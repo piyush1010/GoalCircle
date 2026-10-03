@@ -15,13 +15,13 @@ interface UserProfile {
 }
 
 const DEFAULT_PROFILE: UserProfile = {
-  name: 'Piyush Kaushik',
-  handle: '@piyushkaushik10',
+  name: 'Guest User',
+  handle: '@user',
   bio: 'Building habits, tracking goals, and staying accountable.',
-  avatarEmoji: '🎯',
-  totalGoals: 12,
-  streaks: 5,
-  completed: 8,
+  avatarEmoji: '👤',
+  totalGoals: 0,
+  streaks: 0,
+  completed: 0,
 }
 
 const MEMORY_REELS = [
@@ -80,7 +80,7 @@ export default function ProfilePage() {
       name: editName || profile.name,
       handle: editHandle.startsWith('@') ? editHandle : `@${editHandle || 'user'}`,
       bio: editBio,
-      avatarEmoji: editEmoji || '🎯',
+      avatarEmoji: editEmoji || '👤',
     }
     setProfile(updated)
     localStorage.setItem('gc_user_profile', JSON.stringify(updated))
