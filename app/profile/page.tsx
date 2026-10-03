@@ -1,240 +1,216 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
-import Link from 'next/link'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { useTheme } from '@/components/ThemeProvider'
 
-// Safe Supabase Client Initialization
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-interface MemoryReel {
-  id: string
-  title: string
-  date: string
-  thumbnailUrl: string
-  duration: string
+interface UserProfile {
+  name: string
+  handle: string
+  bio: string
+  avatarEmoji: string
+  totalGoals: number
+  streaks: number
+  completed: number
 }
+
+const DEFAULT_PROFILE: UserProfile = {
+  name: 'Piyush Kaushik',
+  handle: '@piyushkaushik10',
+  bio: 'Building habits, tracking goals, and staying accountable.',
+  avatarEmoji: '🎯',
+  totalGoals: 12,
+  streaks: 5,
+  completed: 8,
+}
+
+const MEMORY_REELS = [
+  { id: '1', title: '100 Days Coding Sprint', duration: '0:45', thumbnail: '💻', date: 'Sep 15' },
+  { id: '2', title: '5K Morning Run Streak', duration: '0:30', thumbnail: '🏃‍♂️', date: 'Sep 20' },
+  { id: '3', title: 'Deep Focus Marathon', duration: '1:12', thumbnail: '⚡', date: 'Sep 28' },
+]
 
 export default function ProfilePage() {
   const router = useRouter()
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const { theme, setTheme } = useTheme()
 
-  // Profile Information
-  const [fullName, setFullName] = useState<string>('Piyush Kaushik')
-  const [username, setUsername] = useState<string>('@piyushkaushik10')
-  const [bio, setBio] = useState<string>('Building habits, tracking goals, and staying accountable.')
+  const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE)
+  const [isEditing, setIsEditing] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
-  // Avatar State: Photo Upload vs Neutral Emoji Presets
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-  const [selectedPresetAvatar, setSelectedPresetAvatar] = useState<string>('🎯')
-  const [isEditingAvatar, setIsEditingAvatar] = useState(false)
+  // Edit Form States
+  const [editName, setEditName] = useState('')
+  const [editHandle, setEditHandle] = useState('')
+  const [editBio, setEditBio] = useState('')
+  const [editEmoji, setEditEmoji] = useState('')
 
-  // Gender-neutral and race-neutral avatar options
-  const avatarPresets = ['🎯', '🔥', '🚀', '⚡', '🌟', '🏆', '💎', '🧘', '🎨', '🧠', '🤖']
-
-  // Memory Journey Reels
-  const [reels] = useState<MemoryReel[]>([
-    {
-      id: '1',
-      title: '30-Day Fitness Challenge Recap',
-      date: 'Sep 2026',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&auto=format&fit=crop&q=60',
-      duration: '0:45',
-    },
-    {
-      id: '2',
-      title: 'Reading Atomic Habits Journey',
-      date: 'Aug 2026',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400&auto=format&fit=crop&q=60',
-      duration: '0:30',
-    },
-    {
-      id: '3',
-      title: 'Deep Work Session Highlights',
-      date: 'Jul 2026',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&auto=format&fit=crop&q=60',
-      duration: '1:12',
-    },
-  ])
-
-  // Fetch Supabase User & Profile Data on Mount
+  // Load profile from LocalStorage on mount
   useEffect(() => {
-    async function loadUserProfile() {
+    const saved = localStorage.getItem('gc_user_profile')
+    if (saved) {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single()
-
-          if (data && !error) {
-            if (data.full_name) setFullName(data.full_name)
-            if (data.username) setUsername(`@${data.username.replace('@', '')}`)
-            if (data.bio) setBio(data.bio)
-            if (data.avatar_url) setAvatarUrl(data.avatar_url)
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching Supabase profile:', err)
+        setProfile(JSON.parse(saved))
+      } catch (e) {
+        console.error('Failed to parse saved profile:', e)
       }
     }
-    loadUserProfile()
   }, [])
 
-  // Handle Photo Upload from Gallery
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const url = URL.createObjectURL(file)
-      setAvatarUrl(url)
-      setIsEditingAvatar(false)
-    }
+  // Start Editing
+  const openEditModal = () => {
+    setEditName(profile.name)
+    setEditHandle(profile.handle)
+    setEditBio(profile.bio)
+    setEditEmoji(profile.avatarEmoji)
+    setIsEditing(true)
   }
 
-  // Handle Supabase Sign Out
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut()
-      router.push('/login')
-    } catch (err) {
-      console.error('Error signing out:', err)
+  // Save Profile Changes
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault()
+    const updated: UserProfile = {
+      ...profile,
+      name: editName || profile.name,
+      handle: editHandle.startsWith('@') ? editHandle : `@${editHandle || 'user'}`,
+      bio: editBio,
+      avatarEmoji: editEmoji || '🎯',
     }
+    setProfile(updated)
+    localStorage.setItem('gc_user_profile', JSON.stringify(updated))
+    setIsEditing(false)
+  }
+
+  // Handle Logout
+  const handleLogout = () => {
+    localStorage.removeItem('gc_user_profile')
+    localStorage.removeItem('gc_auth_token')
+    router.push('/login')
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-24 pt-4 px-4 max-w-md mx-auto transition-colors duration-200">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 max-w-md mx-auto space-y-4 pb-28 transition-colors duration-200 select-none">
+      
+      {/* HEADER & SETTINGS BUTTON */}
+      <div className="pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <h1 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
           👤 My Profile
         </h1>
-        <Link
-          href="/settings"
-          className="text-xs font-bold text-amber-600 dark:text-amber-500 hover:underline transition flex items-center gap-1"
-        >
-          ⚙️ Settings
-        </Link>
-      </div>
 
-      {/* PROFILE HEADER & AVATAR EDITING */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center mb-6 shadow-md dark:shadow-xl relative overflow-hidden transition-colors">
-        <div className="relative inline-block mb-3">
-          <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-amber-500 flex items-center justify-center text-3xl font-bold text-amber-500 overflow-hidden mx-auto shadow-md shadow-amber-500/10">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span>{selectedPresetAvatar}</span>
-            )}
-          </div>
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsEditingAvatar(!isEditingAvatar)}
-            className="absolute bottom-0 right-0 bg-amber-500 text-slate-950 p-1.5 rounded-full text-xs font-bold shadow hover:bg-amber-400 transition"
-            title="Change Avatar"
+            onClick={() => setShowSettings(!showSettings)}
+            className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-black text-slate-700 dark:text-slate-300 hover:border-amber-500 transition"
           >
-            📷
+            ⚙️ Settings
+          </button>
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="p-1.5 rounded-xl border text-xs font-bold transition bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-amber-400"
+            title="Toggle Light/Dark Theme"
+          >
+            {theme === 'dark' ? '🌙' : '☀️'}
           </button>
         </div>
+      </div>
 
-        <h2 className="text-lg font-black text-slate-900 dark:text-white">{fullName}</h2>
-        <p className="text-xs text-amber-600 dark:text-amber-500 font-semibold mb-2">{username}</p>
-        <p className="text-xs text-slate-600 dark:text-slate-400 max-w-xs mx-auto font-medium">
-          {bio}
+      {/* SETTINGS / LOGOUT DROPDOWN */}
+      {showSettings && (
+        <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-lg space-y-2 animate-in fade-in zoom-in-95 duration-150">
+          <button
+            onClick={openEditModal}
+            className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between transition"
+          >
+            <span>✏️ Edit Profile Details</span>
+            <span>→</span>
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-500/10 text-xs font-bold text-rose-500 flex items-center justify-between transition"
+          >
+            <span>🚪 Log Out</span>
+            <span>→</span>
+          </button>
+        </div>
+      )}
+
+      {/* PROFILE CARD */}
+      <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs text-center space-y-3 relative">
+        <button
+          onClick={openEditModal}
+          className="absolute top-4 right-4 text-[10px] font-black text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl hover:bg-amber-500 hover:text-slate-950 transition"
+        >
+          Edit
+        </button>
+
+        <div className="w-20 h-20 mx-auto rounded-full bg-amber-500/10 border-2 border-amber-500 flex items-center justify-center text-4xl shadow-inner">
+          {profile.avatarEmoji}
+        </div>
+
+        <div>
+          <h2 className="text-base font-black text-slate-900 dark:text-white">
+            {profile.name}
+          </h2>
+          <p className="text-xs font-bold text-amber-500">{profile.handle}</p>
+        </div>
+
+        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+          {profile.bio}
         </p>
-
-        {/* AVATAR PICKER & PHOTO UPLOAD CONTROLS */}
-        {isEditingAvatar && (
-          <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-left transition-all">
-            <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Choose Neutral Avatar Icon:</p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {avatarPresets.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => {
-                    setSelectedPresetAvatar(emoji)
-                    setAvatarUrl(null)
-                    setIsEditingAvatar(false)
-                  }}
-                  className={`w-9 h-9 rounded-lg bg-white dark:bg-slate-900 border flex items-center justify-center text-lg ${
-                    selectedPresetAvatar === emoji && !avatarUrl
-                      ? 'border-amber-500 bg-amber-500/10'
-                      : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                  }`}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-
-            <div className="border-t border-slate-200 dark:border-slate-800 pt-3 flex items-center justify-between">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Or upload custom image:</span>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="text-xs px-3 py-1.5 bg-amber-500 text-slate-950 font-bold rounded-lg hover:bg-amber-400 transition"
-              >
-                Upload Photo
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                className="hidden"
-              />
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* CORE STATS GRID */}
-      <div className="grid grid-cols-3 gap-3 mb-6 text-center">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm transition-colors">
-          <span className="block text-lg font-black text-slate-900 dark:text-white">12</span>
-          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+      {/* STATS ROW */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-center">
+          <p className="text-lg font-black text-slate-900 dark:text-white">
+            {profile.totalGoals}
+          </p>
+          <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
             Total Goals
-          </span>
+          </p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm transition-colors">
-          <span className="block text-lg font-black text-amber-600 dark:text-amber-500">🔥 5</span>
-          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+
+        <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-center">
+          <p className="text-lg font-black text-amber-500 flex items-center justify-center gap-0.5">
+            🔥 {profile.streaks}
+          </p>
+          <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
             Streaks
-          </span>
+          </p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-sm transition-colors">
-          <span className="block text-lg font-black text-emerald-600 dark:text-emerald-400">8</span>
-          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+
+        <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-center">
+          <p className="text-lg font-black text-emerald-500">
+            {profile.completed}
+          </p>
+          <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
             Completed
-          </span>
+          </p>
         </div>
       </div>
 
-      {/* 28-DAY CONSISTENCY MATRIX */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 mb-6 shadow-sm transition-colors">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+      {/* CONSISTENCY MATRIX */}
+      <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-black text-slate-900 dark:text-white">
             28-Day Consistency Matrix
           </span>
-          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-500">25 Active Days</span>
+          <span className="font-extrabold text-amber-500 text-[10px]">
+            25 Active Days
+          </span>
         </div>
-        <div className="grid grid-cols-7 gap-2">
-          {Array.from({ length: 28 }).map((_, idx) => {
-            const isActive = idx !== 6 && idx !== 13 && idx !== 20
+
+        <div className="grid grid-cols-7 gap-1.5 pt-1">
+          {Array.from({ length: 28 }).map((_, i) => {
+            const isActive = i !== 6 && i !== 13 && i !== 27
             return (
               <div
-                key={idx}
-                className={`aspect-square rounded-md transition ${
+                key={i}
+                className={`h-7 rounded-lg transition ${
                   isActive
-                    ? 'bg-amber-500 shadow-sm shadow-amber-500/20'
-                    : 'bg-slate-100 dark:bg-slate-800/80'
+                    ? 'bg-amber-500 shadow-2xs'
+                    : 'bg-slate-100 dark:bg-slate-800/60'
                 }`}
+                title={`Day ${i + 1}: ${isActive ? 'Completed' : 'Rest'}`}
               />
             )
           })}
@@ -242,66 +218,133 @@ export default function ProfilePage() {
       </div>
 
       {/* MEMORY JOURNEY REELS */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200 flex items-center gap-1.5">
-            🎬 Memory Journey Reels
-          </h3>
-          <span className="text-[10px] text-amber-600 dark:text-amber-500 font-bold">Auto-Generated</span>
+      <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+            📹 Memory Journey Reels
+          </span>
+          <span className="text-[10px] font-extrabold text-slate-400">
+            Auto-Generated
+          </span>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          {reels.map((reel) => (
+          {MEMORY_REELS.map((reel) => (
             <div
               key={reel.id}
-              className="relative aspect-[9/16] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 group cursor-pointer shadow-sm"
+              className="relative aspect-3/4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 overflow-hidden group cursor-pointer flex flex-col justify-between p-2 shadow-xs"
             >
-              <img
-                src={reel.thumbnailUrl}
-                alt={reel.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-90" />
-              
-              <div className="absolute top-2 right-2 bg-slate-950/80 backdrop-blur-md px-1.5 py-0.5 rounded text-[9px] font-bold text-white">
-                {reel.duration}
+              <div className="flex items-center justify-end">
+                <span className="px-1.5 py-0.5 rounded-md bg-slate-950/70 text-white text-[9px] font-mono font-bold backdrop-blur-xs">
+                  {reel.duration}
+                </span>
               </div>
 
-              <div className="absolute bottom-2 left-2 right-2">
-                <p className="text-[10px] font-bold text-white line-clamp-2 leading-tight">
+              <div className="text-center my-auto text-2xl group-hover:scale-110 transition">
+                {reel.thumbnail}
+              </div>
+
+              <div className="truncate">
+                <p className="text-[10px] font-black text-slate-900 dark:text-white truncate">
                   {reel.title}
                 </p>
-                <span className="text-[9px] text-amber-400 font-medium">
-                  {reel.date}
-                </span>
+                <p className="text-[8px] font-bold text-slate-400">{reel.date}</p>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ACCOUNT ACTIONS */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm transition-colors">
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block mb-3">
-          Account Actions
-        </span>
-        <div className="space-y-2">
-          <Link
-            href="/settings"
-            className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 transition"
-          >
-            <span>✏️ Edit Profile Settings</span>
-            <span className="text-slate-400 dark:text-slate-500">→</span>
-          </Link>
-          <button 
-            onClick={handleSignOut}
-            className="w-full flex items-center justify-between p-2.5 rounded-lg bg-rose-50 dark:bg-slate-950 border border-rose-200 dark:border-slate-800 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:border-rose-300 dark:hover:border-rose-900/50 transition"
-          >
-            <span>🚪 Sign Out</span>
-            <span className="text-rose-400 dark:text-slate-500">→</span>
-          </button>
+      {/* EDIT PROFILE MODAL */}
+      {isEditing && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                ✏️ Edit Profile
+              </h3>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-base font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-3">
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
+                    Username / Handle
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editHandle}
+                    onChange={(e) => setEditHandle(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
+                    Emoji Avatar
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={2}
+                    value={editEmoji}
+                    onChange={(e) => setEditEmoji(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold text-center focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
+                  Bio
+                </label>
+                <textarea
+                  rows={2}
+                  value={editBio}
+                  onChange={(e) => setEditBio(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:border-amber-500 resize-none"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="w-1/2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition shadow-xs"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
+
     </div>
   )
 }
