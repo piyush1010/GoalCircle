@@ -44,8 +44,14 @@ export default function ProfilePage() {
   const [editBio, setEditBio] = useState('')
   const [editEmoji, setEditEmoji] = useState('')
 
-  // Load profile from LocalStorage on mount
+  // Authentication & Data Check on Mount
   useEffect(() => {
+    const token = localStorage.getItem('gc_auth_token')
+    if (!token) {
+      router.push('/login')
+      return
+    }
+
     const saved = localStorage.getItem('gc_user_profile')
     if (saved) {
       try {
@@ -54,7 +60,7 @@ export default function ProfilePage() {
         console.error('Failed to parse saved profile:', e)
       }
     }
-  }, [])
+  }, [router])
 
   // Start Editing
   const openEditModal = () => {
@@ -63,6 +69,7 @@ export default function ProfilePage() {
     setEditBio(profile.bio)
     setEditEmoji(profile.avatarEmoji)
     setIsEditing(true)
+    setShowSettings(false)
   }
 
   // Save Profile Changes
