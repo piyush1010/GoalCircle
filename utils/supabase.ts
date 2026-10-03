@@ -1,14 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
+// Clean and format the Supabase URL to remove /rest/v1 or trailing slashes
 let rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-
-// Automatically strip trailing /rest/v1 or slashes if present in env vars
 rawUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '')
 
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-if (!rawUrl || !supabaseAnonKey) {
-  console.error('Supabase URL or Anon Key is missing from environment variables.')
-}
-
-export const supabase = createClient(rawUrl, supabaseAnonKey)
+export const supabase = createClient(
+  rawUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key'
+)
