@@ -1,357 +1,257 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTheme } from '@/components/ThemeProvider'
-
-interface UserProfile {
-  name: string
-  handle: string
-  bio: string
-  avatarEmoji: string
-  totalGoals: number
-  streaks: number
-  completed: number
-}
-
-const DEFAULT_PROFILE: UserProfile = {
-  name: 'Guest User',
-  handle: '@user',
-  bio: 'Building habits, tracking goals, and staying accountable.',
-  avatarEmoji: '👤',
-  totalGoals: 0,
-  streaks: 0,
-  completed: 0,
-}
-
-const MEMORY_REELS = [
-  { id: '1', title: '100 Days Coding Sprint', duration: '0:45', thumbnail: '💻', date: 'Sep 15' },
-  { id: '2', title: '5K Morning Run Streak', duration: '0:30', thumbnail: '🏃‍♂️', date: 'Sep 20' },
-  { id: '3', title: 'Deep Focus Marathon', duration: '1:12', thumbnail: '⚡', date: 'Sep 28' },
-]
+import { supabase } from '@/utils/supabase'
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { theme, setTheme } = useTheme()
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState({
+    full_name: '',
+    handle: '',
+    avatar_url: '',
+    bio: '',
+    total_goals: 0,
+    streaks: 0,
+    completed: 0,
+  })
 
-  const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE)
   const [isEditing, setIsEditing] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
-
-  // Edit Form States
   const [editName, setEditName] = useState('')
-  const [editHandle, setEditHandle] = useState('')
   const [editBio, setEditBio] = useState('')
-  const [editEmoji, setEditEmoji] = useState('')
 
-  // Authentication & Data Check on Mount
   useEffect(() => {
-    const token = localStorage.getItem('gc_auth_token')
-    if (!token) {
-      router.push('/login')
-      return
-    }
-
-    const saved = localStorage.getItem('gc_user_profile')
-    if (saved) {
+    const checkAuth = async () => {
       try {
-        setProfile(JSON.parse(saved))
-      } catch (e) {
-        console.error('Failed to parse saved profile:', e)
+        // Fetch session directly from Supabase client
+        const { data: { session } } = await supabase.auth.getSession()
+
+        if (session?.user) {
+          setUser(session.user)
+          await fetchProfile(session.user)
+          setLoading(false)
+        } else {
+          // Listen for active OAuth auth state resolution
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
+            if (currentSession?.user) {
+              setUser(currentSession.user)
+              await fetchProfile(currentSession.user)
+              setLoading(false)
+            } else {
+              router.push('/login')
+            }
+          })
+
+          return () => subscription.unsubscribe()
+        }
+      } catch (err) {
+        router.push('/login')
       }
     }
+
+    checkAuth()
   }, [router])
 
-  // Start Editing
-  const openEditModal = () => {
-    setEditName(profile.name)
-    setEditHandle(profile.handle)
-    setEditBio(profile.bio)
-    setEditEmoji(profile.avatarEmoji)
-    setIsEditing(true)
-    setShowSettings(false)
-  }
+  const fetchProfile = async (currentUser: any) => {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single()
 
-  // Save Profile Changes
-  const handleSaveProfile = (e: React.FormEvent) => {
-    e.preventDefault()
-    const updated: UserProfile = {
-      ...profile,
-      name: editName || profile.name,
-      handle: editHandle.startsWith('@') ? editHandle : `@${editHandle || 'user'}`,
-      bio: editBio,
-      avatarEmoji: editEmoji || '👤',
+      if (data) {
+        setProfile(data)
+        setEditName(data.full_name || '')
+        setEditBio(data.bio || '')
+      } else {
+        const defaultName =
+          currentUser.user_metadata?.full_name ||
+          currentUser.email?.split('@')[0] ||
+          'Goal Circles Member'
+
+        const fallbackProfile = {
+          full_name: defaultName,
+          handle: `@${currentUser.email?.split('@')[0] || 'member'}`,
+          avatar_url: currentUser.user_metadata?.avatar_url || '',
+          bio: 'Building habits, tracking goals, and staying accountable.',
+          total_goals: 0,
+          streaks: 0,
+          completed: 0,
+        }
+
+        setProfile(fallbackProfile)
+        setEditName(defaultName)
+        setEditBio(fallbackProfile.bio)
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err)
     }
-    setProfile(updated)
-    localStorage.setItem('gc_user_profile', JSON.stringify(updated))
-    setIsEditing(false)
   }
 
-  // Handle Logout
-  const handleLogout = () => {
-    localStorage.removeItem('gc_user_profile')
+  const handleSaveProfile = async () => {
+    if (!user) return
+    setProfile((prev) => ({ ...prev, full_name: editName, bio: editBio }))
+    setIsEditing(false)
+
+    try {
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        full_name: editName,
+        bio: editBio,
+        updated_at: new Date().toISOString(),
+      })
+    } catch (err) {
+      console.error('Failed to update profile:', err)
+    }
+  }
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
     localStorage.removeItem('gc_auth_token')
     router.push('/login')
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-amber-500"></div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 max-w-md mx-auto space-y-4 pb-28 transition-colors duration-200 select-none">
-      
-      {/* HEADER & SETTINGS BUTTON */}
-      <div className="pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <h1 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-          👤 My Profile
-        </h1>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-black text-slate-700 dark:text-slate-300 hover:border-amber-500 transition"
-          >
-            ⚙️ Settings
-          </button>
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="p-1.5 rounded-xl border text-xs font-bold transition bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-amber-400"
-            title="Toggle Light/Dark Theme"
-          >
-            {theme === 'dark' ? '🌙' : '☀️'}
-          </button>
-        </div>
-      </div>
-
-      {/* SETTINGS / LOGOUT DROPDOWN */}
-      {showSettings && (
-        <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-lg space-y-2 animate-in fade-in zoom-in-95 duration-150">
-          <button
-            onClick={openEditModal}
-            className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between transition"
-          >
-            <span>✏️ Edit Profile Details</span>
-            <span>→</span>
-          </button>
-          <button
-            onClick={handleLogout}
-            className="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-500/10 text-xs font-bold text-rose-500 flex items-center justify-between transition"
-          >
-            <span>🚪 Log Out</span>
-            <span>→</span>
-          </button>
-        </div>
-      )}
-
-      {/* PROFILE CARD */}
-      <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs text-center space-y-3 relative">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 pb-24 max-w-md mx-auto space-y-6">
+      {/* HEADER & SIGN OUT */}
+      <div className="flex justify-between items-center pt-2">
+        <h1 className="text-xl font-black text-white tracking-wide">Profile</h1>
         <button
-          onClick={openEditModal}
-          className="absolute top-4 right-4 text-[10px] font-black text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl hover:bg-amber-500 hover:text-slate-950 transition"
+          onClick={handleSignOut}
+          className="text-xs font-extrabold text-rose-400 hover:text-rose-300 bg-rose-500/10 px-3 py-1.5 rounded-xl border border-rose-500/20 transition"
         >
-          Edit
+          Sign Out
         </button>
-
-        <div className="w-20 h-20 mx-auto rounded-full bg-amber-500/10 border-2 border-amber-500 flex items-center justify-center text-4xl shadow-inner">
-          {profile.avatarEmoji}
-        </div>
-
-        <div>
-          <h2 className="text-base font-black text-slate-900 dark:text-white">
-            {profile.name}
-          </h2>
-          <p className="text-xs font-bold text-amber-500">{profile.handle}</p>
-        </div>
-
-        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
-          {profile.bio}
-        </p>
       </div>
 
-      {/* STATS ROW */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-center">
-          <p className="text-lg font-black text-slate-900 dark:text-white">
-            {profile.totalGoals}
-          </p>
-          <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
-            Total Goals
-          </p>
+      {/* USER CARD */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-2xl font-black text-amber-500 overflow-hidden shrink-0">
+            {profile.avatar_url ? (
+              <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              profile.full_name?.charAt(0)?.toUpperCase() || 'U'
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base font-black text-white truncate">{profile.full_name || 'Member'}</h2>
+            <p className="text-xs text-amber-400 font-bold truncate">{profile.handle || '@member'}</p>
+            <p className="text-xs text-slate-400 mt-1 line-clamp-2">{profile.bio}</p>
+          </div>
         </div>
 
-        <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-center">
-          <p className="text-lg font-black text-amber-500 flex items-center justify-center gap-0.5">
-            🔥 {profile.streaks}
-          </p>
-          <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
-            Streaks
-          </p>
+        {/* STATS */}
+        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-center">
+          <div className="bg-slate-950/50 p-2 rounded-2xl border border-slate-800/80">
+            <p className="text-[10px] uppercase font-black text-slate-500">Goals</p>
+            <p className="text-sm font-black text-white">{profile.total_goals}</p>
+          </div>
+          <div className="bg-slate-950/50 p-2 rounded-2xl border border-slate-800/80">
+            <p className="text-[10px] uppercase font-black text-slate-500">Streak</p>
+            <p className="text-sm font-black text-amber-500">{profile.streaks} 🔥</p>
+          </div>
+          <div className="bg-slate-950/50 p-2 rounded-2xl border border-slate-800/80">
+            <p className="text-[10px] uppercase font-black text-slate-500">Done</p>
+            <p className="text-sm font-black text-emerald-400">{profile.completed}</p>
+          </div>
         </div>
 
-        <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-center">
-          <p className="text-lg font-black text-emerald-500">
-            {profile.completed}
-          </p>
-          <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
-            Completed
-          </p>
-        </div>
+        {/* EDIT PROFILE FORM */}
+        {!isEditing ? (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition"
+          >
+            Edit Profile
+          </button>
+        ) : (
+          <div className="space-y-3 pt-2 border-t border-slate-800">
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Name</label>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Bio</label>
+              <textarea
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                rows={2}
+                className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 resize-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveProfile}
+                className="flex-1 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="px-3 py-1.5 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-700 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* CONSISTENCY MATRIX */}
-      <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-black text-slate-900 dark:text-white">
-            28-Day Consistency Matrix
-          </span>
-          <span className="font-extrabold text-amber-500 text-[10px]">
-            25 Active Days
-          </span>
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xs font-black uppercase text-slate-300 tracking-wider">Consistency Matrix</h3>
+          <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">Last 30 Days</span>
         </div>
-
-        <div className="grid grid-cols-7 gap-1.5 pt-1">
-          {Array.from({ length: 28 }).map((_, i) => {
-            const isActive = i !== 6 && i !== 13 && i !== 27
+        <div className="grid grid-cols-10 gap-1.5 pt-1">
+          {Array.from({ length: 30 }).map((_, i) => {
+            const isActive = i % 3 === 0 || i % 5 === 0
             return (
               <div
                 key={i}
-                className={`h-7 rounded-lg transition ${
-                  isActive
-                    ? 'bg-amber-500 shadow-2xs'
-                    : 'bg-slate-100 dark:bg-slate-800/60'
+                className={`h-6 rounded-md transition ${
+                  isActive ? 'bg-amber-500 border border-amber-400' : 'bg-slate-950 border border-slate-800/60'
                 }`}
-                title={`Day ${i + 1}: ${isActive ? 'Completed' : 'Rest'}`}
+                title={`Day ${i + 1}`}
               />
             )
           })}
         </div>
       </div>
 
-      {/* MEMORY JOURNEY REELS */}
-      <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-            📹 Memory Journey Reels
-          </span>
-          <span className="text-[10px] font-extrabold text-slate-400">
-            Auto-Generated
-          </span>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2">
-          {MEMORY_REELS.map((reel) => (
-            <div
-              key={reel.id}
-              className="relative aspect-3/4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 overflow-hidden group cursor-pointer flex flex-col justify-between p-2 shadow-xs"
-            >
-              <div className="flex items-center justify-end">
-                <span className="px-1.5 py-0.5 rounded-md bg-slate-950/70 text-white text-[9px] font-mono font-bold backdrop-blur-xs">
-                  {reel.duration}
-                </span>
-              </div>
-
-              <div className="text-center my-auto text-2xl group-hover:scale-110 transition">
-                {reel.thumbnail}
-              </div>
-
-              <div className="truncate">
-                <p className="text-[10px] font-black text-slate-900 dark:text-white truncate">
-                  {reel.title}
-                </p>
-                <p className="text-[8px] font-bold text-slate-400">{reel.date}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* EDIT PROFILE MODAL */}
-      {isEditing && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl animate-in fade-in zoom-in duration-150">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-              <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                ✏️ Edit Profile
-              </h3>
-              <button
-                onClick={() => setIsEditing(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-base font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveProfile} className="space-y-3">
-              <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
-                    Username / Handle
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editHandle}
-                    onChange={(e) => setEditHandle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
-                    Emoji Avatar
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={2}
-                    value={editEmoji}
-                    onChange={(e) => setEditEmoji(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold text-center focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
-                  Bio
-                </label>
-                <textarea
-                  rows={2}
-                  value={editBio}
-                  onChange={(e) => setEditBio(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:border-amber-500 resize-none"
-                />
-              </div>
-
-              <div className="pt-2 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(false)}
-                  className="w-1/2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="w-1/2 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition shadow-xs"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
+      {/* MEMORY REELS */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
+        <h3 className="text-xs font-black uppercase text-slate-300 tracking-wider">Memory Reels</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="aspect-video bg-slate-950 rounded-2xl border border-slate-800 flex flex-col items-center justify-center p-3 text-center space-y-1">
+            <span className="text-xl">🎥</span>
+            <p className="text-[10px] font-bold text-slate-300">September Recap</p>
+            <p className="text-[9px] text-slate-500">Generated automatically</p>
+          </div>
+          <div className="aspect-video bg-slate-950/60 border border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center p-3 text-center text-slate-600">
+            <span className="text-lg">✨</span>
+            <p className="text-[10px] font-bold">October Recap</p>
+            <p className="text-[9px]">Unlocks in 28 days</p>
           </div>
         </div>
-      )}
-
+      </div>
     </div>
   )
 }
