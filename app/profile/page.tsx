@@ -23,35 +23,55 @@ export default function ProfilePage() {
   const [editBio, setEditBio] = useState('')
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Fetch session directly from Supabase client
-        const { data: { session } } = await supabase.auth.getSession()
+    let isMounted = true
 
-        if (session?.user) {
-          setUser(session.user)
-          await fetchProfile(session.user)
-          setLoading(false)
-        } else {
-          // Listen for active OAuth auth state resolution
-          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
-            if (currentSession?.user) {
-              setUser(currentSession.user)
-              await fetchProfile(currentSession.user)
-              setLoading(false)
-            } else {
-              router.push('/login')
-            }
-          })
-
-          return () => subscription.unsubscribe()
-        }
-      } catch (err) {
-        router.push('/login')
-      }
+    const loadUserData = async (currentUser: any) => {
+      if (!isMounted) return
+      setUser(currentUser)
+      await fetchProfile(currentUser)
+      if (isMounted) setLoading(false)
     }
 
-    checkAuth()
+    // 1. Listen for auth state changes (captures OAuth redirects & session sync)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return
+
+      if (session?.user) {
+        await loadUserData(session.user)
+      } else if (event === 'SIGNED_OUT') {
+        if (isMounted) {
+          setLoading(false)
+          router.push('/login')
+        }
+      }
+    })
+
+    // 2. Direct session check fallback
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted) return
+
+      if (session?.user) {
+        await loadUserData(session.user)
+      } else {
+        // If there's an OAuth hash token in the URL, give Supabase a second to parse it
+        if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+          return
+        }
+
+        // Small delay to prevent premature redirection on fast clicks
+        setTimeout(() => {
+          if (isMounted && !user) {
+            setLoading(false)
+            router.push('/login')
+          }
+        }, 600)
+      }
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [router])
 
   const fetchProfile = async (currentUser: any) => {
