@@ -119,7 +119,7 @@ function AuthForm() {
       <div className="text-center space-y-1">
         <div className="text-3xl">🎯</div>
         <h1 className="text-2xl font-black text-white tracking-tight">
-          {mode === 'signup' ? 'Create Your Account' : 'Welcome Back'}
+          {mode === 'signup' ? 'Create Your Account' : 'Welcome to GoalCircle'}
         </h1>
         <p className="text-xs text-slate-400 font-medium">
           {mode === 'signup'
