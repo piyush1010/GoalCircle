@@ -1,10 +1,9 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import BottomNav from '@/components/BottomNav'
+import { supabase } from '@/utils/supabase'
 
 interface Goal {
   id: string
@@ -30,24 +29,13 @@ export default function GoalDetailPage() {
   const router = useRouter()
   const goalId = params.id as string
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
   const [goal, setGoal] = useState<Goal | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
 
-  useEffect(() => {
-    if (goalId) loadGoalDetails()
-  }, [goalId])
-
-  async function loadGoalDetails() {
+  const loadGoalDetails = useCallback(async () => {
     try {
-      setLoading(true)
-
       const { data: goalData, error: goalError } = await supabase
         .from('goals')
         .select('*')
@@ -70,7 +58,11 @@ export default function GoalDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [goalId])
+
+  useEffect(() => {
+    if (goalId) void Promise.resolve().then(loadGoalDetails)
+  }, [goalId, loadGoalDetails])
 
   const toggleGoalCompletion = async () => {
     if (!goal) return
@@ -86,8 +78,8 @@ export default function GoalDetailPage() {
 
       if (error) throw error
       setGoal({ ...goal, status: newStatus })
-    } catch (err: any) {
-      alert(err.message || 'Failed to update goal status')
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to update goal status')
     } finally {
       setUpdating(false)
     }
@@ -202,7 +194,6 @@ export default function GoalDetailPage() {
         )}
       </div>
 
-      <BottomNav />
     </div>
   )
 }

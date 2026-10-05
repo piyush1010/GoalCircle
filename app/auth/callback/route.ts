@@ -7,6 +7,10 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const requestedNext = searchParams.get('next')
+  const nextPath = requestedNext?.startsWith('/') && !requestedNext.startsWith('//')
+    ? requestedNext
+    : '/feed'
 
   if (code) {
     const cookieStore = await cookies()
@@ -41,10 +45,10 @@ export async function GET(request: Request) {
         .single()
 
       if (!profile || !profile.is_onboarded) {
-        return NextResponse.redirect(`${origin}/setup-profile`)
+        return NextResponse.redirect(`${origin}/settings?onboarding=1`)
       }
 
-      return NextResponse.redirect(`${origin}/feed`)
+      return NextResponse.redirect(`${origin}${nextPath}`)
     }
   }
 

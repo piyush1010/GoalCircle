@@ -1,18 +1,10 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from '@/components/ThemeProvider'
 
 type TimerMode = 'work' | 'shortBreak' | 'longBreak' | 'deepWork'
-
-interface FocusSessionLog {
-  id: string
-  goalTitle: string
-  durationMinutes: number
-  notes: string
-  timestamp: string
-}
 
 const TIMER_PRESETS: Record<TimerMode, { label: string; minutes: number; emoji: string }> = {
   work: { label: 'Pomodoro', minutes: 25, emoji: '⏱️' },
@@ -27,6 +19,28 @@ const AMBIENT_SOUNDS = [
   { id: 'cafe', name: 'Coffee Shop', emoji: '☕', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
   { id: 'white', name: 'White Noise', emoji: '🌊', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
 ]
+
+function playCompletionChime() {
+  try {
+    const AudioContextClass = window.AudioContext || (
+      window as typeof window & { webkitAudioContext: typeof AudioContext }
+    ).webkitAudioContext
+    const audioCtx = new AudioContextClass()
+    const osc = audioCtx.createOscillator()
+    const gain = audioCtx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5)
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1)
+    osc.connect(gain)
+    gain.connect(audioCtx.destination)
+    osc.start()
+    osc.stop(audioCtx.currentTime + 1)
+  } catch (error) {
+    console.error(error)
+  }
+}
 
 export default function FocusRoomPage() {
   const router = useRouter()
@@ -60,13 +74,31 @@ export default function FocusRoomPage() {
     })
   }, [volume])
 
+  // Timer Mode Preset Switcher
+  const handleModeChange = (mode: TimerMode) => {
+    setIsRunning(false)
+    setTimerMode(mode)
+    setSecondsLeft(TIMER_PRESETS[mode].minutes * 60)
+  }
+
+  // Handle Session Completion
+  const handleTimerComplete = useCallback(() => {
+    const elapsedMins = TIMER_PRESETS[timerMode].minutes
+    if (timerMode === 'work' || timerMode === 'deepWork') {
+      setTodayMinutes((prev) => prev + elapsedMins)
+      setWeeklyHours((prev) => Number((prev + elapsedMins / 60).toFixed(1)))
+      setCompletedSessionsCount((prev) => prev + 1)
+    }
+    setShowCompletionModal(true)
+  }, [timerMode])
+
   // Timer Countdown Logic
   useEffect(() => {
     if (isRunning) {
       timerRef.current = setInterval(() => {
         setSecondsLeft((prev) => {
           if (prev <= 1) {
-            clearInterval(timerRef.current!)
+            if (timerRef.current) clearInterval(timerRef.current)
             setIsRunning(false)
             playCompletionChime()
             handleTimerComplete()
@@ -78,48 +110,11 @@ export default function FocusRoomPage() {
     } else if (timerRef.current) {
       clearInterval(timerRef.current)
     }
+
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
-  }, [isRunning])
-
-  // Timer Mode Preset Switcher
-  const handleModeChange = (mode: TimerMode) => {
-    setIsRunning(false)
-    setTimerMode(mode)
-    setSecondsLeft(TIMER_PRESETS[mode].minutes * 60)
-  }
-
-  // Play Completion Chime using Web Audio API
-  const playCompletionChime = () => {
-    try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
-      const osc = audioCtx.createOscillator()
-      const gain = audioCtx.createGain()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime) // D5
-      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5) // A5
-      gain.gain.setValueAtTime(0.3, audioCtx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1)
-      osc.connect(gain)
-      gain.connect(audioCtx.destination)
-      osc.start()
-      osc.stop(audioCtx.currentTime + 1)
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  // Handle Session Completion
-  const handleTimerComplete = () => {
-    const elapsedMins = TIMER_PRESETS[timerMode].minutes
-    if (timerMode === 'work' || timerMode === 'deepWork') {
-      setTodayMinutes((prev) => prev + elapsedMins)
-      setWeeklyHours((prev) => Number((prev + elapsedMins / 60).toFixed(1)))
-      setCompletedSessionsCount((prev) => prev + 1)
-    }
-    setShowCompletionModal(true)
-  }
+  }, [isRunning, handleTimerComplete])
 
   // Soundscape Toggle
   const toggleSoundscape = (soundId: string) => {

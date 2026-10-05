@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
+import type { User } from '@supabase/supabase-js'
 
 interface DayLog {
   date: string
@@ -13,7 +14,7 @@ interface DayLog {
 export default function ProfilePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   // Real-time Supabase Stats
   const [totalGoals, setTotalGoals] = useState(0)
@@ -34,54 +35,6 @@ export default function ProfilePage() {
   const [daysRemainingInMonth, setDaysRemainingInMonth] = useState(0)
   const [currentMonthName, setCurrentMonthName] = useState('')
   const [nextMonthName, setNextMonthName] = useState('')
-
-  useEffect(() => {
-    let isMounted = true
-
-    const loadProfileData = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session?.user) {
-        router.push('/login')
-        return
-      }
-
-      if (!isMounted) return
-
-      const currentUser = session.user
-      setUser(currentUser)
-
-      // Set initial form states
-      const userMeta = currentUser.user_metadata || {}
-      setFullName(userMeta.full_name || userMeta.name || currentUser.email?.split('@')[0] || 'User')
-      setHandle(userMeta.handle || `@${currentUser.email?.split('@')[0] || 'member'}`)
-
-      // Calculate days remaining in current month for Memory Reels
-      const now = new Date()
-      const currMonth = now.toLocaleString('default', { month: 'long' })
-      const nextM = new Date(now.getFullYear(), now.getMonth() + 1, 1).toLocaleString('default', { month: 'long' })
-      const totalDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-      const remaining = totalDaysInMonth - now.getDate()
-
-      setCurrentMonthName(currMonth)
-      setNextMonthName(nextM)
-      setDaysRemainingInMonth(remaining)
-
-      // Fetch Real Metrics & Consistency Matrix from Supabase
-      await Promise.all([
-        fetchUserStats(currentUser.id),
-        fetchConsistencyMatrix(currentUser.id)
-      ])
-
-      if (isMounted) setLoading(false)
-    }
-
-    loadProfileData()
-
-    return () => {
-      isMounted = false
-    }
-  }, [router])
 
   const fetchUserStats = async (userId: string) => {
     // 1. Fetch Goals Count & Streaks
@@ -135,6 +88,49 @@ export default function ProfilePage() {
     setMatrixDays(days)
   }
 
+  useEffect(() => {
+    let isMounted = true
+
+    const loadProfileData = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session?.user) {
+        router.push('/login')
+        return
+      }
+
+      if (!isMounted) return
+
+      const currentUser = session.user
+      setUser(currentUser)
+
+      const userMeta = currentUser.user_metadata || {}
+      setFullName(userMeta.full_name || userMeta.name || currentUser.email?.split('@')[0] || 'User')
+      setHandle(userMeta.handle || `@${currentUser.email?.split('@')[0] || 'member'}`)
+
+      const now = new Date()
+      const totalDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+      setCurrentMonthName(now.toLocaleString('default', { month: 'long' }))
+      setNextMonthName(
+        new Date(now.getFullYear(), now.getMonth() + 1, 1).toLocaleString('default', { month: 'long' })
+      )
+      setDaysRemainingInMonth(totalDaysInMonth - now.getDate())
+
+      await Promise.all([
+        fetchUserStats(currentUser.id),
+        fetchConsistencyMatrix(currentUser.id),
+      ])
+
+      if (isMounted) setLoading(false)
+    }
+
+    loadProfileData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [router])
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
@@ -149,14 +145,14 @@ export default function ProfilePage() {
     })
 
     if (!error) {
-      setUser((prev: any) => ({
+      setUser((prev) => prev ? ({
         ...prev,
         user_metadata: {
           ...prev.user_metadata,
           full_name: fullName,
           handle: formattedHandle,
         }
-      }))
+      }) : prev)
       setHandle(formattedHandle)
       setShowEditModal(false)
     } else {

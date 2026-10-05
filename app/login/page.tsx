@@ -1,27 +1,27 @@
 'use client'
 
-import React, { useState, useEffect, Suspense } from 'react'
+import React, { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
 
 function AuthForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const requestedNext = searchParams.get('next')
+  const nextPath = requestedNext?.startsWith('/') && !requestedNext.startsWith('//')
+    ? requestedNext
+    : '/feed'
 
   // Mode state: 'signin' or 'signup'
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [mode, setMode] = useState<'signin' | 'signup'>(() =>
+    searchParams.get('mode') === 'signup' ? 'signup' : 'signin'
+  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (searchParams.get('mode') === 'signup') {
-      setMode('signup')
-    }
-  }, [searchParams])
 
   const handleGoogleAuth = async () => {
     setErrorMsg(null)
@@ -30,7 +30,7 @@ function AuthForm() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${origin}/`,
+        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
       },
     })
 
@@ -61,7 +61,7 @@ function AuthForm() {
       } else if (data.user && !data.session) {
         setSuccessMsg('Account created! Check your email to confirm your account.')
       } else {
-        router.push('/')
+        router.push(nextPath)
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
@@ -72,7 +72,7 @@ function AuthForm() {
       if (error) {
         setErrorMsg(error.message)
       } else {
-        router.push('/')
+        router.push(nextPath)
       }
     }
 
@@ -80,9 +80,9 @@ function AuthForm() {
   }
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 w-full max-w-md space-y-6 shadow-2xl">
+    <div className="w-full max-w-md space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl md:p-8 dark:border-slate-700/70 dark:bg-[#101b2d]">
       {/* TABS FOR CLEAR SIGN IN / SIGN UP SELECTION */}
-      <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-2xl border border-slate-800">
+      <div className="grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-[#07101f]">
         <button
           type="button"
           onClick={() => {
@@ -93,7 +93,7 @@ function AuthForm() {
           className={`py-2 text-xs font-black rounded-xl transition ${
             mode === 'signin'
               ? 'bg-amber-500 text-slate-950 shadow-md'
-              : 'text-slate-400 hover:text-white'
+              : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
           }`}
         >
           Sign In
@@ -108,7 +108,7 @@ function AuthForm() {
           className={`py-2 text-xs font-black rounded-xl transition ${
             mode === 'signup'
               ? 'bg-amber-500 text-slate-950 shadow-md'
-              : 'text-slate-400 hover:text-white'
+              : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
           }`}
         >
           Sign Up
@@ -118,7 +118,7 @@ function AuthForm() {
       {/* DYNAMIC HEADER */}
       <div className="text-center space-y-1">
         <div className="text-3xl">🎯</div>
-        <h1 className="text-2xl font-black text-white tracking-tight">
+        <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
           {mode === 'signup' ? 'Create Your Account' : 'Welcome to GoalCircle'}
         </h1>
         <p className="text-xs text-slate-400 font-medium">
@@ -168,8 +168,8 @@ function AuthForm() {
       </button>
 
       <div className="relative flex items-center justify-center">
-        <div className="border-t border-slate-800 w-full"></div>
-        <span className="bg-slate-900 px-3 text-[10px] uppercase font-bold text-slate-500 absolute">
+        <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
+        <span className="absolute bg-white px-3 text-[10px] font-bold uppercase text-slate-500 dark:bg-[#101b2d]">
           or email
         </span>
       </div>
@@ -186,7 +186,7 @@ function AuthForm() {
               placeholder="Alex Morgan"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 transition"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101f] dark:text-white"
               required={mode === 'signup'}
             />
           </div>
@@ -201,7 +201,7 @@ function AuthForm() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 transition"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101f] dark:text-white"
             required
           />
         </div>
@@ -215,8 +215,9 @@ function AuthForm() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 transition"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101f] dark:text-white"
             required
+            minLength={8}
           />
         </div>
 
@@ -252,7 +253,7 @@ function AuthForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-900 dark:bg-[#07101f] dark:text-slate-100">
       <Suspense
         fallback={
           <div className="text-xs text-slate-500 font-semibold animate-pulse">

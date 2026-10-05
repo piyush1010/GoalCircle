@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
 import Link from 'next/link'
 import BottomNav from '../../components/BottomNav'
+import { supabase } from '@/utils/supabase'
 
 interface Goal {
   id: string
@@ -20,20 +20,10 @@ interface Goal {
 }
 
 export default function GoalsDashboardPage() {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
   const [goals, setGoals] = useState<Goal[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchGoals()
-  }, [])
-
   const fetchGoals = async () => {
-    setLoading(true)
     const { data: userData } = await supabase.auth.getUser()
 
     if (userData?.user) {
@@ -49,6 +39,10 @@ export default function GoalsDashboardPage() {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchGoals)
+  }, [])
 
   const handleDeleteGoal = async (goalId: string) => {
     if (!confirm('Are you sure you want to delete this goal?')) return

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
+import { useTheme, type Theme } from '@/components/ThemeProvider'
 
 // Safe Supabase Initialization
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -11,6 +12,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
 
   // Profile Form States
   const [fullName, setFullName] = useState('')
@@ -18,8 +20,10 @@ export default function SettingsPage() {
   const [bio, setBio] = useState('')
 
   // Preference & App States
-  const [theme, setThemeState] = useState<'light' | 'dark' | 'system'>('dark')
-  const [defaultLandingPage, setDefaultLandingPage] = useState('/dashboard')
+  const [defaultLandingPage, setDefaultLandingPage] = useState(() => {
+    if (typeof window === 'undefined') return '/dashboard'
+    return localStorage.getItem('defaultLandingPage') || '/dashboard'
+  })
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [reminderTime, setReminderTime] = useState('20:00')
   const [isPublicProfile, setIsPublicProfile] = useState(true)
@@ -29,16 +33,8 @@ export default function SettingsPage() {
   const [saveMessage, setSaveMessage] = useState('')
   const [passwordResetSent, setPasswordResetSent] = useState(false)
 
-  // Load Initial Settings & Theme
+  // Load profile settings
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const isDark = document.documentElement.classList.contains('dark')
-      setThemeState(isDark ? 'dark' : 'light')
-      
-      const savedLanding = localStorage.getItem('defaultLandingPage')
-      if (savedLanding) setDefaultLandingPage(savedLanding)
-    }
-
     async function fetchProfileData() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
@@ -63,24 +59,8 @@ export default function SettingsPage() {
     fetchProfileData()
   }, [])
 
-  // Direct Crash-Safe Theme Switcher
-  const handleThemeChange = (mode: 'light' | 'dark' | 'system') => {
-    setThemeState(mode)
-    const root = document.documentElement
-    if (mode === 'dark') {
-      root.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
-    } else if (mode === 'light') {
-      root.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
-    } else {
-      localStorage.removeItem('theme')
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        root.classList.add('dark')
-      } else {
-        root.classList.remove('dark')
-      }
-    }
+  const handleThemeChange = (mode: Theme) => {
+    setTheme(mode)
   }
 
   // Save Landing Preference

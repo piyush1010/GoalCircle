@@ -2,12 +2,28 @@
 
 import React, { useEffect, useState } from 'react'
 import { supabase } from '@/utils/supabase'
+import type { User } from '@supabase/supabase-js'
+
+interface Goal {
+  id: string
+  title: string
+  target_days: number | null
+  current_streak: number | null
+}
+
+interface FocusLog {
+  id: string
+  logged_at: string
+  note: string | null
+  minutes_logged: number
+  goals: { title: string } | null
+}
 
 export default function FeedPage() {
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
-  const [goals, setGoals] = useState<any[]>([])
-  const [logs, setLogs] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [goals, setGoals] = useState<Goal[]>([])
+  const [logs, setLogs] = useState<FocusLog[]>([])
   
   // New Goal Modal state
   const [showAddGoal, setShowAddGoal] = useState(false)
@@ -15,9 +31,33 @@ export default function FeedPage() {
   const [newGoalTarget, setNewGoalTarget] = useState(30)
   
   // Quick Log Modal state
-  const [selectedGoal, setSelectedGoal] = useState<any>(null)
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
   const [logMinutes, setLogMinutes] = useState(25)
   const [logNote, setLogNote] = useState('')
+
+  const fetchGoals = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('goals')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (!error && data) {
+      setGoals(data)
+    }
+  }
+
+  const fetchFocusLogs = async () => {
+    const { data, error } = await supabase
+      .from('focus_logs')
+      .select('*, goals(title)')
+      .order('logged_at', { ascending: false })
+      .limit(10)
+
+    if (!error && data) {
+      setLogs(data as FocusLog[])
+    }
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -42,30 +82,6 @@ export default function FeedPage() {
       isMounted = false
     }
   }, [])
-
-  const fetchGoals = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('goals')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-
-    if (!error && data) {
-      setGoals(data)
-    }
-  }
-
-  const fetchFocusLogs = async () => {
-    const { data, error } = await supabase
-      .from('focus_logs')
-      .select('*, goals(title)')
-      .order('logged_at', { ascending: false })
-      .limit(10)
-
-    if (!error && data) {
-      setLogs(data)
-    }
-  }
 
   const handleCreateGoal = async (e: React.FormEvent) => {
     e.preventDefault()

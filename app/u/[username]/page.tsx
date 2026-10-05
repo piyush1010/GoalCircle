@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useCallback, useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
-import { ArrowLeft, Flame, Target, UserPlus, UserCheck, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Flame, Target, UserPlus, UserCheck } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -29,13 +29,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
   const [isSupporting, setIsSupporting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchProfileData();
-  }, [username]);
-
-  const fetchProfileData = async () => {
-    setLoading(true);
-
+  const fetchProfileData = useCallback(async () => {
     // 1. Get current logged-in user
     const { data: { user } } = await supabase.auth.getUser();
     if (user) setCurrentUserId(user.id);
@@ -75,7 +69,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
 
     if (userGoals) setGoals(userGoals);
     setLoading(false);
-  };
+  }, [username]);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchProfileData);
+  }, [fetchProfileData]);
 
   const toggleSupport = async () => {
     if (!currentUserId || !profile) return;
