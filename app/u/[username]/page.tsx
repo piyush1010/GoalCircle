@@ -51,8 +51,8 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
     // 3. Check if current user is supporting this profile
     if (user) {
       const { data: rel } = await supabase
-        .from('user_relationships')
-        .select('id')
+        .from('follows')
+        .select('following_id')
         .eq('follower_id', user.id)
         .eq('following_id', targetProfile.id)
         .maybeSingle();
@@ -81,14 +81,14 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
     if (isSupporting) {
       setIsSupporting(false);
       await supabase
-        .from('user_relationships')
+        .from('follows')
         .delete()
         .eq('follower_id', currentUserId)
         .eq('following_id', profile.id);
     } else {
       setIsSupporting(true);
       await supabase
-        .from('user_relationships')
+        .from('follows')
         .insert({ follower_id: currentUserId, following_id: profile.id });
     }
   };

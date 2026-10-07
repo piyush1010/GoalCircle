@@ -1,406 +1,84 @@
 'use client'
 
-import React, { useState } from 'react'
-import { useTheme } from '@/components/ThemeProvider'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Plus, Users, X } from 'lucide-react'
+import { supabase } from '@/utils/supabase'
 
 type Category = 'all' | 'work' | 'fitness' | 'learning' | 'habits'
-
-interface Circle {
-  id: string
-  name: string
-  category: Category
-  categoryLabel: string
-  emoji: string
-  membersCount: number
-  groupStreak: number
-  totalHoursLogged: number
-  isJoined: boolean
-  description: string
-  recentActivity: string
-}
-
-const INITIAL_CIRCLES: Circle[] = [
-  {
-    id: '1',
-    name: '100 Days of Code',
-    category: 'work',
-    categoryLabel: 'Deep Work',
-    emoji: '💻',
-    membersCount: 42,
-    groupStreak: 28,
-    totalHoursLogged: 612,
-    isJoined: true,
-    description: 'Daily 2-hour coding sprints, PR reviews, and build check-ins.',
-    recentActivity: 'Aarav logged 2.5h on Next.js setup 12m ago',
-  },
-  {
-    id: '2',
-    name: 'Morning Runners Club',
-    category: 'fitness',
-    categoryLabel: 'Fitness',
-    emoji: '🏃‍♀️',
-    membersCount: 29,
-    groupStreak: 18,
-    totalHoursLogged: 340,
-    isJoined: true,
-    description: '5 AM wakeups, 5k daily runs, and weekend trail challenges.',
-    recentActivity: 'Priya completed 6.2km run 1h ago',
-  },
-  {
-    id: '3',
-    name: 'Non-Fiction Readers',
-    category: 'learning',
-    categoryLabel: 'Learning',
-    emoji: '📚',
-    membersCount: 64,
-    groupStreak: 45,
-    totalHoursLogged: 890,
-    isJoined: false,
-    description: '30 pages a day. Summaries and discussions every Sunday.',
-    recentActivity: 'Rohan shared notes on Atomic Habits 3h ago',
-  },
-  {
-    id: '4',
-    name: 'Deep Focus & Flow',
-    category: 'work',
-    categoryLabel: 'Deep Work',
-    emoji: '⚡',
-    membersCount: 88,
-    groupStreak: 32,
-    totalHoursLogged: 1240,
-    isJoined: false,
-    description: 'Silent Pomodoro sessions with strict anti-distraction rules.',
-    recentActivity: 'Neha finished 4x Pomodoro cycles 30m ago',
-  },
-  {
-    id: '5',
-    name: 'Cold Shower & Hydration',
-    category: 'habits',
-    categoryLabel: 'Habits',
-    emoji: '💧',
-    membersCount: 51,
-    groupStreak: 12,
-    totalHoursLogged: 180,
-    isJoined: false,
-    description: '3L water daily + morning cold restart routines.',
-    recentActivity: 'Vikram checked in for Day 12 4h ago',
-  },
+interface CircleRow { id: string; owner_id: string; name: string; description: string | null; category: Exclude<Category, 'all'>; emoji: string; created_at: string }
+interface CircleView extends CircleRow { memberCount: number; joined: boolean; owned: boolean }
+const categories: Array<{ id: Category; label: string; emoji: string }> = [
+  { id: 'all', label: 'All', emoji: '🌐' }, { id: 'work', label: 'Deep Work', emoji: '💻' },
+  { id: 'fitness', label: 'Fitness', emoji: '🏃' }, { id: 'learning', label: 'Learning', emoji: '📚' },
+  { id: 'habits', label: 'Daily Habits', emoji: '💧' },
 ]
 
 export default function CirclesPage() {
-  const { theme, setTheme } = useTheme()
-  const [circles, setCircles] = useState<Circle[]>(INITIAL_CIRCLES)
-  const [activeTab, setActiveTab] = useState<'my' | 'discover'>('my')
-  const [activeCategory, setActiveCategory] = useState<Category>('all')
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  const router = useRouter()
+  const [circles, setCircles] = useState<CircleView[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
+  const [tab, setTab] = useState<'my' | 'discover'>('my')
+  const [category, setCategory] = useState<Category>('all')
+  const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [showCreate, setShowCreate] = useState(false)
+  const [name, setName] = useState('')
+  const [emoji, setEmoji] = useState('🎯')
+  const [newCategory, setNewCategory] = useState<Exclude<Category, 'all'>>('habits')
+  const [description, setDescription] = useState('')
 
-  // New Circle Form State
-  const [newName, setNewName] = useState('')
-  const [newEmoji, setNewEmoji] = useState('🎯')
-  const [newCategory, setNewCategory] = useState<Category>('work')
-  const [newDesc, setNewDesc] = useState('')
+  const loadCircles = useCallback(async () => {
+    setLoading(true); setError(null)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) { router.replace('/login?next=/circles'); return }
+    const uid = session.user.id; setUserId(uid)
+    const [circleResult, membershipResult] = await Promise.all([
+      supabase.from('circles').select('id,owner_id,name,description,category,emoji,created_at').order('created_at', { ascending: false }),
+      supabase.from('circle_memberships').select('circle_id,user_id'),
+    ])
+    if (circleResult.error || membershipResult.error) { setError('Circles could not be loaded. Please try again.'); setLoading(false); return }
+    const memberships = (membershipResult.data || []) as Array<{ circle_id: string; user_id: string }>
+    setCircles(((circleResult.data || []) as CircleRow[]).map((circle) => ({ ...circle, owned: circle.owner_id === uid, joined: circle.owner_id === uid || memberships.some((m) => m.circle_id === circle.id && m.user_id === uid), memberCount: new Set([circle.owner_id, ...memberships.filter((m) => m.circle_id === circle.id).map((m) => m.user_id)]).size })))
+    setLoading(false)
+  }, [router])
 
-  // Join/Leave Circle Handler
-  const toggleJoin = (id: string) => {
-    setCircles((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              isJoined: !c.isJoined,
-              membersCount: c.isJoined ? c.membersCount - 1 : c.membersCount + 1,
-            }
-          : c
-      )
-    )
+  useEffect(() => { void Promise.resolve().then(loadCircles) }, [loadCircles])
+  const displayed = useMemo(() => circles.filter((circle) => (tab === 'discover' || circle.joined) && (category === 'all' || circle.category === category)), [category, circles, tab])
+
+  const toggleMembership = async (circle: CircleView) => {
+    if (!userId || circle.owned) return
+    setBusyId(circle.id); setError(null)
+    const result = circle.joined
+      ? await supabase.from('circle_memberships').delete().eq('circle_id', circle.id).eq('user_id', userId)
+      : await supabase.from('circle_memberships').insert({ circle_id: circle.id, user_id: userId, role: 'member' })
+    if (result.error) setError('Your membership change could not be saved.')
+    else setCircles((items) => items.map((item) => item.id === circle.id ? { ...item, joined: !circle.joined, memberCount: Math.max(1, item.memberCount + (circle.joined ? -1 : 1)) } : item))
+    setBusyId(null)
   }
 
-  // Create Circle Handler
-  const handleCreateCircle = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newName.trim()) return
-
-    const created: Circle = {
-      id: Date.now().toString(),
-      name: newName,
-      category: newCategory,
-      categoryLabel: newCategory === 'work' ? 'Deep Work' : newCategory === 'fitness' ? 'Fitness' : newCategory === 'learning' ? 'Learning' : 'Habits',
-      emoji: newEmoji || '🎯',
-      membersCount: 1,
-      groupStreak: 1,
-      totalHoursLogged: 0,
-      isJoined: true,
-      description: newDesc || 'New accountability circle created by you.',
-      recentActivity: 'Circle created just now',
-    }
-
-    setCircles([created, ...circles])
-    setNewName('')
-    setNewDesc('')
-    setShowCreateModal(false)
+  const createCircle = async (event: React.FormEvent) => {
+    event.preventDefault(); if (!userId || !name.trim()) return
+    setBusyId('create'); setError(null)
+    const { data, error: createError } = await supabase.from('circles').insert({ owner_id: userId, name: name.trim(), description: description.trim() || null, category: newCategory, emoji: emoji.trim() || '🎯', member_count: 1 }).select('id,owner_id,name,description,category,emoji,created_at').single()
+    if (createError || !data) { setError(createError?.message || 'The circle could not be created.'); setBusyId(null); return }
+    const { error: membershipError } = await supabase.from('circle_memberships').insert({ circle_id: data.id, user_id: userId, role: 'owner' })
+    if (membershipError) setError('The circle was created, but its membership record needs repair.')
+    setCircles((items) => [{ ...(data as CircleRow), memberCount: 1, joined: true, owned: true }, ...items])
+    setName(''); setDescription(''); setEmoji('🎯'); setShowCreate(false); setTab('my'); setBusyId(null)
   }
 
-  const filteredCircles = circles.filter((c) => {
-    const matchesTab = activeTab === 'my' ? c.isJoined : true
-    const matchesCategory = activeCategory === 'all' ? true : c.category === activeCategory
-    return matchesTab && matchesCategory
-  })
-
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 max-w-md mx-auto space-y-4 pb-28 transition-colors duration-200 select-none">
-      
-      {/* HEADER & THEME TOGGLE */}
-      <div className="pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <div>
-          <h1 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-            ⭕ Circles
-          </h1>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400">
-            Shared accountability groups & squad streaks
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition active:scale-95 shadow-xs"
-          >
-            + Create
-          </button>
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="p-1.5 rounded-xl border text-xs font-bold transition bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-amber-400 shadow-xs"
-            title="Toggle Light/Dark Theme"
-          >
-            {theme === 'dark' ? '🌙' : '☀️'}
-          </button>
-        </div>
-      </div>
-
-      {/* VIEW TOGGLE TABS */}
-      <div className="grid grid-cols-2 gap-1 p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
-        <button
-          onClick={() => setActiveTab('my')}
-          className={`py-1.5 text-xs font-extrabold rounded-xl transition ${
-            activeTab === 'my'
-              ? 'bg-amber-500 text-slate-950 shadow-xs'
-              : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          My Circles ({circles.filter((c) => c.isJoined).length})
-        </button>
-        <button
-          onClick={() => setActiveTab('discover')}
-          className={`py-1.5 text-xs font-extrabold rounded-xl transition ${
-            activeTab === 'discover'
-              ? 'bg-amber-500 text-slate-950 shadow-xs'
-              : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          Discover All
-        </button>
-      </div>
-
-      {/* CATEGORY CHIPS */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        {[
-          { id: 'all', label: 'All Categories', emoji: '🌐' },
-          { id: 'work', label: 'Deep Work', emoji: '💻' },
-          { id: 'fitness', label: 'Fitness', emoji: '🏃' },
-          { id: 'learning', label: 'Learning', emoji: '📚' },
-          { id: 'habits', label: 'Daily Habits', emoji: '💧' },
-        ].map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setActiveCategory(cat.id as Category)}
-            className={`px-3 py-1.5 rounded-xl border text-[11px] font-extrabold shrink-0 flex items-center gap-1.5 transition ${
-              activeCategory === cat.id
-                ? 'bg-amber-500/10 border-amber-500 text-amber-500'
-                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-            }`}
-          >
-            <span>{cat.emoji}</span>
-            <span>{cat.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* CIRCLES LIST */}
-      <div className="space-y-3">
-        {filteredCircles.length === 0 ? (
-          <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl space-y-2">
-            <span className="text-3xl">🔍</span>
-            <h3 className="text-xs font-black text-slate-900 dark:text-white">
-              No circles found
-            </h3>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">
-              {activeTab === 'my'
-                ? "You haven't joined any circles in this category yet."
-                : 'No active public circles match this filter.'}
-            </p>
-          </div>
-        ) : (
-          filteredCircles.map((circle) => (
-            <div
-              key={circle.id}
-              className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3 transition hover:border-slate-300 dark:hover:border-slate-700"
-            >
-              {/* Card Header */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-xl shrink-0">
-                    {circle.emoji}
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className="text-xs font-black text-slate-900 dark:text-white truncate">
-                      {circle.name}
-                    </h2>
-                    <p className="text-[10px] text-slate-400 font-bold truncate">
-                      {circle.categoryLabel} • {circle.membersCount} members
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => toggleJoin(circle.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition active:scale-95 shrink-0 ${
-                    circle.isJoined
-                      ? 'bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
-                      : 'bg-amber-500 text-slate-950 hover:bg-amber-400'
-                  }`}
-                >
-                  {circle.isJoined ? 'Joined ✓' : '+ Join'}
-                </button>
-              </div>
-
-              {/* Description */}
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                {circle.description}
-              </p>
-
-              {/* Metrics Row */}
-              <div className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 text-[10px]">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-amber-500 font-extrabold">🔥 Squad Streak:</span>
-                  <span className="font-black text-slate-900 dark:text-white">
-                    {circle.groupStreak} days
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-slate-400 font-bold">Total:</span>
-                  <span className="font-black text-slate-900 dark:text-white">
-                    {circle.totalHoursLogged} hrs
-                  </span>
-                </div>
-              </div>
-
-              {/* Activity Feed Snippet */}
-              <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 pt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                <span className="truncate">{circle.recentActivity}</span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* CREATE CIRCLE MODAL */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl animate-in fade-in zoom-in duration-150">
-            
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-              <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                ✨ Create New Circle
-              </h3>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-base font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateCircle} className="space-y-3">
-              <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
-                  Circle Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="e.g. UPSC Daily Sprints"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
-                    Emoji Icon
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={2}
-                    value={newEmoji}
-                    onChange={(e) => setNewEmoji(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold text-center focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
-                    Category
-                  </label>
-                  <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value as Category)}
-                    className="w-full px-2 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:border-amber-500"
-                  >
-                    <option value="work">Deep Work</option>
-                    <option value="fitness">Fitness</option>
-                    <option value="learning">Learning</option>
-                    <option value="habits">Habits</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">
-                  Description / Rules
-                </label>
-                <textarea
-                  rows={2}
-                  value={newDesc}
-                  onChange={(e) => setNewDesc(e.target.value)}
-                  placeholder="Set expectations for squad members..."
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold focus:outline-none focus:border-amber-500 resize-none"
-                />
-              </div>
-
-              <div className="pt-2 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="w-1/2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="w-1/2 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition shadow-sm"
-                >
-                  Create Circle
-                </button>
-              </div>
-            </form>
-
-          </div>
-        </div>
-      )}
-
+  return <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-5">
+    <header className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800"><div><h1 className="text-xl font-black">⭕ Circles</h1><p className="text-[11px] text-slate-500">Small groups for shared accountability</p></div><button onClick={() => setShowCreate(true)} className="inline-flex items-center gap-1 rounded-xl bg-amber-500 px-3 py-2 text-xs font-black text-slate-950"><Plus className="h-4 w-4" />Create</button></header>
+    <div className="mb-3 grid grid-cols-2 rounded-xl bg-slate-200/70 p-1 dark:bg-slate-800"><button onClick={() => setTab('my')} className={`rounded-lg py-2 text-xs font-bold ${tab === 'my' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>My circles ({circles.filter((c) => c.joined).length})</button><button onClick={() => setTab('discover')} className={`rounded-lg py-2 text-xs font-bold ${tab === 'discover' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>Discover</button></div>
+    <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1">{categories.map((item) => <button key={item.id} onClick={() => setCategory(item.id)} className={`shrink-0 rounded-xl border px-3 py-1.5 text-[11px] font-extrabold ${category === item.id ? 'border-amber-500 bg-amber-500/10 text-amber-600' : 'border-slate-200 bg-white text-slate-500 dark:border-slate-800 dark:bg-[#101b2d]'}`}>{item.emoji} {item.label}</button>)}</div>
+    {error && <p role="alert" className="mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
+    <div className="space-y-3">
+      {loading && [1, 2].map((item) => <div key={item} className="h-36 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" />)}
+      {!loading && displayed.length === 0 && <div className="rounded-3xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700"><Users className="mx-auto mb-3 h-8 w-8 text-amber-500" /><h2 className="font-black">{tab === 'my' ? 'No circles joined yet' : 'No circles to discover yet'}</h2><p className="mt-1 text-xs text-slate-500">{tab === 'my' ? 'Discover a group or create the first one.' : 'Create the first real accountability circle.'}</p></div>}
+      {displayed.map((circle) => <article key={circle.id} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-[#101b2d]"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 gap-3"><div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-500/10 text-xl">{circle.emoji}</div><div className="min-w-0"><h2 className="truncate text-sm font-black">{circle.name}</h2><p className="mt-0.5 text-[10px] font-bold text-slate-400">{categories.find((c) => c.id === circle.category)?.label} · {circle.memberCount} {circle.memberCount === 1 ? 'member' : 'members'}</p></div></div><button onClick={() => void toggleMembership(circle)} disabled={circle.owned || busyId === circle.id} className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-black disabled:opacity-60 ${circle.joined ? 'border border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' : 'bg-amber-500 text-slate-950'}`}>{circle.owned ? 'Owner' : busyId === circle.id ? 'Saving…' : circle.joined ? 'Joined ✓' : '+ Join'}</button></div>{circle.description && <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{circle.description}</p>}</article>)}
     </div>
-  )
+    {showCreate && <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/75 p-4 backdrop-blur-sm"><div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-[#101b2d]"><div className="mb-4 flex items-center justify-between"><h2 className="font-black">Create a circle</h2><button onClick={() => setShowCreate(false)} aria-label="Close"><X className="h-5 w-5" /></button></div><form onSubmit={createCircle} className="space-y-3"><label className="block text-[10px] font-black uppercase text-slate-500">Name<input required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} placeholder="UPSC daily sprints" className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold normal-case dark:border-slate-700 dark:bg-[#07101f]" /></label><div className="grid grid-cols-[80px_1fr] gap-2"><label className="text-[10px] font-black uppercase text-slate-500">Icon<input maxLength={4} value={emoji} onChange={(e) => setEmoji(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-center text-sm dark:border-slate-700 dark:bg-[#07101f]" /></label><label className="text-[10px] font-black uppercase text-slate-500">Category<select value={newCategory} onChange={(e) => setNewCategory(e.target.value as Exclude<Category, 'all'>)} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm normal-case dark:border-slate-700 dark:bg-[#07101f]">{categories.filter((c) => c.id !== 'all').map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select></label></div><label className="block text-[10px] font-black uppercase text-slate-500">Description<textarea rows={3} maxLength={300} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What will members accomplish together?" className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm normal-case dark:border-slate-700 dark:bg-[#07101f]" /></label><button disabled={busyId === 'create'} className="w-full rounded-xl bg-amber-500 py-3 text-sm font-black text-slate-950 disabled:opacity-60">{busyId === 'create' ? 'Creating…' : 'Create circle'}</button></form></div></div>}
+  </main>
 }
