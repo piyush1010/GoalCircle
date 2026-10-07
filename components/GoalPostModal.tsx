@@ -12,6 +12,15 @@ export interface UnifiedTrack {
   source: 'iTunes' | 'Spotify' | 'YouTube'
 }
 
+interface ITunesTrack {
+  trackId: number
+  trackName: string
+  artistName: string
+  artworkUrl60?: string
+  artworkUrl100?: string
+  previewUrl?: string
+}
+
 export interface CheckInPayload {
   id: string
   goalTitle: string
@@ -67,7 +76,6 @@ export default function GoalPostModal({
 
   useEffect(() => {
     if (!searchQuery.trim() || audioTab !== 'search') {
-      setSearchResults([])
       return
     }
 
@@ -80,14 +88,14 @@ export default function GoalPostModal({
           const itunesRes = await fetch(
             `https://itunes.apple.com/search?term=${encodeURIComponent(searchQuery)}&entity=song&limit=5`
           )
-          const itunesData = await itunesRes.json()
+          const itunesData = (await itunesRes.json()) as { results?: ITunesTrack[] }
           if (itunesData.results) {
-            itunesData.results.forEach((item: any) => {
+            itunesData.results.forEach((item) => {
               results.push({
                 id: `itunes-${item.trackId}`,
                 title: item.trackName,
                 artist: item.artistName,
-                artworkUrl: item.artworkUrl60 || item.artworkUrl100,
+                artworkUrl: item.artworkUrl60 || item.artworkUrl100 || '',
                 previewUrl: item.previewUrl,
                 source: 'iTunes',
               })

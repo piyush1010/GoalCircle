@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GoalCircle
 
-## Getting Started
+GoalCircle is a social accountability platform for announcing goals, posting daily proof, tracking focus and streaks, joining private circles, and turning sustained progress into shareable memory reels.
 
-First, run the development server:
+## Stack
+
+- Next.js 16.3.6 with the App Router
+- React 19.2.8 and TypeScript
+- Tailwind CSS 4
+- Supabase authentication and PostgreSQL data
+- Capacitor 8 for Android and iOS wrappers
+
+## Local setup
+
+1. Copy `.env.example` to `.env.local` and provide the Supabase project values.
+2. Install dependencies with `npm ci`.
+3. Apply the SQL migrations under `supabase/migrations/` to the matching Supabase project.
+4. Start the site with `npm run dev`.
+5. Open `http://localhost:3000`.
+
+## Verification
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npx tsc --noEmit
+npm run lint
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The active Next.js routing tree is the root `app/` directory. See `HANDOFF_TO_CODEX.md` for the audit record, architecture overview, and remaining work.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The social migration adds goal visibility, database-backed check-ins, boosts, comments, follows, indexes, and row-level security. Preview and production databases must be migrated before deploying the new feed.

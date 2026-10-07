@@ -47,7 +47,7 @@ export default function MemoryReel({ habitTitle, streakCount, userName = 'GoalCi
         {/* Card Content */}
         <div className="z-10 my-4">
           <p className="text-4xl font-extrabold tracking-tight">{streakCount} Days</p>
-          <p className="text-lg font-medium text-white/90 mt-1">Unstoppable on "{habitTitle}"</p>
+          <p className="text-lg font-medium text-white/90 mt-1">Unstoppable on &ldquo;{habitTitle}&rdquo;</p>
         </div>
 
         {/* Card Footer */}

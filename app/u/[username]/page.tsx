@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useCallback, useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
-import { ArrowLeft, Flame, Target, UserPlus, UserCheck, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Flame, Target, UserPlus, UserCheck } from 'lucide-react';
+import ProfileAvatar from '@/components/ProfileAvatar';
 
 interface UserProfile {
   id: string;
@@ -29,13 +30,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
   const [isSupporting, setIsSupporting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchProfileData();
-  }, [username]);
-
-  const fetchProfileData = async () => {
-    setLoading(true);
-
+  const fetchProfileData = useCallback(async () => {
     // 1. Get current logged-in user
     const { data: { user } } = await supabase.auth.getUser();
     if (user) setCurrentUserId(user.id);
@@ -57,8 +52,8 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
     // 3. Check if current user is supporting this profile
     if (user) {
       const { data: rel } = await supabase
-        .from('user_relationships')
-        .select('id')
+        .from('follows')
+        .select('following_id')
         .eq('follower_id', user.id)
         .eq('following_id', targetProfile.id)
         .maybeSingle();
@@ -75,7 +70,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
 
     if (userGoals) setGoals(userGoals);
     setLoading(false);
-  };
+  }, [username]);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchProfileData);
+  }, [fetchProfileData]);
 
   const toggleSupport = async () => {
     if (!currentUserId || !profile) return;
@@ -83,21 +82,21 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
     if (isSupporting) {
       setIsSupporting(false);
       await supabase
-        .from('user_relationships')
+        .from('follows')
         .delete()
         .eq('follower_id', currentUserId)
         .eq('following_id', profile.id);
     } else {
       setIsSupporting(true);
       await supabase
-        .from('user_relationships')
+        .from('follows')
         .insert({ follower_id: currentUserId, following_id: profile.id });
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex items-center justify-center p-4">
         <p className="text-xs text-slate-500 animate-pulse">Loading Profile...</p>
       </div>
     );
@@ -105,7 +104,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 p-6 text-center space-y-4">
+      <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 p-6 text-center space-y-4">
         <p className="text-sm font-bold text-slate-400">User @{username} not found.</p>
         <Link
           href="/search"
@@ -121,7 +120,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
   const totalStreaks = goals.reduce((acc, g) => acc + (g.streak_count || 0), 0);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 pb-24 max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen text-slate-900 dark:text-slate-100 p-4 pb-24 max-w-2xl mx-auto space-y-6">
       {/* Top Bar */}
       <div className="flex items-center justify-between">
         <Link
@@ -137,17 +136,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
       </div>
 
       {/* Profile Header Card */}
-      <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl space-y-5 text-center relative overflow-hidden">
-        <div className="w-20 h-20 mx-auto rounded-full bg-slate-800 border-2 border-amber-500 flex items-center justify-center overflow-hidden font-black text-amber-500 text-2xl shadow-lg">
-          {profile.avatar_url ? (
-            <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover" />
-          ) : (
-            profile.username?.[0]?.toUpperCase()
-          )}
-        </div>
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl space-y-5 text-center relative overflow-hidden">
+        <ProfileAvatar value={profile.avatar_url} name={profile.full_name || profile.username} size={80} className="mx-auto rounded-full border-2 border-amber-500 shadow-lg" />
 
         <div className="space-y-1">
-          <h1 className="text-xl font-black text-slate-100">
+          <h1 className="text-xl font-black">
             {profile.full_name || profile.username}
           </h1>
           <p className="text-xs font-bold text-amber-500">@{profile.username}</p>
@@ -160,14 +153,14 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-3 pt-2">
-          <div className="p-3 bg-slate-950/60 border border-slate-800/80 rounded-2xl">
+          <div className="p-3 bg-slate-50 border border-slate-200 dark:bg-slate-950/60 dark:border-slate-800/80 rounded-2xl">
             <div className="flex items-center justify-center gap-1.5 text-amber-500 font-black text-lg">
               <Flame size={18} />
               <span>{totalStreaks}</span>
             </div>
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Streaks</p>
           </div>
-          <div className="p-3 bg-slate-950/60 border border-slate-800/80 rounded-2xl">
+          <div className="p-3 bg-slate-50 border border-slate-200 dark:bg-slate-950/60 dark:border-slate-800/80 rounded-2xl">
             <div className="flex items-center justify-center gap-1.5 text-emerald-400 font-black text-lg">
               <Target size={18} />
               <span>{goals.length}</span>
@@ -207,20 +200,20 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
         </h2>
 
         {goals.length === 0 ? (
-          <div className="p-6 bg-slate-900/50 border border-slate-800/80 rounded-2xl text-center text-xs text-slate-500 font-medium">
+          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900/50 dark:border-slate-800/80 rounded-2xl text-center text-xs text-slate-500 font-medium">
             No active goals publicly listed yet.
           </div>
         ) : (
           goals.map((goal) => (
             <div
               key={goal.id}
-              className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between"
+              className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl flex items-center justify-between"
             >
               <div className="space-y-1">
                 <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md">
                   {goal.category || 'General'}
                 </span>
-                <p className="text-xs font-bold text-slate-100">{goal.title}</p>
+                <p className="text-xs font-bold">{goal.title}</p>
               </div>
 
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 text-xs font-extrabold">

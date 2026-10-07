@@ -2,24 +2,34 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
-
-// Safe Supabase Initialization
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+import { useTheme, type Theme } from '@/components/ThemeProvider'
+import AvatarEditor from '@/components/AvatarEditor'
+import { supabase } from '@/utils/supabase'
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
+  const [onboardingNext] = useState(() => {
+    if (typeof window === 'undefined') return null
+    const params = new URLSearchParams(window.location.search)
+    const requestedNext = params.get('next')
+    return params.get('onboarding') === '1' && requestedNext?.startsWith('/') && !requestedNext.startsWith('//')
+      ? requestedNext
+      : null
+  })
 
   // Profile Form States
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [bio, setBio] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
   // Preference & App States
-  const [theme, setThemeState] = useState<'light' | 'dark' | 'system'>('dark')
-  const [defaultLandingPage, setDefaultLandingPage] = useState('/dashboard')
+  const [defaultLandingPage, setDefaultLandingPage] = useState(() => {
+    if (typeof window === 'undefined') return '/dashboard'
+    return localStorage.getItem('defaultLandingPage') || '/dashboard'
+  })
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [reminderTime, setReminderTime] = useState('20:00')
   const [isPublicProfile, setIsPublicProfile] = useState(true)
@@ -29,20 +39,13 @@ export default function SettingsPage() {
   const [saveMessage, setSaveMessage] = useState('')
   const [passwordResetSent, setPasswordResetSent] = useState(false)
 
-  // Load Initial Settings & Theme
+  // Load profile settings
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const isDark = document.documentElement.classList.contains('dark')
-      setThemeState(isDark ? 'dark' : 'light')
-      
-      const savedLanding = localStorage.getItem('defaultLandingPage')
-      if (savedLanding) setDefaultLandingPage(savedLanding)
-    }
-
     async function fetchProfileData() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
+          setUserId(user.id)
           const { data } = await supabase
             .from('profiles')
             .select('*')
@@ -53,6 +56,7 @@ export default function SettingsPage() {
             setFullName(data.full_name || '')
             setUsername(data.username || '')
             setBio(data.bio || '')
+            setAvatarUrl(data.avatar_url || user.user_metadata?.avatar_url || null)
             if (typeof data.is_public === 'boolean') setIsPublicProfile(data.is_public)
           }
         }
@@ -63,24 +67,18 @@ export default function SettingsPage() {
     fetchProfileData()
   }, [])
 
-  // Direct Crash-Safe Theme Switcher
-  const handleThemeChange = (mode: 'light' | 'dark' | 'system') => {
-    setThemeState(mode)
-    const root = document.documentElement
-    if (mode === 'dark') {
-      root.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
-    } else if (mode === 'light') {
-      root.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
-    } else {
-      localStorage.removeItem('theme')
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        root.classList.add('dark')
-      } else {
-        root.classList.remove('dark')
-      }
-    }
+  const handleThemeChange = (mode: Theme) => {
+    setTheme(mode)
+  }
+
+  const handleAvatarSaved = async (nextAvatar: string) => {
+    if (!userId) return
+    setAvatarUrl(nextAvatar)
+    const [{ error: profileError }, { error: authError }] = await Promise.all([
+      supabase.from('profiles').upsert({ id: userId, avatar_url: nextAvatar, updated_at: new Date().toISOString() }),
+      supabase.auth.updateUser({ data: { avatar_url: nextAvatar } }),
+    ])
+    setSaveMessage(profileError || authError ? 'Avatar could not be saved.' : 'Profile picture updated!')
   }
 
   // Save Landing Preference
@@ -105,12 +103,19 @@ export default function SettingsPage() {
             full_name: fullName,
             username: username.replace('@', ''),
             bio,
+            avatar_url: avatarUrl,
             is_public: isPublicProfile,
+            is_onboarded: true,
             updated_at: new Date().toISOString(),
           })
 
         if (!error) {
+          await supabase.auth.updateUser({ data: { full_name: fullName, handle: `@${username.replace('@', '')}`, avatar_url: avatarUrl } })
           setSaveMessage('Settings saved successfully!')
+          if (onboardingNext) {
+            router.replace(onboardingNext)
+            return
+          }
           setTimeout(() => setSaveMessage(''), 3000)
         } else {
           setSaveMessage('Failed to save settings.')
@@ -182,6 +187,10 @@ export default function SettingsPage() {
         <label className="block text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">
           👤 Account Information
         </label>
+
+        {userId && <AvatarEditor userId={userId} value={avatarUrl} name={fullName || username || 'GoalCircle member'} onSaved={(value) => void handleAvatarSaved(value)} />}
+
+        <div className="border-t border-slate-100 pt-3 dark:border-slate-800" />
 
         <div>
           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">

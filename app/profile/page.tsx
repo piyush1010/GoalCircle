@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
+import type { User } from '@supabase/supabase-js'
+import ProfileAvatar from '@/components/ProfileAvatar'
 
 interface DayLog {
   date: string
@@ -13,7 +15,7 @@ interface DayLog {
 export default function ProfilePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   // Real-time Supabase Stats
   const [totalGoals, setTotalGoals] = useState(0)
@@ -34,54 +36,6 @@ export default function ProfilePage() {
   const [daysRemainingInMonth, setDaysRemainingInMonth] = useState(0)
   const [currentMonthName, setCurrentMonthName] = useState('')
   const [nextMonthName, setNextMonthName] = useState('')
-
-  useEffect(() => {
-    let isMounted = true
-
-    const loadProfileData = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session?.user) {
-        router.push('/login')
-        return
-      }
-
-      if (!isMounted) return
-
-      const currentUser = session.user
-      setUser(currentUser)
-
-      // Set initial form states
-      const userMeta = currentUser.user_metadata || {}
-      setFullName(userMeta.full_name || userMeta.name || currentUser.email?.split('@')[0] || 'User')
-      setHandle(userMeta.handle || `@${currentUser.email?.split('@')[0] || 'member'}`)
-
-      // Calculate days remaining in current month for Memory Reels
-      const now = new Date()
-      const currMonth = now.toLocaleString('default', { month: 'long' })
-      const nextM = new Date(now.getFullYear(), now.getMonth() + 1, 1).toLocaleString('default', { month: 'long' })
-      const totalDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-      const remaining = totalDaysInMonth - now.getDate()
-
-      setCurrentMonthName(currMonth)
-      setNextMonthName(nextM)
-      setDaysRemainingInMonth(remaining)
-
-      // Fetch Real Metrics & Consistency Matrix from Supabase
-      await Promise.all([
-        fetchUserStats(currentUser.id),
-        fetchConsistencyMatrix(currentUser.id)
-      ])
-
-      if (isMounted) setLoading(false)
-    }
-
-    loadProfileData()
-
-    return () => {
-      isMounted = false
-    }
-  }, [router])
 
   const fetchUserStats = async (userId: string) => {
     // 1. Fetch Goals Count & Streaks
@@ -135,6 +89,49 @@ export default function ProfilePage() {
     setMatrixDays(days)
   }
 
+  useEffect(() => {
+    let isMounted = true
+
+    const loadProfileData = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session?.user) {
+        router.push('/login')
+        return
+      }
+
+      if (!isMounted) return
+
+      const currentUser = session.user
+      setUser(currentUser)
+
+      const userMeta = currentUser.user_metadata || {}
+      setFullName(userMeta.full_name || userMeta.name || currentUser.email?.split('@')[0] || 'User')
+      setHandle(userMeta.handle || `@${currentUser.email?.split('@')[0] || 'member'}`)
+
+      const now = new Date()
+      const totalDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+      setCurrentMonthName(now.toLocaleString('default', { month: 'long' }))
+      setNextMonthName(
+        new Date(now.getFullYear(), now.getMonth() + 1, 1).toLocaleString('default', { month: 'long' })
+      )
+      setDaysRemainingInMonth(totalDaysInMonth - now.getDate())
+
+      await Promise.all([
+        fetchUserStats(currentUser.id),
+        fetchConsistencyMatrix(currentUser.id),
+      ])
+
+      if (isMounted) setLoading(false)
+    }
+
+    loadProfileData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [router])
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
@@ -149,14 +146,14 @@ export default function ProfilePage() {
     })
 
     if (!error) {
-      setUser((prev: any) => ({
+      setUser((prev) => prev ? ({
         ...prev,
         user_metadata: {
           ...prev.user_metadata,
           full_name: fullName,
           handle: formattedHandle,
         }
-      }))
+      }) : prev)
       setHandle(formattedHandle)
       setShowEditModal(false)
     } else {
@@ -173,7 +170,7 @@ export default function ProfilePage() {
 
   // Helper for matrix color intensity
   const getIntensityClass = (minutes: number) => {
-    if (minutes === 0) return 'bg-slate-800/80 border-slate-800'
+    if (minutes === 0) return 'bg-slate-100 border-slate-200 dark:bg-slate-800/80 dark:border-slate-800'
     if (minutes < 15) return 'bg-amber-900/60 border-amber-800 text-amber-200'
     if (minutes < 30) return 'bg-amber-600 border-amber-500 text-slate-950'
     return 'bg-amber-400 border-amber-300 text-slate-950 font-black shadow-sm shadow-amber-500/30'
@@ -181,7 +178,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-amber-500"></div>
       </div>
     )
@@ -193,14 +190,14 @@ export default function ProfilePage() {
   const avatarUrl = userMeta.avatar_url || null
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 pb-28 max-w-md mx-auto space-y-5">
+    <div className="min-h-screen p-4 pb-28 max-w-md mx-auto space-y-5 text-slate-900 dark:text-slate-100">
       
       {/* HEADER WITH SETTINGS BUTTON */}
       <div className="flex justify-between items-center pt-2">
-        <h1 className="text-xl font-black text-white tracking-wide">Profile</h1>
+        <h1 className="text-xl font-black tracking-wide">Profile</h1>
         <button
           onClick={() => router.push('/settings')}
-          className="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-2xl text-slate-300 transition shadow-md flex items-center gap-1.5 text-xs font-bold"
+          className="p-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-2xl text-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-800 dark:text-slate-300 transition shadow-md flex items-center gap-1.5 text-xs font-bold"
           title="Settings"
         >
           <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,36 +209,26 @@ export default function ProfilePage() {
       </div>
 
       {/* USER CARD & STATS */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-5 shadow-xl">
+      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-5 shadow-xl">
         <div className="flex items-center gap-4">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={displayName}
-              className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-500/50 shadow-md"
-            />
-          ) : (
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border-2 border-amber-500/50 flex items-center justify-center text-amber-400 font-black text-xl">
-              {displayName.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <ProfileAvatar value={avatarUrl} name={displayName} size={56} className="rounded-2xl border-2 border-amber-500/50 shadow-md" />
           <div>
-            <h2 className="text-base font-black text-white">{displayName}</h2>
+            <h2 className="text-base font-black">{displayName}</h2>
             <p className="text-xs font-semibold text-amber-500">{displayHandle}</p>
           </div>
         </div>
 
         {/* STAT PILLS WITH LIVE SUPABASE DATA */}
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-2.5 space-y-0.5">
+          <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
             <p className="text-base font-black text-amber-500">{totalGoals}</p>
             <p className="text-[9px] font-extrabold uppercase text-slate-400">Goals</p>
           </div>
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-2.5 space-y-0.5">
+          <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
             <p className="text-base font-black text-amber-500">{currentStreak} 🔥</p>
             <p className="text-[9px] font-extrabold uppercase text-slate-400">Streak</p>
           </div>
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-2.5 space-y-0.5">
+          <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
             <p className="text-base font-black text-emerald-400">{completedGoals}</p>
             <p className="text-[9px] font-extrabold uppercase text-slate-400">Done</p>
           </div>
@@ -249,16 +236,16 @@ export default function ProfilePage() {
 
         <button
           onClick={() => setShowEditModal(true)}
-          className="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700/60 text-slate-200 font-extrabold text-xs rounded-xl transition"
+          className="w-full py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700/60 dark:text-slate-200 font-extrabold text-xs rounded-xl transition"
         >
           Edit Profile
         </button>
       </div>
 
       {/* CONSISTENCY MATRIX (LAST 30 DAYS WITH TOOLTIPS & LABELS) */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
+      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
         <div className="flex justify-between items-center">
-          <h2 className="text-xs font-black uppercase text-slate-300 tracking-wider">
+          <h2 className="text-xs font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider">
             Consistency Matrix
           </h2>
           <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md">
@@ -309,19 +296,19 @@ export default function ProfilePage() {
       </div>
 
       {/* MEMORY REELS (DYNAMIC MONTH CALCULATIONS) */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
-        <h2 className="text-xs font-black uppercase text-slate-300 tracking-wider">
+      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
+        <h2 className="text-xs font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider">
           Memory Reels
         </h2>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-2 text-center">
+          <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-3.5 space-y-2 text-center">
             <div className="text-2xl">🎬</div>
-            <h3 className="text-xs font-extrabold text-white">{currentMonthName} Recap</h3>
+            <h3 className="text-xs font-extrabold">{currentMonthName} Recap</h3>
             <p className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 py-1 px-2 rounded-lg">
               Generated Automatically
             </p>
           </div>
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-2 text-center opacity-70">
+          <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-3.5 space-y-2 text-center opacity-70">
             <div className="text-2xl">✨</div>
             <h3 className="text-xs font-extrabold text-slate-300">{nextMonthName} Recap</h3>
             <p className="text-[9px] text-amber-400 font-bold bg-amber-500/10 py-1 px-2 rounded-lg">
@@ -344,8 +331,8 @@ export default function ProfilePage() {
       {/* MODAL: EDIT PROFILE */}
       {showEditModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
-            <h3 className="text-base font-black text-white">Edit Profile Details</h3>
+          <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+            <h3 className="text-base font-black">Edit Profile Details</h3>
             <form onSubmit={handleUpdateProfile} className="space-y-3">
               <div>
                 <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Display Name</label>
@@ -353,7 +340,7 @@ export default function ProfilePage() {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-white rounded-xl text-xs focus:outline-none focus:border-amber-500"
                   required
                 />
               </div>
@@ -363,7 +350,7 @@ export default function ProfilePage() {
                   type="text"
                   value={handle}
                   onChange={(e) => setHandle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-white rounded-xl text-xs focus:outline-none focus:border-amber-500"
                   required
                 />
               </div>

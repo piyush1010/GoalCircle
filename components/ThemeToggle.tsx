@@ -1,19 +1,17 @@
-'use client';
+'use client'
 
-import { useTheme } from 'next-themes';
-import { useEffect, useState } from 'react';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { useSyncExternalStore } from 'react'
+import { Sun, Moon, Monitor } from 'lucide-react'
+import { useTheme } from '@/components/ThemeProvider'
+
+const subscribe = () => () => {}
 
 export default function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const { theme, setTheme } = useTheme()
+  const mounted = useSyncExternalStore(subscribe, () => true, () => false)
 
   if (!mounted) {
-    return <div className="w-24 h-9 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />;
+    return <div className="w-24 h-9 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
   }
 
   return (
@@ -55,5 +53,5 @@ export default function ThemeToggle() {
         <Monitor size={16} />
       </button>
     </div>
-  );
+  )
 }

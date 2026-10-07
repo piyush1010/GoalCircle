@@ -2,11 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
-import { Flame, ArrowLeft, Trophy, Calendar } from 'lucide-react';
+import { Flame, ArrowLeft, Calendar } from 'lucide-react';
 import BottomNav from '../../../components/BottomNav';
 
+interface Goal {
+  category?: string | null;
+  title: string;
+  streak_count?: number | null;
+  target_date?: string | null;
+}
+
 export default function GoalDetailClient({ goalId }: { goalId: string }) {
-  const [goal, setGoal] = useState<any>(null);
+  const [goal, setGoal] = useState<Goal | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

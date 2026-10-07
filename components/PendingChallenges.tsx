@@ -58,7 +58,7 @@ export default function PendingChallenges({ challenges, onResponse }: PendingCha
                   </p>
                   <p className="text-sm font-bold text-purple-400">{invite.goalTitle}</p>
                   {invite.challengeNote && (
-                    <p className="text-xs italic text-gray-400 mt-0.5">"{invite.challengeNote}"</p>
+                    <p className="text-xs italic text-gray-400 mt-0.5">&ldquo;{invite.challengeNote}&rdquo;</p>
                   )}
                   <p className="text-[10px] text-gray-500 mt-1 flex items-center gap-1">
                     <Clock className="w-3 h-3" /> Target: {invite.targetDate}
