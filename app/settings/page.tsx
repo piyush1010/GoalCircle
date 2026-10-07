@@ -2,13 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
 import { useTheme, type Theme } from '@/components/ThemeProvider'
-
-// Safe Supabase Initialization
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+import AvatarEditor from '@/components/AvatarEditor'
+import { supabase } from '@/utils/supabase'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -26,6 +22,8 @@ export default function SettingsPage() {
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [bio, setBio] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
   // Preference & App States
   const [defaultLandingPage, setDefaultLandingPage] = useState(() => {
@@ -47,6 +45,7 @@ export default function SettingsPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
+          setUserId(user.id)
           const { data } = await supabase
             .from('profiles')
             .select('*')
@@ -57,6 +56,7 @@ export default function SettingsPage() {
             setFullName(data.full_name || '')
             setUsername(data.username || '')
             setBio(data.bio || '')
+            setAvatarUrl(data.avatar_url || user.user_metadata?.avatar_url || null)
             if (typeof data.is_public === 'boolean') setIsPublicProfile(data.is_public)
           }
         }
@@ -69,6 +69,16 @@ export default function SettingsPage() {
 
   const handleThemeChange = (mode: Theme) => {
     setTheme(mode)
+  }
+
+  const handleAvatarSaved = async (nextAvatar: string) => {
+    if (!userId) return
+    setAvatarUrl(nextAvatar)
+    const [{ error: profileError }, { error: authError }] = await Promise.all([
+      supabase.from('profiles').upsert({ id: userId, avatar_url: nextAvatar, updated_at: new Date().toISOString() }),
+      supabase.auth.updateUser({ data: { avatar_url: nextAvatar } }),
+    ])
+    setSaveMessage(profileError || authError ? 'Avatar could not be saved.' : 'Profile picture updated!')
   }
 
   // Save Landing Preference
@@ -93,12 +103,14 @@ export default function SettingsPage() {
             full_name: fullName,
             username: username.replace('@', ''),
             bio,
+            avatar_url: avatarUrl,
             is_public: isPublicProfile,
             is_onboarded: true,
             updated_at: new Date().toISOString(),
           })
 
         if (!error) {
+          await supabase.auth.updateUser({ data: { full_name: fullName, handle: `@${username.replace('@', '')}`, avatar_url: avatarUrl } })
           setSaveMessage('Settings saved successfully!')
           if (onboardingNext) {
             router.replace(onboardingNext)
@@ -175,6 +187,10 @@ export default function SettingsPage() {
         <label className="block text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">
           👤 Account Information
         </label>
+
+        {userId && <AvatarEditor userId={userId} value={avatarUrl} name={fullName || username || 'GoalCircle member'} onSaved={(value) => void handleAvatarSaved(value)} />}
+
+        <div className="border-t border-slate-100 pt-3 dark:border-slate-800" />
 
         <div>
           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">

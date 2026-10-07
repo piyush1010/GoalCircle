@@ -22,10 +22,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useTheme() {
-  const { theme, setTheme } = useNextTheme()
+  const { theme, resolvedTheme, setTheme } = useNextTheme()
 
   return {
     theme: (theme as Theme | undefined) ?? 'dark',
+    resolvedTheme: (resolvedTheme as 'light' | 'dark' | undefined) ?? 'light',
     setTheme: (nextTheme: Theme) => setTheme(nextTheme),
   }
 }
