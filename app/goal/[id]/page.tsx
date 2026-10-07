@@ -21,6 +21,7 @@ interface Post {
   caption: string | null
   media_url?: string | null
   media_urls?: string[] | null
+  proof_type?: string | null
   created_at: string
 }
 
@@ -174,13 +175,7 @@ export default function GoalDetailPage() {
                 {new Date(p.created_at).toLocaleDateString()}
               </span>
               {p.caption && <p className="text-xs text-slate-700 dark:text-slate-200">{p.caption}</p>}
-              {p.media_url && (
-                <img
-                  src={p.media_url}
-                  alt="Goal proof"
-                  className="w-full h-44 object-cover rounded-xl"
-                />
-              )}
+              {p.media_url && (p.proof_type === 'video' ? <video src={p.media_url} controls preload="metadata" playsInline className="max-h-96 w-full rounded-xl bg-slate-950 object-contain" /> : <img src={p.media_url} alt="Goal proof" className="w-full h-44 object-cover rounded-xl" />)}
             </div>
           ))
         )}

@@ -4,13 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Bolt, Clock3, MessageCircle, Plus, Target } from 'lucide-react'
+import { Bolt, Clock3, LockKeyhole, MessageCircle, Plus, Share2, Target } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import ProfileAvatar from '@/components/ProfileAvatar'
 
 interface CommentItem { id: string; post_id: string; user_id: string; body: string; created_at: string }
 interface FeedPost {
   id: string
+  goalId: string
   userId: string
   userName: string
   username: string
@@ -19,6 +20,8 @@ interface FeedPost {
   streak: number
   caption: string
   mediaUrl: string | null
+  mediaType: 'text' | 'image' | 'video' | 'focus'
+  visibility: string
   minutes: number | null
   createdAt: string
   boostCount: number
@@ -53,7 +56,7 @@ export default function FeedPage() {
     const currentUserId = session.user.id
     setUserId(currentUserId)
 
-    const postsResult = await supabase.from('posts').select('id,user_id,goal_id,caption,media_url,minutes_logged,created_at,goals(title,current_streak)').order('created_at', { ascending: false }).limit(30)
+    const postsResult = await supabase.from('posts').select('id,user_id,goal_id,caption,media_url,proof_type,visibility,minutes_logged,created_at,goals(title,current_streak)').order('created_at', { ascending: false }).limit(30)
     if (postsResult.error) { setError('The community feed is not ready yet. Apply the social database migration, then retry.'); setLoading(false); return }
     const rows = (postsResult.data || []) as unknown as Array<Record<string, unknown>>
     const postIds = rows.map((row) => String(row.id))
@@ -78,12 +81,13 @@ export default function FeedPage() {
       const goal = Array.isArray(goalValue) ? goalValue[0] : goalValue
       const emailName = authorId === currentUserId ? session.user.email?.split('@')[0] : null
       return {
-        id: String(row.id), userId: authorId,
+        id: String(row.id), goalId: String(row.goal_id), userId: authorId,
         userName: String(profile?.full_name || profile?.display_name || emailName || 'GoalCircle member'),
         username: String(profile?.username || profile?.handle || 'member').replace(/^@/, ''),
         avatarUrl: profile?.avatar_url ? String(profile.avatar_url) : null,
         goalTitle: String(goal?.title || 'Personal goal'), streak: Number(goal?.current_streak || 0),
         caption: String(row.caption || ''), mediaUrl: row.media_url ? String(row.media_url) : null,
+        mediaType: String(row.proof_type || 'text') as FeedPost['mediaType'], visibility: String(row.visibility || 'public'),
         minutes: row.minutes_logged == null ? null : Number(row.minutes_logged), createdAt: String(row.created_at),
         boostCount: reactions.filter((item) => item.post_id === row.id).length,
         boosted: reactions.some((item) => item.post_id === row.id && item.user_id === currentUserId),
@@ -117,6 +121,12 @@ export default function FeedPage() {
     setPosts((current) => current.map((post) => post.id === postId ? { ...post, comments: [...post.comments, data as CommentItem] } : post)); showToast('Comment added')
   }
 
+  const sharePost = async (post: FeedPost) => {
+    const url = `${window.location.origin}/goal/${post.goalId}`
+    if (navigator.share) { try { await navigator.share({ title: post.goalTitle, text: post.caption, url }); return } catch { return } }
+    await navigator.clipboard.writeText(url); showToast('Goal link copied')
+  }
+
   return (
     <main className="mx-auto min-h-screen max-w-xl pb-28">
       {toast && <div role="status" className="fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-slate-950 px-4 py-2 text-xs font-bold text-white shadow-xl dark:bg-white dark:text-slate-950">{toast}</div>}
@@ -131,10 +141,10 @@ export default function FeedPage() {
         {!loading && !error && displayedPosts.length === 0 && <div className="rounded-3xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700"><Target className="mx-auto mb-3 h-8 w-8 text-amber-500" /><h2 className="font-black">No check-ins here yet</h2><p className="mb-4 mt-1 text-xs text-slate-500">Be the first to share real progress.</p><Link href="/check-in" className="inline-flex rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-slate-950">Post a check-in</Link></div>}
         {displayedPosts.map((post) => <article key={post.id} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
           <div className="flex items-center justify-between p-4"><Link href={`/u/${post.username}`} className="flex min-w-0 items-center gap-3"><ProfileAvatar value={post.avatarUrl} name={post.userName} size={40} className="rounded-full" /><div className="min-w-0"><p className="truncate text-xs font-black">{post.userName}</p><p className="truncate text-[10px] text-slate-500">@{post.username}</p></div></Link><span className="text-[10px] font-semibold text-slate-400">{relativeTime(post.createdAt)}</span></div>
-          <div className="mx-4 mb-3 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-[#07101f]"><span className="truncate text-xs font-bold"><Target className="mr-1.5 inline h-3.5 w-3.5 text-amber-500" />{post.goalTitle}</span>{post.streak > 0 && <span className="shrink-0 text-[10px] font-bold text-amber-600 dark:text-amber-400">🔥 {post.streak}d</span>}</div>
-          {post.mediaUrl && <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-950"><Image src={post.mediaUrl} alt="Progress proof" fill unoptimized sizes="(max-width: 640px) 100vw, 576px" className="object-cover" /></div>}
+          <div className="mx-4 mb-3 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-[#07101f]"><span className="truncate text-xs font-bold"><Target className="mr-1.5 inline h-3.5 w-3.5 text-amber-500" />{post.goalTitle}</span><span className="flex shrink-0 items-center gap-2">{post.visibility === 'private' && <LockKeyhole className="h-3 w-3 text-slate-400" aria-label="Private post" />}{post.streak > 0 && <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">🔥 {post.streak}d</span>}</span></div>
+          {post.mediaUrl && (post.mediaType === 'video' ? <div className="bg-slate-950"><video src={post.mediaUrl} controls preload="metadata" playsInline className="mx-auto max-h-[70vh] w-full object-contain" /></div> : <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-950"><Image src={post.mediaUrl} alt="Progress proof" fill unoptimized sizes="(max-width: 640px) 100vw, 576px" className="object-cover" /></div>)}
           <div className="p-4">{post.minutes != null && <div className="mb-2 inline-flex items-center gap-1 rounded-lg bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-700 dark:text-amber-300"><Clock3 className="h-3 w-3" />{post.minutes} focused minutes</div>}<p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">{post.caption}</p>
-            <div className="mt-4 grid grid-cols-2 border-t border-slate-100 pt-3 dark:border-slate-800"><button onClick={() => void toggleBoost(post)} className={`flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold ${post.boosted ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'text-slate-500'}`}><Bolt className="h-4 w-4" fill={post.boosted ? 'currentColor' : 'none'} />Boost {post.boostCount || ''}</button><button onClick={() => setOpenComments(openComments === post.id ? null : post.id)} className="flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold text-slate-500"><MessageCircle className="h-4 w-4" />Comment {post.comments.length || ''}</button></div>
+            <div className="mt-4 grid grid-cols-3 border-t border-slate-100 pt-3 dark:border-slate-800"><button onClick={() => void toggleBoost(post)} className={`flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-bold ${post.boosted ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'text-slate-500'}`}><Bolt className="h-4 w-4" fill={post.boosted ? 'currentColor' : 'none'} />Boost {post.boostCount || ''}</button><button onClick={() => setOpenComments(openComments === post.id ? null : post.id)} className="flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-bold text-slate-500"><MessageCircle className="h-4 w-4" />Comment {post.comments.length || ''}</button><button onClick={() => void sharePost(post)} className="flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-bold text-slate-500"><Share2 className="h-4 w-4" />Share</button></div>
             {openComments === post.id && <div className="mt-3 space-y-3 border-t border-slate-100 pt-3 dark:border-slate-800">{post.comments.map((comment) => <p key={comment.id} className="rounded-xl bg-slate-50 p-2.5 text-xs dark:bg-[#07101f]">{comment.body}</p>)}<div className="flex gap-2"><input value={commentText} onChange={(event) => setCommentText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void addComment(post.id) } }} maxLength={500} placeholder="Add encouragement…" className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-700 dark:bg-[#07101f]" /><button onClick={() => void addComment(post.id)} disabled={!commentText.trim()} className="rounded-xl bg-amber-500 px-3 text-xs font-black text-slate-950 disabled:opacity-40">Post</button></div></div>}
           </div>
         </article>)}
