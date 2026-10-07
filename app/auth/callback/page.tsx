@@ -49,7 +49,7 @@ function OAuthCallback() {
 
       if (!profile?.is_onboarded) {
         setMessage('Preparing your profile…')
-        router.replace('/settings?onboarding=1')
+        router.replace(`/settings?onboarding=1&next=${encodeURIComponent(nextPath)}`)
         return
       }
 

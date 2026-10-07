@@ -9,10 +9,10 @@ interface Goal {
   id: string
   user_id: string
   title: string
-  category: string
-  description: string | null
-  target_date: string | null
-  status?: string
+  category: string | null
+  status: string | null
+  is_completed: boolean | null
+  current_streak: number | null
   created_at: string
 }
 
@@ -66,18 +66,18 @@ export default function GoalDetailPage() {
 
   const toggleGoalCompletion = async () => {
     if (!goal) return
-    const isCompleted = goal.status === 'completed'
+    const isCompleted = Boolean(goal.is_completed || goal.status === 'completed')
     const newStatus = isCompleted ? 'active' : 'completed'
 
     try {
       setUpdating(true)
       const { error } = await supabase
         .from('goals')
-        .update({ status: newStatus })
+        .update({ status: newStatus, is_completed: !isCompleted })
         .eq('id', goal.id)
 
       if (error) throw error
-      setGoal({ ...goal, status: newStatus })
+      setGoal({ ...goal, status: newStatus, is_completed: !isCompleted })
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Failed to update goal status')
     } finally {
@@ -104,7 +104,7 @@ export default function GoalDetailPage() {
     )
   }
 
-  const isCompleted = goal.status === 'completed'
+  const isCompleted = Boolean(goal.is_completed || goal.status === 'completed')
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-24 pt-4 px-4 max-w-md mx-auto">
@@ -114,7 +114,7 @@ export default function GoalDetailPage() {
           ← Back
         </button>
         <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg">
-          {goal.category}
+          {goal.category || 'Personal'}
         </span>
       </div>
 
@@ -123,11 +123,9 @@ export default function GoalDetailPage() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-lg font-black text-white">{goal.title}</h1>
-            {goal.target_date && (
-              <p className="text-[11px] text-slate-400 mt-1">
-                🗓 Target: {new Date(goal.target_date).toLocaleDateString()}
-              </p>
-            )}
+            <p className="mt-1 text-[11px] font-bold text-amber-400">
+              🔥 {goal.current_streak || 0} day streak
+            </p>
           </div>
           <button
             onClick={toggleGoalCompletion}
@@ -141,12 +139,6 @@ export default function GoalDetailPage() {
             {isCompleted ? '🎉 Completed' : 'Mark Complete'}
           </button>
         </div>
-
-        {goal.description && (
-          <p className="text-xs text-slate-300 leading-relaxed border-t border-slate-800/80 pt-3">
-            {goal.description}
-          </p>
-        )}
 
         {/* Milestone Statistics */}
         <div className="grid grid-cols-2 gap-3 pt-2">
@@ -169,7 +161,7 @@ export default function GoalDetailPage() {
           <div className="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-6 text-center space-y-2">
             <p className="text-xs text-slate-400">No updates logged for this goal yet.</p>
             <Link
-              href="/post-progress"
+              href={`/check-in?goal=${goal.id}`}
               className="inline-block text-xs font-bold text-amber-400 hover:underline"
             >
               Log your first update →

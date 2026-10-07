@@ -25,7 +25,15 @@ export default function CheckInPage() {
       setUserId(session.user.id)
       const { data, error: goalsError } = await supabase.from('goals').select('id,title').eq('user_id', session.user.id).eq('is_completed', false).order('created_at', { ascending: false })
       if (goalsError) setError('Could not load your goals.')
-      else { const options = (data || []) as GoalOption[]; setGoals(options); setGoalId(options[0]?.id || '') }
+      else {
+        const options = (data || []) as GoalOption[]
+        const requestedGoal = new URLSearchParams(window.location.search).get('goal')
+        const selectedGoal = options.some((goal) => goal.id === requestedGoal)
+          ? requestedGoal
+          : options[0]?.id
+        setGoals(options)
+        setGoalId(selectedGoal || '')
+      }
       setLoading(false)
     })
   }, [router])
@@ -37,6 +45,21 @@ export default function CheckInPage() {
     const parsedMinutes = minutes ? Number(minutes) : null
     const { error: postError } = await supabase.from('posts').insert({ user_id: userId, goal_id: goalId, caption: caption.trim(), proof_type: parsedMinutes ? 'focus' : 'text', minutes_logged: parsedMinutes, visibility: 'public' })
     if (postError) { setError(postError.message || 'Your check-in could not be published.'); setSubmitting(false); return }
+
+    if (parsedMinutes) {
+      const { error: logError } = await supabase.from('focus_logs').insert({
+        user_id: userId,
+        goal_id: goalId,
+        minutes_logged: parsedMinutes,
+        note: caption.trim(),
+      })
+      if (logError) {
+        setError('Your update was published, but the focus minutes were not saved. Please try logging them again.')
+        setSubmitting(false)
+        return
+      }
+    }
+
     router.push('/feed'); router.refresh()
   }
 

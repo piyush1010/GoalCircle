@@ -13,6 +13,14 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export default function SettingsPage() {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
+  const [onboardingNext] = useState(() => {
+    if (typeof window === 'undefined') return null
+    const params = new URLSearchParams(window.location.search)
+    const requestedNext = params.get('next')
+    return params.get('onboarding') === '1' && requestedNext?.startsWith('/') && !requestedNext.startsWith('//')
+      ? requestedNext
+      : null
+  })
 
   // Profile Form States
   const [fullName, setFullName] = useState('')
@@ -86,11 +94,16 @@ export default function SettingsPage() {
             username: username.replace('@', ''),
             bio,
             is_public: isPublicProfile,
+            is_onboarded: true,
             updated_at: new Date().toISOString(),
           })
 
         if (!error) {
           setSaveMessage('Settings saved successfully!')
+          if (onboardingNext) {
+            router.replace(onboardingNext)
+            return
+          }
           setTimeout(() => setSaveMessage(''), 3000)
         } else {
           setSaveMessage('Failed to save settings.')

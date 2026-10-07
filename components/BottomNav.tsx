@@ -28,7 +28,7 @@ export default function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                aria-label="Create a goal"
+                aria-label="Create"
                 className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/30 transition hover:bg-amber-400 active:scale-95 dark:border-[#0b1220]"
               >
                 <Icon aria-hidden="true" className="h-6 w-6" strokeWidth={2.6} />
