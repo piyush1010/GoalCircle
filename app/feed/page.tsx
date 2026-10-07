@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Bolt, Clock3, LockKeyhole, MessageCircle, Plus, Share2, Target } from 'lucide-react'
+import { Bell, Bolt, Clock3, Hand, LockKeyhole, MessageCircle, Plus, Share2, Target } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import ProfileAvatar from '@/components/ProfileAvatar'
 
@@ -48,6 +48,8 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [nudgingPost, setNudgingPost] = useState<string | null>(null)
 
   const loadFeed = useCallback(async () => {
     setLoading(true); setError(null)
@@ -55,6 +57,8 @@ export default function FeedPage() {
     if (!session?.user) { router.replace('/login?next=/feed'); return }
     const currentUserId = session.user.id
     setUserId(currentUserId)
+    const { count } = await supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('is_read', false)
+    setUnreadCount(count || 0)
 
     const postsResult = await supabase.from('posts').select('id,user_id,goal_id,caption,media_url,proof_type,visibility,minutes_logged,created_at,goals(title,current_streak)').order('created_at', { ascending: false }).limit(30)
     if (postsResult.error) { setError('The community feed is not ready yet. Apply the social database migration, then retry.'); setLoading(false); return }
@@ -127,11 +131,19 @@ export default function FeedPage() {
     await navigator.clipboard.writeText(url); showToast('Goal link copied')
   }
 
+  const nudgeFriend = async (post: FeedPost) => {
+    if (!userId || post.userId === userId || nudgingPost) return
+    setNudgingPost(post.id)
+    const { error: nudgeError } = await supabase.rpc('send_nudge', { target_user_id: post.userId, target_post_id: post.id })
+    setNudgingPost(null)
+    showToast(nudgeError ? (nudgeError.message.includes('already nudged') ? 'You already nudged this friend today.' : 'Nudge could not be sent.') : `Nudge sent to ${post.userName} 👉`)
+  }
+
   return (
     <main className="mx-auto min-h-screen max-w-xl pb-28">
       {toast && <div role="status" className="fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-slate-950 px-4 py-2 text-xs font-bold text-white shadow-xl dark:bg-white dark:text-slate-950">{toast}</div>}
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-slate-50/90 px-4 pb-3 pt-5 backdrop-blur-xl dark:border-slate-800 dark:bg-[#07101f]/90">
-        <div className="mb-4 flex items-center justify-between"><div><h1 className="text-xl font-black">⚡ Feed</h1><p className="text-[11px] text-slate-500 dark:text-slate-400">Community accountability and progress</p></div><Link href="/check-in" className="inline-flex items-center gap-1 rounded-xl bg-amber-500 px-3 py-2 text-xs font-black text-slate-950"><Plus className="h-3.5 w-3.5" />Check in</Link></div>
+        <div className="mb-4 flex items-center justify-between"><div><h1 className="text-xl font-black">⚡ Feed</h1><p className="text-[11px] text-slate-500 dark:text-slate-400">Community accountability and progress</p></div><div className="flex items-center gap-2"><Link href="/notifications" aria-label={`${unreadCount} unread notifications`} className="relative grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"><Bell className="h-4 w-4" />{unreadCount > 0 && <span className="absolute -right-1 -top-1 grid min-h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-black text-white">{Math.min(unreadCount, 99)}</span>}</Link><Link href="/check-in" className="inline-flex items-center gap-1 rounded-xl bg-amber-500 px-3 py-2 text-xs font-black text-slate-950"><Plus className="h-3.5 w-3.5" />Check in</Link></div></div>
         <div className="grid grid-cols-2 rounded-xl bg-slate-200/70 p-1 dark:bg-slate-800"><button onClick={() => setActiveTab('all')} className={`rounded-lg py-2 text-xs font-bold ${activeTab === 'all' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>All updates</button><button onClick={() => setActiveTab('circle')} className={`rounded-lg py-2 text-xs font-bold ${activeTab === 'circle' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>My circle</button></div>
       </header>
 
@@ -144,7 +156,7 @@ export default function FeedPage() {
           <div className="mx-4 mb-3 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-[#07101f]"><span className="truncate text-xs font-bold"><Target className="mr-1.5 inline h-3.5 w-3.5 text-amber-500" />{post.goalTitle}</span><span className="flex shrink-0 items-center gap-2">{post.visibility === 'private' && <LockKeyhole className="h-3 w-3 text-slate-400" aria-label="Private post" />}{post.streak > 0 && <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">🔥 {post.streak}d</span>}</span></div>
           {post.mediaUrl && (post.mediaType === 'video' ? <div className="bg-slate-950"><video src={post.mediaUrl} controls preload="metadata" playsInline className="mx-auto max-h-[70vh] w-full object-contain" /></div> : <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-950"><Image src={post.mediaUrl} alt="Progress proof" fill unoptimized sizes="(max-width: 640px) 100vw, 576px" className="object-cover" /></div>)}
           <div className="p-4">{post.minutes != null && <div className="mb-2 inline-flex items-center gap-1 rounded-lg bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-700 dark:text-amber-300"><Clock3 className="h-3 w-3" />{post.minutes} focused minutes</div>}<p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">{post.caption}</p>
-            <div className="mt-4 grid grid-cols-3 border-t border-slate-100 pt-3 dark:border-slate-800"><button onClick={() => void toggleBoost(post)} className={`flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-bold ${post.boosted ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'text-slate-500'}`}><Bolt className="h-4 w-4" fill={post.boosted ? 'currentColor' : 'none'} />Boost {post.boostCount || ''}</button><button onClick={() => setOpenComments(openComments === post.id ? null : post.id)} className="flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-bold text-slate-500"><MessageCircle className="h-4 w-4" />Comment {post.comments.length || ''}</button><button onClick={() => void sharePost(post)} className="flex items-center justify-center gap-1 rounded-lg py-2 text-xs font-bold text-slate-500"><Share2 className="h-4 w-4" />Share</button></div>
+            <div className={`mt-4 grid ${post.userId === userId ? 'grid-cols-3' : 'grid-cols-4'} border-t border-slate-100 pt-3 dark:border-slate-800`}><button onClick={() => void toggleBoost(post)} className={`flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold ${post.boosted ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'text-slate-500'}`}><Bolt className="h-4 w-4" fill={post.boosted ? 'currentColor' : 'none'} />Boost {post.boostCount || ''}</button><button onClick={() => setOpenComments(openComments === post.id ? null : post.id)} className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold text-slate-500"><MessageCircle className="h-4 w-4" />Comment {post.comments.length || ''}</button>{post.userId !== userId && <button onClick={() => void nudgeFriend(post)} disabled={nudgingPost === post.id} className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold text-slate-500 disabled:opacity-50"><Hand className="h-4 w-4" />Nudge</button>}<button onClick={() => void sharePost(post)} className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold text-slate-500"><Share2 className="h-4 w-4" />Share</button></div>
             {openComments === post.id && <div className="mt-3 space-y-3 border-t border-slate-100 pt-3 dark:border-slate-800">{post.comments.map((comment) => <p key={comment.id} className="rounded-xl bg-slate-50 p-2.5 text-xs dark:bg-[#07101f]">{comment.body}</p>)}<div className="flex gap-2"><input value={commentText} onChange={(event) => setCommentText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void addComment(post.id) } }} maxLength={500} placeholder="Add encouragement…" className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-700 dark:bg-[#07101f]" /><button onClick={() => void addComment(post.id)} disabled={!commentText.trim()} className="rounded-xl bg-amber-500 px-3 text-xs font-black text-slate-950 disabled:opacity-40">Post</button></div></div>}
           </div>
         </article>)}
