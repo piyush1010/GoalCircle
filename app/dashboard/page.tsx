@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Check, Flame, Play, Plus, Target } from 'lucide-react'
+import { CalendarDays, Check, Flame, PauseCircle, Play, Plus, Target } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 
 interface Goal {
@@ -12,6 +12,9 @@ interface Goal {
   current_streak: number | null
   is_completed: boolean | null
   created_at: string
+  status: string | null
+  pause_until: string | null
+  target_date: string | null
 }
 
 interface FocusLog {
@@ -42,6 +45,7 @@ export default function DashboardPage() {
     }
 
     const user = session.user
+    await supabase.rpc('resume_expired_goal_pauses')
     setDisplayName(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Member')
 
     const weekStart = new Date()
@@ -49,7 +53,7 @@ export default function DashboardPage() {
     weekStart.setDate(weekStart.getDate() - 6)
 
     const [goalsResult, logsResult] = await Promise.all([
-      supabase.from('goals').select('id,title,current_streak,is_completed,created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('goals').select('id,title,current_streak,is_completed,created_at,status,pause_until,target_date').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('focus_logs').select('goal_id,minutes_logged,logged_at').eq('user_id', user.id).gte('logged_at', weekStart.toISOString()).order('logged_at', { ascending: false }),
     ])
 
@@ -125,8 +129,9 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-3">{goals.map((goal) => {
             const minutes = todayMinutesByGoal[goal.id] || 0
+            const isPaused = goal.status === 'paused' && Boolean(goal.pause_until && new Date(goal.pause_until) > new Date())
             return <article key={goal.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
-              <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3"><button onClick={() => void toggleGoal(goal)} disabled={updatingGoalId === goal.id} aria-label={goal.is_completed ? `Mark ${goal.title} incomplete` : `Mark ${goal.title} complete`} className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border ${goal.is_completed ? 'border-amber-500 bg-amber-500 text-slate-950' : 'border-slate-300 dark:border-slate-600'}`}>{goal.is_completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}</button><div className="min-w-0"><Link href={`/goal/${goal.id}`} className={`block truncate text-sm font-bold ${goal.is_completed ? 'text-slate-500 line-through' : ''}`}>{goal.title}</Link><span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400"><Flame className="h-3 w-3" />{goal.current_streak || 0}d streak</span></div></div>{!goal.is_completed && <Link href={`/focus?goal=${goal.id}`} className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300"><Play className="h-3 w-3" fill="currentColor" />Focus</Link>}</div>
+              <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3"><button onClick={() => void toggleGoal(goal)} disabled={updatingGoalId === goal.id || isPaused} aria-label={goal.is_completed ? `Mark ${goal.title} incomplete` : `Mark ${goal.title} complete`} className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border disabled:opacity-40 ${goal.is_completed ? 'border-amber-500 bg-amber-500 text-slate-950' : 'border-slate-300 dark:border-slate-600'}`}>{goal.is_completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}</button><div className="min-w-0"><Link href={`/goal/${goal.id}`} className={`block truncate text-sm font-bold ${goal.is_completed ? 'text-slate-500 line-through' : ''}`}>{goal.title}</Link><span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400"><Flame className="h-3 w-3" />{goal.current_streak || 0}d streak</span>{isPaused && <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-bold text-sky-500"><PauseCircle className="h-3 w-3" />Paused</span>}{goal.target_date && <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500"><CalendarDays className="h-3 w-3" />{new Date(`${goal.target_date}T00:00:00`).toLocaleDateString()}</span>}</div></div>{!goal.is_completed && !isPaused && <Link href={`/focus?goal=${goal.id}`} className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300"><Play className="h-3 w-3" fill="currentColor" />Focus</Link>}</div>
               <div className="mt-3 border-t border-slate-100 pt-2 dark:border-slate-800"><div className="mb-1 flex justify-between text-[10px] font-medium text-slate-500"><span>Time logged today</span><span>{minutes} min</span></div><div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-amber-500" style={{ width: `${Math.min(100, minutes / 0.6)}%` }} /></div></div>
             </article>
           })}</div>
