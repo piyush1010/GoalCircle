@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { ArrowLeft, CheckCircle2, ImagePlus, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 
-interface GoalOption { id: string; title: string }
+interface GoalOption { id: string; title: string; visibility: 'public' | 'followers' | 'circle' | 'private' }
 
 export default function CheckInPage() {
   const router = useRouter()
@@ -26,7 +26,7 @@ export default function CheckInPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) { router.replace('/login?next=/check-in'); return }
       setUserId(session.user.id)
-      const { data, error: goalsError } = await supabase.from('goals').select('id,title').eq('user_id', session.user.id).eq('is_completed', false).order('created_at', { ascending: false })
+      const { data, error: goalsError } = await supabase.from('goals').select('id,title,visibility').eq('user_id', session.user.id).eq('is_completed', false).order('created_at', { ascending: false })
       if (goalsError) setError('Could not load your goals.')
       else {
         const options = (data || []) as GoalOption[]
@@ -72,8 +72,15 @@ export default function CheckInPage() {
       mediaUrl = supabase.storage.from('goal-media').getPublicUrl(path).data.publicUrl
     }
     const proofType = mediaFile?.type.startsWith('video/') ? 'video' : mediaFile ? 'image' : parsedMinutes ? 'focus' : 'text'
-    const { error: postError } = await supabase.from('posts').insert({ user_id: userId, goal_id: goalId, caption: caption.trim(), media_url: mediaUrl, proof_type: proofType, minutes_logged: parsedMinutes, visibility: 'public' })
-    if (postError) { setError(postError.message || 'Your check-in could not be published.'); setSubmitting(false); return }
+    const goalVisibility = goals.find((goal) => goal.id === goalId)?.visibility || 'private'
+    const { error: postError } = await supabase.from('posts').insert({ user_id: userId, goal_id: goalId, caption: caption.trim(), media_url: mediaUrl, proof_type: proofType, minutes_logged: parsedMinutes, visibility: goalVisibility })
+    if (postError) {
+      if (mediaUrl) {
+        const objectPath = mediaUrl.split('/goal-media/')[1]
+        if (objectPath) await supabase.storage.from('goal-media').remove([decodeURIComponent(objectPath)])
+      }
+      setError(postError.message || 'Your check-in could not be published.'); setSubmitting(false); return
+    }
 
     if (parsedMinutes) {
       const { error: logError } = await supabase.from('focus_logs').insert({
