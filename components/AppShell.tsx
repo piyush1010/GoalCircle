@@ -7,7 +7,7 @@ const NAV_HIDDEN_ROUTES = ['/login', '/signup', '/auth']
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const hideNavigation = NAV_HIDDEN_ROUTES.some(
+  const hideNavigation = pathname === '/' || NAV_HIDDEN_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   )
 
