@@ -2,6 +2,7 @@
 
 import React, { useRef } from 'react'
 import { toPng } from 'html-to-image'
+import { Download } from 'lucide-react'
 
 interface MemoryReelProps {
   habitTitle: string
@@ -60,9 +61,9 @@ export default function MemoryReel({ habitTitle, streakCount, userName = 'GoalCi
       {/* Action Button */}
       <button
         onClick={downloadCard}
-        className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm font-semibold rounded-lg border border-slate-700 transition"
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm font-semibold rounded-lg border border-slate-700 transition"
       >
-        Download Shareable Reel 📸
+        <Download className="h-4 w-4" /> Download reel
       </button>
     </div>
   )

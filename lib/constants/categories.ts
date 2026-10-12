@@ -1,12 +1,12 @@
 export const GOAL_CATEGORIES = [
-  { label: '📚 Finishing Books & Syllabus', value: 'education', icon: 'BookOpen' },
-  { label: '✈️ Travel & Destinations', value: 'travel', icon: 'Compass' },
-  { label: '🤝 Charity & Mankind Service', value: 'charity', icon: 'HeartHandshake' },
-  { label: '🏃 Fitness & Health', value: 'health', icon: 'Activity' },
-  { label: '🧘 Mindfulness & Meditation', value: 'mindfulness', icon: 'Smile' },
-  { label: '💻 Skill & Career Growth', value: 'career', icon: 'Briefcase' },
-  { label: '🎨 Creative & Hobbies', value: 'creative', icon: 'Palette' },
-  { label: '💰 Financial Discipline', value: 'finance', icon: 'DollarSign' },
+  { label: 'Finishing Books & Syllabus', value: 'education', icon: 'BookOpen' },
+  { label: 'Travel & Destinations', value: 'travel', icon: 'Compass' },
+  { label: 'Charity & Community Service', value: 'charity', icon: 'HeartHandshake' },
+  { label: 'Fitness & Health', value: 'health', icon: 'Activity' },
+  { label: 'Mindfulness & Meditation', value: 'mindfulness', icon: 'Smile' },
+  { label: 'Skill & Career Growth', value: 'career', icon: 'Briefcase' },
+  { label: 'Creative & Hobbies', value: 'creative', icon: 'Palette' },
+  { label: 'Financial Discipline', value: 'finance', icon: 'DollarSign' },
 ];
 
 export const SUGGESTED_GOALS = [

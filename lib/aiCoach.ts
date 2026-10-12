@@ -7,7 +7,7 @@ export function generateSmartNudge(habitTitle: string, history: HabitLogHistory[
   const missedDays = history.filter(h => !h.completed)
 
   if (missedDays.length === 0) {
-    return `🔥 You're on a roll with "${habitTitle}"! Keep up the momentum today.`
+    return `You're building strong momentum with "${habitTitle}". Keep it going today.`
   }
 
   const dayCounts: Record<number, number> = {}
@@ -27,8 +27,8 @@ export function generateSmartNudge(habitTitle: string, history: HabitLogHistory[
   const days = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays']
   
   if (maxMisses > 1) {
-    return `💡 AI Nudge: You often skip "${habitTitle}" on ${days[mostMissedDay]}. Consider setting a 15-minute earlier reminder today!`
+    return `You often skip "${habitTitle}" on ${days[mostMissedDay]}. Try setting your reminder 15 minutes earlier today.`
   }
 
-  return `🎯 Reminder: Dedicate time to "${habitTitle}" today to protect your streak!`
+  return `Set aside time for "${habitTitle}" today to protect your streak.`
 }

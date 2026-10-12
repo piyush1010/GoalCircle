@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { UserRound } from 'lucide-react';
 
 interface ProtectedAvatarProps {
   src?: string | null;
@@ -48,7 +49,7 @@ export default function ProtectedAvatar({
           <div className="absolute inset-0 bg-transparent" />
         </>
       ) : (
-        <span className="select-none">👤</span>
+        <UserRound className="h-1/2 w-1/2 text-slate-500" aria-hidden="true" />
       )}
     </div>
   );

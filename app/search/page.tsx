@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { Search } from 'lucide-react'
 
 interface SearchResult {
   id: string
@@ -20,14 +21,14 @@ export default function SearchPage() {
       type: 'goal',
       title: 'read 20 pages daily',
       subtitle: 'Target: Oct 31, 2026',
-      meta: '🔥 5 day streak',
+      meta: '5 day streak',
     },
     {
       id: '2',
       type: 'circle',
       title: '5 AM Club',
       subtitle: 'Early risers building high-productivity morning routines.',
-      meta: '👥 142 members',
+      meta: '142 members',
     },
     {
       id: '3',
@@ -56,7 +57,7 @@ export default function SearchPage() {
       {/* Header */}
       <div className="pb-2 border-b border-slate-200 dark:border-slate-800">
         <h1 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-          🔍 Search & Discover
+          <Search className="h-4 w-4 text-amber-500" /> Search & Discover
         </h1>
         <p className="text-[11px] text-slate-500 dark:text-slate-400">
           Find goals, circles, and accountability partners
@@ -122,7 +123,7 @@ export default function SearchPage() {
           ))
         ) : (
           <div className="text-center py-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
-            <span className="text-2xl">🔎</span>
+            <Search className="mx-auto h-6 w-6 text-slate-400" />
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
               No results found for &quot;{query}&quot;
             </p>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
 import type { User } from '@supabase/supabase-js'
 import ProfileAvatar from '@/components/ProfileAvatar'
+import { Film, Flame, Sparkles } from 'lucide-react'
 
 interface DayLog {
   date: string
@@ -225,7 +226,7 @@ export default function ProfilePage() {
             <p className="text-[9px] font-extrabold uppercase text-slate-400">Goals</p>
           </div>
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
-            <p className="text-base font-black text-amber-500">{currentStreak} 🔥</p>
+            <p className="inline-flex items-center justify-center gap-1 text-base font-black text-amber-500"><Flame className="h-4 w-4" />{currentStreak}</p>
             <p className="text-[9px] font-extrabold uppercase text-slate-400">Streak</p>
           </div>
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
@@ -302,14 +303,14 @@ export default function ProfilePage() {
         </h2>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-3.5 space-y-2 text-center">
-            <div className="text-2xl">🎬</div>
+            <Film className="mx-auto h-6 w-6 text-amber-500" />
             <h3 className="text-xs font-extrabold">{currentMonthName} Recap</h3>
             <p className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 py-1 px-2 rounded-lg">
               Generated Automatically
             </p>
           </div>
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-3.5 space-y-2 text-center opacity-70">
-            <div className="text-2xl">✨</div>
+            <Sparkles className="mx-auto h-6 w-6 text-slate-400" />
             <h3 className="text-xs font-extrabold text-slate-300">{nextMonthName} Recap</h3>
             <p className="text-[9px] text-amber-400 font-bold bg-amber-500/10 py-1 px-2 rounded-lg">
               Unlocks in {daysRemainingInMonth} days

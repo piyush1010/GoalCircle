@@ -3,6 +3,7 @@
 import React, { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
+import { Target } from 'lucide-react'
 
 function AuthForm() {
   const router = useRouter()
@@ -117,7 +118,7 @@ function AuthForm() {
 
       {/* DYNAMIC HEADER */}
       <div className="text-center space-y-1">
-        <div className="text-3xl">🎯</div>
+        <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-amber-500 text-slate-950"><Target className="h-5 w-5" /></span>
         <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
           {mode === 'signup' ? 'Create Your Account' : 'Welcome to GoalCircle'}
         </h1>
