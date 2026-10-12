@@ -94,7 +94,7 @@ export default function HomePage() {
               Sign in
             </Link>
             <Link href="/login?mode=signup" className="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-amber-400">
-              Get started
+              Create account
             </Link>
           </nav>
         </div>
@@ -254,7 +254,7 @@ export default function HomePage() {
             <h2 className="text-balance text-3xl font-black tracking-[-0.04em] sm:text-5xl">Your goal deserves more than good intentions.</h2>
             <p className="mx-auto mt-4 max-w-xl text-sm font-medium leading-6 text-slate-300 sm:text-base">Start small. Share the commitment. Show up again tomorrow.</p>
             <Link href="/login?mode=signup" className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-sm font-black text-slate-950 transition hover:-translate-y-0.5 hover:bg-amber-400">
-              Get started free <ArrowRight className="h-4 w-4" />
+              Create free account <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>

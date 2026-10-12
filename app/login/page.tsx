@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
-import { Target } from 'lucide-react'
+import { LogIn, Target, UserPlus } from 'lucide-react'
 
 function AuthForm() {
   const router = useRouter()
@@ -83,49 +83,54 @@ function AuthForm() {
   return (
     <div className="w-full max-w-md space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl md:p-8 dark:border-slate-700/70 dark:bg-[#101b2d]">
       {/* TABS FOR CLEAR SIGN IN / SIGN UP SELECTION */}
-      <div className="grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-[#07101f]">
+      <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-slate-200 bg-slate-100 p-1.5 dark:border-slate-800 dark:bg-[#07101f]" aria-label="Choose authentication mode">
         <button
           type="button"
+          aria-pressed={mode === 'signin'}
           onClick={() => {
             setMode('signin')
             setErrorMsg(null)
             setSuccessMsg(null)
           }}
-          className={`py-2 text-xs font-black rounded-xl transition ${
+          className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition ${
             mode === 'signin'
               ? 'bg-amber-500 text-slate-950 shadow-md'
               : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
           }`}
         >
-          Sign In
+          <LogIn className="h-4 w-4 shrink-0" />
+          <span><span className="block text-xs font-black">Sign in</span><span className={`block text-[9px] font-semibold ${mode === 'signin' ? 'text-slate-800/70' : 'text-slate-400'}`}>Existing member</span></span>
         </button>
         <button
           type="button"
+          aria-pressed={mode === 'signup'}
           onClick={() => {
             setMode('signup')
             setErrorMsg(null)
             setSuccessMsg(null)
           }}
-          className={`py-2 text-xs font-black rounded-xl transition ${
+          className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition ${
             mode === 'signup'
               ? 'bg-amber-500 text-slate-950 shadow-md'
               : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
           }`}
         >
-          Sign Up
+          <UserPlus className="h-4 w-4 shrink-0" />
+          <span><span className="block text-xs font-black">Create account</span><span className={`block text-[9px] font-semibold ${mode === 'signup' ? 'text-slate-800/70' : 'text-slate-400'}`}>New to GoalCircle</span></span>
         </button>
       </div>
 
       {/* DYNAMIC HEADER */}
       <div className="text-center space-y-1">
         <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-amber-500 text-slate-950"><Target className="h-5 w-5" /></span>
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">{mode === 'signup' ? 'New member' : 'Returning member'}</p>
         <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
-          {mode === 'signup' ? 'Create Your Account' : 'Welcome to GoalCircle'}
+          {mode === 'signup' ? 'Create your GoalCircle account' : 'Welcome back'}
         </h1>
         <p className="text-xs text-slate-400 font-medium">
           {mode === 'signup'
-            ? 'Start building habits and tracking goals with GoalCircle'
-            : 'Sign in to continue tracking your goals'}
+            ? 'Set your first goal and choose who keeps you accountable.'
+            : 'Sign in to continue with your goals and circles.'}
         </p>
       </div>
 
@@ -165,7 +170,7 @@ function AuthForm() {
             d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.37 0 3.3 2.68 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"
           />
         </svg>
-        {mode === 'signup' ? 'Sign up with Google' : 'Continue with Google'}
+        {mode === 'signup' ? 'Create account with Google' : 'Sign in with Google'}
       </button>
 
       <div className="relative flex items-center justify-center">
@@ -227,7 +232,7 @@ function AuthForm() {
           disabled={loading}
           className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition shadow-lg shadow-amber-500/20 disabled:opacity-50 mt-2"
         >
-          {loading ? 'Processing...' : mode === 'signup' ? 'Create Account' : 'Sign In'}
+          {loading ? 'Processing...' : mode === 'signup' ? 'Create account' : 'Sign in'}
         </button>
       </form>
 
@@ -244,7 +249,7 @@ function AuthForm() {
             }}
             className="text-amber-500 font-bold hover:underline ml-1"
           >
-            {mode === 'signup' ? 'Sign in' : 'Sign up'}
+            {mode === 'signup' ? 'Sign in' : 'Create account'}
           </button>
         </p>
       </div>
