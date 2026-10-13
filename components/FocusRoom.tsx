@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { UsersRound } from 'lucide-react'
 
 export default function FocusRoom({ roomName = 'Silent Pomodoro', initialMinutes = 25 }) {
   const [timeLeft, setTimeLeft] = useState(initialMinutes * 60)
@@ -26,7 +27,7 @@ export default function FocusRoom({ roomName = 'Silent Pomodoro', initialMinutes
         <span className="text-[10px] uppercase font-extrabold text-amber-400 tracking-wider flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" /> Live Focus Room
         </span>
-        <span className="text-xs text-slate-400">👥 4 In Circle Working</span>
+        <span className="inline-flex items-center gap-1.5 text-xs text-slate-400"><UsersRound className="h-3.5 w-3.5" />4 working now</span>
       </div>
 
       <h3 className="text-sm font-bold text-white">{roomName}</h3>

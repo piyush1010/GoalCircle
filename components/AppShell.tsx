@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 import BottomNav from '@/components/BottomNav'
 
-const NAV_HIDDEN_ROUTES = ['/', '/login', '/signup', '/auth']
+const NAV_HIDDEN_ROUTES = ['/', '/login', '/signup', '/auth', '/privacy']
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

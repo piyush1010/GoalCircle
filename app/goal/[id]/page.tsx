@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CalendarDays, Check, PauseCircle, Pencil, Trash2, X } from 'lucide-react'
+import { CalendarDays, Check, CircleCheck, Flame, PauseCircle, Pencil, Trash2, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 
 interface Goal {
@@ -165,8 +165,8 @@ export default function GoalDetailPage() {
         <div className="flex items-start justify-between">
           <div>
             {editing ? <div className="space-y-2"><input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} maxLength={100} className="w-full rounded-xl border border-amber-500 bg-slate-50 px-3 py-2 text-sm font-bold outline-none dark:bg-slate-950" /><label className="block text-[10px] font-bold uppercase text-slate-500">Achievement date<input type="date" value={editTargetDate} min={new Date().toISOString().slice(0, 10)} onChange={(event) => setEditTargetDate(event.target.value)} className="mt-1 block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs normal-case dark:border-slate-700 dark:bg-slate-950" /></label><div className="flex gap-2"><button onClick={() => void saveGoal()} disabled={updating} className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-black text-slate-950"><Check className="h-3.5 w-3.5" />Save</button><button onClick={() => setEditing(false)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold dark:border-slate-700"><X className="h-3.5 w-3.5" />Cancel</button></div></div> : <h1 className="text-lg font-black">{goal.title}</h1>}
-            <p className="mt-1 text-[11px] font-bold text-amber-400">
-              🔥 {goal.current_streak || 0} day streak
+            <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-amber-400">
+              <Flame className="h-3.5 w-3.5" /> {goal.current_streak || 0} day streak
             </p>
             {goal.target_date && <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-slate-500"><CalendarDays className="h-3 w-3" />Target {new Date(`${goal.target_date}T00:00:00`).toLocaleDateString()}</p>}
             {isPaused && <p className="mt-1 text-[10px] font-bold text-sky-500">Paused until {new Date(goal.pause_until as string).toLocaleDateString()}</p>}
@@ -180,7 +180,7 @@ export default function GoalDetailPage() {
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
             }`}
           >
-            {isCompleted ? '🎉 Completed' : 'Mark Complete'}
+            {isCompleted ? <span className="inline-flex items-center gap-1.5"><CircleCheck className="h-4 w-4" />Completed</span> : 'Mark Complete'}
           </button>}
         </div>
 

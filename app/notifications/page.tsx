@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Bell, CheckCheck } from 'lucide-react'
+import { Bell, Bolt, CheckCheck, Flame, Hand, HeartHandshake, MessageCircle, UsersRound } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 
 interface NotificationItem {
@@ -19,12 +19,17 @@ interface NotificationItem {
 }
 
 const details = {
-  boost: { icon: '⚡', title: 'Your progress was boosted', copy: 'sent encouragement on your latest update.' },
-  comment: { icon: '💬', title: 'New encouragement', copy: 'commented on your progress.' },
-  follow: { icon: '🤝', title: 'New accountability friend', copy: 'started following your goals.' },
-  nudge: { icon: '👉', title: 'Friendly nudge', copy: 'nudged you to keep your momentum going.' },
-  circle_invite: { icon: '👥', title: 'Circle invitation', copy: 'invited you to an accountability circle.' },
-  streak: { icon: '🔥', title: 'Streak milestone', copy: 'Your consistency is paying off.' },
+  boost: { icon: Bolt, title: 'Your progress was boosted', copy: 'sent encouragement on your latest update.' },
+  comment: { icon: MessageCircle, title: 'New encouragement', copy: 'commented on your progress.' },
+  follow: { icon: HeartHandshake, title: 'New accountability friend', copy: 'started following your goals.' },
+  nudge: { icon: Hand, title: 'Friendly nudge', copy: 'nudged you to keep your momentum going.' },
+  circle_invite: { icon: UsersRound, title: 'Circle invitation', copy: 'invited you to an accountability circle.' },
+  streak: { icon: Flame, title: 'Streak milestone', copy: 'Your consistency is paying off.' },
+}
+
+function NotificationIcon({ kind }: { kind: NotificationItem['kind'] }) {
+  const Icon = details[kind].icon
+  return <Icon className="h-5 w-5 text-amber-500" />
 }
 
 const relativeTime = (value: string) => {
@@ -100,8 +105,8 @@ export default function NotificationsPage() {
                 : 'bg-amber-500/5 dark:bg-amber-500/10 border-amber-500/30'
             }`}
           >
-            <div className="text-xl shrink-0 p-2 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-              {details[item.kind].icon}
+            <div className="shrink-0 rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950">
+              <NotificationIcon kind={item.kind} />
             </div>
 
             <div className="flex-1 space-y-0.5">

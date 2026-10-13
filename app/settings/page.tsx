@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTheme, type Theme } from '@/components/ThemeProvider'
 import AvatarEditor from '@/components/AvatarEditor'
 import { supabase } from '@/utils/supabase'
+import { Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, UserRound } from 'lucide-react'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -172,7 +173,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
         <h1 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-          ⚙️ App Settings
+          <Settings className="h-4 w-4 text-amber-500" /> App Settings
         </h1>
         <button
           onClick={() => router.back()}
@@ -184,8 +185,8 @@ export default function SettingsPage() {
 
       {/* SECTION 1: ACCOUNT DETAILS */}
       <form onSubmit={handleSaveSettings} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
-        <label className="block text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">
-          👤 Account Information
+        <label className="flex items-center gap-1.5 text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">
+          <UserRound className="h-3.5 w-3.5" /> Account Information
         </label>
 
         {userId && <AvatarEditor userId={userId} value={avatarUrl} name={fullName || username || 'GoalCircle member'} onSaved={(value) => void handleAvatarSaved(value)} />}
@@ -248,8 +249,8 @@ export default function SettingsPage() {
       {/* SECTION 2: THEME & LANDING VIEW */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-4">
         <div>
-          <label className="block text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-2">
-            🎨 Theme Preference
+          <label className="flex items-center gap-1.5 text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-2">
+            <Palette className="h-3.5 w-3.5" /> Theme Preference
           </label>
           <div className="grid grid-cols-3 gap-2">
             {(['light', 'dark', 'system'] as const).map((mode) => (
@@ -263,7 +264,7 @@ export default function SettingsPage() {
                     : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-amber-500'
                 }`}
               >
-                {mode === 'light' ? '☀️ Light' : mode === 'dark' ? '🌙 Dark' : '💻 System'}
+                <span className="inline-flex items-center justify-center gap-1.5">{mode === 'light' ? <Sun className="h-3.5 w-3.5" /> : mode === 'dark' ? <Moon className="h-3.5 w-3.5" /> : <Monitor className="h-3.5 w-3.5" />}{mode}</span>
               </button>
             ))}
           </div>
@@ -278,18 +279,18 @@ export default function SettingsPage() {
             onChange={(e) => handleLandingPageChange(e.target.value)}
             className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
           >
-            <option value="/dashboard">📊 Dashboard (Matrix & Habits)</option>
-            <option value="/feed">🔥 Activity Feed</option>
-            <option value="/circles">👥 Circles & Social</option>
-            <option value="/profile">👤 Profile Page</option>
+            <option value="/dashboard">Dashboard (Matrix & Habits)</option>
+            <option value="/feed">Activity Feed</option>
+            <option value="/circles">Circles & Social</option>
+            <option value="/profile">Profile Page</option>
           </select>
         </div>
       </div>
 
       {/* SECTION 3: NOTIFICATIONS & REMINDERS */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
-        <label className="block text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">
-          🔔 Notifications & Reminders
+        <label className="flex items-center gap-1.5 text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">
+          <Bell className="h-3.5 w-3.5" /> Notifications & Reminders
         </label>
 
         <div className="flex items-center justify-between">
@@ -327,8 +328,8 @@ export default function SettingsPage() {
 
       {/* SECTION 4: PRIVACY & DATA */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
-        <label className="block text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">
-          🔒 Privacy & Data Export
+        <label className="flex items-center gap-1.5 text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">
+          <Shield className="h-3.5 w-3.5" /> Privacy & Data Export
         </label>
 
         <div className="flex items-center justify-between">
@@ -361,7 +362,7 @@ export default function SettingsPage() {
             onClick={handleExportData}
             className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold rounded-xl transition"
           >
-            📥 Export
+            <span className="inline-flex items-center gap-1.5"><Download className="h-3.5 w-3.5" />Export</span>
           </button>
         </div>
       </div>
@@ -377,7 +378,7 @@ export default function SettingsPage() {
           onClick={handlePasswordReset}
           className="w-full py-2.5 px-3 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between transition mb-2"
         >
-          <span>🔑 Reset Password via Email</span>
+          <span className="inline-flex items-center gap-2"><KeyRound className="h-4 w-4" />Reset Password via Email</span>
           <span>{passwordResetSent ? 'Sent! ✓' : '→'}</span>
         </button>
 
@@ -386,7 +387,7 @@ export default function SettingsPage() {
           onClick={handleSignOut}
           className="w-full py-2.5 px-3 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center justify-between transition"
         >
-          <span>🚪 Log Out of GoalCircle</span>
+          <span className="inline-flex items-center gap-2"><LogOut className="h-4 w-4" />Log Out of GoalCircle</span>
           <span>→</span>
         </button>
       </div>

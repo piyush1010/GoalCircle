@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { useTheme } from '@/components/ThemeProvider'
+import { Bolt, Flame, Moon, Sun, Timer, TrendingUp, Trophy } from 'lucide-react'
 
 type Timeframe = 'weekly' | 'monthly' | 'allTime'
 type Category = 'all' | 'fitness' | 'work' | 'learning'
@@ -26,7 +27,7 @@ const INITIAL_LEADERBOARD: LeaderboardUser[] = [
     id: '1',
     name: 'Aarav Sharma',
     handle: '@aarav_builds',
-    avatar: '👨‍💻',
+    avatar: 'AS',
     category: 'work',
     categoryLabel: 'Deep Work Coding',
     streakDays: 28,
@@ -38,7 +39,7 @@ const INITIAL_LEADERBOARD: LeaderboardUser[] = [
     id: '2',
     name: 'Priya Patel',
     handle: '@priya_runs',
-    avatar: '🏃‍♀️',
+    avatar: 'PP',
     category: 'fitness',
     categoryLabel: 'Marathon Prep',
     streakDays: 24,
@@ -50,7 +51,7 @@ const INITIAL_LEADERBOARD: LeaderboardUser[] = [
     id: '3',
     name: 'Rohan Mehta',
     handle: '@rohan_reads',
-    avatar: '📖',
+    avatar: 'RM',
     category: 'learning',
     categoryLabel: 'Tech & AI Reading',
     streakDays: 21,
@@ -62,7 +63,7 @@ const INITIAL_LEADERBOARD: LeaderboardUser[] = [
     id: '4',
     name: 'Ananya Gupta',
     handle: '@ananya_design',
-    avatar: '🎨',
+    avatar: 'AG',
     category: 'work',
     categoryLabel: 'UI System Design',
     streakDays: 19,
@@ -74,7 +75,7 @@ const INITIAL_LEADERBOARD: LeaderboardUser[] = [
     id: '5',
     name: 'Vikram Singh',
     handle: '@vikram_fit',
-    avatar: '🏋️‍♂️',
+    avatar: 'VS',
     category: 'fitness',
     categoryLabel: 'Strength & Core',
     streakDays: 18,
@@ -86,7 +87,7 @@ const INITIAL_LEADERBOARD: LeaderboardUser[] = [
     id: '6',
     name: 'Neha Verma',
     handle: '@neha_study',
-    avatar: '📚',
+    avatar: 'NV',
     category: 'learning',
     categoryLabel: 'Civil Services Prep',
     streakDays: 16,
@@ -98,7 +99,7 @@ const INITIAL_LEADERBOARD: LeaderboardUser[] = [
     id: 'me',
     name: 'You',
     handle: '@you',
-    avatar: '⚡',
+    avatar: 'YO',
     category: 'work',
     categoryLabel: 'GoalCircle Dev',
     streakDays: 14,
@@ -138,7 +139,7 @@ export default function LeaderboardPage() {
       <div className="pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
         <div>
           <h1 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-            🏆 Leaderboard
+            <Trophy className="h-4 w-4 text-amber-500" /> Leaderboard
           </h1>
           <p className="text-[10px] text-slate-500 dark:text-slate-400">
             Community standings & consistency rankings
@@ -150,14 +151,14 @@ export default function LeaderboardPage() {
           className="p-1.5 rounded-xl border text-xs font-bold transition bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-amber-400 shadow-xs"
           title="Toggle Light/Dark Theme"
         >
-          {theme === 'dark' ? '🌙' : '☀️'}
+          {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
         </button>
       </div>
 
       {/* WEEKLY SPRINT COUNTDOWN BANNER */}
       <div className="p-3 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 rounded-2xl flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-lg">⏳</span>
+          <Timer className="h-5 w-5 text-amber-500" />
           <div>
             <span className="text-[10px] font-extrabold text-amber-500 uppercase tracking-wider block">
               Weekly Sprint #38
@@ -209,10 +210,10 @@ export default function LeaderboardPage() {
       {/* CATEGORY FILTER CHIPS */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {[
-          { id: 'all', label: 'All Circles', emoji: '🌐' },
-          { id: 'work', label: 'Deep Work', emoji: '💻' },
-          { id: 'fitness', label: 'Fitness', emoji: '🏃' },
-          { id: 'learning', label: 'Learning', emoji: '📖' },
+          { id: 'all', label: 'All Circles' },
+          { id: 'work', label: 'Deep Work' },
+          { id: 'fitness', label: 'Fitness' },
+          { id: 'learning', label: 'Learning' },
         ].map((cat) => (
           <button
             key={cat.id}
@@ -223,7 +224,6 @@ export default function LeaderboardPage() {
                 : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
             }`}
           >
-            <span>{cat.emoji}</span>
             <span>{cat.label}</span>
           </button>
         ))}
@@ -238,11 +238,11 @@ export default function LeaderboardPage() {
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white font-black text-xs flex items-center justify-center border-2 border-slate-50 dark:border-slate-950">
                 2
               </span>
-              <span className="text-2xl block">{topThree[1].avatar}</span>
+              <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-xs font-black text-slate-600 dark:bg-slate-800 dark:text-slate-200">{topThree[1].avatar}</span>
               <h3 className="text-xs font-black truncate text-slate-900 dark:text-white mt-1">
                 {topThree[1].name}
               </h3>
-              <p className="text-[10px] text-amber-500 font-bold">🔥 {topThree[1].streakDays}d streak</p>
+              <p className="inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold"><Flame className="h-3 w-3" />{topThree[1].streakDays}d streak</p>
               <p className="text-[9px] text-slate-400 font-extrabold mt-0.5">{topThree[1].totalHours} hrs</p>
             </div>
           )}
@@ -251,13 +251,13 @@ export default function LeaderboardPage() {
           {topThree[0] && (
             <div className="bg-white dark:bg-slate-900 border-2 border-amber-500 rounded-2xl p-3 text-center shadow-md relative pt-6 -translate-y-2">
               <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center border-2 border-slate-50 dark:border-slate-950 shadow-sm">
-                🥇
+                1
               </span>
-              <span className="text-3xl block">{topThree[0].avatar}</span>
+              <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-amber-500/15 text-xs font-black text-amber-700 dark:text-amber-300">{topThree[0].avatar}</span>
               <h3 className="text-xs font-black truncate text-slate-900 dark:text-white mt-1">
                 {topThree[0].name}
               </h3>
-              <p className="text-[10px] text-amber-500 font-black">🔥 {topThree[0].streakDays}d streak</p>
+              <p className="inline-flex items-center gap-1 text-[10px] text-amber-500 font-black"><Flame className="h-3 w-3" />{topThree[0].streakDays}d streak</p>
               <p className="text-[9px] text-slate-400 font-extrabold mt-0.5">{topThree[0].totalHours} hrs</p>
             </div>
           )}
@@ -268,11 +268,11 @@ export default function LeaderboardPage() {
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-amber-700/80 text-white font-black text-xs flex items-center justify-center border-2 border-slate-50 dark:border-slate-950">
                 3
               </span>
-              <span className="text-2xl block">{topThree[2].avatar}</span>
+              <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-xs font-black text-slate-600 dark:bg-slate-800 dark:text-slate-200">{topThree[2].avatar}</span>
               <h3 className="text-xs font-black truncate text-slate-900 dark:text-white mt-1">
                 {topThree[2].name}
               </h3>
-              <p className="text-[10px] text-amber-500 font-bold">🔥 {topThree[2].streakDays}d streak</p>
+              <p className="inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold"><Flame className="h-3 w-3" />{topThree[2].streakDays}d streak</p>
               <p className="text-[9px] text-slate-400 font-extrabold mt-0.5">{topThree[2].totalHours} hrs</p>
             </div>
           )}
@@ -309,7 +309,7 @@ export default function LeaderboardPage() {
                   )}
                 </div>
                 <p className="text-[10px] text-slate-400 truncate">
-                  {user.categoryLabel} • <span className="text-amber-500 font-bold">🔥 {user.streakDays}d</span>
+                  {user.categoryLabel} • <span className="inline-flex items-center gap-0.5 text-amber-500 font-bold"><Flame className="h-3 w-3" />{user.streakDays}d</span>
                 </p>
               </div>
             </div>
@@ -326,7 +326,7 @@ export default function LeaderboardPage() {
                 className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition active:scale-95 flex items-center gap-1"
                 title="Cheer user"
               >
-                <span>⚡</span>
+                <Bolt className="h-3.5 w-3.5" />
                 <span className="text-[10px]">{user.cheers}</span>
               </button>
             </div>
@@ -347,12 +347,12 @@ export default function LeaderboardPage() {
                   Your Current Standing
                 </span>
                 <span className="text-[10px] text-slate-400">
-                  {currentUser.totalHours} hours logged • 🔥 {currentUser.streakDays}d streak
+                  {currentUser.totalHours} hours logged • {currentUser.streakDays}d streak
                 </span>
               </div>
             </div>
             <span className="text-xs font-extrabold text-amber-500">
-              Top 15% 📈
+              <span className="inline-flex items-center gap-1"><TrendingUp className="h-3.5 w-3.5" />Top 15%</span>
             </span>
           </div>
         </div>

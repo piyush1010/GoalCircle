@@ -24,6 +24,13 @@ export const metadata: Metadata = {
   title: 'GoalCircle — Goals become real when you show up',
   description:
     'Announce your goals, share daily progress, and stay accountable with friends and trusted circles.',
+  openGraph: {
+    title: 'GoalCircle — Goals become real when you show up',
+    description: 'Set a meaningful goal, share honest progress, and stay accountable with people you trust.',
+    url: 'https://goalcircle-ivory.vercel.app',
+    siteName: 'GoalCircle',
+    type: 'website',
+  },
 }
 
 const features = [
@@ -55,6 +62,13 @@ const steps = [
   ['03', 'Let accountability compound', 'Friends boost, comment, and nudge while your consistency becomes a track record.'],
 ]
 
+const faqs = [
+  ['Can I keep a goal private?', 'Yes. Choose public, circle-only, or private visibility for each goal and progress update.'],
+  ['What counts as a check-in?', 'A short note, photo, video, or focus session can record the work you completed that day.'],
+  ['What is a circle?', 'A circle is a smaller accountability group for friends, teammates, classmates, or people working toward a shared outcome.'],
+  ['Can I take a break without losing everything?', 'Eligible goals include a one-time seven-day compassionate pause for situations when life needs your full attention.'],
+]
+
 export default function HomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f8fafc] text-slate-950 dark:bg-[#07101f] dark:text-slate-50">
@@ -70,12 +84,17 @@ export default function HomePage() {
           </Link>
 
           <nav className="flex items-center gap-2" aria-label="Landing page navigation">
+            <div className="mr-2 hidden items-center gap-5 lg:flex">
+              <a href="#how-it-works" className="text-xs font-bold text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white">How it works</a>
+              <a href="#features" className="text-xs font-bold text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white">Features</a>
+              <a href="#faq" className="text-xs font-bold text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white">FAQ</a>
+            </div>
             <div className="hidden sm:block"><ThemeToggle /></div>
             <Link href="/login" className="rounded-xl px-3 py-2 text-sm font-extrabold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">
               Sign in
             </Link>
             <Link href="/login?mode=signup" className="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-amber-400">
-              Get started
+              Create account
             </Link>
           </nav>
         </div>
@@ -117,7 +136,7 @@ export default function HomePage() {
             <div className="relative rotate-[1.5deg] rounded-[2.7rem] border border-slate-300/80 bg-slate-950 p-2.5 shadow-[0_35px_90px_-28px_rgba(15,23,42,0.55)] dark:border-slate-700">
               <div className="overflow-hidden rounded-[2.15rem] bg-slate-50 dark:bg-[#0b1526]">
                 <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-                  <div><p className="text-sm font-black">⚡ Today&apos;s circle</p><p className="text-[10px] font-semibold text-slate-500">Proof over promises</p></div>
+                  <div><p className="flex items-center gap-1.5 text-sm font-black"><UsersRound className="h-4 w-4 text-amber-500" />Today&apos;s circle</p><p className="text-[10px] font-semibold text-slate-500">Proof over promises</p></div>
                   <span className="grid h-9 w-9 place-items-center rounded-full bg-amber-500 text-xs font-black text-slate-950">AM</span>
                 </div>
 
@@ -194,7 +213,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 pb-20 sm:px-6 lg:px-8 lg:pb-28">
+      <section id="features" className="scroll-mt-24 px-4 pb-20 sm:px-6 lg:px-8 lg:pb-28">
         <div className="mx-auto max-w-7xl rounded-[2rem] border border-slate-200 bg-slate-100/80 p-5 sm:p-8 lg:p-12 dark:border-slate-800 dark:bg-slate-900/45">
           <div className="grid gap-4 sm:grid-cols-2">
             {features.map(({ icon: Icon, title, copy }) => (
@@ -208,6 +227,25 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section id="faq" className="scroll-mt-24 px-4 pb-20 sm:px-6 lg:px-8 lg:pb-28">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-16">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Questions, answered</p>
+            <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] sm:text-4xl">Accountability without giving up control.</h2>
+            <p className="mt-4 max-w-lg text-sm font-medium leading-6 text-slate-600 dark:text-slate-400">GoalCircle is designed around intentional sharing. You decide what to share, who sees it, and when a goal stays private.</p>
+            <Link href="/privacy" className="mt-5 inline-flex items-center gap-2 text-sm font-black text-amber-600 hover:text-amber-500 dark:text-amber-400">Read our privacy approach <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+          <div className="space-y-3">
+            {faqs.map(([question, answer]) => (
+              <details key={question} className="group rounded-2xl border border-slate-200 bg-white p-5 open:border-amber-500/40 dark:border-slate-800 dark:bg-[#101b2d]">
+                <summary className="cursor-pointer list-none pr-8 text-sm font-black marker:hidden">{question}<span className="float-right text-lg font-medium text-amber-500 transition group-open:rotate-45">+</span></summary>
+                <p className="mt-3 pr-6 text-sm font-medium leading-6 text-slate-600 dark:text-slate-400">{answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="px-4 pb-20 sm:px-6 lg:px-8 lg:pb-28">
         <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] bg-slate-950 px-6 py-14 text-center text-white shadow-2xl sm:px-12 lg:py-20 dark:border dark:border-slate-800">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,.28),transparent_42%)]" />
@@ -216,7 +254,7 @@ export default function HomePage() {
             <h2 className="text-balance text-3xl font-black tracking-[-0.04em] sm:text-5xl">Your goal deserves more than good intentions.</h2>
             <p className="mx-auto mt-4 max-w-xl text-sm font-medium leading-6 text-slate-300 sm:text-base">Start small. Share the commitment. Show up again tomorrow.</p>
             <Link href="/login?mode=signup" className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-sm font-black text-slate-950 transition hover:-translate-y-0.5 hover:bg-amber-400">
-              Get started free <ArrowRight className="h-4 w-4" />
+              Create free account <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -226,7 +264,7 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
           <div className="flex items-center gap-2 text-sm font-black"><Target className="h-4 w-4 text-amber-500" /> GoalCircle</div>
           <p className="text-xs font-medium text-slate-500">Built for progress, accountability, and people who keep showing up.</p>
-          <Link href="/login" className="text-xs font-black text-amber-600 hover:text-amber-500 dark:text-amber-400">Sign in</Link>
+          <div className="flex items-center gap-4"><Link href="/privacy" className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white">Privacy</Link><Link href="/login" className="text-xs font-black text-amber-600 hover:text-amber-500 dark:text-amber-400">Sign in</Link></div>
         </div>
       </footer>
     </main>
