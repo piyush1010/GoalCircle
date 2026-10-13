@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Bell, Bolt, Check, Clock3, Flame, Hand, LockKeyhole, MessageCircle, Pencil, Plus, Share2, Target, Trash2, X } from 'lucide-react'
+import { Bell, Bolt, Check, Clock3, Flame, Hand, LockKeyhole, MessageCircle, MoreHorizontal, Pencil, Plus, Share2, Target, Trash2, UserCheck, UserPlus, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import ProfileAvatar from '@/components/ProfileAvatar'
 
@@ -58,6 +58,8 @@ export default function FeedPage() {
   const [hasMore, setHasMore] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [loadingComments, setLoadingComments] = useState<string | null>(null)
+  const [updatingFollowId, setUpdatingFollowId] = useState<string | null>(null)
+  const [openPostMenu, setOpenPostMenu] = useState<string | null>(null)
 
   const fetchPosts = useCallback(async (currentUserId: string, email: string | undefined, from: number) => {
     const postsResult = await supabase.from('posts').select('id,user_id,goal_id,caption,media_url,proof_type,visibility,minutes_logged,created_at,goals(title,current_streak)').order('created_at', { ascending: false }).range(from, from + PAGE_SIZE)
@@ -184,6 +186,23 @@ export default function FeedPage() {
     showToast(nudgeError ? (nudgeError.message.includes('already nudged') ? 'You already nudged this friend today.' : 'Nudge could not be sent.') : `Nudge sent to ${post.userName}`)
   }
 
+  const toggleSupport = async (post: FeedPost) => {
+    if (!userId || post.userId === userId || updatingFollowId) return
+    const nextFollowing = !post.isFollowing
+    setUpdatingFollowId(post.userId)
+    setPosts((current) => current.map((item) => item.userId === post.userId ? { ...item, isFollowing: nextFollowing } : item))
+    const result = nextFollowing
+      ? await supabase.from('follows').insert({ follower_id: userId, following_id: post.userId })
+      : await supabase.from('follows').delete().eq('follower_id', userId).eq('following_id', post.userId)
+    if (result.error) {
+      setPosts((current) => current.map((item) => item.userId === post.userId ? { ...item, isFollowing: post.isFollowing } : item))
+      showToast('Support status could not be updated.')
+    } else {
+      showToast(nextFollowing ? `You now support ${post.userName}` : `You no longer support ${post.userName}`)
+    }
+    setUpdatingFollowId(null)
+  }
+
   const saveCaption = async (post: FeedPost) => {
     const caption = editingCaption.trim()
     if (!userId || post.userId !== userId || !caption) return
@@ -196,7 +215,7 @@ export default function FeedPage() {
     if (!userId || post.userId !== userId || !window.confirm('Delete this progress post? This cannot be undone.')) return
     const { error: deleteError } = await supabase.from('posts').delete().eq('id', post.id).eq('user_id', userId)
     if (deleteError) { showToast('Post could not be deleted.'); return }
-    setPosts((current) => current.filter((item) => item.id !== post.id)); showToast('Post deleted')
+    setPosts((current) => current.filter((item) => item.id !== post.id)); setOpenPostMenu(null); showToast('Post deleted')
   }
 
   return (
@@ -212,7 +231,7 @@ export default function FeedPage() {
         {!loading && error && <div className="rounded-3xl border border-rose-200 bg-white p-7 text-center dark:border-rose-900/60 dark:bg-[#101b2d]"><Target className="mx-auto mb-3 h-7 w-7 text-rose-500" /><p className="text-sm font-black">Feed unavailable</p><p className="mt-1 text-xs text-slate-500">{error}</p><button onClick={() => void loadFeed()} className="mt-4 rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-slate-950">Retry</button></div>}
         {!loading && !error && displayedPosts.length === 0 && <div className="rounded-3xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700"><Target className="mx-auto mb-3 h-8 w-8 text-amber-500" /><h2 className="font-black">No check-ins here yet</h2><p className="mb-4 mt-1 text-xs text-slate-500">Be the first to share real progress.</p><Link href="/check-in" className="inline-flex rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-slate-950">Post a check-in</Link></div>}
         {displayedPosts.map((post) => <article key={post.id} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
-          <div className="flex items-center justify-between p-4"><Link href={`/u/${post.username}`} className="flex min-w-0 items-center gap-3"><ProfileAvatar value={post.avatarUrl} name={post.userName} size={40} className="rounded-full" /><div className="min-w-0"><p className="truncate text-xs font-black">{post.userName}</p><p className="truncate text-[10px] text-slate-500">@{post.username}</p></div></Link><div className="flex items-center gap-1">{post.userId === userId && <><button onClick={() => { setEditingPost(post.id); setEditingCaption(post.caption) }} aria-label="Edit caption" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-amber-500 dark:hover:bg-slate-800"><Pencil className="h-3.5 w-3.5" /></button><button onClick={() => void deletePost(post)} aria-label="Delete post" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30"><Trash2 className="h-3.5 w-3.5" /></button></>}<span className="ml-1 text-[10px] font-semibold text-slate-400">{relativeTime(post.createdAt)}</span></div></div>
+          <div className="flex items-center justify-between gap-3 p-4"><Link href={`/u/${post.username}`} className="flex min-w-0 items-center gap-3"><ProfileAvatar value={post.avatarUrl} name={post.userName} size={40} className="rounded-full" /><div className="min-w-0"><p className="truncate text-xs font-black">{post.userName}</p><p className="truncate text-[10px] text-slate-500">@{post.username}</p></div></Link><div className="flex items-center gap-1">{post.userId !== userId && <button onClick={() => void toggleSupport(post)} disabled={updatingFollowId === post.userId} className={`mr-1 inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-black transition disabled:opacity-50 ${post.isFollowing ? 'border border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' : 'bg-amber-500 text-slate-950'}`}>{post.isFollowing ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}{post.isFollowing ? 'Supporting' : 'Support'}</button>}{post.userId === userId && <div className="relative"><button onClick={() => setOpenPostMenu((current) => current === post.id ? null : post.id)} aria-label="Manage post" aria-expanded={openPostMenu === post.id} className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><MoreHorizontal className="h-4 w-4" /></button>{openPostMenu === post.id && <div className="absolute right-0 top-9 z-20 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-700 dark:bg-slate-900"><button onClick={() => { setEditingPost(post.id); setEditingCaption(post.caption); setOpenPostMenu(null) }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800"><Pencil className="h-3.5 w-3.5 text-amber-500" />Edit caption</button><button onClick={() => void deletePost(post)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30"><Trash2 className="h-3.5 w-3.5" />Delete post</button></div>}</div>}<span className="ml-1 text-[10px] font-semibold text-slate-400">{relativeTime(post.createdAt)}</span></div></div>
           <div className="mx-4 mb-3 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-[#07101f]"><span className="truncate text-xs font-bold"><Target className="mr-1.5 inline h-3.5 w-3.5 text-amber-500" />{post.goalTitle}</span><span className="flex shrink-0 items-center gap-2">{post.visibility === 'private' && <LockKeyhole className="h-3 w-3 text-slate-400" aria-label="Private post" />}{post.streak > 0 && <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400"><Flame className="h-3 w-3" />{post.streak}d</span>}</span></div>
           {post.mediaUrl && (post.mediaType === 'video' ? <div className="bg-slate-950"><video src={post.mediaUrl} controls preload="none" playsInline className="mx-auto max-h-[70vh] w-full object-contain" /></div> : <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-950"><Image src={post.mediaUrl} alt="Progress proof" fill loading="lazy" quality={72} sizes="(max-width: 640px) 100vw, 576px" className="object-cover" /></div>)}
           <div className="p-4">{post.minutes != null && <div className="mb-2 inline-flex items-center gap-1 rounded-lg bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-700 dark:text-amber-300"><Clock3 className="h-3 w-3" />{post.minutes} focused minutes</div>}{editingPost === post.id ? <div className="flex gap-2"><input autoFocus value={editingCaption} onChange={(event) => setEditingCaption(event.target.value)} maxLength={500} className="min-w-0 flex-1 rounded-xl border border-amber-500 bg-slate-50 px-3 py-2 text-sm outline-none dark:bg-[#07101f]" /><button onClick={() => void saveCaption(post)} aria-label="Save caption" className="grid h-10 w-10 place-items-center rounded-xl bg-amber-500 text-slate-950"><Check className="h-4 w-4" /></button><button onClick={() => setEditingPost(null)} aria-label="Cancel editing" className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 dark:border-slate-700"><X className="h-4 w-4" /></button></div> : <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">{post.caption}</p>}
