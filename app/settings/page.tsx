@@ -6,6 +6,7 @@ import { useTheme, type Theme } from '@/components/ThemeProvider'
 import AvatarEditor from '@/components/AvatarEditor'
 import { supabase } from '@/utils/supabase'
 import { Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, UserRound } from 'lucide-react'
+import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -31,7 +32,7 @@ export default function SettingsPage() {
     if (typeof window === 'undefined') return '/dashboard'
     return localStorage.getItem('defaultLandingPage') || '/dashboard'
   })
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [reminderTime, setReminderTime] = useState('20:00')
   const [isPublicProfile, setIsPublicProfile] = useState(true)
 
@@ -68,6 +69,15 @@ export default function SettingsPage() {
     fetchProfileData()
   }, [])
 
+  useEffect(() => {
+    const reminderPreferences = readReminderPreferences()
+    const loadPreferences = window.setTimeout(() => {
+      setNotificationsEnabled(reminderPreferences.enabled)
+      setReminderTime(reminderPreferences.time)
+    }, 0)
+    return () => window.clearTimeout(loadPreferences)
+  }, [])
+
   const handleThemeChange = (mode: Theme) => {
     setTheme(mode)
   }
@@ -86,6 +96,34 @@ export default function SettingsPage() {
   const handleLandingPageChange = (route: string) => {
     setDefaultLandingPage(route)
     localStorage.setItem('defaultLandingPage', route)
+  }
+
+  const handleNotificationsToggle = async () => {
+    if (notificationsEnabled) {
+      setNotificationsEnabled(false)
+      saveReminderPreferences({ enabled: false, time: reminderTime })
+      setSaveMessage('Daily reminder turned off.')
+      return
+    }
+
+    if (!('Notification' in window)) {
+      setSaveMessage('Notifications are not supported by this browser.')
+      return
+    }
+    const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission()
+    if (permission !== 'granted') {
+      setSaveMessage('Allow notifications in your browser to use reminders.')
+      return
+    }
+    setNotificationsEnabled(true)
+    saveReminderPreferences({ enabled: true, time: reminderTime })
+    setSaveMessage(`Daily reminder set for ${reminderTime}.`)
+  }
+
+  const handleReminderTimeChange = (time: string) => {
+    setReminderTime(time)
+    saveReminderPreferences({ enabled: notificationsEnabled, time })
+    if (notificationsEnabled) setSaveMessage(`Reminder time updated to ${time}.`)
   }
 
   // Save Settings to Supabase
@@ -295,12 +333,14 @@ export default function SettingsPage() {
 
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-xs font-bold text-slate-900 dark:text-white">Push Notifications</h3>
-            <p className="text-[10px] text-slate-400">Streak saver nudges & activity alerts</p>
+            <h3 className="text-xs font-bold text-slate-900 dark:text-white">Daily browser reminder</h3>
+            <p className="text-[10px] text-slate-400">A streak-saver prompt at your chosen time</p>
           </div>
           <button
             type="button"
-            onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+            onClick={() => void handleNotificationsToggle()}
+            aria-pressed={notificationsEnabled}
+            aria-label={notificationsEnabled ? 'Turn off daily reminders' : 'Turn on daily reminders'}
             className={`w-11 h-6 rounded-full transition-colors relative ${
               notificationsEnabled ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'
             }`}
@@ -319,11 +359,12 @@ export default function SettingsPage() {
             <input
               type="time"
               value={reminderTime}
-              onChange={(e) => setReminderTime(e.target.value)}
+              onChange={(e) => handleReminderTimeChange(e.target.value)}
               className="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
             />
           </div>
         )}
+        <p className="text-[10px] leading-relaxed text-slate-400">You will receive one browser reminder after this time while GoalCircle is open. Reliable background reminders will arrive with the installed-app release.</p>
       </div>
 
       {/* SECTION 4: PRIVACY & DATA */}

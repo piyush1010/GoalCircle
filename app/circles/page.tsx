@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BookOpen, BriefcaseBusiness, Dumbbell, Globe2, Plus, Repeat2, Target, Users, X, type LucideIcon } from 'lucide-react'
+import { BookOpen, BriefcaseBusiness, Dumbbell, Globe2, LogOut, Plus, Repeat2, Target, Trash2, Users, X, type LucideIcon } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 
 type Category = 'all' | 'work' | 'fitness' | 'learning' | 'habits'
@@ -53,12 +53,23 @@ export default function CirclesPage() {
 
   const toggleMembership = async (circle: CircleView) => {
     if (!userId || circle.owned) return
+    if (circle.joined && !window.confirm(`Leave “${circle.name}”? You can join again later if the circle is public.`)) return
     setBusyId(circle.id); setError(null)
     const result = circle.joined
       ? await supabase.from('circle_memberships').delete().eq('circle_id', circle.id).eq('user_id', userId)
       : await supabase.from('circle_memberships').insert({ circle_id: circle.id, user_id: userId, role: 'member' })
     if (result.error) setError('Your membership change could not be saved.')
     else setCircles((items) => items.map((item) => item.id === circle.id ? { ...item, joined: !circle.joined, memberCount: Math.max(1, item.memberCount + (circle.joined ? -1 : 1)) } : item))
+    setBusyId(null)
+  }
+
+  const deleteCircle = async (circle: CircleView) => {
+    if (!userId || !circle.owned) return
+    if (!window.confirm(`Delete “${circle.name}” for every member? This cannot be undone.`)) return
+    setBusyId(circle.id); setError(null)
+    const { error: deleteError } = await supabase.from('circles').delete().eq('id', circle.id).eq('owner_id', userId)
+    if (deleteError) setError('The circle could not be deleted.')
+    else setCircles((items) => items.filter((item) => item.id !== circle.id))
     setBusyId(null)
   }
 
@@ -81,7 +92,7 @@ export default function CirclesPage() {
     <div className="space-y-3">
       {loading && [1, 2].map((item) => <div key={item} className="h-36 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" />)}
       {!loading && displayed.length === 0 && <div className="rounded-3xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700"><Users className="mx-auto mb-3 h-8 w-8 text-amber-500" /><h2 className="font-black">{tab === 'my' ? 'No circles joined yet' : 'No circles to discover yet'}</h2><p className="mt-1 text-xs text-slate-500">{tab === 'my' ? 'Discover a group or create the first one.' : 'Create the first real accountability circle.'}</p></div>}
-      {displayed.map((circle) => <article key={circle.id} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-[#101b2d]"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 gap-3"><div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><CategoryIcon category={circle.category} className="h-5 w-5" /></div><div className="min-w-0"><h2 className="truncate text-sm font-black">{circle.name}</h2><p className="mt-0.5 text-[10px] font-bold text-slate-400">{categories.find((c) => c.id === circle.category)?.label} · {circle.memberCount} {circle.memberCount === 1 ? 'member' : 'members'}</p></div></div><button onClick={() => void toggleMembership(circle)} disabled={circle.owned || busyId === circle.id} className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-black disabled:opacity-60 ${circle.joined ? 'border border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' : 'bg-amber-500 text-slate-950'}`}>{circle.owned ? 'Owner' : busyId === circle.id ? 'Saving…' : circle.joined ? 'Joined' : 'Join'}</button></div>{circle.description && <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{circle.description}</p>}</article>)}
+      {displayed.map((circle) => <article key={circle.id} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-[#101b2d]"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 gap-3"><div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><CategoryIcon category={circle.category} className="h-5 w-5" /></div><div className="min-w-0"><h2 className="truncate text-sm font-black">{circle.name}</h2><p className="mt-0.5 text-[10px] font-bold text-slate-400">{categories.find((c) => c.id === circle.category)?.label} · {circle.memberCount} {circle.memberCount === 1 ? 'member' : 'members'}</p></div></div><div className="flex shrink-0 gap-1.5">{circle.owned ? <button onClick={() => void deleteCircle(circle)} disabled={busyId === circle.id} className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-black text-rose-600 disabled:opacity-60 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-300"><Trash2 className="h-3.5 w-3.5" />{busyId === circle.id ? 'Deleting…' : 'Delete'}</button> : <button onClick={() => void toggleMembership(circle)} disabled={busyId === circle.id} className={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-black disabled:opacity-60 ${circle.joined ? 'border border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' : 'bg-amber-500 text-slate-950'}`}>{circle.joined && <LogOut className="h-3.5 w-3.5" />}{busyId === circle.id ? 'Saving…' : circle.joined ? 'Leave' : 'Join'}</button>}</div></div>{circle.description && <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{circle.description}</p>}</article>)}
     </div>
     {showCreate && <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/75 p-4 backdrop-blur-sm"><div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-[#101b2d]"><div className="mb-4 flex items-center justify-between"><h2 className="font-black">Create a circle</h2><button onClick={() => setShowCreate(false)} aria-label="Close"><X className="h-5 w-5" /></button></div><form onSubmit={createCircle} className="space-y-3"><label className="block text-[10px] font-black uppercase text-slate-500">Name<input required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} placeholder="UPSC daily sprints" className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold normal-case dark:border-slate-700 dark:bg-[#07101f]" /></label><label className="block text-[10px] font-black uppercase text-slate-500">Category<select value={newCategory} onChange={(e) => setNewCategory(e.target.value as Exclude<Category, 'all'>)} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm normal-case dark:border-slate-700 dark:bg-[#07101f]">{categories.filter((c) => c.id !== 'all').map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select></label><label className="block text-[10px] font-black uppercase text-slate-500">Description<textarea rows={3} maxLength={300} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What will members accomplish together?" className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm normal-case dark:border-slate-700 dark:bg-[#07101f]" /></label><button disabled={busyId === 'create'} className="w-full rounded-xl bg-amber-500 py-3 text-sm font-black text-slate-950 disabled:opacity-60">{busyId === 'create' ? 'Creating…' : 'Create circle'}</button></form></div></div>}
   </main>
