@@ -103,19 +103,19 @@ export default function HomePage() {
       <section className="relative px-4 pb-20 pt-14 sm:px-6 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
         <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
           <div className="max-w-3xl">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-800 shadow-sm dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
+            <div className="landing-enter landing-delay-1 mb-6 inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-800 shadow-sm dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
               <Sparkles className="h-3.5 w-3.5" />
               Social accountability, built around progress
             </div>
-            <h1 className="text-balance text-5xl font-black leading-[0.98] tracking-[-0.055em] sm:text-6xl lg:text-7xl">
+            <h1 className="landing-enter landing-delay-2 text-balance text-5xl font-black leading-[0.98] tracking-[-0.055em] sm:text-6xl lg:text-7xl">
               Goals become real when you{' '}
               <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-400 bg-clip-text text-transparent">show up.</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-pretty text-base font-medium leading-7 text-slate-600 sm:text-lg dark:text-slate-300">
+            <p className="landing-enter landing-delay-3 mt-6 max-w-2xl text-pretty text-base font-medium leading-7 text-slate-600 sm:text-lg dark:text-slate-300">
               GoalCircle is a social home for meaningful goals. Make a commitment, share daily proof, and stay accountable with friends who want to see you win.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="landing-enter landing-delay-4 mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/login?mode=signup" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-sm font-black text-slate-950 shadow-xl shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-amber-400">
                 Start your first goal <ArrowRight className="h-4 w-4" />
               </Link>
@@ -124,16 +124,16 @@ export default function HomePage() {
               </a>
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+            <div className="landing-enter landing-delay-5 mt-8 flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold text-slate-500 dark:text-slate-400">
               <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> Free to get started</span>
               <span className="inline-flex items-center gap-1.5"><LockKeyhole className="h-4 w-4 text-emerald-500" /> Public, private, or circles</span>
               <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-emerald-500" /> Your progress, your control</span>
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[31rem]">
+          <div className="landing-enter landing-delay-3 relative mx-auto w-full max-w-[31rem]">
             <div className="absolute -inset-10 rounded-full bg-amber-400/15 blur-3xl" />
-            <div className="relative rotate-[1.5deg] rounded-[2.7rem] border border-slate-300/80 bg-slate-950 p-2.5 shadow-[0_35px_90px_-28px_rgba(15,23,42,0.55)] dark:border-slate-700">
+            <div className="landing-float relative rotate-[1.5deg] rounded-[2.7rem] border border-slate-300/80 bg-slate-950 p-2.5 shadow-[0_35px_90px_-28px_rgba(15,23,42,0.55)] dark:border-slate-700">
               <div className="overflow-hidden rounded-[2.15rem] bg-slate-50 dark:bg-[#0b1526]">
                 <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
                   <div><p className="flex items-center gap-1.5 text-sm font-black"><UsersRound className="h-4 w-4 text-amber-500" />Today&apos;s circle</p><p className="text-[10px] font-semibold text-slate-500">Proof over promises</p></div>
@@ -176,7 +176,7 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            <div className="absolute -bottom-5 -left-5 hidden items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:flex dark:border-slate-700 dark:bg-[#111e31]">
+            <div className="landing-float landing-float-delayed absolute -bottom-5 -left-5 hidden items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:flex dark:border-slate-700 dark:bg-[#111e31]">
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/10 text-emerald-500"><Check className="h-5 w-5" /></span>
               <div><p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Check-in complete</p><p className="text-xs font-black">Momentum protected</p></div>
             </div>
@@ -185,7 +185,7 @@ export default function HomePage() {
       </section>
 
       <section className="border-y border-slate-200/80 bg-white/70 py-6 dark:border-slate-800 dark:bg-slate-900/30">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-4 text-xs font-black text-slate-500 dark:text-slate-400">
+        <div className="landing-reveal mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-4 text-xs font-black text-slate-500 dark:text-slate-400">
           <span className="inline-flex items-center gap-2"><Globe2 className="h-4 w-4 text-amber-500" /> Announce publicly</span>
           <span className="inline-flex items-center gap-2"><UsersRound className="h-4 w-4 text-amber-500" /> Share with a circle</span>
           <span className="inline-flex items-center gap-2"><LockKeyhole className="h-4 w-4 text-amber-500" /> Keep it private</span>
@@ -195,15 +195,15 @@ export default function HomePage() {
 
       <section id="how-it-works" className="px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
         <div className="mx-auto max-w-7xl">
-          <div className="mx-auto max-w-2xl text-center">
+          <div className="landing-reveal mx-auto max-w-2xl text-center">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">How it works</p>
-            <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] sm:text-5xl">A simple loop that keeps you moving.</h2>
+            <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] sm:text-5xl">A simple loop that keeps you <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-400 bg-clip-text text-transparent">moving.</span></h2>
             <p className="mt-4 text-sm font-medium leading-6 text-slate-600 dark:text-slate-400">No complicated system to maintain. Just a meaningful goal, honest progress, and the right people beside you.</p>
           </div>
 
           <div className="mt-12 grid gap-4 lg:grid-cols-3">
             {steps.map(([number, title, copy]) => (
-              <article key={number} className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-[#101b2d]">
+              <article key={number} className="landing-reveal group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-500/30 hover:shadow-xl dark:border-slate-800 dark:bg-[#101b2d]">
                 <div className="mb-8 flex items-center justify-between"><span className="text-4xl font-black text-amber-500/35">{number}</span><ChevronRight className="h-5 w-5 text-slate-300 transition group-hover:translate-x-1 group-hover:text-amber-500 dark:text-slate-700" /></div>
                 <h3 className="text-lg font-black">{title}</h3>
                 <p className="mt-2 text-sm font-medium leading-6 text-slate-600 dark:text-slate-400">{copy}</p>
@@ -214,10 +214,10 @@ export default function HomePage() {
       </section>
 
       <section id="features" className="scroll-mt-24 px-4 pb-20 sm:px-6 lg:px-8 lg:pb-28">
-        <div className="mx-auto max-w-7xl rounded-[2rem] border border-slate-200 bg-slate-100/80 p-5 sm:p-8 lg:p-12 dark:border-slate-800 dark:bg-slate-900/45">
+        <div className="landing-reveal mx-auto max-w-7xl rounded-[2rem] border border-slate-200 bg-slate-100/80 p-5 sm:p-8 lg:p-12 dark:border-slate-800 dark:bg-slate-900/45">
           <div className="grid gap-4 sm:grid-cols-2">
             {features.map(({ icon: Icon, title, copy }) => (
-              <article key={title} className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-[#101b2d]">
+              <article key={title} className="group rounded-3xl border border-slate-200 bg-white p-6 transition duration-300 hover:-translate-y-1 hover:border-amber-500/30 hover:shadow-xl dark:border-slate-700 dark:bg-[#101b2d]">
                 <span className="mb-5 grid h-11 w-11 place-items-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><Icon className="h-5 w-5" /></span>
                 <h3 className="text-base font-black">{title}</h3>
                 <p className="mt-2 text-sm font-medium leading-6 text-slate-600 dark:text-slate-400">{copy}</p>
@@ -229,13 +229,13 @@ export default function HomePage() {
 
       <section id="faq" className="scroll-mt-24 px-4 pb-20 sm:px-6 lg:px-8 lg:pb-28">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-16">
-          <div>
+          <div className="landing-reveal">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Questions, answered</p>
             <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] sm:text-4xl">Accountability without giving up control.</h2>
             <p className="mt-4 max-w-lg text-sm font-medium leading-6 text-slate-600 dark:text-slate-400">GoalCircle is designed around intentional sharing. You decide what to share, who sees it, and when a goal stays private.</p>
             <Link href="/privacy" className="mt-5 inline-flex items-center gap-2 text-sm font-black text-amber-600 hover:text-amber-500 dark:text-amber-400">Read our privacy approach <ArrowRight className="h-4 w-4" /></Link>
           </div>
-          <div className="space-y-3">
+          <div className="landing-reveal space-y-3">
             {faqs.map(([question, answer]) => (
               <details key={question} className="group rounded-2xl border border-slate-200 bg-white p-5 open:border-amber-500/40 dark:border-slate-800 dark:bg-[#101b2d]">
                 <summary className="cursor-pointer list-none pr-8 text-sm font-black marker:hidden">{question}<span className="float-right text-lg font-medium text-amber-500 transition group-open:rotate-45">+</span></summary>
@@ -247,7 +247,7 @@ export default function HomePage() {
       </section>
 
       <section className="px-4 pb-20 sm:px-6 lg:px-8 lg:pb-28">
-        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] bg-slate-950 px-6 py-14 text-center text-white shadow-2xl sm:px-12 lg:py-20 dark:border dark:border-slate-800">
+        <div className="landing-reveal relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] bg-slate-950 px-6 py-14 text-center text-white shadow-2xl sm:px-12 lg:py-20 dark:border dark:border-slate-800">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,.28),transparent_42%)]" />
           <div className="relative">
             <span className="mx-auto mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-amber-500 text-slate-950"><Target className="h-6 w-6" /></span>
