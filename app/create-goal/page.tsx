@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import {
   AlignLeft,
   ArrowLeft,
+  Camera,
   CalendarDays,
   Film,
   Globe2,
@@ -306,19 +307,21 @@ export default function CreateGoalPage() {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex cursor-pointer flex-col items-center rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-7 text-center transition hover:border-amber-500 dark:border-slate-700 dark:bg-[#101b2d]">
-                    {postFormat === 'video' ? <Film className="mb-2 h-6 w-6 text-amber-500" /> : <ImagePlus className="mb-2 h-6 w-6 text-amber-500" />}
-                    <span className="text-xs font-black">{postFormat === 'video' ? 'Choose a short reel' : 'Choose a photo'}</span>
-                    <span className="mt-1 text-[10px] text-slate-500">
-                      {postFormat === 'video' ? 'MP4, MOV or WebM · up to 30 seconds' : 'JPG, PNG or WebP'} · 25 MB maximum
-                    </span>
-                    <input
-                      type="file"
-                      accept={postFormat === 'video' ? 'video/mp4,video/quicktime,video/webm' : 'image/jpeg,image/png,image/webp'}
-                      className="sr-only"
-                      onChange={(event) => void chooseMedia(event.target.files?.[0])}
-                    />
-                  </label>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="flex cursor-pointer flex-col items-center rounded-2xl border border-slate-200 bg-white px-4 py-5 text-center transition hover:border-amber-500 dark:border-slate-700 dark:bg-[#101b2d]">
+                        <Camera className="mb-2 h-6 w-6 text-amber-500" />
+                        <span className="text-xs font-black">{postFormat === 'video' ? 'Record a clip' : 'Take a photo'}</span>
+                        <input type="file" accept={postFormat === 'video' ? 'video/*' : 'image/*'} capture="environment" className="sr-only" onChange={(event) => void chooseMedia(event.target.files?.[0])} />
+                      </label>
+                      <label className="flex cursor-pointer flex-col items-center rounded-2xl border border-slate-200 bg-white px-4 py-5 text-center transition hover:border-amber-500 dark:border-slate-700 dark:bg-[#101b2d]">
+                        {postFormat === 'video' ? <Film className="mb-2 h-6 w-6 text-amber-500" /> : <ImagePlus className="mb-2 h-6 w-6 text-amber-500" />}
+                        <span className="text-xs font-black">Choose from library</span>
+                        <input type="file" accept={postFormat === 'video' ? 'video/mp4,video/quicktime,video/webm' : 'image/jpeg,image/png,image/webp'} className="sr-only" onChange={(event) => void chooseMedia(event.target.files?.[0])} />
+                      </label>
+                    </div>
+                    <p className="text-center text-[10px] text-slate-500">{postFormat === 'video' ? 'Clips up to 30 seconds' : 'JPG, PNG or WebP'} · 25 MB maximum</p>
+                  </div>
                 )}
               </div>
             )}

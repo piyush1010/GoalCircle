@@ -30,6 +30,18 @@ interface Post {
   created_at: string
 }
 
+const goalMediaPath = (value: string | null | undefined) => {
+  if (!value) return null
+  try {
+    const marker = '/storage/v1/object/public/goal-media/'
+    const pathname = new URL(value).pathname
+    const markerIndex = pathname.indexOf(marker)
+    return markerIndex === -1 ? null : decodeURIComponent(pathname.slice(markerIndex + marker.length))
+  } catch {
+    return null
+  }
+}
+
 export default function GoalDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -44,6 +56,7 @@ export default function GoalDetailPage() {
   const [editTitle, setEditTitle] = useState('')
   const [editTargetDate, setEditTargetDate] = useState('')
   const [message, setMessage] = useState<string | null>(null)
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
 
   const loadGoalDetails = useCallback(async () => {
     try {
@@ -125,6 +138,32 @@ export default function GoalDetailPage() {
     setUpdating(false)
     if (error) { setMessage(error.message || 'Goal could not be paused.'); return }
     setGoal({ ...goal, status: 'paused', pause_count: 1, pause_until: String(data) }); setMessage('Goal paused for seven days. Take care of yourself.')
+  }
+
+  const deleteProgressPost = async (post: Post) => {
+    if (!goal || goal.user_id !== userId || !window.confirm('Delete this progress update? This cannot be undone.')) return
+    setDeletingPostId(post.id)
+    setMessage(null)
+
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', post.id)
+      .eq('user_id', userId)
+
+    if (error) {
+      setMessage('Progress update could not be deleted.')
+      setDeletingPostId(null)
+      return
+    }
+
+    setPosts((current) => current.filter((item) => item.id !== post.id))
+    const mediaPaths = [post.media_url, ...(post.media_urls || [])]
+      .map(goalMediaPath)
+      .filter((path): path is string => Boolean(path?.startsWith(`${userId}/`)))
+    if (mediaPaths.length > 0) await supabase.storage.from('goal-media').remove(mediaPaths)
+    setDeletingPostId(null)
+    setMessage('Progress update deleted')
   }
 
   if (loading) {
@@ -217,9 +256,12 @@ export default function GoalDetailPage() {
         ) : (
           posts.map(p => (
             <div key={p.id} className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl p-4 space-y-2">
-              <span className="text-[10px] font-mono text-slate-500">
-                {new Date(p.created_at).toLocaleDateString()}
-              </span>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[10px] font-mono text-slate-500">
+                  {new Date(p.created_at).toLocaleDateString()}
+                </span>
+                {isOwner && <button type="button" onClick={() => void deleteProgressPost(p)} disabled={deletingPostId === p.id} aria-label="Delete progress update" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:opacity-50 dark:hover:bg-rose-950/30"><Trash2 className="h-3.5 w-3.5" /></button>}
+              </div>
               {p.caption && <p className="text-xs text-slate-700 dark:text-slate-200">{p.caption}</p>}
               {p.media_url && (p.proof_type === 'video' ? <video src={p.media_url} controls preload="metadata" playsInline className="max-h-96 w-full rounded-xl bg-slate-950 object-contain" /> : <div className="relative h-44 overflow-hidden rounded-xl"><Image src={p.media_url} alt="Goal proof" fill unoptimized className="object-cover" /></div>)}
             </div>
