@@ -2,15 +2,16 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTheme, type Theme } from '@/components/ThemeProvider'
+import { useDisplayPreferences, useTheme, type Theme } from '@/components/ThemeProvider'
 import AvatarEditor from '@/components/AvatarEditor'
 import { supabase } from '@/utils/supabase'
-import { Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, UserRound } from 'lucide-react'
+import { Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, Type, UserRound } from 'lucide-react'
 import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
 
 export default function SettingsPage() {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
+  const { fontSize, setFontSize } = useDisplayPreferences()
   const [onboardingNext] = useState(() => {
     if (typeof window === 'undefined') return null
     const params = new URLSearchParams(window.location.search)
@@ -296,6 +297,31 @@ export default function SettingsPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+          <label className="mb-2 flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+            <Type className="h-3.5 w-3.5" /> Text Size
+          </label>
+          <div className="grid grid-cols-3 gap-2" aria-label="Choose text size">
+            {([
+              { value: 'small' as const, label: 'Small', sample: 'A' },
+              { value: 'standard' as const, label: 'Standard', sample: 'A' },
+              { value: 'large' as const, label: 'Large', sample: 'A' },
+            ]).map((option) => (
+              <button
+                type="button"
+                key={option.value}
+                onClick={() => setFontSize(option.value)}
+                aria-pressed={fontSize === option.value}
+                className={`rounded-xl border px-2 py-2.5 text-center transition ${fontSize === option.value ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400'}`}
+              >
+                <span className={`block font-black ${option.value === 'small' ? 'text-xs' : option.value === 'large' ? 'text-xl' : 'text-base'}`}>{option.sample}</span>
+                <span className="mt-0.5 block text-[10px] font-bold">{option.label}</span>
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[10px] leading-4 text-slate-400">Changes apply across GoalCircle and stay on this device.</p>
         </div>
 
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800">

@@ -6,6 +6,8 @@ import { supabase } from '@/utils/supabase'
 import type { User } from '@supabase/supabase-js'
 import ProfileAvatar from '@/components/ProfileAvatar'
 import QuickStartGuide from '@/components/QuickStartGuide'
+import QuickActionsWidget from '@/components/QuickActionsWidget'
+import TodoWidget from '@/components/TodoWidget'
 import { CircleHelp, Film, Flame, Settings as SettingsIcon, Sparkles } from 'lucide-react'
 
 interface DayLog {
@@ -279,6 +281,10 @@ export default function ProfilePage() {
           Edit Profile
         </button>
       </div>
+
+      <QuickActionsWidget />
+
+      {user && <TodoWidget userId={user.id} />}
 
       {/* CONSISTENCY MATRIX (LAST 30 DAYS WITH TOOLTIPS & LABELS) */}
       <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
