@@ -14,7 +14,7 @@ function OAuthCallback() {
     const requestedNext = searchParams.get('next')
     return requestedNext?.startsWith('/') && !requestedNext.startsWith('//')
       ? requestedNext
-      : '/feed'
+      : '/profile'
   }, [searchParams])
 
   useEffect(() => {

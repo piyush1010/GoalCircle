@@ -28,10 +28,6 @@ export default function SettingsPage() {
   const [userId, setUserId] = useState<string | null>(null)
 
   // Preference & App States
-  const [defaultLandingPage, setDefaultLandingPage] = useState(() => {
-    if (typeof window === 'undefined') return '/dashboard'
-    return localStorage.getItem('defaultLandingPage') || '/dashboard'
-  })
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [reminderTime, setReminderTime] = useState('20:00')
   const [isPublicProfile, setIsPublicProfile] = useState(true)
@@ -90,12 +86,6 @@ export default function SettingsPage() {
       supabase.auth.updateUser({ data: { avatar_url: nextAvatar } }),
     ])
     setSaveMessage(profileError || authError ? 'Avatar could not be saved.' : 'Profile picture updated!')
-  }
-
-  // Save Landing Preference
-  const handleLandingPageChange = (route: string) => {
-    setDefaultLandingPage(route)
-    localStorage.setItem('defaultLandingPage', route)
   }
 
   const handleNotificationsToggle = async () => {
@@ -310,18 +300,15 @@ export default function SettingsPage() {
 
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-            Default View on Launch
+            View after sign-in
           </label>
-          <select
-            value={defaultLandingPage}
-            onChange={(e) => handleLandingPageChange(e.target.value)}
-            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
-          >
-            <option value="/dashboard">Dashboard (Matrix & Habits)</option>
-            <option value="/feed">Activity Feed</option>
-            <option value="/circles">Circles & Social</option>
-            <option value="/profile">Profile Page</option>
-          </select>
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-950">
+            <UserRound className="h-4 w-4 text-amber-500" />
+            <div>
+              <p className="text-xs font-black text-slate-900 dark:text-white">Profile Page</p>
+              <p className="text-[10px] text-slate-400">Your goals, streaks, and account overview</p>
+            </div>
+          </div>
         </div>
       </div>
 
