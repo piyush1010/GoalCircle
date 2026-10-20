@@ -149,6 +149,18 @@ export default function FeedPage() {
   }
 
   useEffect(() => { void Promise.resolve().then(loadFeed) }, [loadFeed])
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('published') !== 'goal') return
+    url.searchParams.delete('published')
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+    const showTimer = window.setTimeout(() => setToast('Your public goal is live'), 0)
+    const hideTimer = window.setTimeout(() => setToast(null), 2400)
+    return () => {
+      window.clearTimeout(showTimer)
+      window.clearTimeout(hideTimer)
+    }
+  }, [])
   const displayedPosts = useMemo(() => activeTab === 'circle' ? posts.filter((post) => post.isFollowing) : posts, [activeTab, posts])
 
   const showToast = (message: string) => { setToast(message); window.setTimeout(() => setToast(null), 1800) }

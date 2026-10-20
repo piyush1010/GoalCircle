@@ -2,15 +2,16 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTheme, type Theme } from '@/components/ThemeProvider'
+import { useDisplayPreferences, useTheme, type Theme } from '@/components/ThemeProvider'
 import AvatarEditor from '@/components/AvatarEditor'
 import { supabase } from '@/utils/supabase'
-import { Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, UserRound } from 'lucide-react'
+import { Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, Type, UserRound } from 'lucide-react'
 import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
 
 export default function SettingsPage() {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
+  const { fontSize, setFontSize } = useDisplayPreferences()
   const [onboardingNext] = useState(() => {
     if (typeof window === 'undefined') return null
     const params = new URLSearchParams(window.location.search)
@@ -28,10 +29,6 @@ export default function SettingsPage() {
   const [userId, setUserId] = useState<string | null>(null)
 
   // Preference & App States
-  const [defaultLandingPage, setDefaultLandingPage] = useState(() => {
-    if (typeof window === 'undefined') return '/dashboard'
-    return localStorage.getItem('defaultLandingPage') || '/dashboard'
-  })
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [reminderTime, setReminderTime] = useState('20:00')
   const [isPublicProfile, setIsPublicProfile] = useState(true)
@@ -90,12 +87,6 @@ export default function SettingsPage() {
       supabase.auth.updateUser({ data: { avatar_url: nextAvatar } }),
     ])
     setSaveMessage(profileError || authError ? 'Avatar could not be saved.' : 'Profile picture updated!')
-  }
-
-  // Save Landing Preference
-  const handleLandingPageChange = (route: string) => {
-    setDefaultLandingPage(route)
-    localStorage.setItem('defaultLandingPage', route)
   }
 
   const handleNotificationsToggle = async () => {
@@ -309,19 +300,41 @@ export default function SettingsPage() {
         </div>
 
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-            Default View on Launch
+          <label className="mb-2 flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+            <Type className="h-3.5 w-3.5" /> Text Size
           </label>
-          <select
-            value={defaultLandingPage}
-            onChange={(e) => handleLandingPageChange(e.target.value)}
-            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
-          >
-            <option value="/dashboard">Dashboard (Matrix & Habits)</option>
-            <option value="/feed">Activity Feed</option>
-            <option value="/circles">Circles & Social</option>
-            <option value="/profile">Profile Page</option>
-          </select>
+          <div className="grid grid-cols-3 gap-2" aria-label="Choose text size">
+            {([
+              { value: 'small' as const, label: 'Small', sample: 'A' },
+              { value: 'standard' as const, label: 'Standard', sample: 'A' },
+              { value: 'large' as const, label: 'Large', sample: 'A' },
+            ]).map((option) => (
+              <button
+                type="button"
+                key={option.value}
+                onClick={() => setFontSize(option.value)}
+                aria-pressed={fontSize === option.value}
+                className={`rounded-xl border px-2 py-2.5 text-center transition ${fontSize === option.value ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400'}`}
+              >
+                <span className={`block font-black ${option.value === 'small' ? 'text-xs' : option.value === 'large' ? 'text-xl' : 'text-base'}`}>{option.sample}</span>
+                <span className="mt-0.5 block text-[10px] font-bold">{option.label}</span>
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[10px] leading-4 text-slate-400">Changes apply across GoalCircle and stay on this device.</p>
+        </div>
+
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+            View after sign-in
+          </label>
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-950">
+            <UserRound className="h-4 w-4 text-amber-500" />
+            <div>
+              <p className="text-xs font-black text-slate-900 dark:text-white">Profile Page</p>
+              <p className="text-[10px] text-slate-400">Your goals, streaks, and account overview</p>
+            </div>
+          </div>
         </div>
       </div>
 

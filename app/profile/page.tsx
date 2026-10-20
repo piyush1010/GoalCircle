@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
 import type { User } from '@supabase/supabase-js'
 import ProfileAvatar from '@/components/ProfileAvatar'
-import { Film, Flame, Sparkles } from 'lucide-react'
+import QuickStartGuide from '@/components/QuickStartGuide'
+import QuickActionsWidget from '@/components/QuickActionsWidget'
+import TodoWidget from '@/components/TodoWidget'
+import { CircleHelp, Film, Flame, Settings as SettingsIcon, Sparkles } from 'lucide-react'
 
 interface DayLog {
   date: string
@@ -32,6 +35,7 @@ export default function ProfilePage() {
   const [fullName, setFullName] = useState('')
   const [handle, setHandle] = useState('')
   const [saving, setSaving] = useState(false)
+  const [showQuickGuide, setShowQuickGuide] = useState(false)
 
   // Memory Reels Dynamic Days
   const [daysRemainingInMonth, setDaysRemainingInMonth] = useState(0)
@@ -107,6 +111,10 @@ export default function ProfilePage() {
       setUser(currentUser)
 
       const userMeta = currentUser.user_metadata || {}
+      const guideStorageKey = `goalcircle.quick-guide.${currentUser.id}`
+      const forceGuide = new URLSearchParams(window.location.search).get('guide') === '1'
+      const hasSeenGuide = userMeta.goalcircle_quick_guide_seen === true || localStorage.getItem(guideStorageKey) === '1'
+      if (forceGuide || !hasSeenGuide) setShowQuickGuide(true)
       setFullName(userMeta.full_name || userMeta.name || currentUser.email?.split('@')[0] || 'User')
       setHandle(userMeta.handle || `@${currentUser.email?.split('@')[0] || 'member'}`)
 
@@ -169,6 +177,27 @@ export default function ProfilePage() {
     router.push('/login')
   }
 
+  const handleQuickGuideComplete = async () => {
+    if (!user) {
+      setShowQuickGuide(false)
+      return
+    }
+    localStorage.setItem(`goalcircle.quick-guide.${user.id}`, '1')
+    setShowQuickGuide(false)
+    setUser((current) => current ? ({
+      ...current,
+      user_metadata: {
+        ...current.user_metadata,
+        goalcircle_quick_guide_seen: true,
+      },
+    }) : current)
+    await supabase.auth.updateUser({
+      data: {
+        goalcircle_quick_guide_seen: true,
+      },
+    })
+  }
+
   // Helper for matrix color intensity
   const getIntensityClass = (minutes: number) => {
     if (minutes === 0) return 'bg-slate-100 border-slate-200 dark:bg-slate-800/80 dark:border-slate-800'
@@ -196,18 +225,28 @@ export default function ProfilePage() {
       {/* HEADER WITH SETTINGS BUTTON */}
       <div className="flex justify-between items-center pt-2">
         <h1 className="text-xl font-black tracking-wide">Profile</h1>
-        <button
-          onClick={() => router.push('/settings')}
-          className="p-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-2xl text-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-800 dark:text-slate-300 transition shadow-md flex items-center gap-1.5 text-xs font-bold"
-          title="Settings"
-        >
-          <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          <span className="text-[11px]">Settings</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowQuickGuide(true)}
+            className="grid h-9 w-9 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-md transition hover:border-amber-500 hover:text-amber-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-amber-400"
+            aria-label="Open quick guide"
+            title="Quick guide"
+          >
+            <CircleHelp className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => router.push('/settings')}
+            className="p-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-2xl text-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-800 dark:text-slate-300 transition shadow-md flex items-center gap-1.5 text-xs font-bold"
+            title="Settings"
+          >
+            <SettingsIcon className="h-4 w-4 text-amber-500" />
+            <span className="text-[11px]">Settings</span>
+          </button>
+        </div>
       </div>
+
+      <QuickStartGuide open={showQuickGuide} onComplete={() => void handleQuickGuideComplete()} />
 
       {/* USER CARD & STATS */}
       <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-5 shadow-xl">
@@ -242,6 +281,10 @@ export default function ProfilePage() {
           Edit Profile
         </button>
       </div>
+
+      <QuickActionsWidget />
+
+      {user && <TodoWidget userId={user.id} />}
 
       {/* CONSISTENCY MATRIX (LAST 30 DAYS WITH TOOLTIPS & LABELS) */}
       <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">

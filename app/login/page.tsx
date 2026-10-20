@@ -11,7 +11,7 @@ function AuthForm() {
   const requestedNext = searchParams.get('next')
   const nextPath = requestedNext?.startsWith('/') && !requestedNext.startsWith('//')
     ? requestedNext
-    : '/feed'
+    : '/profile'
 
   // Mode state: 'signin' or 'signup'
   const [mode, setMode] = useState<'signin' | 'signup'>(() =>
@@ -51,6 +51,7 @@ function AuthForm() {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
           data: {
             full_name: fullName || email.split('@')[0],
           },
@@ -62,7 +63,7 @@ function AuthForm() {
       } else if (data.user && !data.session) {
         setSuccessMsg('Account created! Check your email to confirm your account.')
       } else {
-        router.push(nextPath)
+        router.replace(nextPath)
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
@@ -73,7 +74,7 @@ function AuthForm() {
       if (error) {
         setErrorMsg(error.message)
       } else {
-        router.push(nextPath)
+        router.replace(nextPath)
       }
     }
 
