@@ -263,7 +263,7 @@ export default function GoalDetailPage() {
                 {isOwner && <button type="button" onClick={() => void deleteProgressPost(p)} disabled={deletingPostId === p.id} aria-label="Delete progress update" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:opacity-50 dark:hover:bg-rose-950/30"><Trash2 className="h-3.5 w-3.5" /></button>}
               </div>
               {p.caption && <p className="text-xs text-slate-700 dark:text-slate-200">{p.caption}</p>}
-              {p.media_url && (p.proof_type === 'video' ? <video src={p.media_url} controls preload="metadata" playsInline className="max-h-96 w-full rounded-xl bg-slate-950 object-contain" /> : <div className="relative h-44 overflow-hidden rounded-xl"><Image src={p.media_url} alt="Goal proof" fill unoptimized className="object-cover" /></div>)}
+              {p.media_url && (p.proof_type === 'video' ? <video src={p.media_url} controls preload="metadata" playsInline className="max-h-96 w-full rounded-xl bg-slate-950 object-contain" /> : <div className="relative h-44 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"><Image src={p.media_url} alt="Goal proof" fill unoptimized className="object-contain" /></div>)}
             </div>
           ))
         )}
