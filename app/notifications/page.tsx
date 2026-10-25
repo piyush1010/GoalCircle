@@ -3,20 +3,22 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Bell, Bolt, CheckCheck, Flame, Hand, HeartHandshake, MessageCircle, UsersRound } from 'lucide-react'
+import { Bell, Bolt, Check, CheckCheck, Flame, Hand, HeartHandshake, MessageCircle, UsersRound, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 
 interface NotificationItem {
   id: string
   recipient_id: string
   actor_id: string | null
-  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak'
+  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap'
   post_id: string | null
   circle_id: string | null
   message: string | null
   is_read: boolean
   created_at: string
 }
+
+interface PartnerRequest { id: string; requester_id: string; partner_id: string; status: string; created_at: string }
 
 const details = {
   boost: { icon: Bolt, title: 'Your progress was boosted', copy: 'sent encouragement on your latest update.' },
@@ -25,6 +27,9 @@ const details = {
   nudge: { icon: Hand, title: 'Friendly nudge', copy: 'nudged you to keep your momentum going.' },
   circle_invite: { icon: UsersRound, title: 'Circle invitation', copy: 'invited you to an accountability circle.' },
   streak: { icon: Flame, title: 'Streak milestone', copy: 'Your consistency is paying off.' },
+  accountability_invite: { icon: HeartHandshake, title: 'Accountability invitation', copy: 'invited you to become an accountability partner.' },
+  challenge_invite: { icon: UsersRound, title: 'Challenge invitation', copy: 'invited you to a circle challenge.' },
+  weekly_recap: { icon: CheckCheck, title: 'Weekly recap ready', copy: 'Your latest consistency recap is ready.' },
 }
 
 function NotificationIcon({ kind }: { kind: NotificationItem['kind'] }) {
@@ -44,6 +49,7 @@ export default function NotificationsPage() {
   const router = useRouter()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [actorNames, setActorNames] = useState<Record<string, string>>({})
+  const [partnerRequests, setPartnerRequests] = useState<PartnerRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -51,13 +57,17 @@ export default function NotificationsPage() {
     setLoading(true); setError(null)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) { router.replace('/login?next=/notifications'); return }
-    const { data, error: notificationsError } = await supabase.from('notifications').select('id,recipient_id,actor_id,kind,post_id,circle_id,message,is_read,created_at').order('created_at', { ascending: false }).limit(50)
+    const [{ data, error: notificationsError }, { data: requestData }] = await Promise.all([
+      supabase.from('notifications').select('id,recipient_id,actor_id,kind,post_id,circle_id,message,is_read,created_at').order('created_at', { ascending: false }).limit(50),
+      supabase.from('accountability_partners').select('id,requester_id,partner_id,status,created_at').eq('partner_id', session.user.id).eq('status', 'pending').order('created_at', { ascending: false }),
+    ])
     if (notificationsError) { setError('Notifications are not available in this preview yet.'); setLoading(false); return }
     const rows = (data || []) as NotificationItem[]
-    const actorIds = [...new Set(rows.flatMap((item) => item.actor_id ? [item.actor_id] : []))]
+    const requests = (requestData || []) as PartnerRequest[]
+    const actorIds = [...new Set([...rows.flatMap((item) => item.actor_id ? [item.actor_id] : []), ...requests.map((item) => item.requester_id)])]
     const { data: profiles } = actorIds.length ? await supabase.from('profiles').select('id,full_name,username').in('id', actorIds) : { data: [] }
     setActorNames(Object.fromEntries(((profiles || []) as Array<Record<string, unknown>>).map((profile) => [String(profile.id), String(profile.full_name || profile.username || 'A GoalCircle friend')])))
-    setNotifications(rows); setLoading(false)
+    setPartnerRequests(requests); setNotifications(rows); setLoading(false)
   }, [router])
 
   useEffect(() => { void Promise.resolve().then(loadNotifications) }, [loadNotifications])
@@ -67,6 +77,11 @@ export default function NotificationsPage() {
     if (!unreadIds.length) return
     const { error: updateError } = await supabase.from('notifications').update({ is_read: true }).in('id', unreadIds)
     if (!updateError) setNotifications((current) => current.map((item) => ({ ...item, is_read: true })))
+  }
+
+  const respondToPartnerRequest = async (request: PartnerRequest, status: 'accepted' | 'declined') => {
+    const { error: responseError } = await supabase.from('accountability_partners').update({ status, updated_at: new Date().toISOString() }).eq('id', request.id).eq('partner_id', request.partner_id)
+    if (!responseError) setPartnerRequests((current) => current.filter((item) => item.id !== request.id))
   }
 
   return (
@@ -94,7 +109,8 @@ export default function NotificationsPage() {
       <div className="space-y-3">
         {loading && [1, 2, 3].map((item) => <div key={item} className="h-24 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}
         {!loading && error && <div className="rounded-2xl border border-rose-300 bg-white p-6 text-center dark:border-rose-900 dark:bg-slate-900"><p className="text-sm font-black">Could not load notifications</p><p className="mt-1 text-xs text-slate-500">{error}</p><button onClick={() => void loadNotifications()} className="mt-4 rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-slate-950">Retry</button></div>}
-        {!loading && !error && notifications.length === 0 && <div className="rounded-3xl border border-dashed border-slate-300 p-9 text-center dark:border-slate-700"><Bell className="mx-auto mb-3 h-8 w-8 text-amber-500" /><h2 className="font-black">All quiet for now</h2><p className="mt-1 text-xs text-slate-500">Boosts, comments, follows, nudges, and circle invitations will appear here.</p></div>}
+        {!loading && partnerRequests.map((request) => <article key={request.id} className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 dark:bg-amber-500/10"><div className="flex items-start gap-3"><span className="rounded-xl bg-white p-2 dark:bg-slate-950"><HeartHandshake className="h-5 w-5 text-amber-500" /></span><div className="min-w-0 flex-1"><h3 className="text-xs font-black">Accountability invitation</h3><p className="mt-0.5 text-xs text-slate-500">{actorNames[request.requester_id] || 'A GoalCircle member'} wants to support your consistency.</p></div></div><div className="mt-3 grid grid-cols-2 gap-2"><button onClick={() => void respondToPartnerRequest(request, 'accepted')} className="inline-flex items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-xs font-black text-slate-950"><Check className="h-3.5 w-3.5" />Accept</button><button onClick={() => void respondToPartnerRequest(request, 'declined')} className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 py-2 text-xs font-black dark:border-slate-700"><X className="h-3.5 w-3.5" />Decline</button></div></article>)}
+        {!loading && !error && notifications.length === 0 && partnerRequests.length === 0 && <div className="rounded-3xl border border-dashed border-slate-300 p-9 text-center dark:border-slate-700"><Bell className="mx-auto mb-3 h-8 w-8 text-amber-500" /><h2 className="font-black">All quiet for now</h2><p className="mt-1 text-xs text-slate-500">Boosts, comments, follows, nudges, and circle invitations will appear here.</p></div>}
         {notifications.map((item) => (
           <Link
             key={item.id}
