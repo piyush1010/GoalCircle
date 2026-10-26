@@ -5,7 +5,7 @@ import { useId } from 'react'
 export type GoalieMood = 'normal' | 'happy' | 'wave' | 'think' | 'sleepy' | 'dizzy' | 'angry'
 
 /**
- * Golu: GoalCircle's guide bot (components keep the Goalie name). Original artwork in SVG, shaded with gradients so it reads as a
+ * Goalie: GoalCircle's guide bot. Original artwork in SVG, shaded with gradients so it reads as a
  * soft 3D toy. A few KB, no image files. Animation classes live in globals.css.
  */
 export function GoalieBot({ size = 56, mood = 'normal' }: { size?: number; mood?: GoalieMood }) {

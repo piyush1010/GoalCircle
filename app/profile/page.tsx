@@ -8,7 +8,7 @@ import ProfileAvatar from '@/components/ProfileAvatar'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
 
 const WELCOME_TOUR: TourStep[] = [
-  { title: "Hi, I'm Golu!", text: "I'll help you keep going, one small step at a time. Here's a one-minute tour." },
+  { title: "Hi, I'm Goalie!", text: "I'll help you keep going, one small step at a time. Here's a one-minute tour." },
   { target: 'nav-create', title: 'Start here', text: "Create a goal, or post today's progress on one you already have." },
   { target: 'nav-feed', title: 'Feed', text: 'See progress from people you follow. Boost a win, comment or send a nudge.' },
   { target: 'nav-circles', title: 'Circles', text: "Join your mentor's batch with an invite link, or start a group with friends." },

@@ -129,7 +129,7 @@ export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: 
         <div className="flex gap-3">
           <GoalieBot mood="think" />
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Golu · {index + 1} of {active.length}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Goalie · {index + 1} of {active.length}</p>
             <h2 className="mt-0.5 text-base font-black leading-snug">{step.title}</h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{step.text}</p>
           </div>

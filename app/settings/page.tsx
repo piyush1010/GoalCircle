@@ -449,7 +449,7 @@ export default function SettingsPage() {
       >
         <span>
           <span className="block text-sm font-bold">Show me around again</span>
-          <span className="block text-xs text-slate-500">Replay Golu&apos;s tours on every page.</span>
+          <span className="block text-xs text-slate-500">Replay Goalie&apos;s tours on every page.</span>
         </span>
         <span className="text-amber-500">→</span>
       </button>

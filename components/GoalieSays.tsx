@@ -54,7 +54,7 @@ export default function GoalieSays({ lines, mood = 'normal', size = 56, layout =
 
   return (
     <div className={`${layout === 'row' ? 'flex items-end gap-2' : 'flex flex-col-reverse items-center gap-2'} ${className}`}>
-      <button type="button" onClick={poke} aria-label="Poke Golu" style={{ touchAction: 'manipulation' }} className={`shrink-0 select-none rounded-full outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${reaction?.mood === 'happy' ? 'goalie-jump' : ''}`} key={reaction?.key ?? 0}>
+      <button type="button" onClick={poke} aria-label="Poke Goalie" style={{ touchAction: 'manipulation' }} className={`shrink-0 select-none rounded-full outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${reaction?.mood === 'happy' ? 'goalie-jump' : ''}`} key={reaction?.key ?? 0}>
         <GoalieBot size={size} mood={face} />
       </button>
       {bubble}

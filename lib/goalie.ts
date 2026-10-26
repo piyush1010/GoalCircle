@@ -1,4 +1,4 @@
-/** What Golu (the guide bot) says. Playful and warm, never guilt-tripping: teasing always ends kindly. */
+/** What Goalie says. Playful and warm, never guilt-tripping: teasing always ends kindly. */
 export const GOALIE_LINES = {
   welcomeBack: [
     'What took you so long? I missed you!',
@@ -54,7 +54,7 @@ export const pickLine = (set: GoalieLineSet, avoid?: string) => {
 
 export const CHEER_EVENT = 'goalcircle:cheer'
 
-/** Ask Golu to celebrate (after a check-in). Survives the page change that follows. */
+/** Ask Goalie to celebrate (after a check-in). Survives the page change that follows. */
 export function cheer() {
   try { window.sessionStorage.setItem('goalcircle-cheer', '1') } catch { /* storage unavailable */ }
   window.dispatchEvent(new Event(CHEER_EVENT))
