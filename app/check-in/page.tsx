@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { ArrowLeft, Camera, CircleDashed, Images, LockKeyhole, Music2, Video, X } from 'lucide-react'
 import GoalieMessage from '@/components/GoalieMessage'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
+import { MAX_VIDEO_SECONDS, mediaLimitError, shrinkImage } from '@/lib/media'
 import { supabase } from '@/utils/supabase'
 
 const CHECKIN_TOUR: TourStep[] = [
@@ -74,16 +75,19 @@ export default function CheckInPage() {
 
   useEffect(() => () => { if (mediaPreview) URL.revokeObjectURL(mediaPreview) }, [mediaPreview])
 
-  const chooseMedia = async (file: File | undefined) => {
+  const chooseMedia = async (picked: File | undefined) => {
     setError(null)
-    if (!file) return
+    if (!picked) return
+    let file: File = picked
     if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) { setError('Choose an image or short video.'); return }
-    if (file.size > 25 * 1024 * 1024) { setError('Media must be smaller than 25 MB.'); return }
+    const limit = mediaLimitError(file)
+    if (limit) { setError(limit); return }
+    if (file.type.startsWith('image/')) file = await shrinkImage(file)
     if (file.type.startsWith('video/')) {
       const videoUrl = URL.createObjectURL(file)
       const duration = await new Promise<number>((resolve) => { const video = document.createElement('video'); video.preload = 'metadata'; video.onloadedmetadata = () => resolve(video.duration); video.onerror = () => resolve(999); video.src = videoUrl })
       URL.revokeObjectURL(videoUrl)
-      if (duration > 30) { setError('Progress videos can be up to 30 seconds long.'); return }
+      if (duration > MAX_VIDEO_SECONDS) { setError(`Progress videos can be up to ${MAX_VIDEO_SECONDS} seconds long.`); return }
     }
     if (mediaPreview) URL.revokeObjectURL(mediaPreview)
     setMediaFile(file); setMediaPreview(URL.createObjectURL(file))
@@ -111,7 +115,7 @@ export default function CheckInPage() {
     if (mediaFile) {
       const extension = mediaFile.name.split('.').pop()?.toLowerCase() || (mediaFile.type.startsWith('video/') ? 'mp4' : 'jpg')
       const path = `${userId}/${crypto.randomUUID()}.${extension}`
-      const { error: uploadError } = await supabase.storage.from('goal-media').upload(path, mediaFile, { contentType: mediaFile.type, upsert: false })
+      const { error: uploadError } = await supabase.storage.from('goal-media').upload(path, mediaFile, { contentType: mediaFile.type, upsert: false, cacheControl: '31536000' })
       if (uploadError) { setError('Your media could not be uploaded. Try another file.'); setSubmitting(false); return }
       mediaUrl = supabase.storage.from('goal-media').getPublicUrl(path).data.publicUrl
     }

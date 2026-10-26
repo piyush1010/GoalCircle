@@ -7,6 +7,7 @@ import { AlignLeft, ArrowLeft, BellRing, CalendarDays, Camera, CircleCheck, Down
 import { OPEN_ENDED_REMINDER_DAYS, calendarFileName, createGoalCalendarBundle, createGoogleCalendarUrl, createGoogleDailyReminderUrl, type DailyReminder, type GoalCalendarEvent } from '@/lib/calendar'
 import MusicPicker, { type SelectedTrack } from '@/components/MusicPicker'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
+import { MAX_VIDEO_SECONDS, mediaLimitError, shrinkImage } from '@/lib/media'
 import { supabase } from '@/utils/supabase'
 
 const CREATE_TOUR: TourStep[] = [
@@ -91,17 +92,20 @@ export default function CreateGoalPage() {
     }
   }
 
-  const chooseMedia = async (file?: File) => {
-    if (!file) return
+  const chooseMedia = async (picked?: File) => {
+    if (!picked) return
+    let file: File = picked
     const actualType = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : null
     if (!actualType || actualType !== postFormat) {
       setError(postFormat === 'image' ? 'Choose an image for this post.' : 'Choose a video for this reel.')
       return
     }
-    if (file.size > 25 * 1024 * 1024) {
-      setError('Media must be smaller than 25 MB.')
+    const limit = mediaLimitError(file)
+    if (limit) {
+      setError(limit)
       return
     }
+    if (actualType === 'image') file = await shrinkImage(file)
     if (actualType === 'video') {
       const url = URL.createObjectURL(file)
       const duration = await new Promise<number>((resolve) => {
@@ -112,8 +116,8 @@ export default function CreateGoalPage() {
         video.src = url
       })
       URL.revokeObjectURL(url)
-      if (!Number.isFinite(duration) || duration > 30) {
-        setError('Reels can be up to 30 seconds long.')
+      if (!Number.isFinite(duration) || duration > MAX_VIDEO_SECONDS) {
+        setError(`Reels can be up to ${MAX_VIDEO_SECONDS} seconds long.`)
         return
       }
     }

@@ -3,13 +3,13 @@
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { FileText, Paperclip, X } from 'lucide-react'
+import { mediaLimitError, shrinkImage } from '@/lib/media'
 import { supabase } from '@/utils/supabase'
 
 export interface Attachment { path: string; name: string; type: string; size: number }
 
 const BUCKET = 'circle-files'
 export const MAX_FILES = 10
-const MAX_BYTES = 50 * 1024 * 1024
 const ACCEPT = 'application/pdf,image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm'
 
 const sizeLabel = (bytes: number) => bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
@@ -20,7 +20,7 @@ export async function uploadCircleFiles(circleId: string, files: File[]): Promis
   for (const file of files) {
     const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, '-').replace(/^-+|-+$/g, '').slice(-80) || 'file'
     const path = `${circleId}/${crypto.randomUUID()}-${safeName}`
-    const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type })
+    const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000' })
     if (error) throw new Error(`“${file.name}” could not be uploaded.`)
     uploaded.push({ path, name: file.name, type: file.type, size: file.size })
   }
@@ -38,16 +38,21 @@ export function AttachmentPicker({ files, existing = [], onFilesChange, onRemove
 }) {
   const total = files.length + existing.length
 
-  const add = (list: FileList | null) => {
+  const [preparing, setPreparing] = useState(false)
+
+  const add = async (list: FileList | null) => {
     if (!list) return
     const picked = Array.from(list)
     const allowed = picked.filter((file) => ACCEPT.split(',').includes(file.type))
     if (allowed.length < picked.length) onError('Only photos, PDFs and videos can be attached.')
-    const tooBig = allowed.find((file) => file.size > MAX_BYTES)
-    if (tooBig) { onError(`“${tooBig.name}” is larger than 50 MB.`); return }
+    const tooBig = allowed.map((file) => mediaLimitError(file)).find(Boolean)
+    if (tooBig) { onError(tooBig); return }
     const room = MAX_FILES - total
     if (allowed.length > room) onError(`You can attach up to ${MAX_FILES} files.`)
-    onFilesChange([...files, ...allowed.slice(0, Math.max(0, room))])
+    setPreparing(true)
+    const ready = await Promise.all(allowed.slice(0, Math.max(0, room)).map((file) => (file.type.startsWith('image/') ? shrinkImage(file) : Promise.resolve(file))))
+    setPreparing(false)
+    onFilesChange([...files, ...ready])
   }
 
   return (
@@ -57,8 +62,8 @@ export function AttachmentPicker({ files, existing = [], onFilesChange, onRemove
         {files.map((file, index) => <li key={`${file.name}-${index}`} className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-amber-500/10 py-1 pl-2 pr-1 text-xs font-semibold text-amber-800 dark:text-amber-200"><FileText className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{file.name}</span><span className="shrink-0 font-normal opacity-70">{sizeLabel(file.size)}</span><button type="button" onClick={() => onFilesChange(files.filter((_, i) => i !== index))} aria-label={`Remove ${file.name}`} className="grid h-6 w-6 place-items-center rounded-md hover:text-rose-500"><X className="h-3.5 w-3.5" /></button></li>)}
       </ul>}
       {total < MAX_FILES && <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-amber-500 dark:border-slate-700 dark:text-slate-300">
-        <Paperclip className="h-4 w-4 text-amber-500" />Attach photos, PDFs or videos
-        <input type="file" multiple accept={ACCEPT} className="sr-only" onChange={(event) => { add(event.target.files); event.target.value = '' }} />
+        <Paperclip className="h-4 w-4 text-amber-500" />{preparing ? 'Preparing…' : 'Attach photos, PDFs or videos'}
+        <input type="file" multiple accept={ACCEPT} className="sr-only" onChange={(event) => { void add(event.target.files); event.target.value = '' }} />
       </label>}
     </div>
   )

@@ -10,6 +10,7 @@ import CircleNotices from '@/components/CircleNotices'
 import MentorDashboard, { type DashboardRow } from '@/components/MentorDashboard'
 import { AttachmentList, type Attachment } from '@/components/CircleAttachments'
 import { examLabel, localDateString } from '@/lib/exams'
+import { mediaLimitError, shrinkImage } from '@/lib/media'
 import { supabase } from '@/utils/supabase'
 
 interface Circle { id: string; owner_id: string; name: string; description: string | null; exam: string | null; visibility: 'public' | 'private'; invite_code: string | null }
@@ -180,10 +181,13 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
     <Link href="/focus" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-amber-600 dark:text-amber-400"><Timer className="h-4 w-4" />Start a focus session</Link>
   </section>
 
-  const chooseFile = (picked?: File) => {
-    if (!picked) return
+  const chooseFile = async (chosen?: File) => {
+    if (!chosen) return
+    let picked: File = chosen
     if (!picked.type.startsWith('image/') && !picked.type.startsWith('video/')) { setError('Choose a photo or a video.'); return }
-    if (picked.size > 25 * 1024 * 1024) { setError('Files must be smaller than 25 MB.'); return }
+    const limit = mediaLimitError(picked)
+    if (limit) { setError(limit); return }
+    if (picked.type.startsWith('image/')) picked = await shrinkImage(picked)
     if (preview) URL.revokeObjectURL(preview)
     setFile(picked); setPreview(URL.createObjectURL(picked)); setError(null)
   }
@@ -197,7 +201,7 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
     if (file) {
       const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || (file.type.startsWith('video/') ? 'mp4' : 'jpg')
       const path = `${userId}/circle-${circleId}/${crypto.randomUUID()}.${extension}`
-      const { error: uploadError } = await supabase.storage.from('goal-media').upload(path, file, { contentType: file.type })
+      const { error: uploadError } = await supabase.storage.from('goal-media').upload(path, file, { contentType: file.type, cacheControl: '31536000' })
       if (uploadError) { setError('Your photo or video could not be uploaded.'); setSaving(false); return }
       mediaUrl = supabase.storage.from('goal-media').getPublicUrl(path).data.publicUrl
       mediaType = file.type.startsWith('video/') ? 'video' : 'image'
@@ -234,7 +238,7 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
         </div>
         <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={2} maxLength={500} placeholder="A short note for your mentor (optional)" className={`${field} resize-none`} />
         {preview ? <div className="relative overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950">{file?.type.startsWith('video/') ? <video src={preview} controls playsInline className="max-h-56 w-full object-contain" /> : <div className="relative h-44"><Image src={preview} alt="Your proof" fill unoptimized className="object-contain" /></div>}<button type="button" onClick={() => { if (preview) URL.revokeObjectURL(preview); setPreview(null); setFile(null) }} aria-label="Remove file" className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-slate-950/80 text-white"><X className="h-4 w-4" /></button></div>
-          : <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 py-3 text-sm font-bold text-slate-500 transition hover:border-amber-500 dark:border-slate-700"><ImagePlus className="h-4 w-4 text-amber-500" />Add a photo or video (optional)<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" className="sr-only" onChange={(event) => chooseFile(event.target.files?.[0])} /></label>}
+          : <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 py-3 text-sm font-bold text-slate-500 transition hover:border-amber-500 dark:border-slate-700"><ImagePlus className="h-4 w-4 text-amber-500" />Add a photo or video (optional)<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" className="sr-only" onChange={(event) => void chooseFile(event.target.files?.[0])} /></label>}
         {error && <p role="alert" className="text-sm font-semibold text-rose-600">{error}</p>}
         <button type="button" data-tour="checkin" onClick={() => void save()} disabled={saving} className={primary}>{saving ? 'Saving…' : 'Save my update'}</button>
         <Link href="/focus" data-tour="focus" className="flex items-center justify-center gap-1.5 text-sm font-bold text-amber-600 dark:text-amber-400"><Timer className="h-4 w-4" />Start a focus session first</Link>
