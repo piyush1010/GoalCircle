@@ -3,7 +3,7 @@
  * phone before upload, so they take about a tenth of the space and data.
  */
 
-export const MAX_VIDEO_BYTES = 15 * 1024 * 1024
+export const MAX_VIDEO_BYTES = 50 * 1024 * 1024
 export const MAX_VIDEO_SECONDS = 30
 export const MAX_PDF_BYTES = 10 * 1024 * 1024
 /** Photos are shrunk, so the original may be large. */

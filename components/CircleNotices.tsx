@@ -87,7 +87,7 @@ export default function CircleNotices({ circleId, userId, isAdmin }: { circleId:
         {notice.media_url && (notice.media_type === 'video'
           ? <video src={notice.media_url} controls playsInline className="mt-3 max-h-72 w-full rounded-xl bg-slate-950 object-contain" />
           : <div className="relative mt-3 h-56 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"><Image src={notice.media_url} alt="Notice" fill unoptimized className="object-contain" /></div>)}
-        <AttachmentList attachments={notice.attachments ?? []} />
+        <AttachmentList attachments={notice.attachments ?? []} isAdmin={isAdmin} />
       </article>)}
     </section>
   )

@@ -4,12 +4,12 @@
 begin;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('circle-files', 'circle-files', false, 15728640,
+values ('circle-files', 'circle-files', false, 52428800,
         array['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/quicktime', 'video/webm'])
 on conflict (id) do update set public = false, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
 
--- Photos are now shrunk on the phone before upload; keep videos small to save free storage.
-update storage.buckets set file_size_limit = 15728640 where id = 'goal-media' and (file_size_limit is null or file_size_limit > 15728640);
+-- Photos are now shrunk on the phone before upload; cap videos at 50 MB.
+update storage.buckets set file_size_limit = 52428800 where id = 'goal-media' and (file_size_limit is null or file_size_limit > 52428800);
 
 -- First folder of the object name, as a circle id (null when it isn't a uuid).
 create or replace function public.circle_file_circle_id(object_name text)
