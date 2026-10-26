@@ -6,7 +6,7 @@ import { Download, Eye, FileText, Paperclip, X } from 'lucide-react'
 import { mediaLimitError, shrinkImage } from '@/lib/media'
 import { supabase } from '@/utils/supabase'
 
-/** `downloadable`: the mentor allowed students to save this file. Missing means view only. */
+/** `downloadable`: false when the mentor marked the file view only. Missing means students can download. */
 export interface Attachment { path: string; name: string; type: string; size: number; downloadable?: boolean }
 
 const BUCKET = 'circle-files'
@@ -17,7 +17,7 @@ const sizeLabel = (bytes: number) => bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1
 
 // Download choice for files not uploaded yet, kept beside the File itself.
 const downloadChoice = new WeakMap<File, boolean>()
-const allowsDownload = (file: File) => downloadChoice.get(file) === true
+const allowsDownload = (file: File) => downloadChoice.get(file) !== false
 
 /** Upload files into the circle's private folder and return their attachment records. */
 export async function uploadCircleFiles(circleId: string, files: File[]): Promise<Attachment[]> {
@@ -70,19 +70,19 @@ export function AttachmentPicker({ files, existing = [], onFilesChange, onRemove
   }
 
   const toggleNew = (file: File) => { downloadChoice.set(file, !allowsDownload(file)); onFilesChange([...files]) }
-  const toggleExisting = (path: string) => onExistingChange?.(existing.map((file) => file.path === path ? { ...file, downloadable: !file.downloadable } : file))
+  const toggleExisting = (path: string) => onExistingChange?.(existing.map((file) => file.path === path ? { ...file, downloadable: file.downloadable === false } : file))
 
   return (
     <div className="space-y-2">
       {total > 0 && <ul className="flex flex-wrap gap-2">
         {existing.map((file) => <li key={file.path} className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-slate-100 py-1 pl-2 pr-1 text-xs font-semibold dark:bg-slate-800"><FileText className="h-3.5 w-3.5 shrink-0 text-amber-500" /><span className="truncate">{file.name}</span>
-          {onExistingChange && <DownloadToggle on={file.downloadable === true} name={file.name} onToggle={() => toggleExisting(file.path)} />}
+          {onExistingChange && <DownloadToggle on={file.downloadable !== false} name={file.name} onToggle={() => toggleExisting(file.path)} />}
           {onRemoveExisting && <button type="button" onClick={() => onRemoveExisting(file.path)} aria-label={`Remove ${file.name}`} className="grid h-6 w-6 place-items-center rounded-md text-slate-400 hover:text-rose-500"><X className="h-3.5 w-3.5" /></button>}</li>)}
         {files.map((file, index) => <li key={`${file.name}-${index}`} className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-amber-500/10 py-1 pl-2 pr-1 text-xs font-semibold text-amber-800 dark:text-amber-200"><FileText className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{file.name}</span><span className="shrink-0 font-normal opacity-70">{sizeLabel(file.size)}</span>
           <DownloadToggle on={allowsDownload(file)} name={file.name} onToggle={() => toggleNew(file)} />
           <button type="button" onClick={() => onFilesChange(files.filter((_, i) => i !== index))} aria-label={`Remove ${file.name}`} className="grid h-6 w-6 place-items-center rounded-md hover:text-rose-500"><X className="h-3.5 w-3.5" /></button></li>)}
       </ul>}
-      {total > 0 && <p className="text-[11px] text-slate-500">Files are view only unless you tap “View only” to allow download.</p>}
+      {total > 0 && <p className="text-[11px] text-slate-500">Students can download these. Tap “Download” to make a file view only.</p>}
       {total < MAX_FILES && <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-amber-500 dark:border-slate-700 dark:text-slate-300">
         <Paperclip className="h-4 w-4 text-amber-500" />{preparing ? 'Preparing…' : 'Attach photos, PDFs or videos'}
         <input type="file" multiple accept={ACCEPT} className="sr-only" onChange={(event) => { void add(event.target.files); event.target.value = '' }} />
@@ -221,8 +221,8 @@ export function AttachmentList({ attachments, isAdmin = false }: { attachments: 
   const images = attachments.filter((file) => file.type.startsWith('image/'))
   const videos = attachments.filter((file) => file.type.startsWith('video/'))
   const documents = attachments.filter((file) => !file.type.startsWith('image/') && !file.type.startsWith('video/'))
-  const canDownload = (file: Attachment) => isAdmin || file.downloadable === true
-  const badge = (file: Attachment) => isAdmin && <span className={`text-[10px] font-black ${file.downloadable ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>{file.downloadable ? 'Students can download' : 'View only for students'}</span>
+  const canDownload = (file: Attachment) => isAdmin || file.downloadable !== false
+  const badge = (file: Attachment) => isAdmin && <span className={`text-[10px] font-black ${file.downloadable !== false ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>{file.downloadable !== false ? 'Students can download' : 'View only for students'}</span>
 
   return (
     <div className="mt-3 space-y-2">
@@ -230,7 +230,7 @@ export function AttachmentList({ attachments, isAdmin = false }: { attachments: 
         {images.map((file) => <button type="button" key={file.path} onClick={() => urls[file.path] && setOpen(file)} onContextMenu={(event) => { if (!canDownload(file)) event.preventDefault() }} aria-label={`Open ${file.name}`}
           className="relative block aspect-[4/3] overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950" style={{ WebkitTouchCallout: canDownload(file) ? undefined : 'none' }}>
           {urls[file.path] && <Image src={urls[file.path]} alt={file.name} fill unoptimized draggable={false} className="pointer-events-none object-cover" />}
-          {isAdmin && <span className={`absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-black ${file.downloadable ? 'bg-emerald-500 text-white' : 'bg-slate-900/70 text-white'}`}>{file.downloadable ? <Download className="h-3 w-3" /> : <Eye className="h-3 w-3" />}{file.downloadable ? 'Download' : 'View only'}</span>}
+          {isAdmin && <span className={`absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-black ${file.downloadable !== false ? 'bg-emerald-500 text-white' : 'bg-slate-900/70 text-white'}`}>{file.downloadable !== false ? <Download className="h-3 w-3" /> : <Eye className="h-3 w-3" />}{file.downloadable !== false ? 'Download' : 'View only'}</span>}
         </button>)}
       </div>}
       {videos.map((file) => urls[file.path] && <div key={file.path}>
