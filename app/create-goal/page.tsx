@@ -3,7 +3,8 @@
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlignLeft, ArrowLeft, CalendarDays, Camera, Film, Globe2, ImagePlus, LockKeyhole, Music2, X } from 'lucide-react'
+import { AlignLeft, ArrowLeft, BellRing, CalendarDays, Camera, CircleCheck, Download, ExternalLink, Film, Globe2, ImagePlus, LockKeyhole, Music2, X } from 'lucide-react'
+import { OPEN_ENDED_REMINDER_DAYS, calendarFileName, createGoalCalendarBundle, createGoogleCalendarUrl, createGoogleDailyReminderUrl, type DailyReminder, type GoalCalendarEvent } from '@/lib/calendar'
 import MusicPicker, { type SelectedTrack } from '@/components/MusicPicker'
 import { supabase } from '@/utils/supabase'
 
@@ -24,6 +25,7 @@ const visibilityOptions = [
 const sectionClass = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]'
 const headingClass = 'block text-sm font-black text-slate-900 dark:text-white'
 const fieldClass = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#07101f]'
+const calendarButtonClass = 'mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-sm font-black text-slate-950 transition hover:bg-amber-400'
 const uploadClass = 'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 px-3 py-6 text-center text-xs font-bold text-slate-600 transition hover:border-amber-500 dark:border-slate-700 dark:text-slate-300'
 
 const templates = [
@@ -48,6 +50,9 @@ export default function CreateGoalPage() {
   const [musicOpen, setMusicOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [remindDaily, setRemindDaily] = useState(false)
+  const [reminderTime, setReminderTime] = useState('08:00')
+  const [created, setCreated] = useState<{ goalId: string; title: string; targetDate: string | null; reminder: boolean; next: string } | null>(null)
 
   useEffect(() => () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
@@ -166,12 +171,69 @@ export default function CreateGoalPage() {
 
     if (goalId) await supabase.from('goals').update({ category }).eq('id', goalId).eq('user_id', session.user.id)
 
-    router.replace(visibility === 'public' ? '/feed?published=goal' : goalId ? `/goal/${goalId}` : '/profile')
+    const next = visibility === 'public' ? '/feed?published=goal' : goalId ? `/goal/${goalId}` : '/profile'
+    if (goalId && (remindDaily || targetDate)) {
+      // Offer calendar reminders before leaving the page.
+      setCreated({ goalId, title: cleanTitle, targetDate: targetDate || null, reminder: remindDaily, next })
+      setSubmitting(false)
+      return
+    }
+    router.replace(next)
+    router.refresh()
+  }
+
+  const goalUrl = (goalId: string) => `${window.location.origin}/goal/${goalId}`
+  const reminderFor = (goal: NonNullable<typeof created>): DailyReminder => ({ goalId: goal.goalId, title: goal.title, time: reminderTime, targetDate: goal.targetDate, url: goalUrl(goal.goalId) })
+  const targetEventFor = (goal: NonNullable<typeof created>): GoalCalendarEvent | null => goal.targetDate ? { goalId: goal.goalId, title: goal.title, targetDate: goal.targetDate, url: goalUrl(goal.goalId) } : null
+  const openInNewTab = (url: string) => window.open(url, '_blank', 'noopener,noreferrer')
+  const downloadCalendar = (goal: NonNullable<typeof created>) => {
+    const contents = createGoalCalendarBundle({ reminder: goal.reminder ? reminderFor(goal) : null, goal: targetEventFor(goal) })
+    const href = URL.createObjectURL(new Blob([contents], { type: 'text/calendar;charset=utf-8' }))
+    const anchor = document.createElement('a')
+    anchor.href = href
+    anchor.download = calendarFileName(goal.title)
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(href)
+  }
+  const continueToGoal = () => {
+    if (!created) return
+    router.replace(created.next)
     router.refresh()
   }
 
   const isPublic = visibility === 'public'
   const today = new Date().toISOString().slice(0, 10)
+
+  if (created) {
+    const targetEvent = targetEventFor(created)
+    return (
+      <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-8">
+        <section className={`${sectionClass} text-center`}>
+          <CircleCheck className="mx-auto h-12 w-12 text-amber-500" />
+          <h1 className="mt-3 text-xl font-black tracking-tight">Goal created</h1>
+          <p className="mt-1 text-sm font-semibold">{created.title}</p>
+          <p className="mx-auto mt-3 max-w-sm text-sm text-slate-500 dark:text-slate-400">Add it to your calendar so your phone reminds you, even when GoalCircle is closed.</p>
+
+          <div className="mt-6 space-y-3 text-left">
+            {created.reminder && <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
+              <p className="flex items-center gap-2 text-sm font-black"><BellRing className="h-4 w-4 text-amber-500" />Daily reminder at {reminderTime}</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{created.targetDate ? 'Every day until your target date.' : `Every day for the next ${OPEN_ENDED_REMINDER_DAYS} days.`}</p>
+              <button type="button" onClick={() => openInNewTab(createGoogleDailyReminderUrl(reminderFor(created)))} className={calendarButtonClass}><ExternalLink className="h-4 w-4" />Add reminder to Google Calendar</button>
+            </div>}
+            {targetEvent && <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
+              <p className="flex items-center gap-2 text-sm font-black"><CalendarDays className="h-4 w-4 text-amber-500" />Target date: {new Date(`${targetEvent.targetDate}T00:00:00`).toLocaleDateString()}</p>
+              <button type="button" onClick={() => openInNewTab(createGoogleCalendarUrl(targetEvent))} className={calendarButtonClass}><ExternalLink className="h-4 w-4" />Add target date to Google Calendar</button>
+            </div>}
+            <button type="button" onClick={() => downloadCalendar(created)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-700 transition hover:border-amber-500 dark:border-slate-700 dark:text-slate-200"><Download className="h-4 w-4 text-amber-500" />Apple Calendar / Outlook (one file with everything)</button>
+          </div>
+
+          <button type="button" onClick={continueToGoal} className="mt-6 w-full rounded-2xl bg-amber-500 py-4 text-base font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400">Continue</button>
+        </section>
+      </main>
+    )
+  }
 
   return (
     <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4">
@@ -205,6 +267,20 @@ export default function CreateGoalPage() {
           <div className="relative">
             <CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input id="target-date" type="date" value={targetDate} min={today} onChange={(event) => setTargetDate(event.target.value)} className={`${fieldClass} pl-10 text-sm font-semibold`} />
+          </div>
+
+          <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" checked={remindDaily} onChange={(event) => setRemindDaily(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-amber-500" />
+              <span>
+                <span className="flex items-center gap-1.5 text-sm font-bold"><BellRing className="h-4 w-4 text-amber-500" />Remind me every day</span>
+                <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">Adds a daily reminder to your phone&apos;s calendar{targetDate ? ' until your target date' : ` for ${OPEN_ENDED_REMINDER_DAYS} days`}.</span>
+              </span>
+            </label>
+            {remindDaily && <div className="mt-3 flex items-center gap-3 pl-8">
+              <label htmlFor="reminder-time" className="text-xs font-semibold text-slate-500 dark:text-slate-400">At</label>
+              <input id="reminder-time" type="time" value={reminderTime} onChange={(event) => setReminderTime(event.target.value || '08:00')} className={`${fieldClass} w-36 py-2 text-sm font-semibold`} />
+            </div>}
           </div>
         </section>
 
