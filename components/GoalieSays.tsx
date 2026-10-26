@@ -50,7 +50,7 @@ export default function GoalieSays({ lines, mood = 'normal', size = 56, layout =
   }
 
   const face = reaction?.mood ?? mood
-  const bubble = line && <p key={line} aria-live="polite" className={`goalie-bubble relative rounded-2xl px-3.5 py-2 text-sm font-bold shadow-sm ring-1 ${face === 'angry' ? 'bg-rose-50 text-rose-800 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-100 dark:ring-rose-400/30' : 'bg-amber-50 text-slate-800 ring-amber-200 dark:bg-amber-400/10 dark:text-amber-100 dark:ring-amber-400/30'} ${layout === 'row' ? 'rounded-bl-md' : 'mx-auto w-fit max-w-[16rem] rounded-b-md'}`}>{line}</p>
+  const bubble = line && <p key={line} aria-live="polite" className={`goalie-bubble relative rounded-2xl border-2 border-slate-900 px-3.5 py-2 text-sm font-black shadow-[3px_3px_0_#0f172a] ${face === 'angry' ? 'bg-rose-50 text-rose-800' : 'bg-white text-slate-900'} ${layout === 'row' ? 'rounded-bl-md' : 'mx-auto w-fit max-w-[16rem] rounded-b-md'}`}>{line}</p>
 
   return (
     <div className={`${layout === 'row' ? 'flex items-end gap-2' : 'flex flex-col-reverse items-center gap-2'} ${className}`}>

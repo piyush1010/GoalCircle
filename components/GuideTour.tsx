@@ -125,20 +125,27 @@ export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: 
       {/* Clicks on the dimmed area do nothing; use the buttons. */}
       <div className="absolute inset-0" />
 
-      <div className="guide-card absolute inset-x-4 bottom-24 mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-[#101b2d]">
-        <div className="flex gap-3">
-          <GoalieBot mood="think" />
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Goalie · {index + 1} of {active.length}</p>
-            <h2 className="mt-0.5 text-base font-black leading-snug">{step.title}</h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{step.text}</p>
+      <div className="guide-card absolute inset-x-4 bottom-20 mx-auto max-w-md select-none">
+        {/* Comic speech bubble */}
+        <div className="relative rounded-[28px] border-[3px] border-slate-900 bg-white p-4 text-slate-900 shadow-[5px_5px_0_#0f172a]">
+          <p className="text-[11px] font-black uppercase tracking-wider text-amber-600">Goalie · {index + 1} of {active.length}</p>
+          <h2 className="mt-0.5 text-lg font-black leading-snug">{step.title}</h2>
+          <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{step.text}</p>
+          <div className="mt-4 flex items-center gap-2">
+            <button type="button" onClick={finish} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Skip</button>
+            <span className="flex-1" />
+            {index > 0 && <button type="button" onClick={() => setIndex(index - 1)} className="rounded-xl border-2 border-slate-900 px-4 py-2 text-sm font-black">Back</button>}
+            <button type="button" onClick={() => (last ? finish() : setIndex(index + 1))} autoFocus className="rounded-xl border-2 border-slate-900 bg-amber-400 px-5 py-2 text-sm font-black text-slate-950 shadow-[2px_2px_0_#0f172a] active:translate-x-px active:translate-y-px active:shadow-none">{last ? 'Got it' : 'Next'}</button>
           </div>
+          {/* Tail pointing down at Goalie */}
+          <svg width="36" height="26" viewBox="0 0 36 26" aria-hidden="true" className="absolute -bottom-[23px] left-12">
+            <path d="M0 0 L12 24 L34 0 Z" fill="#fff" />
+            <path d="M2 1 L12 24 L32 1" fill="none" stroke="#0f172a" strokeWidth="3" strokeLinejoin="round" />
+          </svg>
         </div>
-        <div className="mt-4 flex items-center gap-2">
-          <button type="button" onClick={finish} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Skip</button>
-          <span className="flex-1" />
-          {index > 0 && <button type="button" onClick={() => setIndex(index - 1)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold dark:border-slate-700">Back</button>}
-          <button type="button" onClick={() => (last ? finish() : setIndex(index + 1))} autoFocus className="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-black text-slate-950">{last ? 'Got it' : 'Next'}</button>
+        {/* Goalie stands outside the bubble */}
+        <div className="ml-1 mt-1 w-fit drop-shadow-xl">
+          <GoalieBot size={84} mood={index === 0 ? 'wave' : last ? 'happy' : 'think'} />
         </div>
       </div>
     </div>
