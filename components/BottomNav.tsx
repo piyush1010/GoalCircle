@@ -9,11 +9,11 @@ export default function BottomNav() {
   const pathname = usePathname()
 
   const navItems = [
-    { label: 'Feed', href: '/feed', icon: Flame },
-    { label: 'Circles', href: '/circles', icon: UsersRound },
-    { label: 'Create', href: '/create', icon: Plus, primary: true },
-    { label: 'Progress', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Profile', href: '/profile', icon: CircleUserRound },
+    { label: 'Feed', href: '/feed', icon: Flame, tour: 'nav-feed' },
+    { label: 'Circles', href: '/circles', icon: UsersRound, tour: 'nav-circles' },
+    { label: 'Create', href: '/create', icon: Plus, primary: true, tour: 'nav-create' },
+    { label: 'Progress', href: '/dashboard', icon: LayoutDashboard, tour: 'nav-progress' },
+    { label: 'Profile', href: '/profile', icon: CircleUserRound, tour: 'nav-profile' },
   ]
 
   return (
@@ -28,6 +28,7 @@ export default function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                data-tour={item.tour}
                 aria-label="Create"
                 className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/30 transition hover:bg-amber-400 active:scale-95 dark:border-[#0b1220]"
               >
@@ -40,6 +41,7 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              data-tour={item.tour}
               aria-current={isActive ? 'page' : undefined}
               className={`flex min-w-14 flex-col items-center gap-1 rounded-xl px-2 py-1 transition active:scale-95 ${
                 isActive

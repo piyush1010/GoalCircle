@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import GoalieMessage from '@/components/GoalieMessage'
 import { useRouter } from 'next/navigation'
 import { CalendarDays, Check, Flame, PauseCircle, Play, Plus, Target, UsersRound } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
@@ -142,7 +143,7 @@ export default function DashboardPage() {
       <section className="mb-6">
         <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-black">Today&apos;s goals</h2><Link href="/create-goal" className="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400"><Plus className="h-3.5 w-3.5" />New goal</Link></div>
         {goals.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-[#101b2d]"><Target className="mx-auto mb-3 h-8 w-8 text-amber-500" /><p className="text-sm font-bold">Your next streak starts here</p><p className="mb-4 mt-1 text-xs text-slate-500">Choose one action you can repeat consistently.</p><Link href="/create-goal" className="inline-flex rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-slate-950">Create a goal</Link></div>
+          <GoalieMessage title="Your next streak starts here" message="Choose one small action you can repeat daily. I'll help you keep going." actionLabel="Create a goal" href="/create-goal" />
         ) : (
           <div className="space-y-3">{goals.map((goal) => {
             const minutes = todayMinutesByGoal[goal.id] || 0

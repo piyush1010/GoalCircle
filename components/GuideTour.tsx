@@ -11,7 +11,9 @@ export interface TourStep {
 
 interface Rect { top: number; left: number; width: number; height: number }
 
-const storageKey = (name: string) => `goalcircle-tour-${name}-done`
+export const TOUR_STORAGE_PREFIX = 'goalcircle-tour-'
+export const REPLAY_TOURS_EVENT = 'goalcircle:replay-tours'
+const storageKey = (name: string) => `${TOUR_STORAGE_PREFIX}${name}-done`
 const PAD = 8
 
 function readDone(name: string) {
@@ -41,7 +43,20 @@ export function GoalieBot({ size = 56 }: { size?: number }) {
   )
 }
 
-export default function GuideTour({ name, steps, replayKey = 0 }: { name: string; steps: TourStep[]; replayKey?: number }) {
+/** Forget which tours were seen on this device, so they run again. */
+export function resetTours() {
+  try {
+    Object.keys(window.localStorage).filter((key) => key.startsWith(TOUR_STORAGE_PREFIX)).forEach((key) => window.localStorage.removeItem(key))
+  } catch { /* storage unavailable */ }
+  window.dispatchEvent(new Event(REPLAY_TOURS_EVENT))
+}
+
+/**
+ * A step-by-step guide with Goalie. Uncontrolled (default): runs once per device, replayable with replayKey.
+ * Controlled: pass `open` and `onDone`; the caller decides when it shows and remembers that it was seen.
+ */
+export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: { name: string; steps: TourStep[]; replayKey?: number; open?: boolean; onDone?: () => void }) {
+  const controlled = open !== undefined
   const [index, setIndex] = useState<number | null>(null)
   const [rect, setRect] = useState<Rect | null>(null)
 
@@ -49,13 +64,26 @@ export default function GuideTour({ name, steps, replayKey = 0 }: { name: string
   const available = useCallback(() => steps.filter((step) => !step.target || document.querySelector(`[data-tour="${step.target}"]`)), [steps])
   const [active, setActive] = useState<TourStep[]>([])
 
+  const start = useCallback(() => { const list = available(); setActive(list); setIndex(list.length ? 0 : null) }, [available])
+
   useEffect(() => {
-    const start = () => { const list = available(); setActive(list); setIndex(list.length ? 0 : null) }
+    if (controlled) {
+      if (!open) { setIndex(null); return }
+      const timer = window.setTimeout(start, 300)
+      return () => window.clearTimeout(timer)
+    }
     if (replayKey > 0) { const timer = window.setTimeout(start, 50); return () => window.clearTimeout(timer) }
     if (readDone(name)) return
     const timer = window.setTimeout(start, 700) // let the page settle first
     return () => window.clearTimeout(timer)
-  }, [available, name, replayKey])
+  }, [controlled, name, open, replayKey, start])
+
+  useEffect(() => {
+    if (controlled) return
+    const replay = () => window.setTimeout(start, 50)
+    window.addEventListener(REPLAY_TOURS_EVENT, replay)
+    return () => window.removeEventListener(REPLAY_TOURS_EVENT, replay)
+  }, [controlled, start])
 
   const step = index !== null ? active[index] : null
 
@@ -77,7 +105,11 @@ export default function GuideTour({ name, steps, replayKey = 0 }: { name: string
     return () => { window.clearTimeout(timer); window.removeEventListener('resize', measure); window.removeEventListener('scroll', measure, true) }
   }, [measure, step])
 
-  const finish = () => { writeDone(name); setIndex(null) }
+  const finish = () => {
+    setIndex(null)
+    if (controlled) onDone?.()
+    else writeDone(name)
+  }
 
   if (!step || index === null) return null
   const last = index === active.length - 1
