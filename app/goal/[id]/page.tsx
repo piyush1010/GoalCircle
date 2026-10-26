@@ -27,6 +27,7 @@ interface Post {
   media_url?: string | null
   media_urls?: string[] | null
   proof_type?: string | null
+  checkin_status?: 'done' | 'partial' | 'missed' | null
   created_at: string
 }
 
@@ -188,6 +189,10 @@ export default function GoalDetailPage() {
   const isCompleted = Boolean(goal.is_completed || goal.status === 'completed')
   const isOwner = goal.user_id === userId
   const isPaused = goal.status === 'paused' && Boolean(goal.pause_until && new Date(goal.pause_until) > new Date())
+  const doneCount = posts.filter((post) => post.checkin_status === 'done').length
+  const partialCount = posts.filter((post) => post.checkin_status === 'partial').length
+  const trackedCount = posts.filter((post) => post.checkin_status).length
+  const consistencyRate = trackedCount ? Math.round(((doneCount + partialCount * 0.5) / trackedCount) * 100) : 0
 
   return (
     <div className="min-h-screen text-slate-900 dark:text-slate-100 pb-24 pt-4 px-4 max-w-md mx-auto">
@@ -227,14 +232,18 @@ export default function GoalDetailPage() {
         {isOwner && !isCompleted && !isPaused && Number(goal.pause_count || 0) === 0 && <button onClick={() => void pauseGoal()} disabled={updating} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-300 bg-sky-50 px-4 py-2.5 text-xs font-black text-sky-700 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-300"><PauseCircle className="h-4 w-4" />Use one-time 7-day compassionate pause</button>}
 
         {/* Milestone Statistics */}
-        <div className="grid grid-cols-2 gap-3 pt-2">
+        <div className="grid grid-cols-3 gap-2 pt-2">
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 dark:bg-slate-950 dark:border-slate-800/60 text-center">
-            <p className="text-lg font-black text-amber-400">{posts.length}</p>
-            <p className="text-[10px] text-slate-500">Progress Updates</p>
+            <p className="text-lg font-black text-amber-400">{trackedCount || posts.length}</p>
+            <p className="text-[10px] text-slate-500">Check-ins</p>
           </div>
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 dark:bg-slate-950 dark:border-slate-800/60 text-center">
-            <p className="text-lg font-black text-emerald-400">{isCompleted ? '100%' : 'In Progress'}</p>
-            <p className="text-[10px] text-slate-500">Current Status</p>
+            <p className="text-lg font-black text-emerald-400">{consistencyRate}%</p>
+            <p className="text-[10px] text-slate-500">Consistency</p>
+          </div>
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 dark:bg-slate-950 dark:border-slate-800/60 text-center">
+            <p className="text-lg font-black text-sky-500">{doneCount}</p>
+            <p className="text-[10px] text-slate-500">Done days</p>
           </div>
         </div>
       </div>
@@ -257,9 +266,7 @@ export default function GoalDetailPage() {
           posts.map(p => (
             <div key={p.id} className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl p-4 space-y-2">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-[10px] font-mono text-slate-500">
-                  {new Date(p.created_at).toLocaleDateString()}
-                </span>
+                <div className="flex items-center gap-2"><span className="text-[10px] font-mono text-slate-500">{new Date(p.created_at).toLocaleDateString()}</span>{p.checkin_status && <span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${p.checkin_status === 'done' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : p.checkin_status === 'partial' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-slate-200 text-slate-500 dark:bg-slate-800'}`}>{p.checkin_status}</span>}</div>
                 {isOwner && <button type="button" onClick={() => void deleteProgressPost(p)} disabled={deletingPostId === p.id} aria-label="Delete progress update" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:opacity-50 dark:hover:bg-rose-950/30"><Trash2 className="h-3.5 w-3.5" /></button>}
               </div>
               {p.caption && <p className="text-xs text-slate-700 dark:text-slate-200">{p.caption}</p>}

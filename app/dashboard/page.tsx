@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CalendarDays, Check, Flame, PauseCircle, Play, Plus, Target } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
+import WeeklyRecap from '@/components/WeeklyRecap'
 
 interface Goal {
   id: string
@@ -30,6 +31,7 @@ export default function DashboardPage() {
   const [goals, setGoals] = useState<Goal[]>([])
   const [logs, setLogs] = useState<FocusLog[]>([])
   const [displayName, setDisplayName] = useState('Member')
+  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [updatingGoalId, setUpdatingGoalId] = useState<string | null>(null)
@@ -45,6 +47,7 @@ export default function DashboardPage() {
     }
 
     const user = session.user
+    setUserId(user.id)
     await supabase.rpc('resume_expired_goal_pauses')
     setDisplayName(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Member')
 
@@ -116,6 +119,8 @@ export default function DashboardPage() {
       </header>
 
       {error && <div role="alert" className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"><span>{error}</span><button onClick={() => void loadDashboard()} className="shrink-0 underline">Retry</button></div>}
+
+      {userId && <div className="mb-4"><WeeklyRecap userId={userId} /></div>}
 
       <section className="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
         <div className="mb-2 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500"><span>Today&apos;s pace</span><span>{progressPercent}%</span></div>

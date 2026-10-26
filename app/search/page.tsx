@@ -1,135 +1,95 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Search } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { CircleUserRound, HeartHandshake, Search, Target, UsersRound } from 'lucide-react'
+import { supabase } from '@/utils/supabase'
+import ProfileAvatar from '@/components/ProfileAvatar'
 
-interface SearchResult {
-  id: string
-  type: 'goal' | 'circle' | 'user'
-  title: string
-  subtitle: string
-  meta?: string
-}
+type SearchTab = 'all' | 'goals' | 'circles' | 'people'
+interface ProfileResult { id: string; full_name: string | null; username: string | null; avatar_url: string | null; bio: string | null }
+interface GoalResult { id: string; title: string; category: string | null; current_streak: number | null; user_id: string }
+interface CircleResult { id: string; name: string; description: string | null; category: string; member_count: number }
 
 export default function SearchPage() {
+  const router = useRouter()
   const [query, setQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'all' | 'goals' | 'circles' | 'users'>('all')
+  const [activeTab, setActiveTab] = useState<SearchTab>('all')
+  const [userId, setUserId] = useState<string | null>(null)
+  const [profiles, setProfiles] = useState<ProfileResult[]>([])
+  const [goals, setGoals] = useState<GoalResult[]>([])
+  const [circles, setCircles] = useState<CircleResult[]>([])
+  const [following, setFollowing] = useState<Set<string>>(new Set())
+  const [partnerRequests, setPartnerRequests] = useState<Set<string>>(new Set())
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
 
-  const sampleResults: SearchResult[] = [
-    {
-      id: '1',
-      type: 'goal',
-      title: 'read 20 pages daily',
-      subtitle: 'Target: Oct 31, 2026',
-      meta: '5 day streak',
-    },
-    {
-      id: '2',
-      type: 'circle',
-      title: '5 AM Club',
-      subtitle: 'Early risers building high-productivity morning routines.',
-      meta: '142 members',
-    },
-    {
-      id: '3',
-      type: 'user',
-      title: 'Aarav Sharma',
-      subtitle: '@aarav_s',
-      meta: '12 goals completed',
-    },
-  ]
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!data.session?.user) router.replace('/login?next=/search')
+      else setUserId(data.session.user.id)
+    })
+  }, [router])
 
-  const filteredResults = sampleResults.filter((item) => {
-    const matchesQuery =
-      item.title.toLowerCase().includes(query.toLowerCase()) ||
-      item.subtitle.toLowerCase().includes(query.toLowerCase())
-    const matchesTab =
-      activeTab === 'all' ||
-      (activeTab === 'goals' && item.type === 'goal') ||
-      (activeTab === 'circles' && item.type === 'circle') ||
-      (activeTab === 'users' && item.type === 'user')
+  useEffect(() => {
+    if (!userId || query.trim().length < 2) return
+    const timer = window.setTimeout(async () => {
+      setLoading(true); setMessage(null)
+      const term = query.trim().replace(/[,%()]/g, ' ')
+      const [profileResult, goalResult, circleResult, followResult, partnerResult] = await Promise.all([
+        supabase.from('profiles').select('id,full_name,username,avatar_url,bio').or(`full_name.ilike.%${term}%,username.ilike.%${term}%`).neq('id', userId).limit(12),
+        supabase.from('goals').select('id,title,category,current_streak,user_id').eq('visibility', 'public').ilike('title', `%${term}%`).limit(12),
+        supabase.from('circles').select('id,name,description,category,member_count').eq('visibility', 'public').or(`name.ilike.%${term}%,description.ilike.%${term}%`).limit(12),
+        supabase.from('follows').select('following_id').eq('follower_id', userId),
+        supabase.from('accountability_partners').select('partner_id').eq('requester_id', userId).in('status', ['pending', 'accepted']),
+      ])
+      if (profileResult.error || goalResult.error || circleResult.error) setMessage('Search could not be completed. Please retry.')
+      setProfiles((profileResult.data || []) as ProfileResult[])
+      setGoals((goalResult.data || []) as GoalResult[])
+      setCircles((circleResult.data || []) as CircleResult[])
+      setFollowing(new Set(((followResult.data || []) as Array<{ following_id: string }>).map((row) => row.following_id)))
+      setPartnerRequests(new Set(((partnerResult.data || []) as Array<{ partner_id: string }>).map((row) => row.partner_id)))
+      setLoading(false)
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [query, userId])
 
-    return matchesQuery && matchesTab
-  })
+  const resultCount = useMemo(() => activeTab === 'people' ? profiles.length : activeTab === 'goals' ? goals.length : activeTab === 'circles' ? circles.length : profiles.length + goals.length + circles.length, [activeTab, circles.length, goals.length, profiles.length])
+
+  const toggleSupport = async (profileId: string) => {
+    if (!userId) return
+    const isFollowing = following.has(profileId)
+    setFollowing((current) => { const next = new Set(current); if (isFollowing) next.delete(profileId); else next.add(profileId); return next })
+    const result = isFollowing
+      ? await supabase.from('follows').delete().eq('follower_id', userId).eq('following_id', profileId)
+      : await supabase.from('follows').insert({ follower_id: userId, following_id: profileId })
+    if (result.error) {
+      setFollowing((current) => { const next = new Set(current); if (isFollowing) next.add(profileId); else next.delete(profileId); return next })
+      setMessage('Support status could not be changed.')
+    }
+  }
+
+  const requestPartner = async (profile: ProfileResult) => {
+    if (!userId || partnerRequests.has(profile.id)) return
+    const { error } = await supabase.from('accountability_partners').insert({ requester_id: userId, partner_id: profile.id })
+    if (error) { setMessage('Partner invitation could not be sent.'); return }
+    setPartnerRequests((current) => new Set(current).add(profile.id))
+    setMessage(`Accountability invitation sent to ${profile.full_name || profile.username || 'this member'}.`)
+  }
 
   return (
-    <div className="p-4 max-w-md mx-auto space-y-5 pb-28 text-slate-800 dark:text-slate-200 select-none">
-      {/* Header */}
-      <div className="pb-2 border-b border-slate-200 dark:border-slate-800">
-        <h1 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-          <Search className="h-4 w-4 text-amber-500" /> Search & Discover
-        </h1>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-          Find goals, circles, and accountability partners
-        </p>
-      </div>
-
-      {/* Search Input */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 shadow-sm">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search goals, circles, or users..."
-          className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-amber-500"
-        />
-      </div>
-
-      {/* Category Tabs */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
-        {(['all', 'goals', 'circles', 'users'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition ${
-              activeTab === tab
-                ? 'bg-amber-500 text-slate-950 shadow-sm'
-                : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Search Results Feed */}
-      <div className="space-y-3">
-        {filteredResults.length > 0 ? (
-          filteredResults.map((result) => (
-            <div
-              key={result.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex items-center justify-between hover:border-slate-300 dark:hover:border-slate-700 transition"
-            >
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white">
-                    {result.title}
-                  </span>
-                  <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                    {result.type}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {result.subtitle}
-                </p>
-              </div>
-
-              {result.meta && (
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 shrink-0">
-                  {result.meta}
-                </span>
-              )}
-            </div>
-          ))
-        ) : (
-          <div className="text-center py-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
-            <Search className="mx-auto h-6 w-6 text-slate-400" />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
-              No results found for &quot;{query}&quot;
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+    <main className="mx-auto min-h-screen max-w-xl space-y-4 px-4 pb-28 pt-5">
+      <header className="border-b border-slate-200 pb-3 dark:border-slate-800"><h1 className="flex items-center gap-2 text-lg font-black"><Search className="h-5 w-5 text-amber-500" />Discover</h1><p className="text-[11px] text-slate-500">Find people, public goals and accountability circles</p></header>
+      <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm focus-within:border-amber-500 dark:border-slate-700 dark:bg-[#101b2d]"><Search className="h-4 w-4 text-slate-400" /><input autoFocus value={query} onChange={(event) => { const next = event.target.value; setQuery(next); if (next.trim().length < 2) { setProfiles([]); setGoals([]); setCircles([]) } }} placeholder="Search by name, goal or circle" className="min-w-0 flex-1 bg-transparent text-sm outline-none" /></label>
+      <div className="flex gap-1.5 overflow-x-auto pb-1">{(['all', 'people', 'goals', 'circles'] as const).map((tab) => <button key={tab} onClick={() => setActiveTab(tab)} className={`rounded-xl px-3 py-1.5 text-xs font-black capitalize ${activeTab === tab ? 'bg-amber-500 text-slate-950' : 'border border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-[#101b2d]'}`}>{tab}</button>)}</div>
+      {message && <p role="status" className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-700 dark:text-amber-300">{message}</p>}
+      {query.trim().length < 2 && <div className="rounded-3xl border border-dashed border-slate-300 p-9 text-center dark:border-slate-700"><Search className="mx-auto mb-3 h-8 w-8 text-amber-500" /><h2 className="font-black">Search GoalCircle</h2><p className="mt-1 text-xs text-slate-500">Enter at least two characters. Results come from real public profiles, goals and circles.</p></div>}
+      {loading && <div className="space-y-3">{[1, 2, 3].map((item) => <div key={item} className="h-24 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}</div>}
+      {!loading && query.trim().length >= 2 && resultCount === 0 && <div className="rounded-3xl border border-dashed border-slate-300 p-9 text-center dark:border-slate-700"><p className="text-sm font-black">No matching results</p><p className="mt-1 text-xs text-slate-500">Try a shorter name or a broader goal category.</p></div>}
+      {!loading && (activeTab === 'all' || activeTab === 'people') && profiles.length > 0 && <section className="space-y-2"><h2 className="px-1 text-xs font-black uppercase tracking-wider text-slate-400">People</h2>{profiles.map((profile) => <article key={profile.id} className="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-700 dark:bg-[#101b2d]"><div className="flex items-center gap-3"><Link href={`/u/${profile.username || profile.id}`}><ProfileAvatar value={profile.avatar_url} name={profile.full_name || profile.username || 'Member'} size={42} className="rounded-full" /></Link><div className="min-w-0 flex-1"><Link href={`/u/${profile.username || profile.id}`} className="block truncate text-sm font-black">{profile.full_name || 'GoalCircle member'}</Link><p className="truncate text-[10px] text-slate-500">@{profile.username || 'member'}{profile.bio ? ` · ${profile.bio}` : ''}</p></div><button onClick={() => void toggleSupport(profile.id)} className={`rounded-xl px-2.5 py-2 text-[10px] font-black ${following.has(profile.id) ? 'border border-slate-200 text-slate-500 dark:border-slate-700' : 'bg-amber-500 text-slate-950'}`}>{following.has(profile.id) ? 'Supporting' : 'Support'}</button></div><button onClick={() => void requestPartner(profile)} disabled={partnerRequests.has(profile.id)} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2 text-[10px] font-black disabled:text-emerald-600 dark:border-slate-700"><HeartHandshake className="h-3.5 w-3.5" />{partnerRequests.has(profile.id) ? 'Partner invitation sent' : 'Invite as accountability partner'}</button></article>)}</section>}
+      {!loading && (activeTab === 'all' || activeTab === 'goals') && goals.length > 0 && <section className="space-y-2"><h2 className="px-1 text-xs font-black uppercase tracking-wider text-slate-400">Public goals</h2>{goals.map((goal) => <Link key={goal.id} href={`/goal/${goal.id}`} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#101b2d]"><span className="grid h-10 w-10 place-items-center rounded-xl bg-amber-500/10"><Target className="h-5 w-5 text-amber-500" /></span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-black">{goal.title}</span><span className="text-[10px] text-slate-500">{goal.category || 'Personal'} · {goal.current_streak || 0} day streak</span></span></Link>)}</section>}
+      {!loading && (activeTab === 'all' || activeTab === 'circles') && circles.length > 0 && <section className="space-y-2"><h2 className="px-1 text-xs font-black uppercase tracking-wider text-slate-400">Circles</h2>{circles.map((circle) => <Link key={circle.id} href="/circles" className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#101b2d]"><span className="grid h-10 w-10 place-items-center rounded-xl bg-amber-500/10"><UsersRound className="h-5 w-5 text-amber-500" /></span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-black">{circle.name}</span><span className="block truncate text-[10px] text-slate-500">{circle.description || circle.category} · {circle.member_count || 0} members</span></span><CircleUserRound className="h-4 w-4 text-slate-400" /></Link>)}</section>}
+    </main>
   )
 }

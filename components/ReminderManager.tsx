@@ -18,6 +18,12 @@ export default function ReminderManager() {
       const now = new Date()
       const today = now.toISOString().slice(0, 10)
       const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+      const inQuietHours = current.quietHoursEnabled && (
+        current.quietHoursStart <= current.quietHoursEnd
+          ? currentTime >= current.quietHoursStart && currentTime < current.quietHoursEnd
+          : currentTime >= current.quietHoursStart || currentTime < current.quietHoursEnd
+      )
+      if (inQuietHours) return
       if (currentTime < current.time || localStorage.getItem(LAST_REMINDER_KEY) === today) return
       const notification = new Notification('Your goals are waiting', {
         body: 'Add today’s progress to protect your momentum.',

@@ -16,9 +16,18 @@ const formats = [
   { value: 'video' as const, label: 'Reel', icon: Film },
 ]
 
+const templates = [
+  { label: 'Reading', title: 'Read 20 pages every day', category: 'learning' },
+  { label: 'Fitness', title: 'Move for 30 minutes every day', category: 'fitness' },
+  { label: 'Study', title: 'Complete one focused study session daily', category: 'learning' },
+  { label: 'Deep work', title: 'Complete 60 minutes of deep work', category: 'work' },
+  { label: 'Mindfulness', title: 'Practice mindfulness for 10 minutes', category: 'habits' },
+]
+
 export default function CreateGoalPage() {
   const router = useRouter()
   const [title, setTitle] = useState('')
+  const [category, setCategory] = useState('personal')
   const [visibility, setVisibility] = useState<Visibility>('public')
   const [postFormat, setPostFormat] = useState<PostFormat>('text')
   const [caption, setCaption] = useState('')
@@ -145,6 +154,8 @@ export default function CreateGoalPage() {
       return
     }
 
+    if (goalId) await supabase.from('goals').update({ category }).eq('id', goalId).eq('user_id', session.user.id)
+
     router.replace(visibility === 'public' ? '/feed?published=goal' : goalId ? `/goal/${goalId}` : '/profile')
     router.refresh()
   }
@@ -159,6 +170,7 @@ export default function CreateGoalPage() {
       <form onSubmit={handleSubmit} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
         <label htmlFor="goal-title" className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500">Your goal</label>
         <input id="goal-title" autoFocus value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} placeholder="Read 20 pages every day" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm font-bold outline-none focus:border-amber-500 dark:border-slate-700 dark:bg-[#07101f]" />
+        <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1" aria-label="Goal templates">{templates.map((template) => <button type="button" key={template.label} onClick={() => { setTitle(template.title); setCategory(template.category) }} className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-[10px] font-black ${title === template.title ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 text-slate-500 dark:border-slate-700'}`}>{template.label}</button>)}</div>
 
         <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
           <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">

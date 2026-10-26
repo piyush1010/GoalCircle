@@ -7,6 +7,7 @@ import { Flag, ShieldAlert, Ban } from 'lucide-react';
 export default function ReportBlockModal({ targetUserId, isOpen, onClose }: { targetUserId: string; isOpen: boolean; onClose: () => void }) {
   const [reason, setReason] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -14,11 +15,13 @@ export default function ReportBlockModal({ targetUserId, isOpen, onClose }: { ta
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    await supabase.from('reports').insert({
+    if (!reason.trim()) { setError('Choose a brief reason before submitting.'); return; }
+    const { error: reportError } = await supabase.from('reports').insert({
       reporter_id: user.id,
       target_user_id: targetUserId,
-      reason,
+      reason: reason.trim(),
     });
+    if (reportError) { setError('The report could not be submitted.'); return; }
     setSubmitted(true);
   }
 
@@ -26,10 +29,11 @@ export default function ReportBlockModal({ targetUserId, isOpen, onClose }: { ta
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    await supabase.from('blocks').insert({
+    const { error: blockError } = await supabase.from('blocks').insert({
       blocker_id: user.id,
       blocked_id: targetUserId,
     });
+    if (blockError) { setError('This member could not be blocked.'); return; }
     onClose();
   }
 
@@ -49,6 +53,7 @@ export default function ReportBlockModal({ targetUserId, isOpen, onClose }: { ta
               className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm mb-4 text-slate-900 dark:text-slate-100 focus:outline-none"
             />
             <div className="flex flex-col gap-2">
+              {error && <p role="alert" className="rounded-xl bg-red-500/10 p-2 text-xs font-semibold text-red-600 dark:text-red-300">{error}</p>}
               <button
                 onClick={handleReport}
                 className="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
@@ -69,7 +74,7 @@ export default function ReportBlockModal({ targetUserId, isOpen, onClose }: { ta
         ) : (
           <div className="text-center py-4">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">
-              Report submitted. Our team will review this profile within 24 hours.
+              Report recorded. Thank you for helping keep GoalCircle focused and respectful.
             </p>
             <button onClick={onClose} className="px-4 py-2 bg-amber-500 text-black font-semibold rounded-xl text-sm">
               Close
