@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import BottomNav from '@/components/BottomNav'
 import ReminderManager from '@/components/ReminderManager'
 import PwaManager from '@/components/PwaManager'
+import WelcomeBack from '@/components/WelcomeBack'
 
 const NAV_HIDDEN_ROUTES = ['/', '/login', '/signup', '/auth', '/privacy']
 
@@ -19,6 +20,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <ReminderManager />
       {children}
       {!hideNavigation && <BottomNav />}
+      {!hideNavigation && <WelcomeBack />}
     </>
   )
 }

@@ -6,7 +6,14 @@ import { useRouter } from 'next/navigation'
 import { AlignLeft, ArrowLeft, BellRing, CalendarDays, Camera, CircleCheck, Download, ExternalLink, Film, Globe2, ImagePlus, LockKeyhole, Music2, X } from 'lucide-react'
 import { OPEN_ENDED_REMINDER_DAYS, calendarFileName, createGoalCalendarBundle, createGoogleCalendarUrl, createGoogleDailyReminderUrl, type DailyReminder, type GoalCalendarEvent } from '@/lib/calendar'
 import MusicPicker, { type SelectedTrack } from '@/components/MusicPicker'
+import GuideTour, { type TourStep } from '@/components/GuideTour'
 import { supabase } from '@/utils/supabase'
+
+const CREATE_TOUR: TourStep[] = [
+  { target: 'goal-title', title: 'Name one clear action', text: "Small and specific works best: 'Read 20 pages a day', not 'Read more'. Or tap an idea to start." },
+  { target: 'goal-plan', title: 'Date, reminder and privacy', text: 'Add a target date and a daily reminder if you like. Public shares it on your Feed; Private keeps it to yourself.' },
+  { target: 'goal-publish', title: "That's it", text: 'Publish when ready. You can change everything later.' },
+]
 
 type Visibility = 'public' | 'private'
 type PostFormat = 'text' | 'image' | 'video'
@@ -250,7 +257,7 @@ export default function CreateGoalPage() {
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        <section className={sectionClass}>
+        <section data-tour="goal-title" className={sectionClass}>
           <div className="mb-3 flex items-baseline justify-between">
             <label htmlFor="goal-title" className={headingClass}>What&apos;s your goal?</label>
             <span className="text-xs text-slate-400">{title.length}/100</span>
@@ -265,7 +272,7 @@ export default function CreateGoalPage() {
           </div>
         </section>
 
-        <section className={`${sectionClass} divide-y divide-slate-100 py-1 dark:divide-slate-800`}>
+        <section data-tour="goal-plan" className={`${sectionClass} divide-y divide-slate-100 py-1 dark:divide-slate-800`}>
           <div className={rowClass}>
             <div>
               <label htmlFor="target-date" className={headingClass}>Target date</label>
@@ -330,9 +337,10 @@ export default function CreateGoalPage() {
 
         {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
 
-        <button type="submit" disabled={submitting} className="w-full rounded-2xl bg-amber-500 py-4 text-base font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 disabled:opacity-60">{submitting ? 'Publishing…' : isPublic ? 'Publish goal' : 'Create private goal'}</button>
+        <button type="submit" data-tour="goal-publish" disabled={submitting} className="w-full rounded-2xl bg-amber-500 py-4 text-base font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 disabled:opacity-60">{submitting ? 'Publishing…' : isPublic ? 'Publish goal' : 'Create private goal'}</button>
       </form>
 
+      <GuideTour name="create-goal" steps={CREATE_TOUR} />
       <MusicPicker open={musicOpen} selected={selectedTrack} onClose={() => setMusicOpen(false)} onSelect={setSelectedTrack} />
     </main>
   )

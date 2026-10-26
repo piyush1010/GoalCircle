@@ -6,6 +6,7 @@ import { useDisplayPreferences, useTheme, type Theme } from '@/components/ThemeP
 import AvatarEditor from '@/components/AvatarEditor'
 import InstallAppCard from '@/components/InstallAppCard'
 import FeedbackCard from '@/components/FeedbackCard'
+import { resetTours } from '@/components/GuideTour'
 import { supabase } from '@/utils/supabase'
 import { Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, Type, UserRound } from 'lucide-react'
 import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
@@ -440,6 +441,18 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => { resetTours(); router.push('/profile?guide=1') }}
+        className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-amber-500 dark:border-slate-800 dark:bg-slate-900"
+      >
+        <span>
+          <span className="block text-sm font-bold">Show me around again</span>
+          <span className="block text-xs text-slate-500">Replay Goalie&apos;s tours on every page.</span>
+        </span>
+        <span className="text-amber-500">→</span>
+      </button>
 
       <FeedbackCard />
 

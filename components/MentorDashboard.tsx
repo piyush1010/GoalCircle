@@ -65,7 +65,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800" role="tablist">
-        {([['today', 'Today'], ['students', `Students (${rows.length})`]] as const).map(([value, label]) => <button type="button" role="tab" aria-selected={view === value} key={value} onClick={() => setView(value)} className={`rounded-lg py-2.5 text-sm font-bold transition ${view === value ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}>{label}</button>)}
+        {([['today', 'Today'], ['students', `Students (${rows.length})`]] as const).map(([value, label]) => <button type="button" role="tab" data-tour={value === 'students' ? 'students-tab' : undefined} aria-selected={view === value} key={value} onClick={() => setView(value)} className={`rounded-lg py-2.5 text-sm font-bold transition ${view === value ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}>{label}</button>)}
       </div>
 
       {view === 'today' && <>
@@ -127,7 +127,7 @@ function TaskCard({ circleId, today, task, onSaved }: { circleId: string; today:
     onSaved(result.data as Task)
   }
 
-  if (!editing && task) return <section className={card}>
+  if (!editing && task) return <section data-tour="task" className={card}>
     <div className="flex items-start justify-between gap-3">
       <div>
         <p className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Today&apos;s task</p>
@@ -138,7 +138,7 @@ function TaskCard({ circleId, today, task, onSaved }: { circleId: string; today:
     </div>
   </section>
 
-  return <section className={card}>
+  return <section data-tour="task" className={card}>
     <label htmlFor="task-title" className="block text-sm font-black">{task ? 'Edit today’s task' : 'Set today’s task'}</label>
     <p className="mt-0.5 text-xs text-slate-500">Students get a notification and check in against it.</p>
     <input id="task-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={140} placeholder="e.g. Write 2 GS2 answers + revise Polity ch. 5" className={`${field} mt-3 font-semibold`} />

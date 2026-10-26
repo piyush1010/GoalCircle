@@ -5,7 +5,16 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
 import type { User } from '@supabase/supabase-js'
 import ProfileAvatar from '@/components/ProfileAvatar'
-import QuickStartGuide from '@/components/QuickStartGuide'
+import GuideTour, { type TourStep } from '@/components/GuideTour'
+
+const WELCOME_TOUR: TourStep[] = [
+  { title: "Hi, I'm Goalie!", text: "I'll help you keep going, one small step at a time. Here's a one-minute tour." },
+  { target: 'nav-create', title: 'Start here', text: "Create a goal, or post today's progress on one you already have." },
+  { target: 'nav-feed', title: 'Feed', text: 'See progress from people you follow. Boost a win, comment or send a nudge.' },
+  { target: 'nav-circles', title: 'Circles', text: "Join your mentor's batch with an invite link, or start a group with friends." },
+  { target: 'nav-progress', title: 'Progress', text: 'Your streaks, check-ins and focus time, all in one place.' },
+  { target: 'nav-profile', title: 'Profile', text: 'Your goals and settings. Tap the ? on this page any time to see this tour again.' },
+]
 import QuickActionsWidget from '@/components/QuickActionsWidget'
 import TodoWidget from '@/components/TodoWidget'
 import { CircleHelp, Film, Flame, Settings as SettingsIcon, Sparkles } from 'lucide-react'
@@ -246,7 +255,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <QuickStartGuide open={showQuickGuide} onComplete={() => void handleQuickGuideComplete()} />
+      <GuideTour name="welcome" steps={WELCOME_TOUR} open={showQuickGuide} onDone={() => void handleQuickGuideComplete()} />
 
       {/* USER CARD & STATS */}
       <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-5 shadow-xl">

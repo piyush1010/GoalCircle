@@ -71,7 +71,7 @@ export default function CircleNotices({ circleId, userId, isAdmin }: { circleId:
   if (!isAdmin && notices.length === 0) return null
 
   return (
-    <section className="mt-3 space-y-3">
+    <section data-tour="notices" className="mt-3 space-y-3">
       <div className="flex items-center justify-between px-1">
         <h2 className="flex items-center gap-1.5 text-sm font-black"><Megaphone className="h-4 w-4 text-amber-500" />Notices</h2>
         {isAdmin && !composing && <button type="button" onClick={() => setComposing(true)} className="text-xs font-bold text-amber-600 dark:text-amber-400">+ New notice</button>}
