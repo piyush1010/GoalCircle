@@ -8,11 +8,12 @@ import { ArrowLeft, CheckCircle2, CircleHelp, Copy, ImagePlus, LockKeyhole, LogO
 import GuideTour, { type TourStep } from '@/components/GuideTour'
 import CircleNotices from '@/components/CircleNotices'
 import MentorDashboard, { type DashboardRow } from '@/components/MentorDashboard'
+import { AttachmentList, type Attachment } from '@/components/CircleAttachments'
 import { examLabel, localDateString } from '@/lib/exams'
 import { supabase } from '@/utils/supabase'
 
 interface Circle { id: string; owner_id: string; name: string; description: string | null; exam: string | null; visibility: 'public' | 'private'; invite_code: string | null }
-interface Task { id: string; title: string; details: string | null; task_date: string }
+interface Task { id: string; title: string; details: string | null; task_date: string; attachments: Attachment[] }
 interface Checkin { status: 'done' | 'partial'; hours: number | null; note: string | null; media_url: string | null; media_type: 'image' | 'video' | null }
 
 const MENTOR_TOUR: TourStep[] = [
@@ -73,7 +74,7 @@ export default function CirclePage() {
       supabase.from('circles').select('id,owner_id,name,description,exam,visibility,invite_code').eq('id', circleId).maybeSingle(),
       supabase.from('circle_memberships').select('role').eq('circle_id', circleId).eq('user_id', uid).maybeSingle(),
       supabase.from('circle_memberships').select('user_id', { count: 'exact', head: true }).eq('circle_id', circleId),
-      supabase.from('circle_tasks').select('id,title,details,task_date').eq('circle_id', circleId).eq('task_date', today).maybeSingle(),
+      supabase.from('circle_tasks').select('id,title,details,task_date,attachments').eq('circle_id', circleId).eq('task_date', today).maybeSingle(),
     ])
     if (!circleResult.data) { setNotFound(true); setLoading(false); return }
     const loadedCircle = circleResult.data as Circle
@@ -156,7 +157,6 @@ export default function CirclePage() {
       </section>}
 
       {!isAdmin && isMember && <button type="button" onClick={() => void leave()} className="mx-auto mt-8 flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-rose-500"><LogOut className="h-3.5 w-3.5" />Leave circle</button>}
-      {isAdmin && inviteLink && <p className="mt-6 flex items-center justify-center gap-2 text-xs text-slate-400">Invite link: <button type="button" onClick={async () => { await navigator.clipboard.writeText(inviteLink); flash('Invite link copied') }} className="inline-flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400"><Copy className="h-3.5 w-3.5" />Copy</button></p>}
     </main>
   )
 }
@@ -217,6 +217,7 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
       <p className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Today&apos;s task</p>
       <h2 className="mt-1 text-lg font-black leading-snug">{task.title}</h2>
       {task.details && <p className="mt-1 whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{task.details}</p>}
+      <AttachmentList attachments={task.attachments ?? []} />
 
       {!showForm && checkin && <div className="mt-4 flex items-center justify-between rounded-2xl bg-emerald-500/10 px-4 py-3">
         <p className="flex items-center gap-2 text-sm font-black text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="h-5 w-5" />{checkin.status === 'done' ? 'Done today' : 'Partly done'}{checkin.hours !== null && ` · ${checkin.hours} h`}</p>
