@@ -47,9 +47,9 @@ const timeAgo = (value: string | null) => {
 }
 const whatsappUrl = (text: string) => `https://wa.me/?text=${encodeURIComponent(text)}`
 
-export default function MentorDashboard({ circleId, circleName, today, task, rows, inviteLink, onTaskSaved, onChanged, onCopyInvite, flash }: {
+export default function MentorDashboard({ circleId, circleName, today, task, rows, inviteLink, onTaskSaved, onTaskDeleted, onChanged, onCopyInvite, flash }: {
   circleId: string; circleName: string; today: string; task: Task | null; rows: DashboardRow[]; inviteLink: string
-  onTaskSaved: (task: Task) => void; onChanged: () => void; onCopyInvite: () => void; flash: (text: string) => void
+  onTaskSaved: (task: Task) => void; onTaskDeleted: () => void; onChanged: () => void; onCopyInvite: () => void; flash: (text: string) => void
 }) {
   const [view, setView] = useState<'today' | 'students'>('today')
   const [now] = useState(() => Date.now())
@@ -71,7 +71,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
       </div>
 
       {view === 'today' && <>
-        <TaskCard circleId={circleId} today={today} task={task} onSaved={onTaskSaved} />
+        <TaskCard key={task?.id ?? 'new'} circleId={circleId} today={today} task={task} onSaved={onTaskSaved} onDeleted={onTaskDeleted} />
 
         {rows.length === 0 ? <section className={`${card} text-center`}>
           <UserPlus className="mx-auto h-8 w-8 text-amber-500" />
@@ -108,7 +108,7 @@ function Stat({ label, value, tone, onClick }: { label: string; value: number; t
   </button>
 }
 
-function TaskCard({ circleId, today, task, onSaved }: { circleId: string; today: string; task: Task | null; onSaved: (task: Task) => void }) {
+function TaskCard({ circleId, today, task, onSaved, onDeleted }: { circleId: string; today: string; task: Task | null; onSaved: (task: Task) => void; onDeleted: () => void }) {
   const [editing, setEditing] = useState(!task)
   const [title, setTitle] = useState(task?.title ?? '')
   const [details, setDetails] = useState(task?.details ?? '')
@@ -136,6 +136,16 @@ function TaskCard({ circleId, today, task, onSaved }: { circleId: string; today:
     onSaved(result.data as Task)
   }
 
+  const remove = async () => {
+    if (!task || !(await confirmAction('Delete today’s task? Students’ check-ins for it will be removed too.'))) return
+    setSaving(true); setError(null)
+    const { data, error: deleteError } = await supabase.from('circle_tasks').delete().eq('id', task.id).select('id')
+    setSaving(false)
+    if (deleteError || !data?.length) { setError('The task could not be deleted.'); return }
+    void removeCircleFiles((task.attachments ?? []).map((file) => file.path))
+    onDeleted()
+  }
+
   if (!editing && task) return <section data-tour="task" className={card}>
     <div className="flex items-start justify-between gap-3">
       <div>
@@ -159,6 +169,7 @@ function TaskCard({ circleId, today, task, onSaved }: { circleId: string; today:
       {task && <button type="button" onClick={() => { setEditing(false); setTitle(task.title); setDetails(task.details ?? ''); setKept(task.attachments ?? []); setFiles([]) }} className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700">Cancel</button>}
       <button type="button" onClick={() => void save()} disabled={saving} className="flex-[2] rounded-xl bg-amber-500 py-3 text-sm font-black text-slate-950 disabled:opacity-60">{saving ? 'Saving…' : task ? 'Save changes' : 'Post task'}</button>
     </div>
+    {task && <button type="button" onClick={() => void remove()} disabled={saving} className="mt-3 w-full text-center text-xs font-bold text-rose-600 disabled:opacity-60 dark:text-rose-400">Delete this task</button>}
   </section>
 }
 

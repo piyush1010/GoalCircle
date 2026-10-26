@@ -145,7 +145,7 @@ export default function CirclePage() {
       {error && <p role="alert" className="mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
 
       {isAdmin && <MentorDashboard circleId={circleId} circleName={circle.name} today={today} task={task} rows={dashboard} inviteLink={inviteLink}
-        onTaskSaved={(saved) => { setTask(saved); void loadDashboard() }} onChanged={() => void loadDashboard()} onCopyInvite={async () => { await navigator.clipboard.writeText(inviteLink); flash('Invite link copied') }} flash={flash} />}
+        onTaskSaved={(saved) => { setTask(saved); void loadDashboard() }} onTaskDeleted={() => { setTask(null); void loadDashboard() }} onChanged={() => void loadDashboard()} onCopyInvite={async () => { await navigator.clipboard.writeText(inviteLink); flash('Invite link copied') }} flash={flash} />}
 
       {!isAdmin && isMember && userId && <StudentToday circleId={circleId} userId={userId} task={task} checkin={checkin} onSaved={(saved) => { setCheckin(saved); flash('Saved. Your mentor can see it.') }} />}
 
