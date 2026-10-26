@@ -127,7 +127,7 @@ export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: 
 
       <div className="guide-card absolute inset-x-4 bottom-24 mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-[#101b2d]">
         <div className="flex gap-3">
-          <GoalieBot />
+          <GoalieBot mood="think" />
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Goalie · {index + 1} of {active.length}</p>
             <h2 className="mt-0.5 text-base font-black leading-snug">{step.title}</h2>

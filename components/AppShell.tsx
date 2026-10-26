@@ -5,6 +5,7 @@ import BottomNav from '@/components/BottomNav'
 import ReminderManager from '@/components/ReminderManager'
 import PwaManager from '@/components/PwaManager'
 import WelcomeBack from '@/components/WelcomeBack'
+import GoalieCheer from '@/components/GoalieCheer'
 
 const NAV_HIDDEN_ROUTES = ['/', '/login', '/signup', '/auth', '/privacy']
 
@@ -21,6 +22,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {children}
       {!hideNavigation && <BottomNav />}
       {!hideNavigation && <WelcomeBack />}
+      <GoalieCheer />
     </>
   )
 }

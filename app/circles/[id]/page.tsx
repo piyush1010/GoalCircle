@@ -1,5 +1,6 @@
 'use client'
 
+import { cheer } from '@/lib/goalie'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
@@ -212,6 +213,7 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
     if (saveError) { setError('Your update could not be saved. Please try again.'); return }
     setEditing(false); setFile(null)
     onSaved(row)
+    cheer()
   }
 
   const showForm = editing || !checkin

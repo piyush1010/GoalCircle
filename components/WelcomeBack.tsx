@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
-import { GoalieBot } from '@/components/GuideTour'
+import GoalieSays from '@/components/GoalieSays'
 
 const LAST_VISIT_KEY = 'goalcircle-last-visit'
 const AWAY_DAYS = 3
@@ -29,12 +29,9 @@ export default function WelcomeBack() {
   return (
     <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-[#101b2d]">
       <button type="button" onClick={() => setDaysAway(null)} aria-label="Close" className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:text-slate-600"><X className="h-4 w-4" /></button>
-      <div className="flex gap-3 pr-6">
-        <GoalieBot />
-        <div>
-          <h2 className="text-base font-black">Good to see you again</h2>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">It&apos;s been {daysAway} days. No pressure. Every restart counts. One small step today?</p>
-        </div>
+      <div className="pr-6">
+        <GoalieSays lines="welcomeBack" mood="wave" size={60} />
+        <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">It&apos;s been {daysAway} days. No pressure, every restart counts. One small step today?</p>
       </div>
       <div className="mt-4 flex justify-end gap-2">
         <button type="button" onClick={() => setDaysAway(null)} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Not now</button>
