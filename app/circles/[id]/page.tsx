@@ -4,7 +4,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, CheckCircle2, Copy, ImagePlus, LockKeyhole, LogOut, Pencil, Share2, Timer, Users, X } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, CircleHelp, Copy, ImagePlus, LockKeyhole, LogOut, Pencil, Share2, Timer, Users, X } from 'lucide-react'
+import GuideTour, { type TourStep } from '@/components/GuideTour'
 import CircleNotices from '@/components/CircleNotices'
 import MentorDashboard, { type DashboardRow } from '@/components/MentorDashboard'
 import { examLabel, localDateString } from '@/lib/exams'
@@ -13,6 +14,22 @@ import { supabase } from '@/utils/supabase'
 interface Circle { id: string; owner_id: string; name: string; description: string | null; exam: string | null; visibility: 'public' | 'private'; invite_code: string | null }
 interface Task { id: string; title: string; details: string | null; task_date: string }
 interface Checkin { status: 'done' | 'partial'; hours: number | null; note: string | null; media_url: string | null; media_type: 'image' | 'video' | null }
+
+const MENTOR_TOUR: TourStep[] = [
+  { title: "Hi, I'm Goalie!", text: 'This is your batch. In four quick steps I\'ll show you how to run it in a few minutes a day.' },
+  { target: 'invite', title: 'Invite your students', text: 'Share this link in your WhatsApp group. Students join with one tap.' },
+  { target: 'task', title: "Post today's task", text: 'Write what everyone should finish today. Students get a notification and check in against it.' },
+  { target: 'students-tab', title: 'See who needs you', text: 'Students shows who is done, who isn\'t yet and who has gone quiet. Search, filter and nudge from here.' },
+  { target: 'notices', title: 'Share notices', text: 'Post test dates, new targets or a photo. Pin the important ones so they stay on top.' },
+]
+
+const STUDENT_TOUR: TourStep[] = [
+  { title: "Hi, I'm Goalie!", text: 'This is your batch. Here\'s how to keep your mentor updated in about 10 seconds a day.' },
+  { target: 'task', title: "Today's task", text: 'Your mentor posts the task here. You get a notification when it\'s new.' },
+  { target: 'checkin', title: 'Check in', text: 'Pick Done or Partly done, add hours if you like, then save. A photo is optional.' },
+  { target: 'focus', title: 'Hard to start?', text: 'Run a short focus session first. Starting is the hardest part.' },
+  { target: 'notices', title: 'Notices', text: 'Test dates and updates from your mentor appear here.' },
+]
 
 const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]'
 const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#07101f]'
@@ -35,6 +52,7 @@ export default function CirclePage() {
   const [notFound, setNotFound] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [tourReplay, setTourReplay] = useState(0)
 
   const isAdmin = !!circle && (circle.owner_id === userId || role === 'owner' || role === 'moderator')
   const isMember = isAdmin || !!role
@@ -115,7 +133,8 @@ export default function CirclePage() {
             <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />{memberCount} {memberCount === 1 ? 'member' : 'members'}</span>
           </p>
         </div>
-        {isAdmin && <button type="button" onClick={() => void shareInvite()} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-xs font-black text-slate-950"><Share2 className="h-4 w-4" />Invite</button>}
+        {isMember && <button type="button" onClick={() => setTourReplay((n) => n + 1)} aria-label="Show the guide" className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-500 hover:text-amber-500 dark:border-slate-700"><CircleHelp className="h-4 w-4" /></button>}
+        {isAdmin && <button type="button" data-tour="invite" onClick={() => void shareInvite()} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-xs font-black text-slate-950"><Share2 className="h-4 w-4" />Invite</button>}
       </header>
 
       {message && <p role="status" className="mb-3 rounded-xl bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-700 dark:text-emerald-300">{message}</p>}
@@ -127,6 +146,8 @@ export default function CirclePage() {
       {!isAdmin && isMember && userId && <StudentToday circleId={circleId} userId={userId} task={task} checkin={checkin} onSaved={(saved) => { setCheckin(saved); flash('Saved. Your mentor can see it.') }} />}
 
       {isMember && userId && <CircleNotices circleId={circleId} userId={userId} isAdmin={isAdmin} />}
+
+      {isMember && <GuideTour name={isAdmin ? 'mentor-circle' : 'student-circle'} steps={isAdmin ? MENTOR_TOUR : STUDENT_TOUR} replayKey={tourReplay} />}
 
       {!isMember && <section className={`${card} text-center`}>
         <h2 className="text-base font-black">Join this circle</h2>
@@ -152,7 +173,7 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
 
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
 
-  if (!task) return <section className={`${card} text-center`}>
+  if (!task) return <section data-tour="task" className={`${card} text-center`}>
     <CheckCircle2 className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
     <h2 className="mt-2 text-base font-black">No task yet today</h2>
     <p className="mt-1 text-sm text-slate-500">Your mentor hasn&apos;t set today&apos;s task. Keep going with your own goals.</p>
@@ -192,7 +213,7 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
   const showForm = editing || !checkin
 
   return (
-    <section className={card}>
+    <section data-tour="task" className={card}>
       <p className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Today&apos;s task</p>
       <h2 className="mt-1 text-lg font-black leading-snug">{task.title}</h2>
       {task.details && <p className="mt-1 whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{task.details}</p>}
@@ -214,8 +235,8 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
         {preview ? <div className="relative overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950">{file?.type.startsWith('video/') ? <video src={preview} controls playsInline className="max-h-56 w-full object-contain" /> : <div className="relative h-44"><Image src={preview} alt="Your proof" fill unoptimized className="object-contain" /></div>}<button type="button" onClick={() => { if (preview) URL.revokeObjectURL(preview); setPreview(null); setFile(null) }} aria-label="Remove file" className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-slate-950/80 text-white"><X className="h-4 w-4" /></button></div>
           : <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 py-3 text-sm font-bold text-slate-500 transition hover:border-amber-500 dark:border-slate-700"><ImagePlus className="h-4 w-4 text-amber-500" />Add a photo or video (optional)<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" className="sr-only" onChange={(event) => chooseFile(event.target.files?.[0])} /></label>}
         {error && <p role="alert" className="text-sm font-semibold text-rose-600">{error}</p>}
-        <button type="button" onClick={() => void save()} disabled={saving} className={primary}>{saving ? 'Saving…' : 'Save my update'}</button>
-        <Link href="/focus" className="flex items-center justify-center gap-1.5 text-sm font-bold text-amber-600 dark:text-amber-400"><Timer className="h-4 w-4" />Start a focus session first</Link>
+        <button type="button" data-tour="checkin" onClick={() => void save()} disabled={saving} className={primary}>{saving ? 'Saving…' : 'Save my update'}</button>
+        <Link href="/focus" data-tour="focus" className="flex items-center justify-center gap-1.5 text-sm font-bold text-amber-600 dark:text-amber-400"><Timer className="h-4 w-4" />Start a focus session first</Link>
       </div>}
     </section>
   )
