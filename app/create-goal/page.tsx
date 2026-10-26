@@ -34,9 +34,10 @@ const uploadClass = 'flex cursor-pointer flex-col items-center justify-center ga
 const templates = [
   { label: 'Reading', title: 'Read 20 pages every day', category: 'learning' },
   { label: 'Fitness', title: 'Move for 30 minutes every day', category: 'fitness' },
-  { label: 'Study', title: 'Complete one focused study session daily', category: 'learning' },
+  { label: 'New skill', title: 'Practise Python for 30 minutes a day', category: 'learning' },
   { label: 'Deep work', title: 'Complete 60 minutes of deep work', category: 'work' },
-  { label: 'Mindfulness', title: 'Practice mindfulness for 10 minutes', category: 'habits' },
+  { label: 'Mindfulness', title: 'Practise mindfulness for 10 minutes', category: 'habits' },
+  { label: 'Give back', title: 'Spend 30 minutes cleaning up my area every week', category: 'community' },
 ]
 
 export default function CreateGoalPage() {
