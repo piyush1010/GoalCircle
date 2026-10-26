@@ -243,7 +243,7 @@ export default function SettingsPage() {
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            placeholder="Piyush Kaushik"
+            placeholder="Aarav Mehta"
             className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 transition"
           />
         </div>
@@ -256,7 +256,7 @@ export default function SettingsPage() {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="piyushkaushik10"
+            placeholder="aarav.builds"
             className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 transition"
           />
         </div>
