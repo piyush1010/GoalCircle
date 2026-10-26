@@ -40,17 +40,29 @@ function OAuthCallback() {
         return
       }
 
+      const user = data.session.user
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_onboarded')
-        .eq('id', data.session.user.id)
+        .eq('id', user.id)
         .maybeSingle()
 
       if (!isActive) return
 
+      // New here: create the profile from the Google account and open Profile, where Goalie's tour starts.
       if (!profile?.is_onboarded) {
         setMessage('Preparing your profile…')
-        router.replace(`/settings?onboarding=1&next=${encodeURIComponent(nextPath)}`)
+        const meta = user.user_metadata || {}
+        const fullName = String(meta.full_name || meta.name || user.email?.split('@')[0] || 'GoalCircle member').slice(0, 60)
+        const base = (user.email?.split('@')[0] || 'member').toLowerCase().replace(/[^a-z0-9_.]/g, '').slice(0, 24) || 'member'
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          const username = attempt === 0 ? base : `${base}${Math.floor(100 + Math.random() * 900)}`
+          const { error: profileError } = await supabase.from('profiles').upsert({ id: user.id, full_name: fullName, username, avatar_url: meta.avatar_url || meta.picture || null, is_onboarded: true, updated_at: new Date().toISOString() })
+          if (!profileError) { await supabase.auth.updateUser({ data: { full_name: fullName, handle: `@${username}` } }); break }
+          if (profileError.code !== '23505') break // not a username clash: carry on, Profile can fix it
+        }
+        if (!isActive) return
+        router.replace(nextPath === '/profile' ? '/profile' : nextPath)
         return
       }
 

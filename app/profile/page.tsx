@@ -1,5 +1,6 @@
 'use client'
 
+import ProfileEditor from '@/components/ProfileEditor'
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
@@ -43,7 +44,6 @@ export default function ProfilePage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [fullName, setFullName] = useState('')
   const [handle, setHandle] = useState('')
-  const [saving, setSaving] = useState(false)
   const [showQuickGuide, setShowQuickGuide] = useState(false)
 
   // Memory Reels Dynamic Days
@@ -124,6 +124,7 @@ export default function ProfilePage() {
       const forceGuide = new URLSearchParams(window.location.search).get('guide') === '1'
       const hasSeenGuide = userMeta.goalcircle_quick_guide_seen === true || localStorage.getItem(guideStorageKey) === '1'
       if (forceGuide || !hasSeenGuide) setShowQuickGuide(true)
+      if (new URLSearchParams(window.location.search).get('edit') === '1') setShowEditModal(true)
       setFullName(userMeta.full_name || userMeta.name || currentUser.email?.split('@')[0] || 'User')
       setHandle(userMeta.handle || `@${currentUser.email?.split('@')[0] || 'member'}`)
 
@@ -149,37 +150,6 @@ export default function ProfilePage() {
       isMounted = false
     }
   }, [router])
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-
-    const formattedHandle = handle.startsWith('@') ? handle : `@${handle}`
-
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        full_name: fullName,
-        handle: formattedHandle,
-      }
-    })
-
-    if (!error) {
-      setUser((prev) => prev ? ({
-        ...prev,
-        user_metadata: {
-          ...prev.user_metadata,
-          full_name: fullName,
-          handle: formattedHandle,
-        }
-      }) : prev)
-      setHandle(formattedHandle)
-      setShowEditModal(false)
-    } else {
-      console.error('Failed to update profile:', error)
-    }
-
-    setSaving(false)
-  }
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -381,49 +351,16 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* MODAL: EDIT PROFILE */}
+      {/* MODAL: EDIT PROFILE (the only place to edit profile details) */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
-            <h3 className="text-base font-black">Edit Profile Details</h3>
-            <form onSubmit={handleUpdateProfile} className="space-y-3">
-              <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Display Name</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-white rounded-xl text-xs focus:outline-none focus:border-amber-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Handle</label>
-                <input
-                  type="text"
-                  value={handle}
-                  onChange={(e) => setHandle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-white rounded-xl text-xs focus:outline-none focus:border-amber-500"
-                  required
-                />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition disabled:opacity-50"
-                >
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-700 transition"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/70 p-4 backdrop-blur-sm sm:items-center" onClick={() => setShowEditModal(false)}>
+          <div className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900" onClick={(event) => event.stopPropagation()}>
+            <h3 className="mb-3 text-base font-black">Edit profile</h3>
+            <ProfileEditor onCancel={() => setShowEditModal(false)} onSaved={(saved) => {
+              setFullName(saved.fullName); setHandle(`@${saved.username}`)
+              setUser((prev) => prev ? ({ ...prev, user_metadata: { ...prev.user_metadata, full_name: saved.fullName, handle: `@${saved.username}`, avatar_url: saved.avatarUrl } }) : prev)
+              setShowEditModal(false)
+            }} />
           </div>
         </div>
       )}

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDisplayPreferences, useTheme, type Theme } from '@/components/ThemeProvider'
-import AvatarEditor from '@/components/AvatarEditor'
 import InstallAppCard from '@/components/InstallAppCard'
 import FeedbackCard from '@/components/FeedbackCard'
 import { resetTours } from '@/components/GuideTour'
@@ -16,20 +15,9 @@ export default function SettingsPage() {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
   const { fontSize, setFontSize } = useDisplayPreferences()
-  const [onboardingNext] = useState(() => {
-    if (typeof window === 'undefined') return null
-    const params = new URLSearchParams(window.location.search)
-    const requestedNext = params.get('next')
-    return params.get('onboarding') === '1' && requestedNext?.startsWith('/') && !requestedNext.startsWith('//')
-      ? requestedNext
-      : null
-  })
-
   // Profile Form States
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
-  const [bio, setBio] = useState('')
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
 
   // Preference & App States
@@ -61,8 +49,6 @@ export default function SettingsPage() {
           if (data) {
             setFullName(data.full_name || '')
             setUsername(data.username || '')
-            setBio(data.bio || '')
-            setAvatarUrl(data.avatar_url || user.user_metadata?.avatar_url || null)
             if (typeof data.is_public === 'boolean') setIsPublicProfile(data.is_public)
           }
         }
@@ -87,16 +73,6 @@ export default function SettingsPage() {
 
   const handleThemeChange = (mode: Theme) => {
     setTheme(mode)
-  }
-
-  const handleAvatarSaved = async (nextAvatar: string) => {
-    if (!userId) return
-    setAvatarUrl(nextAvatar)
-    const [{ error: profileError }, { error: authError }] = await Promise.all([
-      supabase.from('profiles').upsert({ id: userId, avatar_url: nextAvatar, updated_at: new Date().toISOString() }),
-      supabase.auth.updateUser({ data: { avatar_url: nextAvatar } }),
-    ])
-    setSaveMessage(profileError || authError ? 'Avatar could not be saved.' : 'Profile picture updated!')
   }
 
   const handleNotificationsToggle = async () => {
@@ -134,45 +110,12 @@ export default function SettingsPage() {
   }
 
   // Save Settings to Supabase
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSaving(true)
-    setSaveMessage('')
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { error } = await supabase
-          .from('profiles')
-          .upsert({
-            id: user.id,
-            full_name: fullName,
-            username: username.replace('@', ''),
-            bio,
-            avatar_url: avatarUrl,
-            is_public: isPublicProfile,
-            is_onboarded: true,
-            updated_at: new Date().toISOString(),
-          })
-
-        if (!error) {
-          await supabase.auth.updateUser({ data: { full_name: fullName, handle: `@${username.replace('@', '')}`, avatar_url: avatarUrl } })
-          setSaveMessage('Settings saved successfully!')
-          if (onboardingNext) {
-            router.replace(onboardingNext)
-            return
-          }
-          setTimeout(() => setSaveMessage(''), 3000)
-        } else {
-          setSaveMessage('Failed to save settings.')
-        }
-      }
-    } catch (err) {
-      console.error('Error updating settings:', err)
-      setSaveMessage('Error saving settings.')
-    } finally {
-      setIsSaving(false)
-    }
+  const togglePublicProfile = async () => {
+    if (!userId) return
+    const next = !isPublicProfile
+    setIsPublicProfile(next)
+    const { error } = await supabase.from('profiles').update({ is_public: next, updated_at: new Date().toISOString() }).eq('id', userId)
+    if (error) { setIsPublicProfile(!next); setSaveMessage('That change was not saved.') }
   }
 
   // Password Reset Email Trigger
@@ -228,68 +171,13 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {/* SECTION 1: ACCOUNT DETAILS */}
-      <form onSubmit={handleSaveSettings} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
-        <label className="flex items-center gap-1.5 text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">
-          <UserRound className="h-3.5 w-3.5" /> Account Information
-        </label>
-
-        {userId && <AvatarEditor userId={userId} value={avatarUrl} name={fullName || username || 'GoalCircle member'} onSaved={(value) => void handleAvatarSaved(value)} />}
-
-        <div className="border-t border-slate-100 pt-3 dark:border-slate-800" />
-
-        <div>
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-            Display Name
-          </label>
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="John Doe"
-            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 transition"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-            Username
-          </label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="johndoe"
-            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 transition"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-            Bio / Goal Vision
-          </label>
-          <textarea
-            rows={2}
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            placeholder="Building daily consistency, tracking habits, and completing GoalCircle challenges."
-            className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 transition resize-none"
-          />
-        </div>
-
-        <div className="flex items-center justify-between pt-1">
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="py-2 px-4 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 text-xs font-bold rounded-xl transition shadow-sm active:scale-95"
-          >
-            {isSaving ? 'Saving...' : 'Save Profile Details'}
-          </button>
-          {saveMessage && (
-            <span className="text-xs font-bold text-amber-500">{saveMessage}</span>
-          )}
-        </div>
-      </form>
+      {/* Profile details live on the Profile page only */}
+      <button type="button" onClick={() => router.push('/profile?edit=1')} className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-amber-500 dark:border-slate-800 dark:bg-slate-900">
+        <UserRound className="h-5 w-5 text-amber-500" />
+        <span className="flex-1"><span className="block text-sm font-bold">Edit profile</span><span className="block text-xs text-slate-500">Photo, name, username and bio</span></span>
+        <span className="text-amber-500">→</span>
+      </button>
+      {saveMessage && <p role="status" className="text-xs font-bold text-amber-500">{saveMessage}</p>}
 
       {/* SECTION 2: THEME & LANDING VIEW */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-4">
@@ -415,7 +303,10 @@ export default function SettingsPage() {
           </div>
           <button
             type="button"
-            onClick={() => setIsPublicProfile(!isPublicProfile)}
+            onClick={() => void togglePublicProfile()}
+            role="switch"
+            aria-checked={isPublicProfile}
+            aria-label="Public matrix and badges"
             className={`w-11 h-6 rounded-full transition-colors relative ${
               isPublicProfile ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'
             }`}
