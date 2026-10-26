@@ -10,7 +10,7 @@ interface NotificationItem {
   id: string
   recipient_id: string
   actor_id: string | null
-  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap' | 'goal_collaboration_invite' | 'goal_collaboration_accepted'
+  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap' | 'goal_collaboration_invite' | 'goal_collaboration_accepted' | 'circle_task' | 'circle_post'
   post_id: string | null
   circle_id: string | null
   goal_id: string | null
@@ -34,6 +34,8 @@ const details = {
   weekly_recap: { icon: CheckCheck, title: 'Weekly recap ready', copy: 'Your latest consistency recap is ready.' },
   goal_collaboration_invite: { icon: UsersRound, title: 'Shared-goal invitation', copy: 'invited you to work on a goal together.' },
   goal_collaboration_accepted: { icon: Check, title: 'Collaborator joined', copy: 'accepted your shared-goal invitation.' },
+  circle_task: { icon: CheckCheck, title: 'New task from your mentor', copy: 'set a new task in your circle.' },
+  circle_post: { icon: UsersRound, title: 'New notice in your circle', copy: 'posted a new notice in your circle.' },
 }
 
 function NotificationIcon({ kind }: { kind: NotificationItem['kind'] }) {
@@ -130,7 +132,7 @@ export default function NotificationsPage() {
         {notifications.filter((item) => item.kind !== 'goal_collaboration_invite' || !collaborationRequests.some((request) => request.goal_id === item.goal_id)).map((item) => (
           <Link
             key={item.id}
-            href={item.kind === 'goal_collaboration_invite' ? '/notifications' : item.post_id ? `/feed?post=${item.post_id}` : item.goal_id ? `/goal/${item.goal_id}` : item.circle_id ? `/circles` : '/profile'}
+            href={item.kind === 'goal_collaboration_invite' ? '/notifications' : item.post_id ? `/feed?post=${item.post_id}` : item.goal_id ? `/goal/${item.goal_id}` : item.circle_id ? `/circles/${item.circle_id}` : '/profile'}
             className={`border rounded-2xl p-4 shadow-sm flex items-start gap-3 transition ${
               item.is_read
                 ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-80'

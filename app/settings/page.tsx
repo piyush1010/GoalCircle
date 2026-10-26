@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useDisplayPreferences, useTheme, type Theme } from '@/components/ThemeProvider'
 import AvatarEditor from '@/components/AvatarEditor'
 import InstallAppCard from '@/components/InstallAppCard'
+import FeedbackCard from '@/components/FeedbackCard'
 import { supabase } from '@/utils/supabase'
 import { Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, Type, UserRound } from 'lucide-react'
 import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
@@ -439,6 +440,8 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+
+      <FeedbackCard />
 
       {/* SECTION 5: ACCOUNT SECURITY & SIGN OUT */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-2">
