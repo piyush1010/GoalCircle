@@ -18,14 +18,17 @@ const formats = [
 ]
 
 const visibilityOptions = [
-  { value: 'public' as const, label: 'Public', description: 'Shared on your Feed', icon: Globe2 },
-  { value: 'private' as const, label: 'Private', description: 'Only you can see it', icon: LockKeyhole },
+  { value: 'public' as const, label: 'Public', description: 'Shared on your Feed so friends can boost you.', icon: Globe2 },
+  { value: 'private' as const, label: 'Private', description: 'Only you can see it. Nothing is posted.', icon: LockKeyhole },
 ]
 
-const sectionClass = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]'
+const sectionClass = 'rounded-3xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]'
 const headingClass = 'block text-sm font-black text-slate-900 dark:text-white'
 const fieldClass = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#07101f]'
 const calendarButtonClass = 'mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-sm font-black text-slate-950 transition hover:bg-amber-400'
+const rowClass = 'flex items-center justify-between gap-4 py-4'
+const hintClass = 'mt-0.5 text-xs text-slate-500 dark:text-slate-400'
+const compactFieldClass = 'rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold outline-none transition [color-scheme:light] focus:border-amber-500 dark:border-slate-700 dark:bg-[#07101f] dark:[color-scheme:dark]'
 const uploadClass = 'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 px-3 py-6 text-center text-xs font-bold text-slate-600 transition hover:border-amber-500 dark:border-slate-700 dark:text-slate-300'
 
 const templates = [
@@ -245,7 +248,7 @@ export default function CreateGoalPage() {
         </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <section className={sectionClass}>
           <div className="mb-3 flex items-baseline justify-between">
             <label htmlFor="goal-title" className={headingClass}>What&apos;s your goal?</label>
@@ -261,41 +264,39 @@ export default function CreateGoalPage() {
           </div>
         </section>
 
-        <section className={sectionClass}>
-          <label htmlFor="target-date" className={headingClass}>Target date <span className="font-medium text-slate-400">(optional)</span></label>
-          <p className="mb-3 mt-1 text-xs text-slate-500 dark:text-slate-400">When do you want to have achieved it?</p>
-          <div className="relative">
-            <CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input id="target-date" type="date" value={targetDate} min={today} onChange={(event) => setTargetDate(event.target.value)} className={`${fieldClass} pl-10 text-sm font-semibold`} />
+        <section className={`${sectionClass} divide-y divide-slate-100 py-1 dark:divide-slate-800`}>
+          <div className={rowClass}>
+            <div>
+              <label htmlFor="target-date" className={headingClass}>Target date</label>
+              <p className={hintClass}>Optional</p>
+            </div>
+            <input id="target-date" type="date" value={targetDate} min={today} onChange={(event) => setTargetDate(event.target.value)} className={`${compactFieldClass} w-40 ${targetDate ? '' : 'text-slate-400'}`} />
           </div>
 
-          <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
-            <label className="flex cursor-pointer items-start gap-3">
-              <input type="checkbox" checked={remindDaily} onChange={(event) => setRemindDaily(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-amber-500" />
-              <span>
-                <span className="flex items-center gap-1.5 text-sm font-bold"><BellRing className="h-4 w-4 text-amber-500" />Remind me every day</span>
-                <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">Adds a daily reminder to your phone&apos;s calendar{targetDate ? ' until your target date' : ` for ${OPEN_ENDED_REMINDER_DAYS} days`}.</span>
-              </span>
-            </label>
-            {remindDaily && <div className="mt-3 flex items-center gap-3 pl-8">
-              <label htmlFor="reminder-time" className="text-xs font-semibold text-slate-500 dark:text-slate-400">At</label>
-              <input id="reminder-time" type="time" value={reminderTime} onChange={(event) => setReminderTime(event.target.value || '08:00')} className={`${fieldClass} w-36 py-2 text-sm font-semibold`} />
-            </div>}
+          <div className={rowClass}>
+            <div>
+              <p id="reminder-label" className={`${headingClass} flex items-center gap-1.5`}><BellRing className="h-4 w-4 text-amber-500" />Daily reminder</p>
+              <p className={hintClass}>{remindDaily ? (targetDate ? 'Every day until your target date' : `Every day for ${OPEN_ENDED_REMINDER_DAYS} days`) : 'A nudge in your phone\'s calendar'}</p>
+            </div>
+            <button type="button" role="switch" aria-checked={remindDaily} aria-labelledby="reminder-label" onClick={() => setRemindDaily((on) => !on)} className={`relative h-7 w-12 shrink-0 rounded-full transition ${remindDaily ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'}`}>
+              <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${remindDaily ? 'left-6' : 'left-1'}`} />
+            </button>
           </div>
-        </section>
+          {remindDaily && <div className={rowClass}>
+            <label htmlFor="reminder-time" className="text-sm font-semibold text-slate-600 dark:text-slate-300">Remind me at</label>
+            <input id="reminder-time" type="time" value={reminderTime} onChange={(event) => setReminderTime(event.target.value || '08:00')} className={`${compactFieldClass} w-32`} />
+          </div>}
 
-        <section className={sectionClass}>
-          <h2 className={headingClass}>Who can see it?</h2>
-          <div className="mt-3 grid grid-cols-2 gap-3" role="radiogroup" aria-label="Goal visibility">
-            {visibilityOptions.map((option) => {
-              const Icon = option.icon
-              const selected = visibility === option.value
-              return <button type="button" role="radio" aria-checked={selected} key={option.value} onClick={() => chooseVisibility(option.value)} className={`rounded-2xl border p-3.5 text-left transition ${selected ? 'border-amber-500 bg-amber-500/10 ring-1 ring-amber-500' : 'border-slate-200 hover:border-slate-300 dark:border-slate-700'}`}>
-                <Icon className={`mb-2 h-5 w-5 ${selected ? 'text-amber-500' : 'text-slate-400'}`} />
-                <span className="block text-sm font-black">{option.label}</span>
-                <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{option.description}</span>
-              </button>
-            })}
+          <div className="py-4">
+            <p className={headingClass}>Who can see it?</p>
+            <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800" role="radiogroup" aria-label="Goal visibility">
+              {visibilityOptions.map((option) => {
+                const Icon = option.icon
+                const selected = visibility === option.value
+                return <button type="button" role="radio" aria-checked={selected} key={option.value} onClick={() => chooseVisibility(option.value)} className={`flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-bold transition ${selected ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}><Icon className="h-4 w-4" />{option.label}</button>
+              })}
+            </div>
+            <p className={`${hintClass} mt-2`}>{visibilityOptions.find((option) => option.value === visibility)?.description}</p>
           </div>
         </section>
 
@@ -325,8 +326,6 @@ export default function CreateGoalPage() {
           {selectedTrack ? <div className="mt-3 flex items-center gap-3 rounded-xl border border-slate-200 p-2.5 dark:border-slate-700"><Image src={selectedTrack.artworkUrl} alt="" width={40} height={40} unoptimized className="h-10 w-10 rounded-lg" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{selectedTrack.title}</p><p className="truncate text-xs text-slate-500">{selectedTrack.artist}</p></div><button type="button" onClick={() => setMusicOpen(true)} className="text-xs font-bold text-amber-600 dark:text-amber-400">Change</button><button type="button" onClick={() => setSelectedTrack(null)} aria-label="Remove music" className="grid h-8 w-8 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-3.5 w-3.5" /></button></div>
             : <button type="button" onClick={() => setMusicOpen(true)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:border-amber-500 dark:border-slate-700 dark:text-slate-300"><Music2 className="h-4 w-4 text-amber-500" />Add music <span className="font-normal text-slate-400">(optional)</span></button>}
         </section>}
-
-        {!isPublic && <p className="flex items-start gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />Only you can see this goal. Nothing will be posted to the Feed.</p>}
 
         {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
 
