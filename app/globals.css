@@ -133,3 +133,8 @@ textarea {
 .goalie-steam { animation: goalie-steam 1s ease-out infinite; }
 .goalie-stars { transform-origin: 32px 10px; animation: goalie-stars 1.2s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .goalie-fall, .goalie-huff, .goalie-steam, .goalie-stars { animation: none; } }
+
+/* Floating Goalie buddy: drifts gently in the corner */
+@keyframes goalie-float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-3px, -6px); } }
+.goalie-float { animation: goalie-float 5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .goalie-float { animation: none; } }

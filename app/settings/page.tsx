@@ -7,6 +7,7 @@ import AvatarEditor from '@/components/AvatarEditor'
 import InstallAppCard from '@/components/InstallAppCard'
 import FeedbackCard from '@/components/FeedbackCard'
 import { resetTours } from '@/components/GuideTour'
+import GoalieToggle from '@/components/GoalieToggle'
 import { supabase } from '@/utils/supabase'
 import { Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, Type, UserRound } from 'lucide-react'
 import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
@@ -453,6 +454,8 @@ export default function SettingsPage() {
         </span>
         <span className="text-amber-500">→</span>
       </button>
+
+      <GoalieToggle />
 
       <FeedbackCard />
 
