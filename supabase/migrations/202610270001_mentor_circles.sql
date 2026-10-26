@@ -199,7 +199,7 @@ alter table public.notifications add constraint notifications_kind_check check (
     'boost', 'comment', 'follow', 'nudge', 'circle_invite', 'streak',
     'accountability_invite', 'challenge_invite', 'weekly_recap',
     'goal_collaboration_invite', 'goal_collaboration_accepted',
-    'circle_task'
+    'circle_task', 'circle_post'
   )
 );
 
@@ -251,6 +251,68 @@ grant execute on function public.circle_dashboard(uuid, date) to authenticated;
 grant execute on function public.nudge_circle_members(uuid, uuid[], text) to authenticated;
 grant select, insert, update, delete on public.circle_tasks to authenticated;
 grant select, insert, update, delete on public.circle_task_checkins to authenticated;
+
+-- 10. Mentor notices: posts by circle admins, optionally pinned ---------------
+create table if not exists public.circle_posts (
+  id uuid primary key default gen_random_uuid(),
+  circle_id uuid not null references public.circles(id) on delete cascade,
+  author_id uuid not null references auth.users(id) on delete cascade,
+  body text check (body is null or char_length(body) <= 2000),
+  media_url text,
+  media_type text check (media_type is null or media_type in ('image', 'video')),
+  pinned boolean not null default false,
+  created_at timestamptz not null default now(),
+  check (coalesce(char_length(trim(body)), 0) > 0 or media_url is not null)
+);
+create index if not exists circle_posts_circle_created_idx on public.circle_posts(circle_id, pinned desc, created_at desc);
+alter table public.circle_posts enable row level security;
+
+drop policy if exists "Circle members view notices" on public.circle_posts;
+create policy "Circle members view notices" on public.circle_posts
+for select to authenticated using (public.is_circle_member(circle_id));
+drop policy if exists "Circle admins post notices" on public.circle_posts;
+create policy "Circle admins post notices" on public.circle_posts
+for insert to authenticated with check (author_id = (select auth.uid()) and public.is_circle_admin(circle_id));
+drop policy if exists "Circle admins update notices" on public.circle_posts;
+create policy "Circle admins update notices" on public.circle_posts
+for update to authenticated using (public.is_circle_admin(circle_id)) with check (public.is_circle_admin(circle_id));
+drop policy if exists "Circle admins delete notices" on public.circle_posts;
+create policy "Circle admins delete notices" on public.circle_posts
+for delete to authenticated using (public.is_circle_admin(circle_id));
+
+create or replace function public.notify_circle_post()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.notifications (recipient_id, actor_id, kind, circle_id, message)
+  select m.user_id, new.author_id, 'circle_post', new.circle_id,
+         left('New notice: ' || coalesce(nullif(trim(new.body), ''), 'a new photo or video'), 200)
+  from public.circle_memberships m
+  where m.circle_id = new.circle_id and m.user_id <> new.author_id;
+  return new;
+end;
+$$;
+drop trigger if exists circle_post_notification on public.circle_posts;
+create trigger circle_post_notification after insert on public.circle_posts
+for each row execute function public.notify_circle_post();
+revoke execute on function public.notify_circle_post() from public, anon, authenticated;
+grant select, insert, update, delete on public.circle_posts to authenticated;
+
+-- 11. Feedback from users (read by the team in the Supabase dashboard) --------
+create table if not exists public.feedback (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  message text not null check (char_length(trim(message)) between 3 and 2000),
+  page text check (page is null or char_length(page) <= 200),
+  created_at timestamptz not null default now()
+);
+alter table public.feedback enable row level security;
+drop policy if exists "Users send feedback as themselves" on public.feedback;
+create policy "Users send feedback as themselves" on public.feedback
+for insert to authenticated with check (user_id = (select auth.uid()));
+drop policy if exists "Users read their own feedback" on public.feedback;
+create policy "Users read their own feedback" on public.feedback
+for select to authenticated using (user_id = (select auth.uid()));
+grant select, insert on public.feedback to authenticated;
 
 notify pgrst, 'reload schema';
 commit;

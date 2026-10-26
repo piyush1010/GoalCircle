@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CalendarDays, Check, CircleCheck, Flame, PauseCircle, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { CalendarDays, Check, CircleCheck, Flame, PauseCircle, Pencil, Plus, Timer, Trash2, X } from 'lucide-react'
 import GoalCollaborators from '@/components/GoalCollaborators'
 import GoalCalendarActions from '@/components/GoalCalendarActions'
 import { supabase } from '@/utils/supabase'
@@ -217,6 +217,7 @@ export default function GoalDetailPage() {
             </p>
             {goal.target_date && <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-slate-500"><CalendarDays className="h-3 w-3" />Target {new Date(`${goal.target_date}T00:00:00`).toLocaleDateString()}</p>}
             {goal.target_date && !editing && <GoalCalendarActions goalId={goal.id} title={goal.title} targetDate={goal.target_date} />}
+            {isOwner && !editing && <Link href={`/focus?goal=${goal.id}`} className="mt-2 inline-flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] font-black text-amber-700 transition hover:bg-amber-500/20 dark:text-amber-300"><Timer className="h-3.5 w-3.5" />Start focus</Link>}
             {isPaused && <p className="mt-1 text-[10px] font-bold text-sky-500">Paused until {new Date(goal.pause_until as string).toLocaleDateString()}</p>}
           </div>
           {isOwner && !isPaused && <button

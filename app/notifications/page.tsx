@@ -10,7 +10,7 @@ interface NotificationItem {
   id: string
   recipient_id: string
   actor_id: string | null
-  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap' | 'goal_collaboration_invite' | 'goal_collaboration_accepted' | 'circle_task'
+  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap' | 'goal_collaboration_invite' | 'goal_collaboration_accepted' | 'circle_task' | 'circle_post'
   post_id: string | null
   circle_id: string | null
   goal_id: string | null
@@ -35,6 +35,7 @@ const details = {
   goal_collaboration_invite: { icon: UsersRound, title: 'Shared-goal invitation', copy: 'invited you to work on a goal together.' },
   goal_collaboration_accepted: { icon: Check, title: 'Collaborator joined', copy: 'accepted your shared-goal invitation.' },
   circle_task: { icon: CheckCheck, title: 'New task from your mentor', copy: 'set a new task in your circle.' },
+  circle_post: { icon: UsersRound, title: 'New notice in your circle', copy: 'posted a new notice in your circle.' },
 }
 
 function NotificationIcon({ kind }: { kind: NotificationItem['kind'] }) {

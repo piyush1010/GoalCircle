@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, CheckCircle2, Copy, ImagePlus, LockKeyhole, LogOut, Pencil, Share2, Timer, Users, X } from 'lucide-react'
+import CircleNotices from '@/components/CircleNotices'
 import MentorDashboard, { type DashboardRow } from '@/components/MentorDashboard'
 import { examLabel, localDateString } from '@/lib/exams'
 import { supabase } from '@/utils/supabase'
@@ -124,6 +125,8 @@ export default function CirclePage() {
         onTaskSaved={(saved) => { setTask(saved); void loadDashboard() }} onChanged={() => void loadDashboard()} onCopyInvite={async () => { await navigator.clipboard.writeText(inviteLink); flash('Invite link copied') }} flash={flash} />}
 
       {!isAdmin && isMember && userId && <StudentToday circleId={circleId} userId={userId} task={task} checkin={checkin} onSaved={(saved) => { setCheckin(saved); flash('Saved. Your mentor can see it.') }} />}
+
+      {isMember && userId && <CircleNotices circleId={circleId} userId={userId} isAdmin={isAdmin} />}
 
       {!isMember && <section className={`${card} text-center`}>
         <h2 className="text-base font-black">Join this circle</h2>
