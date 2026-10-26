@@ -16,6 +16,16 @@ const formats = [
   { value: 'video' as const, label: 'Reel', icon: Film },
 ]
 
+const visibilityOptions = [
+  { value: 'public' as const, label: 'Public', description: 'Shared on your Feed', icon: Globe2 },
+  { value: 'private' as const, label: 'Private', description: 'Only you can see it', icon: LockKeyhole },
+]
+
+const sectionClass = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]'
+const headingClass = 'block text-sm font-black text-slate-900 dark:text-white'
+const fieldClass = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#07101f]'
+const uploadClass = 'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 px-3 py-6 text-center text-xs font-bold text-slate-600 transition hover:border-amber-500 dark:border-slate-700 dark:text-slate-300'
+
 const templates = [
   { label: 'Reading', title: 'Read 20 pages every day', category: 'learning' },
   { label: 'Fitness', title: 'Move for 30 minutes every day', category: 'fitness' },
@@ -160,43 +170,91 @@ export default function CreateGoalPage() {
     router.refresh()
   }
 
+  const isPublic = visibility === 'public'
+  const today = new Date().toISOString().slice(0, 10)
+
   return (
-    <main className="mx-auto min-h-screen max-w-xl px-4 pb-24 pt-3">
-      <header className="mb-3 flex items-center gap-3">
-        <button type="button" onClick={() => router.back()} aria-label="Go back" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101b2d]"><ArrowLeft className="h-4 w-4" /></button>
-        <div><h1 className="text-lg font-black">Create a goal</h1><p className="text-[11px] text-slate-500">Set it. Share it. Show up.</p></div>
+    <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4">
+      <header className="mb-6 flex items-center gap-3">
+        <button type="button" onClick={() => router.back()} aria-label="Go back" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 bg-white transition hover:border-amber-500 dark:border-slate-700 dark:bg-[#101b2d]"><ArrowLeft className="h-4 w-4" /></button>
+        <div>
+          <h1 className="text-xl font-black tracking-tight">Create a goal</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Set it. Share it. Show up.</p>
+        </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
-        <label htmlFor="goal-title" className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500">Your goal</label>
-        <input id="goal-title" autoFocus value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} placeholder="Read 20 pages every day" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm font-bold outline-none focus:border-amber-500 dark:border-slate-700 dark:bg-[#07101f]" />
-        <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1" aria-label="Goal templates">{templates.map((template) => <button type="button" key={template.label} onClick={() => { setTitle(template.title); setCategory(template.category) }} className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-[10px] font-black ${title === template.title ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 text-slate-500 dark:border-slate-700'}`}>{template.label}</button>)}</div>
-
-        <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
-          <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
-            <button type="button" onClick={() => chooseVisibility('public')} className={`flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-black ${visibility === 'public' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}><Globe2 className="h-3.5 w-3.5" />Public</button>
-            <button type="button" onClick={() => chooseVisibility('private')} className={`flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-black ${visibility === 'private' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}><LockKeyhole className="h-3.5 w-3.5" />Private</button>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <section className={sectionClass}>
+          <div className="mb-3 flex items-baseline justify-between">
+            <label htmlFor="goal-title" className={headingClass}>What&apos;s your goal?</label>
+            <span className="text-xs text-slate-400">{title.length}/100</span>
           </div>
-          <label className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 dark:border-slate-700" title="Achievement date"><CalendarDays className="h-4 w-4 text-slate-400" /><input type="date" value={targetDate} min={new Date().toISOString().slice(0, 10)} onChange={(event) => setTargetDate(event.target.value)} aria-label="Achievement date" className="w-[7.7rem] bg-transparent py-2 text-[11px] font-bold outline-none" /></label>
-        </div>
+          <input id="goal-title" autoFocus value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} placeholder="e.g. Read 20 pages every day" className={`${fieldClass} text-base font-semibold`} />
+          <p className="mb-2 mt-4 text-xs font-semibold text-slate-500 dark:text-slate-400">Or start from an idea</p>
+          <div className="flex flex-wrap gap-2" aria-label="Goal templates">
+            {templates.map((template) => {
+              const selected = title === template.title
+              return <button type="button" key={template.label} aria-pressed={selected} onClick={() => { setTitle(template.title); setCategory(template.category) }} className={`rounded-full border px-3.5 py-1.5 text-xs font-bold transition ${selected ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 text-slate-600 hover:border-amber-500 dark:border-slate-700 dark:text-slate-300'}`}>{template.label}</button>
+            })}
+          </div>
+        </section>
 
-        {visibility === 'public' && <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
-          <div className="grid grid-cols-3 gap-2">
-            {formats.map((format) => { const Icon = format.icon; const selected = postFormat === format.value; return <button type="button" key={format.value} onClick={() => chooseFormat(format.value)} aria-pressed={selected} className={`flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-[11px] font-black ${selected ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 text-slate-500 dark:border-slate-700'}`}><Icon className="h-3.5 w-3.5" />{format.label}</button> })}
+        <section className={sectionClass}>
+          <label htmlFor="target-date" className={headingClass}>Target date <span className="font-medium text-slate-400">(optional)</span></label>
+          <p className="mb-3 mt-1 text-xs text-slate-500 dark:text-slate-400">When do you want to have achieved it?</p>
+          <div className="relative">
+            <CalendarDays className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input id="target-date" type="date" value={targetDate} min={today} onChange={(event) => setTargetDate(event.target.value)} className={`${fieldClass} pl-10 text-sm font-semibold`} />
+          </div>
+        </section>
+
+        <section className={sectionClass}>
+          <h2 className={headingClass}>Who can see it?</h2>
+          <div className="mt-3 grid grid-cols-2 gap-3" role="radiogroup" aria-label="Goal visibility">
+            {visibilityOptions.map((option) => {
+              const Icon = option.icon
+              const selected = visibility === option.value
+              return <button type="button" role="radio" aria-checked={selected} key={option.value} onClick={() => chooseVisibility(option.value)} className={`rounded-2xl border p-3.5 text-left transition ${selected ? 'border-amber-500 bg-amber-500/10 ring-1 ring-amber-500' : 'border-slate-200 hover:border-slate-300 dark:border-slate-700'}`}>
+                <Icon className={`mb-2 h-5 w-5 ${selected ? 'text-amber-500' : 'text-slate-400'}`} />
+                <span className="block text-sm font-black">{option.label}</span>
+                <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{option.description}</span>
+              </button>
+            })}
+          </div>
+        </section>
+
+        {isPublic && <section className={sectionClass}>
+          <h2 className={headingClass}>Announce it on your Feed</h2>
+          <p className="mb-3 mt-1 text-xs text-slate-500 dark:text-slate-400">Choose how your first post looks.</p>
+          <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800" role="radiogroup" aria-label="Post format">
+            {formats.map((format) => {
+              const Icon = format.icon
+              const selected = postFormat === format.value
+              return <button type="button" role="radio" aria-checked={selected} key={format.value} onClick={() => chooseFormat(format.value)} className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition ${selected ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}><Icon className="h-4 w-4" />{format.label}</button>
+            })}
           </div>
 
-          {postFormat !== 'text' && <div className="mt-2">
-            {previewUrl ? <div className="relative overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950">{postFormat === 'video' ? <video src={previewUrl} controls playsInline className="max-h-52 w-full object-contain" /> : <div className="relative h-40"><Image src={previewUrl} alt="Goal post preview" fill unoptimized className="object-contain" /></div>}<button type="button" onClick={removeMedia} aria-label="Remove media" className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-slate-950/80 text-white"><X className="h-4 w-4" /></button></div> : <div className="grid grid-cols-2 gap-2"><label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-3 text-[11px] font-black dark:border-slate-700"><Camera className="h-4 w-4 text-amber-500" />{postFormat === 'video' ? 'Record clip' : 'Take photo'}<input type="file" accept={postFormat === 'video' ? 'video/*' : 'image/*'} capture="environment" className="sr-only" onChange={(event) => void chooseMedia(event.target.files?.[0])} /></label><label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-3 text-[11px] font-black dark:border-slate-700">{postFormat === 'video' ? <Film className="h-4 w-4 text-amber-500" /> : <ImagePlus className="h-4 w-4 text-amber-500" />}Library<input type="file" accept={postFormat === 'video' ? 'video/mp4,video/quicktime,video/webm' : 'image/jpeg,image/png,image/webp'} className="sr-only" onChange={(event) => void chooseMedia(event.target.files?.[0])} /></label></div>}
+          {postFormat !== 'text' && <div className="mt-3">
+            {previewUrl ? <div className="relative overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950">{postFormat === 'video' ? <video src={previewUrl} controls playsInline className="max-h-64 w-full object-contain" /> : <div className="relative h-52"><Image src={previewUrl} alt="Goal post preview" fill unoptimized className="object-contain" /></div>}<button type="button" onClick={removeMedia} aria-label="Remove media" className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-slate-950/80 text-white"><X className="h-4 w-4" /></button></div>
+              : <div className="grid grid-cols-2 gap-3">
+                <label className={uploadClass}><Camera className="h-5 w-5 text-amber-500" />{postFormat === 'video' ? 'Record a clip' : 'Take a photo'}<input type="file" accept={postFormat === 'video' ? 'video/*' : 'image/*'} capture="environment" className="sr-only" onChange={(event) => void chooseMedia(event.target.files?.[0])} /></label>
+                <label className={uploadClass}>{postFormat === 'video' ? <Film className="h-5 w-5 text-amber-500" /> : <ImagePlus className="h-5 w-5 text-amber-500" />}Choose from library<input type="file" accept={postFormat === 'video' ? 'video/mp4,video/quicktime,video/webm' : 'image/jpeg,image/png,image/webp'} className="sr-only" onChange={(event) => void chooseMedia(event.target.files?.[0])} /></label>
+              </div>}
+            {postFormat === 'video' && !previewUrl && <p className="mt-2 text-xs text-slate-400">Up to 30 seconds and 25 MB.</p>}
           </div>}
 
-          <textarea value={caption} onChange={(event) => setCaption(event.target.value)} rows={2} maxLength={500} placeholder="Add a caption (optional)" className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none focus:border-amber-500 dark:border-slate-700 dark:bg-[#07101f]" />
+          <label htmlFor="goal-caption" className="mb-2 mt-4 block text-xs font-semibold text-slate-500 dark:text-slate-400">Caption <span className="font-normal text-slate-400">(optional)</span></label>
+          <textarea id="goal-caption" value={caption} onChange={(event) => setCaption(event.target.value)} rows={3} maxLength={500} placeholder="Why does this goal matter to you?" className={`${fieldClass} resize-none text-sm`} />
 
-          {selectedTrack ? <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 p-2 dark:border-slate-700"><Image src={selectedTrack.artworkUrl} alt="" width={36} height={36} unoptimized className="h-9 w-9 rounded-lg" /><div className="min-w-0 flex-1"><p className="truncate text-[11px] font-black">{selectedTrack.title}</p><p className="truncate text-[9px] text-slate-500">{selectedTrack.artist}</p></div><button type="button" onClick={() => setMusicOpen(true)} className="text-[10px] font-black text-amber-600 dark:text-amber-400">Change</button><button type="button" onClick={() => setSelectedTrack(null)} aria-label="Remove music" className="grid h-8 w-8 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-3.5 w-3.5" /></button></div> : <button type="button" onClick={() => setMusicOpen(true)} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-[11px] font-black text-slate-600 dark:border-slate-700 dark:text-slate-300"><Music2 className="h-4 w-4 text-amber-500" />Add music</button>}
-        </div>}
+          {selectedTrack ? <div className="mt-3 flex items-center gap-3 rounded-xl border border-slate-200 p-2.5 dark:border-slate-700"><Image src={selectedTrack.artworkUrl} alt="" width={40} height={40} unoptimized className="h-10 w-10 rounded-lg" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{selectedTrack.title}</p><p className="truncate text-xs text-slate-500">{selectedTrack.artist}</p></div><button type="button" onClick={() => setMusicOpen(true)} className="text-xs font-bold text-amber-600 dark:text-amber-400">Change</button><button type="button" onClick={() => setSelectedTrack(null)} aria-label="Remove music" className="grid h-8 w-8 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-3.5 w-3.5" /></button></div>
+            : <button type="button" onClick={() => setMusicOpen(true)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:border-amber-500 dark:border-slate-700 dark:text-slate-300"><Music2 className="h-4 w-4 text-amber-500" />Add music <span className="font-normal text-slate-400">(optional)</span></button>}
+        </section>}
 
-        {visibility === 'private' && <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-[10px] text-slate-500 dark:bg-[#07101f]">Only you can see this goal. No Feed post will be created.</p>}
-        {error && <p role="alert" className="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-xs font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
-        <button type="submit" disabled={submitting} className="mt-3 w-full rounded-xl bg-amber-500 py-3 text-sm font-black text-slate-950 shadow-lg shadow-amber-500/20 disabled:opacity-60">{submitting ? 'Publishing…' : visibility === 'public' ? 'Publish goal' : 'Create private goal'}</button>
+        {!isPublic && <p className="flex items-start gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />Only you can see this goal. Nothing will be posted to the Feed.</p>}
+
+        {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
+
+        <button type="submit" disabled={submitting} className="w-full rounded-2xl bg-amber-500 py-4 text-base font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 disabled:opacity-60">{submitting ? 'Publishing…' : isPublic ? 'Publish goal' : 'Create private goal'}</button>
       </form>
 
       <MusicPicker open={musicOpen} selected={selectedTrack} onClose={() => setMusicOpen(false)} onSelect={setSelectedTrack} />
