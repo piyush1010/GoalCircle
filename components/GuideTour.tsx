@@ -1,6 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import { GoalieBot } from '@/components/GoalieBot'
+
+export { GoalieBot }
 
 export interface TourStep {
   /** Value of a data-tour attribute on the page; omit for a welcome step with no target. */
@@ -21,26 +24,6 @@ function readDone(name: string) {
 }
 function writeDone(name: string) {
   try { window.localStorage.setItem(storageKey(name), '1') } catch { /* storage unavailable */ }
-}
-
-/** Goalie: GoalCircle's guide bot. Original artwork drawn in SVG. */
-export function GoalieBot({ size = 56 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" className="goalie-bob shrink-0">
-      <line x1="32" y1="6" x2="32" y2="14" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" className="goalie-antenna" />
-      <circle cx="32" cy="5" r="4" fill="#f59e0b" className="goalie-antenna" />
-      <rect x="8" y="14" width="48" height="40" rx="18" fill="#f59e0b" />
-      <rect x="14" y="21" width="36" height="24" rx="12" fill="#0f172a" />
-      <g className="goalie-eyes">
-        <circle cx="25" cy="32" r="4" fill="#fde68a" />
-        <circle cx="39" cy="32" r="4" fill="#fde68a" />
-      </g>
-      <path d="M26 39 Q32 43 38 39" stroke="#fde68a" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      <circle cx="10" cy="38" r="4" fill="#d97706" />
-      <circle cx="54" cy="38" r="4" fill="#d97706" />
-      <rect x="22" y="54" width="20" height="6" rx="3" fill="#d97706" />
-    </svg>
-  )
 }
 
 /** Forget which tours were seen on this device, so they run again. */
@@ -144,7 +127,7 @@ export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: 
 
       <div className="guide-card absolute inset-x-4 bottom-24 mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-[#101b2d]">
         <div className="flex gap-3">
-          <GoalieBot />
+          <GoalieBot mood="think" />
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Goalie · {index + 1} of {active.length}</p>
             <h2 className="mt-0.5 text-base font-black leading-snug">{step.title}</h2>

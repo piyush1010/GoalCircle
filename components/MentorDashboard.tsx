@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { BellRing, CheckCircle2, ChevronDown, Clock3, Copy, MessageCircle, Moon, Pencil, Search, UserMinus, UserPlus } from 'lucide-react'
+import { AttachmentList, AttachmentPicker, removeCircleFiles, uploadCircleFiles, type Attachment } from '@/components/CircleAttachments'
 import { supabase } from '@/utils/supabase'
 
 export interface DashboardRow {
@@ -21,7 +22,7 @@ export interface DashboardRow {
   tasks_set_7: number
 }
 
-interface Task { id: string; title: string; details: string | null; task_date: string }
+interface Task { id: string; title: string; details: string | null; task_date: string; attachments: Attachment[] }
 
 type Filter = 'all' | 'done' | 'not_done' | 'quiet'
 type Sort = 'last' | 'name' | 'newest'
@@ -110,6 +111,8 @@ function TaskCard({ circleId, today, task, onSaved }: { circleId: string; today:
   const [editing, setEditing] = useState(!task)
   const [title, setTitle] = useState(task?.title ?? '')
   const [details, setDetails] = useState(task?.details ?? '')
+  const [kept, setKept] = useState<Attachment[]>(task?.attachments ?? [])
+  const [files, setFiles] = useState<File[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -117,13 +120,18 @@ function TaskCard({ circleId, today, task, onSaved }: { circleId: string; today:
     if (title.trim().length < 3) { setError('Write a task of at least 3 characters.'); return }
     setSaving(true); setError(null)
     const { data: { session } } = await supabase.auth.getSession()
-    const values = { title: title.trim(), details: details.trim() || null, updated_at: new Date().toISOString() }
+    let uploaded: Attachment[] = []
+    try { uploaded = await uploadCircleFiles(circleId, files) } catch (uploadError) { setError((uploadError as Error).message); setSaving(false); return }
+    const attachments = [...kept, ...uploaded]
+    const values = { title: title.trim(), details: details.trim() || null, attachments, updated_at: new Date().toISOString() }
     const result = task
-      ? await supabase.from('circle_tasks').update(values).eq('id', task.id).select('id,title,details,task_date').single()
-      : await supabase.from('circle_tasks').insert({ ...values, circle_id: circleId, creator_id: session?.user.id, task_date: today }).select('id,title,details,task_date').single()
+      ? await supabase.from('circle_tasks').update(values).eq('id', task.id).select('id,title,details,task_date,attachments').single()
+      : await supabase.from('circle_tasks').insert({ ...values, circle_id: circleId, creator_id: session?.user.id, task_date: today }).select('id,title,details,task_date,attachments').single()
     setSaving(false)
-    if (result.error || !result.data) { setError('The task could not be saved.'); return }
-    setEditing(false)
+    if (result.error || !result.data) { await removeCircleFiles(uploaded.map((file) => file.path)); setError('The task could not be saved.'); return }
+    const removed = (task?.attachments ?? []).filter((file) => !kept.some((keep) => keep.path === file.path))
+    void removeCircleFiles(removed.map((file) => file.path))
+    setFiles([]); setKept(attachments); setEditing(false)
     onSaved(result.data as Task)
   }
 
@@ -136,6 +144,7 @@ function TaskCard({ circleId, today, task, onSaved }: { circleId: string; today:
       </div>
       <button type="button" onClick={() => setEditing(true)} aria-label="Edit task" className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><Pencil className="h-4 w-4" /></button>
     </div>
+    <AttachmentList attachments={task.attachments ?? []} isAdmin />
   </section>
 
   return <section data-tour="task" className={card}>
@@ -143,9 +152,10 @@ function TaskCard({ circleId, today, task, onSaved }: { circleId: string; today:
     <p className="mt-0.5 text-xs text-slate-500">Students get a notification and check in against it.</p>
     <input id="task-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={140} placeholder="e.g. Write 2 GS2 answers + revise Polity ch. 5" className={`${field} mt-3 font-semibold`} />
     <textarea value={details} onChange={(event) => setDetails(event.target.value)} rows={2} maxLength={1000} placeholder="Details or instructions (optional)" className={`${field} mt-2 resize-none`} />
+    <div className="mt-2"><AttachmentPicker files={files} existing={kept} onFilesChange={setFiles} onRemoveExisting={(path) => setKept((list) => list.filter((file) => file.path !== path))} onExistingChange={setKept} onError={setError} /></div>
     {error && <p role="alert" className="mt-2 text-sm font-semibold text-rose-600">{error}</p>}
     <div className="mt-3 flex gap-2">
-      {task && <button type="button" onClick={() => { setEditing(false); setTitle(task.title); setDetails(task.details ?? '') }} className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700">Cancel</button>}
+      {task && <button type="button" onClick={() => { setEditing(false); setTitle(task.title); setDetails(task.details ?? ''); setKept(task.attachments ?? []); setFiles([]) }} className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700">Cancel</button>}
       <button type="button" onClick={() => void save()} disabled={saving} className="flex-[2] rounded-xl bg-amber-500 py-3 text-sm font-black text-slate-950 disabled:opacity-60">{saving ? 'Saving…' : task ? 'Save changes' : 'Post task'}</button>
     </div>
   </section>
