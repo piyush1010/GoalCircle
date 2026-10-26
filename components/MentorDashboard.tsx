@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmAction } from '@/lib/confirm'
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { BellRing, CheckCircle2, ChevronDown, Clock3, Copy, MessageCircle, Moon, Pencil, Search, UserMinus, UserPlus } from 'lucide-react'
@@ -183,7 +184,7 @@ function StudentList({ rows, now, hasTask, circleId, onNudge, onChanged, flash }
   }, [filter, now, query, rows, sort])
 
   const remove = async (row: DashboardRow) => {
-    if (!window.confirm(`Remove ${displayName(row)} from this circle?`)) return
+    if (!(await confirmAction(`Remove ${displayName(row)} from this circle?`))) return
     const { error } = await supabase.from('circle_memberships').delete().eq('circle_id', circleId).eq('user_id', row.user_id)
     if (error) flash('Could not remove this student')
     else { flash(`${displayName(row)} removed`); onChanged() }

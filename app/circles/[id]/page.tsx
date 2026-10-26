@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmAction } from '@/lib/confirm'
 import { cheer } from '@/lib/goalie'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -114,7 +115,7 @@ export default function CirclePage() {
   }
 
   const leave = async () => {
-    if (!userId || !window.confirm('Leave this circle? Your mentor will no longer see your check-ins here.')) return
+    if (!userId || !(await confirmAction('Leave this circle? Your mentor will no longer see your check-ins here.'))) return
     const { error: leaveError } = await supabase.from('circle_memberships').delete().eq('circle_id', circleId).eq('user_id', userId)
     if (leaveError) setError('You could not leave this circle.')
     else router.replace('/circles')

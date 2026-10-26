@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmAction } from '@/lib/confirm'
 import Image from 'next/image'
 import { useCallback, useEffect, useState } from 'react'
 import { Megaphone, Pin, PinOff, Trash2 } from 'lucide-react'
@@ -46,7 +47,7 @@ export default function CircleNotices({ circleId, userId, isAdmin }: { circleId:
   }
 
   const remove = async (notice: Notice) => {
-    if (!window.confirm('Delete this notice for everyone?')) return
+    if (!(await confirmAction('Delete this notice for everyone?'))) return
     await supabase.from('circle_posts').delete().eq('id', notice.id)
     void removeCircleFiles((notice.attachments ?? []).map((file) => file.path))
     void load()

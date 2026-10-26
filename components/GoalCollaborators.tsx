@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmAction } from '@/lib/confirm'
 import { useCallback, useEffect, useState } from 'react'
 import { Check, Search, UserPlus, UsersRound, X } from 'lucide-react'
 import ProfileAvatar from '@/components/ProfileAvatar'
@@ -86,7 +87,7 @@ export default function GoalCollaborators({ goalId, ownerId, currentUserId }: { 
 
   const remove = async (member: TeamMember) => {
     const action = member.user_id === currentUserId ? 'leave this shared goal' : 'remove this collaborator'
-    if (!window.confirm(`Are you sure you want to ${action}?`)) return
+    if (!(await confirmAction(`Are you sure you want to ${action}?`))) return
     setBusyId(member.user_id); setMessage(null)
     const { error } = await supabase.from('goal_collaborators').delete().eq('goal_id', goalId).eq('user_id', member.user_id)
     setBusyId(null)

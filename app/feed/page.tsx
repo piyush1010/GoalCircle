@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmAction } from '@/lib/confirm'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -239,7 +240,7 @@ export default function FeedPage() {
   }
 
   const deletePost = async (post: FeedPost) => {
-    if (!userId || post.userId !== userId || !window.confirm('Delete this progress post? This cannot be undone.')) return
+    if (!userId || post.userId !== userId || !(await confirmAction('Delete this progress post? This cannot be undone.'))) return
     const { error: deleteError } = await supabase.from('posts').delete().eq('id', post.id).eq('user_id', userId)
     if (deleteError) { showToast('Post could not be deleted.'); return }
     setPosts((current) => current.filter((item) => item.id !== post.id)); setOpenPostMenu(null); showToast('Post deleted')

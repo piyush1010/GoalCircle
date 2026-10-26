@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmAction } from '@/lib/confirm'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -52,6 +53,7 @@ export default function GoalDetailPage() {
   const goalId = params.id as string
 
   const [goal, setGoal] = useState<Goal | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
@@ -112,7 +114,7 @@ export default function GoalDetailPage() {
       if (error) throw error
       setGoal({ ...goal, status: newStatus, is_completed: !isCompleted })
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Failed to update goal status')
+      setActionError(err instanceof Error ? err.message : 'Failed to update goal status')
     } finally {
       setUpdating(false)
     }
@@ -128,7 +130,7 @@ export default function GoalDetailPage() {
   }
 
   const deleteGoal = async () => {
-    if (!goal || goal.user_id !== userId || !window.confirm('Delete this goal and all of its progress posts? This cannot be undone.')) return
+    if (!goal || goal.user_id !== userId || !(await confirmAction('Delete this goal and all of its progress posts? This cannot be undone.'))) return
     setUpdating(true)
     const { error } = await supabase.from('goals').delete().eq('id', goal.id).eq('user_id', userId)
     if (error) { setMessage('Goal could not be deleted.'); setUpdating(false); return }
@@ -136,7 +138,7 @@ export default function GoalDetailPage() {
   }
 
   const pauseGoal = async () => {
-    if (!goal || goal.user_id !== userId || !window.confirm('Use this goal’s one-time seven-day pause? It cannot be used again.')) return
+    if (!goal || goal.user_id !== userId || !(await confirmAction('Use this goal’s one-time seven-day pause? It cannot be used again.'))) return
     setUpdating(true); setMessage(null)
     const { data, error } = await supabase.rpc('pause_goal_for_week', { target_goal_id: goal.id })
     setUpdating(false)
@@ -145,7 +147,7 @@ export default function GoalDetailPage() {
   }
 
   const deleteProgressPost = async (post: Post) => {
-    if (!goal || post.user_id !== userId || !window.confirm('Delete this progress update? This cannot be undone.')) return
+    if (!goal || post.user_id !== userId || !(await confirmAction('Delete this progress update? This cannot be undone.'))) return
     setDeletingPostId(post.id)
     setMessage(null)
 
@@ -199,6 +201,7 @@ export default function GoalDetailPage() {
 
   return (
     <div className="min-h-screen text-slate-900 dark:text-slate-100 pb-24 pt-4 px-4 max-w-md mx-auto">
+      {actionError && <button type="button" role="alert" onClick={() => setActionError(null)} className="mb-3 w-full rounded-xl border border-rose-200 bg-rose-50 p-3 text-left text-xs font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{actionError} <span className="opacity-60">(tap to close)</span></button>}
       {/* Top Header */}
       <div className="flex items-center justify-between mb-4">
         <button onClick={() => router.back()} className="text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">

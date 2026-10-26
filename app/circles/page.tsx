@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmAction } from '@/lib/confirm'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -59,7 +60,7 @@ export default function CirclesPage() {
 
   const toggleMembership = async (circle: CircleView) => {
     if (!userId || circle.owned) return
-    if (circle.joined && !window.confirm(`Leave “${circle.name}”? You can join again later if the circle is public.`)) return
+    if (circle.joined && !(await confirmAction(`Leave “${circle.name}”? You can join again later if the circle is public.`))) return
     setBusyId(circle.id); setError(null)
     const result = circle.joined
       ? await supabase.from('circle_memberships').delete().eq('circle_id', circle.id).eq('user_id', userId)
@@ -71,10 +72,11 @@ export default function CirclesPage() {
 
   const deleteCircle = async (circle: CircleView) => {
     if (!userId || !circle.owned) return
-    if (!window.confirm(`Delete “${circle.name}” for every member? This cannot be undone.`)) return
+    if (!(await confirmAction(`Delete “${circle.name}” for every member? This cannot be undone.`))) return
     setBusyId(circle.id); setError(null)
-    const { error: deleteError } = await supabase.from('circles').delete().eq('id', circle.id).eq('owner_id', userId)
-    if (deleteError) setError('The circle could not be deleted.')
+    // .select() returns the deleted row, so a silent "0 rows deleted" shows as an error instead of doing nothing.
+    const { data: deleted, error: deleteError } = await supabase.from('circles').delete().eq('id', circle.id).eq('owner_id', userId).select('id')
+    if (deleteError || !deleted?.length) setError(deleteError ? `The circle could not be deleted: ${deleteError.message}` : 'The circle could not be deleted. Only the owner can delete it.')
     else setCircles((items) => items.filter((item) => item.id !== circle.id))
     setBusyId(null)
   }
