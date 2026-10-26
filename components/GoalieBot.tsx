@@ -2,7 +2,7 @@
 
 import { useId } from 'react'
 
-export type GoalieMood = 'normal' | 'happy' | 'wave' | 'think' | 'sleepy'
+export type GoalieMood = 'normal' | 'happy' | 'wave' | 'think' | 'sleepy' | 'dizzy' | 'angry'
 
 /**
  * Goalie: GoalCircle's guide bot. Original artwork in SVG, shaded with gradients so it reads as a
@@ -32,6 +32,17 @@ export function GoalieBot({ size = 56, mood = 'normal' }: { size?: number; mood?
       <path d="M35 31 Q39.5 38 44 31 Z" fill={url('eye')} />
       <path d="M19.5 31 H29.5 M34.5 31 H44.5" stroke="#fbbf24" strokeWidth="1.6" strokeLinecap="round" />
     </g>,
+    // x x after a tumble
+    dizzy: <g stroke={url('eye')} strokeWidth="2.8" strokeLinecap="round">
+      <path d="M21 28.5 L28 35.5 M28 28.5 L21 35.5" />
+      <path d="M36 28.5 L43 35.5 M43 28.5 L36 35.5" />
+    </g>,
+    // pouty eyes under cross little brows
+    angry: <g>
+      <ellipse cx="24.5" cy="33.5" rx="3.8" ry="3.6" fill={url('eye')} />
+      <ellipse cx="39.5" cy="33.5" rx="3.8" ry="3.6" fill={url('eye')} />
+      <path d="M19.5 26.5 L28.5 29.5 M44.5 26.5 L35.5 29.5" stroke="#fda4af" strokeWidth="2.6" strokeLinecap="round" />
+    </g>,
     normal: <g className="goalie-eyes">
       <ellipse cx="24.5" cy="32" rx="4.6" ry="5.4" fill={url('eye')} />
       <ellipse cx="39.5" cy="32" rx="4.6" ry="5.4" fill={url('eye')} />
@@ -47,10 +58,12 @@ export function GoalieBot({ size = 56, mood = 'normal' }: { size?: number; mood?
     wave: <path d="M27.5 39.8 Q32 45 36.5 39.8 Z" fill="#bdf4ff" stroke="#bdf4ff" strokeWidth="1.2" strokeLinejoin="round" />,
     think: <circle cx="35" cy="41.5" r="1.8" fill="#bdf4ff" />,
     sleepy: <ellipse cx="32" cy="41.8" rx="2" ry="1.4" fill="#bdf4ff" />,
+    dizzy: <path d="M27 42 Q29 40 31 42 T35 42 T37 41" stroke="#bdf4ff" strokeWidth="2" fill="none" strokeLinecap="round" />,
+    angry: <path d="M28.5 43 Q32 39.5 35.5 43" stroke="#bdf4ff" strokeWidth="2.2" fill="none" strokeLinecap="round" />,
     normal: <path d="M28 40.5 Q32 44 36 40.5" stroke="#bdf4ff" strokeWidth="2.2" fill="none" strokeLinecap="round" />,
   }[mood]
 
-  const blush = mood === 'happy' || mood === 'wave' ? 0.9 : 0.7
+  const blush = mood === 'happy' || mood === 'wave' || mood === 'angry' ? 0.95 : 0.7
 
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" className="shrink-0 overflow-visible">
@@ -92,7 +105,7 @@ export function GoalieBot({ size = 56, mood = 'normal' }: { size?: number; mood?
       {/* Soft shadow on the ground; stays put while Goalie moves. */}
       <ellipse cx="32" cy="61" rx="17" ry="2.6" fill={url('shadow')} />
 
-      <g className={mood === 'happy' ? 'goalie-hop' : mood === 'sleepy' ? 'goalie-doze' : 'goalie-bob'}>
+      <g className={({ happy: 'goalie-hop', sleepy: 'goalie-doze', dizzy: 'goalie-fall', angry: 'goalie-huff' } as Partial<Record<GoalieMood, string>>)[mood] ?? 'goalie-bob'}>
         {/* Antenna with a glowing ball */}
         <g className="goalie-antenna">
           <path d="M32 14 Q31 9 33 6.5" stroke="#b45309" strokeWidth="2.6" fill="none" strokeLinecap="round" />
@@ -128,6 +141,18 @@ export function GoalieBot({ size = 56, mood = 'normal' }: { size?: number; mood?
         <ellipse cx="18.5" cy="40" rx="3" ry="1.7" fill="#f472b6" opacity={blush} />
         <ellipse cx="45.5" cy="40" rx="3" ry="1.7" fill="#f472b6" opacity={blush} />
         {mouth}
+
+        {/* Cross red cheeks and a puff of steam */}
+        {mood === 'angry' && <g>
+          <rect x="7" y="12" width="50" height="45" rx="22" fill="#ef4444" opacity="0.18" />
+          <g className="goalie-steam" fill="#cbd5e1"><circle cx="54" cy="13" r="2.4" /><circle cx="58" cy="9" r="1.8" /></g>
+        </g>}
+
+        {/* Stars spinning round a dizzy head */}
+        {mood === 'dizzy' && <g className="goalie-stars" fill="#facc15">
+          <path d="M16 6 l1.2 2.6 2.8 .3 -2.1 1.9 .6 2.8 -2.5-1.4 -2.5 1.4 .6-2.8 -2.1-1.9 2.8-.3 Z" />
+          <path d="M48 4 l1 2.2 2.4 .3 -1.8 1.6 .5 2.4 -2.1-1.2 -2.1 1.2 .5-2.4 -1.8-1.6 2.4-.3 Z" />
+        </g>}
 
         {/* Thinking dots */}
         {mood === 'think' && <g fill="#fbbf24">

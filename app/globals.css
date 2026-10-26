@@ -122,3 +122,14 @@ textarea {
 .goalie-jump { animation: goalie-jump .6s ease-out; }
 .goalie-bubble { animation: goalie-bubble .3s ease-out; }
 @media (prefers-reduced-motion: reduce) { .goalie-hop, .goalie-doze, .goalie-wave, .goalie-dot, .goalie-zzz, .goalie-jump, .goalie-bubble { animation: none; } }
+
+/* Goalie tumbles over and gets back up; huffs when cross */
+@keyframes goalie-fall { 0% { transform: rotate(0); } 18% { transform: rotate(-20deg) translateY(-6px); } 35% { transform: rotate(88deg) translate(4px, -2px); } 42% { transform: rotate(80deg) translate(4px, -2px); } 50%, 72% { transform: rotate(86deg) translate(4px, -2px); } 88% { transform: rotate(-8deg); } 100% { transform: rotate(0); } }
+@keyframes goalie-huff { 0%, 100% { transform: translateX(0) scale(1); } 20% { transform: translateX(-2px) scale(1.04, .97); } 40% { transform: translateX(2px) scale(1.04, .97); } 60% { transform: translateX(-2px); } 80% { transform: translateX(1px); } }
+@keyframes goalie-steam { 0% { opacity: 0; transform: translate(0, 2px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(2px, -6px); } }
+@keyframes goalie-stars { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+.goalie-fall { transform-origin: 32px 58px; animation: goalie-fall 2.2s ease-in-out both; }
+.goalie-huff { transform-origin: 32px 58px; animation: goalie-huff .5s ease-in-out infinite; }
+.goalie-steam { animation: goalie-steam 1s ease-out infinite; }
+.goalie-stars { transform-origin: 32px 10px; animation: goalie-stars 1.2s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .goalie-fall, .goalie-huff, .goalie-steam, .goalie-stars { animation: none; } }

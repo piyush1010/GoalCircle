@@ -27,6 +27,21 @@ export const GOALIE_LINES = {
     'It’s so quiet… let’s make some noise! 🥁',
     'I’m bored! Let’s start something 🙃',
   ],
+  fall: [
+    'Woahhh! 😵‍💫 You knocked me over!',
+    'Oww! My antenna! 🤕',
+    'Wheee… thud. I’m okay! 😵',
+  ],
+  angry: [
+    'Hmph! Stop poking me! 😤',
+    'I’m telling Mom! 😠',
+    'Not talking to you… for 2 seconds 😤',
+  ],
+  forgive: [
+    '…okay, I’m not mad anymore 🥺',
+    'Fine. Friends again? 🤝',
+    'I can’t stay angry at you 💛',
+  ],
   tap: [
     'Hehe, that tickles! 😆',
     'Boop! 👉',
