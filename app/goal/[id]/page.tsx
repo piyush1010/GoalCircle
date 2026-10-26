@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CalendarDays, Check, CircleCheck, Flame, PauseCircle, Pencil, Trash2, X } from 'lucide-react'
+import { CalendarDays, Check, CircleCheck, Flame, PauseCircle, Pencil, Plus, Trash2, X } from 'lucide-react'
+import GoalCollaborators from '@/components/GoalCollaborators'
 import { supabase } from '@/utils/supabase'
 
 interface Goal {
@@ -23,6 +24,7 @@ interface Goal {
 
 interface Post {
   id: string
+  user_id: string
   caption: string | null
   media_url?: string | null
   media_urls?: string[] | null
@@ -95,7 +97,7 @@ export default function GoalDetailPage() {
   }, [goalId, loadGoalDetails])
 
   const toggleGoalCompletion = async () => {
-    if (!goal) return
+    if (!goal || goal.user_id !== userId) return
     const isCompleted = Boolean(goal.is_completed || goal.status === 'completed')
     const newStatus = isCompleted ? 'active' : 'completed'
 
@@ -142,7 +144,7 @@ export default function GoalDetailPage() {
   }
 
   const deleteProgressPost = async (post: Post) => {
-    if (!goal || goal.user_id !== userId || !window.confirm('Delete this progress update? This cannot be undone.')) return
+    if (!goal || post.user_id !== userId || !window.confirm('Delete this progress update? This cannot be undone.')) return
     setDeletingPostId(post.id)
     setMessage(null)
 
@@ -215,7 +217,7 @@ export default function GoalDetailPage() {
             {goal.target_date && <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-slate-500"><CalendarDays className="h-3 w-3" />Target {new Date(`${goal.target_date}T00:00:00`).toLocaleDateString()}</p>}
             {isPaused && <p className="mt-1 text-[10px] font-bold text-sky-500">Paused until {new Date(goal.pause_until as string).toLocaleDateString()}</p>}
           </div>
-          {!isPaused && <button
+          {isOwner && !isPaused && <button
             onClick={toggleGoalCompletion}
             disabled={updating}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
@@ -248,6 +250,10 @@ export default function GoalDetailPage() {
         </div>
       </div>
 
+      {userId && <GoalCollaborators goalId={goal.id} ownerId={goal.user_id} currentUserId={userId} />}
+
+      {!isCompleted && !isPaused && <Link href={`/check-in?goal=${goal.id}`} className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-xs font-black text-slate-950 shadow-lg shadow-amber-500/20"><Plus className="h-4 w-4" />Add a check-in</Link>}
+
       {/* Progress Posts Timeline */}
       <div className="space-y-3">
         <h2 className="text-sm font-bold px-1">Goal Timeline</h2>
@@ -267,7 +273,7 @@ export default function GoalDetailPage() {
             <div key={p.id} className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl p-4 space-y-2">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2"><span className="text-[10px] font-mono text-slate-500">{new Date(p.created_at).toLocaleDateString()}</span>{p.checkin_status && <span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${p.checkin_status === 'done' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : p.checkin_status === 'partial' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-slate-200 text-slate-500 dark:bg-slate-800'}`}>{p.checkin_status}</span>}</div>
-                {isOwner && <button type="button" onClick={() => void deleteProgressPost(p)} disabled={deletingPostId === p.id} aria-label="Delete progress update" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:opacity-50 dark:hover:bg-rose-950/30"><Trash2 className="h-3.5 w-3.5" /></button>}
+                {p.user_id === userId && <button type="button" onClick={() => void deleteProgressPost(p)} disabled={deletingPostId === p.id} aria-label="Delete progress update" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:opacity-50 dark:hover:bg-rose-950/30"><Trash2 className="h-3.5 w-3.5" /></button>}
               </div>
               {p.caption && <p className="text-xs text-slate-700 dark:text-slate-200">{p.caption}</p>}
               {p.media_url && (p.proof_type === 'video' ? <video src={p.media_url} controls preload="metadata" playsInline className="max-h-96 w-full rounded-xl bg-slate-950 object-contain" /> : <div className="relative h-44 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"><Image src={p.media_url} alt="Goal proof" fill unoptimized className="object-contain" /></div>)}
