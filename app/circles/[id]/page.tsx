@@ -19,7 +19,7 @@ interface Task { id: string; title: string; details: string | null; task_date: s
 interface Checkin { status: 'done' | 'partial'; hours: number | null; note: string | null; media_url: string | null; media_type: 'image' | 'video' | null }
 
 const MENTOR_TOUR: TourStep[] = [
-  { title: "Hi, I'm Goalie!", text: 'This is your batch. In four quick steps I\'ll show you how to run it in a few minutes a day.' },
+  { title: "Hi, I'm Golu!", text: 'This is your batch. In four quick steps I\'ll show you how to run it in a few minutes a day.' },
   { target: 'invite', title: 'Invite your students', text: 'Share this link in your WhatsApp group. Students join with one tap.' },
   { target: 'task', title: "Post today's task", text: 'Write what everyone should finish today. Students get a notification and check in against it.' },
   { target: 'students-tab', title: 'See who needs you', text: 'Students shows who is done, who isn\'t yet and who has gone quiet. Search, filter and nudge from here.' },
@@ -27,7 +27,7 @@ const MENTOR_TOUR: TourStep[] = [
 ]
 
 const STUDENT_TOUR: TourStep[] = [
-  { title: "Hi, I'm Goalie!", text: 'This is your batch. Here\'s how to keep your mentor updated in about 10 seconds a day.' },
+  { title: "Hi, I'm Golu!", text: 'This is your batch. Here\'s how to keep your mentor updated in about 10 seconds a day.' },
   { target: 'task', title: "Today's task", text: 'Your mentor posts the task here. You get a notification when it\'s new.' },
   { target: 'checkin', title: 'Check in', text: 'Pick Done or Partly done, add hours if you like, then save. A photo is optional.' },
   { target: 'focus', title: 'Hard to start?', text: 'Run a short focus session first. Starting is the hardest part.' },

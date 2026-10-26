@@ -1,55 +1,47 @@
-/** What Goalie says. Playful like a little kid, never guilt-tripping: teasing always ends in a hug. */
+/** What Golu (the guide bot) says. Playful and warm, never guilt-tripping: teasing always ends kindly. */
 export const GOALIE_LINES = {
   welcomeBack: [
-    'What took you so long? I missed you! 🥺',
-    'You made me wait… but I forgive you! 🤗',
-    'Hmph! I waited and waited… okay, hug first 🤗',
-    'Yay, you’re back! I saved your spot 💛',
-    'There you are! I was counting the days 🥹',
+    'What took you so long? I missed you!',
+    'You made me wait… but I forgive you 🤗',
+    'There you are! I saved your spot 💛',
+    'Welcome back! Let’s pick up where we left off.',
   ],
   encourage: [
     'You can do it! 💪',
-    'Even 10 minutes counts!',
+    'Even 10 minutes counts.',
     'Small steps, big dreams ✨',
-    'I believe in you. Like, a LOT. 🥹',
-    'Don’t overthink it. Just start! 🚀',
-    'Future you says thank you 💛',
+    'I believe in you 💛',
+    'Don’t overthink it. Just start.',
   ],
   cheer: [
-    'You did it! I’m so proud! 🎉',
-    'Yaaay! High five! ✋',
-    'Look at you go! 🚀',
-    'That’s my friend! 💪',
-    'One more day stronger! 🌱',
+    'You did it! So proud of you 🎉',
+    'High five! ✋',
+    'One more day stronger 🌱',
+    'That’s how it’s done 💪',
   ],
   empty: [
-    'Yawn… nothing here yet. Wake me up? 😴',
-    'It’s so quiet… let’s make some noise! 🥁',
-    'I’m bored! Let’s start something 🙃',
+    'Nothing here yet. Let’s start something?',
+    'So quiet… let’s change that.',
   ],
   fall: [
-    'Woahhh! 😵‍💫 You knocked me over!',
-    'Oww! My antenna! 🤕',
-    'Wheee… thud. I’m okay! 😵',
+    'Woah! You knocked me over 😵‍💫',
+    'Oww, my antenna! I’m okay.',
   ],
   angry: [
-    'Hmph! Stop poking me! 😤',
-    'I’m telling Mom! 😠',
-    'Not talking to you… for 2 seconds 😤',
+    'Hey! Stop poking me 😤',
+    'I’m telling on you! 😤',
   ],
   forgive: [
-    '…okay, I’m not mad anymore 🥺',
-    'Fine. Friends again? 🤝',
-    'I can’t stay angry at you 💛',
+    'Okay, I’m not mad anymore 🥺',
+    'Friends again? 🤝',
   ],
   tap: [
-    'Hehe, that tickles! 😆',
-    'Boop! 👉',
-    'Are you studying or poking me? 🤨',
-    'Okay okay, I’m awake! 😳',
-    'Drink some water! 💧',
+    'Hehe, that tickles 😆',
+    'Boop!',
+    'Studying or poking me? 🤨',
+    'Drink some water 💧',
     'You’re doing better than you think 💛',
-    'Take a deep breath with me… 🌬️',
+    'Deep breath. You’ve got this.',
   ],
 } as const
 
@@ -62,7 +54,7 @@ export const pickLine = (set: GoalieLineSet, avoid?: string) => {
 
 export const CHEER_EVENT = 'goalcircle:cheer'
 
-/** Ask Goalie to celebrate (after a check-in). Survives the page change that follows. */
+/** Ask Golu to celebrate (after a check-in). Survives the page change that follows. */
 export function cheer() {
   try { window.sessionStorage.setItem('goalcircle-cheer', '1') } catch { /* storage unavailable */ }
   window.dispatchEvent(new Event(CHEER_EVENT))
