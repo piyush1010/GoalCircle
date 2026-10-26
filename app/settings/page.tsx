@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDisplayPreferences, useTheme, type Theme } from '@/components/ThemeProvider'
 import AvatarEditor from '@/components/AvatarEditor'
+import InstallAppCard from '@/components/InstallAppCard'
 import { supabase } from '@/utils/supabase'
 import { Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, Type, UserRound } from 'lucide-react'
 import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
@@ -393,8 +394,10 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between"><div><h3 className="text-xs font-bold text-slate-900 dark:text-white">Quiet hours</h3><p className="text-[10px] text-slate-400">Pause reminders and social prompts overnight</p></div><button type="button" onClick={() => saveQuietHours(!quietHoursEnabled)} aria-pressed={quietHoursEnabled} className={`relative h-6 w-11 rounded-full transition-colors ${quietHoursEnabled ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'}`}><span className={`absolute top-1 block h-4 w-4 rounded-full bg-white transition-transform ${quietHoursEnabled ? 'left-6' : 'left-1'}`} /></button></div>
           {quietHoursEnabled && <div className="mt-3 grid grid-cols-2 gap-2"><label className="text-[10px] font-bold text-slate-500">From<input type="time" value={quietHoursStart} onChange={(event) => saveQuietHours(true, event.target.value, quietHoursEnd)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label><label className="text-[10px] font-bold text-slate-500">Until<input type="time" value={quietHoursEnd} onChange={(event) => saveQuietHours(true, quietHoursStart, event.target.value)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label></div>}
         </div>
-        <p className="text-[10px] leading-relaxed text-slate-400">You will receive one browser reminder after this time while GoalCircle is open. Reliable background reminders will arrive with the installed-app release.</p>
+        <p className="text-[10px] leading-relaxed text-slate-400">You will receive one browser reminder after this time while GoalCircle is open. Background push delivery will be enabled in the next notification release.</p>
       </div>
+
+      <InstallAppCard />
 
       {/* SECTION 4: PRIVACY & DATA */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">

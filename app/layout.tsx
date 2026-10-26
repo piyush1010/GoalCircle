@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import AppShell from '@/components/AppShell'
@@ -6,6 +6,28 @@ import AppShell from '@/components/AppShell'
 export const metadata: Metadata = {
   title: 'GoalCircle',
   description: 'Track habits, build daily consistency, and stay accountable.',
+  applicationName: 'GoalCircle',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'GoalCircle',
+  },
+  icons: {
+    icon: [
+      { url: '/goalcircle-icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/goalcircle-icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/goalcircle-icon-192.png',
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+    { media: '(prefers-color-scheme: dark)', color: '#07101f' },
+  ],
+  colorScheme: 'light dark',
 }
 
 export default function RootLayout({

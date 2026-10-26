@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { CalendarDays, Check, CircleCheck, Flame, PauseCircle, Pencil, Plus, Trash2, X } from 'lucide-react'
 import GoalCollaborators from '@/components/GoalCollaborators'
+import GoalCalendarActions from '@/components/GoalCalendarActions'
 import { supabase } from '@/utils/supabase'
 
 interface Goal {
@@ -215,6 +216,7 @@ export default function GoalDetailPage() {
               <Flame className="h-3.5 w-3.5" /> {goal.current_streak || 0} day streak
             </p>
             {goal.target_date && <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-slate-500"><CalendarDays className="h-3 w-3" />Target {new Date(`${goal.target_date}T00:00:00`).toLocaleDateString()}</p>}
+            {goal.target_date && !editing && <GoalCalendarActions goalId={goal.id} title={goal.title} targetDate={goal.target_date} />}
             {isPaused && <p className="mt-1 text-[10px] font-bold text-sky-500">Paused until {new Date(goal.pause_until as string).toLocaleDateString()}</p>}
           </div>
           {isOwner && !isPaused && <button
