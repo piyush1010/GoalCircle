@@ -162,7 +162,7 @@ function TaskCard({ circleId, today, task, onSaved, onDeleted }: { circleId: str
     <label htmlFor="task-title" className="block text-sm font-black">{task ? 'Edit today’s task' : 'Set today’s task'}</label>
     <p className="mt-0.5 text-xs text-slate-500">Students get a notification and check in against it.</p>
     <input id="task-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={140} placeholder="e.g. Write 2 GS2 answers + revise Polity ch. 5" className={`${field} mt-3 font-semibold`} />
-    <textarea value={details} onChange={(event) => setDetails(event.target.value)} rows={2} maxLength={1000} placeholder="Details or instructions (optional)" className={`${field} mt-2 resize-none`} />
+    <textarea value={details} onChange={(event) => setDetails(event.target.value)} rows={3} maxLength={1000} placeholder="Details or instructions (optional)" className={`${field} mt-2 max-h-72 min-h-[5rem] resize-none [field-sizing:content]`} />
     <div className="mt-2"><AttachmentPicker files={files} existing={kept} onFilesChange={setFiles} onRemoveExisting={(path) => setKept((list) => list.filter((file) => file.path !== path))} onExistingChange={setKept} onError={setError} /></div>
     {error && <p role="alert" className="mt-2 text-sm font-semibold text-rose-600">{error}</p>}
     <div className="mt-3 flex gap-2">
