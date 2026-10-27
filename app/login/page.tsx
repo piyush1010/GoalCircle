@@ -15,7 +15,8 @@ function AuthForm() {
 
   // Mode state: 'signin' or 'signup'
   const [mode, setMode] = useState<'signin' | 'signup'>(() =>
-    searchParams.get('mode') === 'signup' ? 'signup' : 'signin'
+    // Students arriving from an invite link are almost always new.
+    searchParams.get('mode') === 'signup' || (searchParams.get('next') || '').startsWith('/circles/join') ? 'signup' : 'signin'
   )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -124,14 +125,13 @@ function AuthForm() {
       {/* DYNAMIC HEADER */}
       <div className="text-center space-y-1">
         <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-amber-500 text-slate-950"><Target className="h-5 w-5" /></span>
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">{mode === 'signup' ? 'New member' : 'Returning member'}</p>
         <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
-          {mode === 'signup' ? 'Create your GoalCircle account' : 'Welcome back'}
+          {mode === 'signup' ? 'Create your account' : 'Sign in to GoalCircle'}
         </h1>
-        <p className="text-xs text-slate-400 font-medium">
+        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
           {mode === 'signup'
-            ? 'Set your first goal and choose who keeps you accountable.'
-            : 'Sign in to continue with your goals and circles.'}
+            ? 'Free. With Google it takes one tap.'
+            : 'New here? Google sets up your account in one tap.'}
         </p>
       </div>
 
@@ -190,7 +190,7 @@ function AuthForm() {
             </label>
             <input
               type="text"
-              placeholder="Alex Morgan"
+              placeholder="Your name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101f] dark:text-white"
@@ -219,7 +219,7 @@ function AuthForm() {
           </label>
           <input
             type="password"
-            placeholder="••••••••"
+            placeholder={mode === 'signup' ? 'At least 6 characters' : 'Your password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101f] dark:text-white"

@@ -3,7 +3,7 @@
 import ClampedText from '@/components/ClampedText'
 import { confirmAction } from '@/lib/confirm'
 import Image from 'next/image'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BellRing, CheckCircle2, ChevronDown, Clock3, Copy, MessageCircle, Moon, Pencil, Search, UserMinus, UserPlus } from 'lucide-react'
 import { AttachmentList, AttachmentPicker, removeCircleFiles, uploadCircleFiles, type Attachment } from '@/components/CircleAttachments'
 import { supabase } from '@/utils/supabase'
@@ -87,6 +87,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
 
       {view === 'today' && <>
         <TaskCard key={task?.id ?? 'new'} circleId={circleId} today={today} task={task} onSaved={onTaskSaved} onDeleted={onTaskDeleted} />
+        <UpcomingTasks circleId={circleId} today={today} />
 
         {rows.length === 0 ? inviteCard : <section className={card}>
           <h2 className="text-sm font-black">Today at a glance</h2>
@@ -116,8 +117,9 @@ function Stat({ label, value, tone, onClick }: { label: string; value: number; t
   </button>
 }
 
-function TaskCard({ circleId, today, task, onSaved, onDeleted }: { circleId: string; today: string; task: Task | null; onSaved: (task: Task) => void; onDeleted: () => void }) {
-  const [editing, setEditing] = useState(!task)
+function TaskCard({ circleId, today, task, onSaved, onDeleted, dayLabel = 'today', startOpen }: { circleId: string; today: string; task: Task | null; onSaved: (task: Task) => void; onDeleted: () => void; dayLabel?: string; startOpen?: boolean }) {
+  const [editing, setEditing] = useState(startOpen ?? !task)
+  const forToday = dayLabel === 'today'
   const [title, setTitle] = useState(task?.title ?? '')
   const [details, setDetails] = useState(task?.details ?? '')
   const [kept, setKept] = useState<Attachment[]>(task?.attachments ?? [])
@@ -142,11 +144,11 @@ function TaskCard({ circleId, today, task, onSaved, onDeleted }: { circleId: str
     void removeCircleFiles(removed.map((file) => file.path))
     setFiles([]); setKept(attachments); setEditing(false)
     onSaved(result.data as Task)
-    if (!task) window.dispatchEvent(new CustomEvent('goalcircle:push-moment', { detail: 'Task posted! Want a buzz when students comment or need you?' }))
+    if (!task && forToday) window.dispatchEvent(new CustomEvent('goalcircle:push-moment', { detail: 'Task posted! Want a buzz when students comment or need you?' }))
   }
 
   const remove = async () => {
-    if (!task || !(await confirmAction('Delete today’s task? Students’ check-ins for it will be removed too.'))) return
+    if (!task || !(await confirmAction(forToday ? 'Delete today’s task? Students’ check-ins for it will be removed too.' : `Delete the task for ${dayLabel}?`))) return
     setSaving(true); setError(null)
     const { data, error: deleteError } = await supabase.from('circle_tasks').delete().eq('id', task.id).select('id')
     setSaving(false)
@@ -155,10 +157,10 @@ function TaskCard({ circleId, today, task, onSaved, onDeleted }: { circleId: str
     onDeleted()
   }
 
-  if (!editing && task) return <section data-tour="task" className={card}>
+  if (!editing && task) return <section data-tour={forToday ? 'task' : undefined} className={card}>
     <div className="flex items-start justify-between gap-3">
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Today&apos;s task</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">{forToday ? 'Today’s task' : `Task for ${dayLabel}`}</p>
         <h2 className="mt-1 text-lg font-black leading-snug">{task.title}</h2>
         {task.details && <ClampedText text={task.details} className="mt-1 text-sm text-slate-600 dark:text-slate-300" />}
       </div>
@@ -167,18 +169,58 @@ function TaskCard({ circleId, today, task, onSaved, onDeleted }: { circleId: str
     <AttachmentList attachments={task.attachments ?? []} isAdmin />
   </section>
 
-  return <section data-tour="task" className={card}>
-    <label htmlFor="task-title" className="block text-sm font-black">{task ? 'Edit today’s task' : 'Set today’s task'}</label>
-    <p className="mt-0.5 text-xs text-slate-500">Students get a notification and check in against it.</p>
-    <input id="task-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={140} placeholder="e.g. Write 2 GS2 answers + revise Polity ch. 5" className={`${field} mt-3 font-semibold`} />
+  return <section data-tour={forToday ? 'task' : undefined} className={card}>
+    <label htmlFor={`task-title-${today}`} className="block text-sm font-black">{forToday ? (task ? 'Edit today’s task' : 'Set today’s task') : (task ? `Edit task for ${dayLabel}` : `Plan a task for ${dayLabel}`)}</label>
+    <p className="mt-0.5 text-xs text-slate-500">{forToday ? 'Students get a notification and check in against it.' : 'Students see it and get a notification that morning at 6 AM.'}</p>
+    <input id={`task-title-${today}`} value={title} onChange={(event) => setTitle(event.target.value)} maxLength={140} placeholder="e.g. Write 2 GS2 answers + revise Polity ch. 5" className={`${field} mt-3 font-semibold`} />
     <textarea value={details} onChange={(event) => setDetails(event.target.value)} rows={3} maxLength={1000} placeholder="Details or instructions (optional)" className={`${field} mt-2 max-h-72 min-h-[5rem] resize-none [field-sizing:content]`} />
     <div className="mt-2"><AttachmentPicker files={files} existing={kept} onFilesChange={setFiles} onRemoveExisting={(path) => setKept((list) => list.filter((file) => file.path !== path))} onExistingChange={setKept} onError={setError} /></div>
     {error && <p role="alert" className="mt-2 text-sm font-semibold text-rose-600">{error}</p>}
     <div className="mt-3 flex gap-2">
-      {task && <button type="button" onClick={() => { setEditing(false); setTitle(task.title); setDetails(task.details ?? ''); setKept(task.attachments ?? []); setFiles([]) }} className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700">Cancel</button>}
-      <button type="button" onClick={() => void save()} disabled={saving} className="flex-[2] rounded-xl bg-amber-500 py-3 text-sm font-black text-slate-950 disabled:opacity-60">{saving ? 'Saving…' : task ? 'Save changes' : 'Post task'}</button>
+      {(task || !forToday) && <button type="button" onClick={() => { if (!task) { onDeleted(); return } setEditing(false); setTitle(task.title); setDetails(task.details ?? ''); setKept(task.attachments ?? []); setFiles([]) }} className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700">Cancel</button>}
+      <button type="button" onClick={() => void save()} disabled={saving} className="flex-[2] rounded-xl bg-amber-500 py-3 text-sm font-black text-slate-950 disabled:opacity-60">{saving ? 'Saving…' : task ? 'Save changes' : forToday ? 'Post task' : 'Schedule task'}</button>
     </div>
     {task && <button type="button" onClick={() => void remove()} disabled={saving} className="mt-3 w-full text-center text-xs font-bold text-rose-600 disabled:opacity-60 dark:text-rose-400">Delete this task</button>}
+  </section>
+}
+
+const addDays = (date: string, days: number) => {
+  const [y, m, d] = date.split('-').map(Number)
+  const next = new Date(y, m - 1, d + days)
+  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`
+}
+const dayName = (date: string, today: string) => date === addDays(today, 1) ? 'tomorrow' : new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })
+
+/** Plan the next seven days. Each planned task reaches students on its own morning. */
+function UpcomingTasks({ circleId, today }: { circleId: string; today: string }) {
+  const [open, setOpen] = useState(false)
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [editingDay, setEditingDay] = useState<string | null>(null)
+  const days = Array.from({ length: 7 }, (_, index) => addDays(today, index + 1))
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.from('circle_tasks').select('id,title,details,task_date,attachments').eq('circle_id', circleId).gt('task_date', today).lte('task_date', addDays(today, 7)).order('task_date')
+    setTasks((data || []) as Task[])
+  }, [circleId, today])
+  useEffect(() => { void Promise.resolve().then(load) }, [load])
+
+  const planned = tasks.length
+  return <section className={card}>
+    <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="flex w-full items-center justify-between text-left">
+      <span><span className="block text-base font-black">Plan ahead</span><span className="block text-sm text-slate-600 dark:text-slate-300">{planned ? `${planned} of the next 7 days planned` : 'Set tasks for the coming week in one go'}</span></span>
+      <ChevronDown className={`h-5 w-5 transition ${open ? 'rotate-180' : ''}`} />
+    </button>
+    {open && <div className="mt-3 space-y-2">{days.map((day) => {
+      const existing = tasks.find((item) => item.task_date === day) ?? null
+      if (editingDay === day) return <TaskCard key={`${day}-${existing?.id ?? 'new'}`} circleId={circleId} today={day} task={existing} dayLabel={dayName(day, today)} startOpen
+        onSaved={(saved) => { setTasks((list) => [...list.filter((item) => item.task_date !== day), saved].sort((a, b) => a.task_date.localeCompare(b.task_date))); setEditingDay(null) }}
+        onDeleted={() => { setTasks((list) => list.filter((item) => item.task_date !== day)); setEditingDay(null) }} />
+      return <button type="button" key={day} onClick={() => setEditingDay(day)} className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 px-3.5 py-3 text-left transition hover:border-amber-500 dark:border-slate-700">
+        <span className="w-24 shrink-0 text-sm font-black capitalize">{dayName(day, today)}</span>
+        <span className={`min-w-0 flex-1 truncate text-sm ${existing ? 'font-semibold' : 'text-slate-500'}`}>{existing ? existing.title : '+ Add task'}</span>
+        {existing && <Pencil className="h-4 w-4 shrink-0 text-slate-400" />}
+      </button>
+    })}</div>}
   </section>
 }
 
