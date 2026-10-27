@@ -20,6 +20,7 @@ interface Goal {
   pause_until: string | null
   shared?: boolean
 }
+interface BatchCard { id: string; name: string; admin: boolean; task: string | null; done: boolean }
 interface Activity { goal_id: string | null; at: string; minutes: number; checkin: boolean }
 
 const WELCOME_TOUR: TourStep[] = [
@@ -48,6 +49,7 @@ export default function TodayPage() {
   const [error, setError] = useState<string | null>(null)
   const [busyGoalId, setBusyGoalId] = useState<string | null>(null)
   const [stepsOpen, setStepsOpen] = useState(false)
+  const [batches, setBatches] = useState<BatchCard[]>([])
 
   const load = useCallback(async () => {
     setError(null)
@@ -60,14 +62,26 @@ export default function TodayPage() {
 
     const monthStart = new Date(); monthStart.setHours(0, 0, 0, 0); monthStart.setDate(1)
     const fields = 'id,user_id,title,current_streak,status,pause_until'
-    const [goalsResult, postsResult, logsResult, collabResult] = await Promise.all([
+    const todayKey = localKey(new Date())
+    const [goalsResult, postsResult, logsResult, collabResult, membershipResult] = await Promise.all([
       supabase.from('goals').select(fields).eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('posts').select('goal_id,created_at').eq('user_id', user.id).gte('created_at', monthStart.toISOString()),
       supabase.from('focus_logs').select('goal_id,minutes_logged,logged_at').eq('user_id', user.id).gte('logged_at', monthStart.toISOString()),
       supabase.from('goal_collaborators').select('goal_id').eq('user_id', user.id).eq('status', 'accepted'),
+      supabase.from('circle_memberships').select('role, circles(id,name,owner_id)').eq('user_id', user.id),
     ])
     const sharedIds = (collabResult.data || []).map((row) => row.goal_id)
-    const sharedResult = sharedIds.length ? await supabase.from('goals').select(fields).in('id', sharedIds) : { data: [], error: null }
+    type MembershipRow = { role: string; circles: { id: string; name: string; owner_id: string } | null }
+    const memberships = ((membershipResult.data || []) as unknown as MembershipRow[]).filter((row) => row.circles)
+    const circleIds = memberships.map((row) => row.circles!.id)
+    const [sharedResult, tasksResult, myCheckinsResult] = await Promise.all([
+      sharedIds.length ? supabase.from('goals').select(fields).in('id', sharedIds) : Promise.resolve({ data: [], error: null }),
+      circleIds.length ? supabase.from('circle_tasks').select('circle_id,title').in('circle_id', circleIds).eq('task_date', todayKey) : Promise.resolve({ data: [], error: null }),
+      circleIds.length ? supabase.from('circle_task_checkins').select('circle_id,circle_tasks!inner(task_date)').in('circle_id', circleIds).eq('user_id', user.id).eq('circle_tasks.task_date', todayKey) : Promise.resolve({ data: [], error: null }),
+    ])
+    const taskByCircle = new Map(((tasksResult.data || []) as Array<{ circle_id: string; title: string }>).map((row) => [row.circle_id, row.title]))
+    const doneCircles = new Set(((myCheckinsResult.data || []) as Array<{ circle_id: string }>).map((row) => row.circle_id))
+    setBatches(memberships.map((row) => ({ id: row.circles!.id, name: row.circles!.name, admin: row.circles!.owner_id === user.id || ['owner', 'moderator'].includes(row.role), task: taskByCircle.get(row.circles!.id) ?? null, done: doneCircles.has(row.circles!.id) })))
     const failed = goalsResult.error || postsResult.error || logsResult.error || collabResult.error || sharedResult.error
     if (failed) { setError('Your day could not be loaded. Pull down or tap Retry.'); setLoading(false); return }
 
@@ -112,6 +126,9 @@ export default function TodayPage() {
   const bestStreak = goals.reduce((max, goal) => Math.max(max, goal.current_streak || 0), 0)
   const activeGoals = goals.filter((goal) => !(goal.status === 'paused' && goal.pause_until && new Date(goal.pause_until) > new Date()))
   const checkedCount = activeGoals.filter((goal) => doneToday.has(goal.id)).length
+  const studentTasks = batches.filter((batch) => !batch.admin && batch.task)
+  const totalDue = activeGoals.length + studentTasks.length
+  const totalDone = checkedCount + studentTasks.filter((batch) => batch.done).length
 
   const deleteGoal = async (goal: Goal) => {
     if (goal.user_id !== userId || !(await confirmAction(`Delete “${goal.title}” and all its progress? This cannot be undone.`))) return
@@ -138,7 +155,7 @@ export default function TodayPage() {
 
       <header className="mb-4">
         <p className="text-sm font-bold text-slate-600 dark:text-slate-300">{greeting()}{firstName ? `, ${firstName}` : ''} 👋</p>
-        <h1 className="text-2xl font-black tracking-tight">{activeGoals.length === 0 ? 'Let’s start today' : checkedCount === activeGoals.length ? 'All done today! 🎉' : `${activeGoals.length - checkedCount} to go today`}</h1>
+        <h1 className="text-2xl font-black tracking-tight">{totalDue === 0 ? 'Let’s start today' : totalDone === totalDue ? 'All done today! 🎉' : `${totalDue - totalDone} to go today`}</h1>
       </header>
 
       {error && <div role="alert" className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"><span>{error}</span><button onClick={() => void load()} className="shrink-0 font-black underline">Retry</button></div>}
@@ -151,13 +168,33 @@ export default function TodayPage() {
       {/* Quick numbers, swipe sideways */}
       <div className="-mx-4 mt-3 flex snap-x gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
         <span className={chip}><Flame className="h-4 w-4 text-orange-500" />{bestStreak} day streak</span>
-        <span className={chip}><CheckCircle2 className="h-4 w-4 text-emerald-500" />{checkedCount}/{activeGoals.length} today</span>
+        <span className={chip}><CheckCircle2 className="h-4 w-4 text-emerald-500" />{totalDone}/{totalDue} today</span>
         <span className={chip}><Timer className="h-4 w-4 text-sky-500" />{weekMinutes} min this week</span>
       </div>
 
+      {batches.length > 0 && <section className="mt-5">
+        <h2 className="mb-2 text-lg font-black">{batches.length === 1 ? 'Your batch' : 'Your circles'}</h2>
+        <div className="space-y-2.5">{batches.map((batch) => (
+          <Link key={batch.id} href={`/circles/${batch.id}`} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:border-amber-500 dark:border-slate-700/70 dark:bg-[#101b2d]">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400"><UsersRound className="h-5 w-5" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-base font-black">{batch.name}</span>
+              <span className="block truncate text-sm font-semibold text-slate-600 dark:text-slate-300">{batch.task ? batch.task : batch.admin ? 'No task posted today' : 'No task yet today'}</span>
+            </span>
+            {batch.admin
+              ? <span className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-sm font-black dark:border-slate-700">{batch.task ? 'Students' : 'Post task'}</span>
+              : batch.task && (batch.done
+                ? <span className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-black text-white"><CheckCircle2 className="h-4 w-4" />Done</span>
+                : <span className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-black text-slate-950">Check in</span>)}
+          </Link>
+        ))}</div>
+      </section>}
+
       <section data-tour="today-goals" className="mt-5">
         <div className="mb-2 flex items-center justify-between"><h2 className="text-lg font-black">Today’s goals</h2><Link href="/create-goal" className="flex items-center gap-1 text-sm font-black text-amber-600 dark:text-amber-400"><Plus className="h-4 w-4" />New goal</Link></div>
-        {goals.length === 0
+        {goals.length === 0 && batches.length > 0
+          ? <Link href="/create-goal" className="block rounded-2xl border border-dashed border-slate-300 p-4 text-center text-sm font-bold text-slate-600 dark:border-slate-700 dark:text-slate-300">Add a personal goal too, like “Revise 2 hours daily”</Link>
+          : goals.length === 0
           ? <GoalieMessage title="Your next streak starts here" message="Choose one small thing you can do every day. I'll help you keep going." actionLabel="Create a goal" href="/create-goal" />
           : <div className="space-y-2.5">{goals.map((goal) => {
             const paused = goal.status === 'paused' && Boolean(goal.pause_until && new Date(goal.pause_until) > new Date())
