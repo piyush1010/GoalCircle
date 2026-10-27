@@ -19,6 +19,9 @@ interface Goal {
   current_streak: number | null
   status: string | null
   pause_until: string | null
+  frequency?: 'daily' | 'weekly' | 'once' | null
+  times_per_week?: number | null
+  is_completed?: boolean | null
   shared?: boolean
 }
 interface BatchCard { id: string; name: string; admin: boolean; task: string | null; done: boolean }
@@ -62,12 +65,15 @@ export default function TodayPage() {
     void supabase.rpc('resume_expired_goal_pauses')
 
     const monthStart = new Date(); monthStart.setHours(0, 0, 0, 0); monthStart.setDate(1)
-    const fields = 'id,user_id,title,current_streak,status,pause_until'
+    // Weekly goals need this week's check-ins even when the week started last month.
+    const weekStart = new Date(); weekStart.setHours(0, 0, 0, 0); weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7))
+    const since = weekStart < monthStart ? weekStart : monthStart
+    const fields = 'id,user_id,title,current_streak,status,pause_until,frequency,times_per_week,is_completed'
     const todayKey = localKey(new Date())
     const [goalsResult, postsResult, logsResult, collabResult, membershipResult] = await Promise.all([
       supabase.from('goals').select(fields).eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('posts').select('goal_id,created_at').eq('user_id', user.id).gte('created_at', monthStart.toISOString()),
-      supabase.from('focus_logs').select('goal_id,minutes_logged,logged_at').eq('user_id', user.id).gte('logged_at', monthStart.toISOString()),
+      supabase.from('posts').select('goal_id,created_at').eq('user_id', user.id).gte('created_at', since.toISOString()),
+      supabase.from('focus_logs').select('goal_id,minutes_logged,logged_at').eq('user_id', user.id).gte('logged_at', since.toISOString()),
       supabase.from('goal_collaborators').select('goal_id').eq('user_id', user.id).eq('status', 'accepted'),
       supabase.from('circle_memberships').select('role, circles(id,name,owner_id)').eq('user_id', user.id),
     ])
@@ -124,8 +130,20 @@ export default function TodayPage() {
     const since = Date.now() - 7 * 86_400_000
     return activity.filter((item) => new Date(item.at).getTime() >= since).reduce((sum, item) => sum + item.minutes, 0)
   }, [activity])
-  const bestStreak = goals.reduce((max, goal) => Math.max(max, goal.current_streak || 0), 0)
-  const activeGoals = goals.filter((goal) => !(goal.status === 'paused' && goal.pause_until && new Date(goal.pause_until) > new Date()))
+  // Days checked in this week, per goal (weeks start on Monday)
+  const weekDays = useMemo(() => {
+    const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - ((start.getDay() + 6) % 7))
+    const map = new Map<string, Set<string>>()
+    activity.forEach((item) => { if (!item.goal_id || new Date(item.at) < start) return; const days = map.get(item.goal_id) || new Set<string>(); days.add(localKey(new Date(item.at))); map.set(item.goal_id, days) })
+    return map
+  }, [activity])
+  const dailyStreak = goals.filter((goal) => (goal.frequency ?? 'daily') === 'daily').reduce((max, goal) => Math.max(max, goal.current_streak || 0), 0)
+  const visibleGoals = goals.filter((goal) => !(goal.frequency === 'once' && goal.is_completed))
+  const finishedOnce = goals.filter((goal) => goal.frequency === 'once' && goal.is_completed).length
+  const isPaused = (goal: Goal) => goal.status === 'paused' && Boolean(goal.pause_until && new Date(goal.pause_until) > new Date())
+  const weekMet = (goal: Goal) => (weekDays.get(goal.id)?.size || 0) >= (goal.times_per_week || 1)
+  // Only goals that are actually due today count: a weekly goal that already hit its target isn't.
+  const activeGoals = visibleGoals.filter((goal) => !isPaused(goal) && !(goal.frequency === 'weekly' && weekMet(goal) && !doneToday.has(goal.id)))
   const checkedCount = activeGoals.filter((goal) => doneToday.has(goal.id)).length
   const studentTasks = batches.filter((batch) => !batch.admin && batch.task)
   const totalDue = activeGoals.length + studentTasks.length
@@ -170,7 +188,7 @@ export default function TodayPage() {
 
       {/* Quick numbers, swipe sideways */}
       <div className="-mx-4 mt-3 flex snap-x gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
-        <span className={chip}><Flame className="h-4 w-4 text-orange-500" />{bestStreak} day streak</span>
+        <span className={chip}><Flame className="h-4 w-4 text-orange-500" />{dailyStreak} day streak</span>
         <span className={chip}><CheckCircle2 className="h-4 w-4 text-emerald-500" />{totalDone}/{totalDue} today</span>
         <span className={chip}><Timer className="h-4 w-4 text-sky-500" />{weekMinutes} min this week</span>
       </div>
@@ -199,25 +217,32 @@ export default function TodayPage() {
           ? <Link href="/create-goal" className="block rounded-2xl border border-dashed border-slate-300 p-4 text-center text-sm font-bold text-slate-600 dark:border-slate-700 dark:text-slate-300">Add a personal goal too, like “Revise 2 hours daily”</Link>
           : goals.length === 0
           ? <GoalieMessage title="Your next streak starts here" message="Choose one small thing you can do every day. I'll help you keep going." actionLabel="Create a goal" href="/create-goal" />
-          : <div className="space-y-2.5">{goals.map((goal) => {
-            const paused = goal.status === 'paused' && Boolean(goal.pause_until && new Date(goal.pause_until) > new Date())
-            const done = doneToday.has(goal.id)
+          : <div className="space-y-2.5">{visibleGoals.map((goal) => {
+            const paused = isPaused(goal)
+            const weekly = goal.frequency === 'weekly'
+            const once = goal.frequency === 'once'
+            const daysThisWeek = weekDays.get(goal.id)?.size || 0
+            const done = doneToday.has(goal.id) || (weekly && weekMet(goal))
             return <article key={goal.id} className={`flex items-center gap-3 rounded-2xl border p-3.5 shadow-sm ${done ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30' : 'border-slate-200 bg-white dark:border-slate-700/70 dark:bg-[#101b2d]'}`}>
               <div className="min-w-0 flex-1">
                 <Link href={`/goal/${goal.id}`} className="block truncate text-base font-black">{goal.title}</Link>
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-                  <span className="inline-flex items-center gap-1"><Flame className="h-3.5 w-3.5 text-orange-500" />{goal.current_streak || 0} day{goal.current_streak === 1 ? '' : 's'}</span>
+                  {once ? <span>One-time goal</span>
+                    : weekly ? <><span>{Math.min(daysThisWeek, goal.times_per_week || 1)} of {goal.times_per_week} this week</span><span className="inline-flex items-center gap-1"><Flame className="h-3.5 w-3.5 text-orange-500" />{goal.current_streak || 0} wk</span></>
+                    : <span className="inline-flex items-center gap-1"><Flame className="h-3.5 w-3.5 text-orange-500" />{goal.current_streak || 0} day{goal.current_streak === 1 ? '' : 's'}</span>}
                   {goal.shared && <span className="inline-flex items-center gap-1 text-violet-600 dark:text-violet-400"><UsersRound className="h-3.5 w-3.5" />Shared</span>}
                   {paused && <span className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400"><PauseCircle className="h-3.5 w-3.5" />Paused</span>}
                 </p>
               </div>
               {!paused && (done
-                ? <span className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-black text-white"><CheckCircle2 className="h-4 w-4" />Done</span>
+                ? <span className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-black text-white"><CheckCircle2 className="h-4 w-4" />{weekly && !doneToday.has(goal.id) ? 'Week done' : 'Done'}</span>
                 : <Link href={`/check-in?goal=${goal.id}`} className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-black text-slate-950 shadow-sm">Check in</Link>)}
               {!goal.shared && <button type="button" onClick={() => void deleteGoal(goal)} disabled={busyGoalId === goal.id} aria-label={`Delete ${goal.title}`} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-500 disabled:opacity-40"><Trash2 className="h-4 w-4" /></button>}
             </article>
           })}</div>}
       </section>
+
+      {finishedOnce > 0 && <p className="mt-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">🎉 {finishedOnce} one-time goal{finishedOnce > 1 ? 's' : ''} completed</p>}
 
       {userId && <section className="mt-5">
         <button type="button" onClick={() => setStepsOpen((open) => !open)} aria-expanded={stepsOpen} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-base font-black shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">

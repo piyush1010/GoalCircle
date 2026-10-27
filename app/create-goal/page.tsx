@@ -63,6 +63,8 @@ export default function CreateGoalPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [remindDaily, setRemindDaily] = useState(false)
+  const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'once'>('daily')
+  const [timesPerWeek, setTimesPerWeek] = useState(3)
   const [reminderTime, setReminderTime] = useState('08:00')
   const [created, setCreated] = useState<{ goalId: string; title: string; targetDate: string | null; reminder: boolean; next: string } | null>(null)
 
@@ -185,7 +187,7 @@ export default function CreateGoalPage() {
       return
     }
 
-    if (goalId) await supabase.from('goals').update({ category }).eq('id', goalId).eq('user_id', session.user.id)
+    if (goalId) await supabase.from('goals').update({ category, frequency, times_per_week: frequency === 'weekly' ? timesPerWeek : null }).eq('id', goalId).eq('user_id', session.user.id)
 
     const next = visibility === 'public' ? '/feed?published=goal' : goalId ? `/goal/${goalId}` : '/profile'
     if (goalId && (remindDaily || targetDate)) {
@@ -275,6 +277,24 @@ export default function CreateGoalPage() {
         </section>
 
         <section data-tour="goal-plan" className={`${sectionClass} divide-y divide-slate-100 py-1 dark:divide-slate-800`}>
+          <div className="py-4">
+            <p className={headingClass}>How often?</p>
+            <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800" role="radiogroup" aria-label="How often">
+              {([['daily', 'Every day'], ['weekly', 'Few times a week'], ['once', 'Just once']] as const).map(([value, label]) => (
+                <button type="button" role="radio" aria-checked={frequency === value} key={value} onClick={() => setFrequency(value)} className={`rounded-lg px-1 py-2.5 text-sm font-bold transition ${frequency === value ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-950 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>{label}</button>
+              ))}
+            </div>
+            {frequency === 'weekly' && <div className="mt-3 flex items-center justify-between">
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Times per week</span>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setTimesPerWeek((n) => Math.max(1, n - 1))} aria-label="Fewer times" className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-lg font-black dark:border-slate-700">−</button>
+                <span className="w-8 text-center text-lg font-black">{timesPerWeek}</span>
+                <button type="button" onClick={() => setTimesPerWeek((n) => Math.min(6, n + 1))} aria-label="More times" className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-lg font-black dark:border-slate-700">+</button>
+              </div>
+            </div>}
+            <p className={`${hintClass} mt-2`}>{frequency === 'daily' ? 'Your streak counts days in a row.' : frequency === 'weekly' ? `Check in any ${timesPerWeek} days a week. Your streak counts weeks you hit it.` : 'For a one-off, like submitting a form. Check in with “Done” to finish it.'}</p>
+          </div>
+
           <div className={rowClass}>
             <div>
               <label htmlFor="target-date" className={headingClass}>Target date</label>
