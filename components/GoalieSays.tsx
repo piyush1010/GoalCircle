@@ -15,8 +15,13 @@ const REACTIONS: Record<'tap' | 'fall' | 'angry', Reaction> = {
  * Goalie with a speech bubble. One tap: giggles. Three quick taps: falls over, dizzy.
  * Keep poking: gets cross, then forgives you.
  */
-export default function GoalieSays({ lines, mood = 'normal', size = 56, layout = 'row', className = '' }: {
-  lines: GoalieLineSet; mood?: GoalieMood; size?: number; layout?: 'row' | 'stack'; className?: string
+export default function GoalieSays({ lines, say, mood = 'normal', size = 56, layout = 'row', autoHideMs, className = '' }: {
+  /** A set to pick the opening line from, or `say` for an exact line. */
+  lines?: GoalieLineSet; say?: string; mood?: GoalieMood; size?: number
+  /** row: bubble to the right. left: bubble to the left. stack: bubble above. */
+  layout?: 'row' | 'left' | 'stack'
+  /** Hide the bubble this long after it last changed (Goalie stays). */
+  autoHideMs?: number; className?: string
 }) {
   const [line, setLine] = useState<string | null>(null)
   const [reaction, setReaction] = useState<{ mood: GoalieMood; key: number } | null>(null)
@@ -24,7 +29,16 @@ export default function GoalieSays({ lines, mood = 'normal', size = 56, layout =
   const timer = useRef<number | undefined>(undefined)
 
   // Pick after mount so server and phone agree on the first render.
-  useEffect(() => { const t = window.setTimeout(() => setLine(pickLine(lines)), 0); return () => window.clearTimeout(t) }, [lines])
+  useEffect(() => {
+    if (!lines && !say) return
+    const t = window.setTimeout(() => setLine(say ?? (lines ? pickLine(lines) : null)), 0)
+    return () => window.clearTimeout(t)
+  }, [lines, say])
+  useEffect(() => {
+    if (!line || !autoHideMs) return
+    const t = window.setTimeout(() => setLine(null), autoHideMs)
+    return () => window.clearTimeout(t)
+  }, [line, autoHideMs, reaction])
   useEffect(() => () => window.clearTimeout(timer.current), [])
 
   const react = (kind: keyof typeof REACTIONS) => {
@@ -50,10 +64,10 @@ export default function GoalieSays({ lines, mood = 'normal', size = 56, layout =
   }
 
   const face = reaction?.mood ?? mood
-  const bubble = line && <p key={line} aria-live="polite" className={`goalie-bubble relative rounded-2xl px-3.5 py-2 text-sm font-bold shadow-sm ring-1 ${face === 'angry' ? 'bg-rose-50 text-rose-800 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-100 dark:ring-rose-400/30' : 'bg-amber-50 text-slate-800 ring-amber-200 dark:bg-amber-400/10 dark:text-amber-100 dark:ring-amber-400/30'} ${layout === 'row' ? 'rounded-bl-md' : 'mx-auto w-fit max-w-[16rem] rounded-b-md'}`}>{line}</p>
+  const bubble = line && <p key={line} aria-live="polite" className={`goalie-bubble relative rounded-2xl border-2 border-slate-900 px-3.5 py-2 text-sm font-black shadow-[3px_3px_0_#0f172a] ${face === 'angry' ? 'bg-rose-50 text-rose-800' : 'bg-white text-slate-900'} ${layout === 'row' ? 'rounded-bl-md' : layout === 'left' ? 'max-w-[13rem] rounded-br-md' : 'mx-auto w-fit max-w-[16rem] rounded-b-md'}`}>{line}</p>
 
   return (
-    <div className={`${layout === 'row' ? 'flex items-end gap-2' : 'flex flex-col-reverse items-center gap-2'} ${className}`}>
+    <div className={`${layout === 'row' ? 'flex items-end gap-2' : layout === 'left' ? 'flex flex-row-reverse items-end gap-2' : 'flex flex-col-reverse items-center gap-2'} ${className}`}>
       <button type="button" onClick={poke} aria-label="Poke Goalie" style={{ touchAction: 'manipulation' }} className={`shrink-0 select-none rounded-full outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${reaction?.mood === 'happy' ? 'goalie-jump' : ''}`} key={reaction?.key ?? 0}>
         <GoalieBot size={size} mood={face} />
       </button>

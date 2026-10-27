@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmAction } from '@/lib/confirm'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -70,19 +71,22 @@ export default function FeedPage() {
   const [safetyTarget, setSafetyTarget] = useState<string | null>(null)
 
   const fetchPosts = useCallback(async (currentUserId: string, email: string | undefined, from: number) => {
-    const postsResult = await supabase.from('posts').select('id,user_id,goal_id,caption,media_url,proof_type,checkin_status,visibility,minutes_logged,music_title,music_artist,music_artwork_url,music_preview_url,created_at,goals(title,current_streak)').order('created_at', { ascending: false }).range(from, from + PAGE_SIZE)
+    // Posts, blocks and follows don't depend on each other: fetch them together.
+    const [postsResult, { data: blockRows }, followsResult] = await Promise.all([
+      supabase.from('posts').select('id,user_id,goal_id,caption,media_url,proof_type,checkin_status,visibility,minutes_logged,music_title,music_artist,music_artwork_url,music_preview_url,created_at,goals(title,current_streak)').order('created_at', { ascending: false }).range(from, from + PAGE_SIZE),
+      supabase.from('blocks').select('blocked_id').eq('blocker_id', currentUserId),
+      supabase.from('follows').select('following_id').eq('follower_id', currentUserId),
+    ])
     if (postsResult.error) throw postsResult.error
 
     const pageRows = (postsResult.data || []) as unknown as Array<Record<string, unknown>>
-    const { data: blockRows } = await supabase.from('blocks').select('blocked_id').eq('blocker_id', currentUserId)
     const blockedIds = new Set(((blockRows || []) as Array<{ blocked_id: string }>).map((row) => row.blocked_id))
     const rows = pageRows.filter((row) => !blockedIds.has(String(row.user_id))).slice(0, PAGE_SIZE)
     const postIds = rows.map((row) => String(row.id))
     const authorIds = [...new Set(rows.map((row) => String(row.user_id)))]
-    const [profilesResult, reactionsResult, followsResult] = await Promise.all([
+    const [profilesResult, reactionsResult] = await Promise.all([
       authorIds.length ? supabase.from('profiles').select('id,full_name,display_name,username,handle,avatar_url').in('id', authorIds) : Promise.resolve({ data: [], error: null }),
       postIds.length ? supabase.from('post_reactions').select('post_id,user_id').in('post_id', postIds) : Promise.resolve({ data: [], error: null }),
-      supabase.from('follows').select('following_id').eq('follower_id', currentUserId),
     ])
     const profiles = new Map<string, Record<string, unknown>>(((profilesResult.data || []) as Array<Record<string, unknown>>).map((profile) => [String(profile.id), profile]))
     const reactions = (reactionsResult.data || []) as Array<{ post_id: string; user_id: string }>
@@ -124,6 +128,12 @@ export default function FeedPage() {
     if (!session?.user) { router.replace('/login?next=/feed'); return }
     const currentUserId = session.user.id
     setUserId(currentUserId)
+    // Show the last feed straight away, then refresh it quietly.
+    const cacheKey = `goalcircle-feed-${currentUserId}`
+    try {
+      const cached = JSON.parse(window.localStorage.getItem(cacheKey) || 'null') as FeedPost[] | null
+      if (cached?.length) { setPosts(cached); setLoading(false) }
+    } catch { /* no cache */ }
     try {
       const [page] = await Promise.all([
         fetchPosts(currentUserId, session.user.email, 0),
@@ -131,6 +141,7 @@ export default function FeedPage() {
       ])
       setPosts(page.posts)
       setHasMore(page.moreAvailable)
+      try { window.localStorage.setItem(cacheKey, JSON.stringify(page.posts.slice(0, 10))) } catch { /* storage full or blocked */ }
     } catch {
       setError('The community feed could not be loaded. Please retry.')
     } finally {
@@ -239,7 +250,7 @@ export default function FeedPage() {
   }
 
   const deletePost = async (post: FeedPost) => {
-    if (!userId || post.userId !== userId || !window.confirm('Delete this progress post? This cannot be undone.')) return
+    if (!userId || post.userId !== userId || !(await confirmAction('Delete this progress post? This cannot be undone.'))) return
     const { error: deleteError } = await supabase.from('posts').delete().eq('id', post.id).eq('user_id', userId)
     if (deleteError) { showToast('Post could not be deleted.'); return }
     setPosts((current) => current.filter((item) => item.id !== post.id)); setOpenPostMenu(null); showToast('Post deleted')

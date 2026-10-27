@@ -1,10 +1,13 @@
 'use client'
 
+import TodoWidget from '@/components/TodoWidget'
+import ConsistencyMatrix from '@/components/ConsistencyMatrix'
+import { confirmAction } from '@/lib/confirm'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import GoalieMessage from '@/components/GoalieMessage'
 import { useRouter } from 'next/navigation'
-import { CalendarDays, Check, Flame, PauseCircle, Play, Plus, Target, UsersRound } from 'lucide-react'
+import { CalendarDays, Check, Flame, PauseCircle, Play, Plus, Target, Trash2, UsersRound } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import WeeklyRecap from '@/components/WeeklyRecap'
 
@@ -92,14 +95,6 @@ export default function DashboardPage() {
     return totals
   }, {}), [logs, today])
 
-  const week = useMemo(() => Array.from({ length: 7 }, (_, index) => {
-    const date = new Date()
-    date.setHours(0, 0, 0, 0)
-    date.setDate(date.getDate() - (6 - index))
-    const key = dayKey(date)
-    const minutes = logs.filter((log) => dayKey(new Date(log.logged_at)) === key).reduce((sum, log) => sum + (log.minutes_logged || 0), 0)
-    return { key, label: date.toLocaleDateString('en', { weekday: 'narrow' }), minutes }
-  }), [logs])
 
   const toggleGoal = async (goal: Goal) => {
     if (goal.user_id !== userId) return
@@ -112,6 +107,15 @@ export default function DashboardPage() {
       setError('That change was not saved. Please try again.')
     }
     setUpdatingGoalId(null)
+  }
+
+  const deleteGoal = async (goal: Goal) => {
+    if (goal.user_id !== userId || !(await confirmAction(`Delete “${goal.title}” and all its progress? This cannot be undone.`))) return
+    setUpdatingGoalId(goal.id)
+    const { data, error: deleteError } = await supabase.from('goals').delete().eq('id', goal.id).eq('user_id', goal.user_id).select('id')
+    setUpdatingGoalId(null)
+    if (deleteError || !data?.length) { setError('That goal could not be deleted. Please try again.'); return }
+    setGoals((current) => current.filter((item) => item.id !== goal.id))
   }
 
   if (loading) {
@@ -149,14 +153,16 @@ export default function DashboardPage() {
             const minutes = todayMinutesByGoal[goal.id] || 0
             const isPaused = goal.status === 'paused' && Boolean(goal.pause_until && new Date(goal.pause_until) > new Date())
             return <article key={goal.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
-              <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3"><button onClick={() => void toggleGoal(goal)} disabled={updatingGoalId === goal.id || isPaused || goal.shared} aria-label={goal.is_completed ? `Mark ${goal.title} incomplete` : `Mark ${goal.title} complete`} className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border disabled:opacity-40 ${goal.is_completed ? 'border-amber-500 bg-amber-500 text-slate-950' : 'border-slate-300 dark:border-slate-600'}`}>{goal.is_completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}</button><div className="min-w-0"><Link href={`/goal/${goal.id}`} className={`block truncate text-sm font-bold ${goal.is_completed ? 'text-slate-500 line-through' : ''}`}>{goal.title}</Link><span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400"><Flame className="h-3 w-3" />{goal.current_streak || 0}d streak</span>{goal.shared && <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-bold text-violet-500"><UsersRound className="h-3 w-3" />Shared</span>}{isPaused && <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-bold text-sky-500"><PauseCircle className="h-3 w-3" />Paused</span>}{goal.target_date && <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500"><CalendarDays className="h-3 w-3" />{new Date(`${goal.target_date}T00:00:00`).toLocaleDateString()}</span>}</div></div>{!goal.is_completed && !isPaused && <Link href={goal.shared ? `/check-in?goal=${goal.id}` : `/focus?goal=${goal.id}`} className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300">{goal.shared ? <Plus className="h-3 w-3" /> : <Play className="h-3 w-3" fill="currentColor" />}{goal.shared ? 'Check in' : 'Focus'}</Link>}</div>
+              <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3"><button onClick={() => void toggleGoal(goal)} disabled={updatingGoalId === goal.id || isPaused || goal.shared} aria-label={goal.is_completed ? `Mark ${goal.title} incomplete` : `Mark ${goal.title} complete`} className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border disabled:opacity-40 ${goal.is_completed ? 'border-amber-500 bg-amber-500 text-slate-950' : 'border-slate-300 dark:border-slate-600'}`}>{goal.is_completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}</button><div className="min-w-0"><Link href={`/goal/${goal.id}`} className={`block truncate text-sm font-bold ${goal.is_completed ? 'text-slate-500 line-through' : ''}`}>{goal.title}</Link><span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400"><Flame className="h-3 w-3" />{goal.current_streak || 0}d streak</span>{goal.shared && <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-bold text-violet-500"><UsersRound className="h-3 w-3" />Shared</span>}{isPaused && <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-bold text-sky-500"><PauseCircle className="h-3 w-3" />Paused</span>}{goal.target_date && <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500"><CalendarDays className="h-3 w-3" />{new Date(`${goal.target_date}T00:00:00`).toLocaleDateString()}</span>}</div></div><div className="flex shrink-0 items-center gap-1">{!goal.is_completed && !isPaused && <Link href={goal.shared ? `/check-in?goal=${goal.id}` : `/focus?goal=${goal.id}`} className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300">{goal.shared ? <Plus className="h-3 w-3" /> : <Play className="h-3 w-3" fill="currentColor" />}{goal.shared ? 'Check in' : 'Focus'}</Link>}{!goal.shared && <button type="button" onClick={() => void deleteGoal(goal)} disabled={updatingGoalId === goal.id} aria-label={`Delete ${goal.title}`} className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-500 disabled:opacity-40"><Trash2 className="h-3.5 w-3.5" /></button>}</div></div>
               <div className="mt-3 border-t border-slate-100 pt-2 dark:border-slate-800"><div className="mb-1 flex justify-between text-[10px] font-medium text-slate-500"><span>Time logged today</span><span>{minutes} min</span></div><div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-amber-500" style={{ width: `${Math.min(100, minutes / 0.6)}%` }} /></div></div>
             </article>
           })}</div>
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]"><h2 className="mb-3 text-[10px] font-black uppercase tracking-wider text-slate-500">Consistency · last 7 days</h2><div className="grid grid-cols-7 gap-2 text-center">{week.map((day) => <div key={day.key} className="space-y-1.5" title={`${day.minutes} minutes`}><div className={`grid aspect-square place-items-center rounded-lg text-xs font-black ${day.minutes > 0 ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>{day.minutes > 0 && <Check className="h-3.5 w-3.5" />}</div><span className="text-[9px] font-bold text-slate-400">{day.label}</span></div>)}</div></section>
+      {userId && <div className="mb-6"><TodoWidget userId={userId} /></div>}
+
+      {userId && <ConsistencyMatrix userId={userId} />}
     </main>
   )
 }

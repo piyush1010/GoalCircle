@@ -1,5 +1,6 @@
 'use client'
 
+import ProfileEditor from '@/components/ProfileEditor'
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
@@ -15,15 +16,7 @@ const WELCOME_TOUR: TourStep[] = [
   { target: 'nav-progress', title: 'Progress', text: 'Your streaks, check-ins and focus time, all in one place.' },
   { target: 'nav-profile', title: 'Profile', text: 'Your goals and settings. Tap the ? on this page any time to see this tour again.' },
 ]
-import QuickActionsWidget from '@/components/QuickActionsWidget'
-import TodoWidget from '@/components/TodoWidget'
 import { CircleHelp, Film, Flame, Settings as SettingsIcon, Sparkles } from 'lucide-react'
-
-interface DayLog {
-  date: string
-  dayLabel: string
-  minutes: number
-}
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -35,15 +28,10 @@ export default function ProfilePage() {
   const [completedGoals, setCompletedGoals] = useState(0)
   const [currentStreak, setCurrentStreak] = useState(0)
 
-  // Consistency Matrix Data (Last 30 Days)
-  const [matrixDays, setMatrixDays] = useState<DayLog[]>([])
-  const [hoveredDay, setHoveredDay] = useState<DayLog | null>(null)
-
   // Edit Profile Modal
   const [showEditModal, setShowEditModal] = useState(false)
   const [fullName, setFullName] = useState('')
   const [handle, setHandle] = useState('')
-  const [saving, setSaving] = useState(false)
   const [showQuickGuide, setShowQuickGuide] = useState(false)
 
   // Memory Reels Dynamic Days
@@ -68,41 +56,6 @@ export default function ProfilePage() {
     }
   }
 
-  const fetchConsistencyMatrix = async (userId: string) => {
-    // Generate array for last 30 days
-    const days: DayLog[] = []
-    const today = new Date()
-
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date()
-      d.setDate(today.getDate() - i)
-      const dateStr = d.toISOString().split('T')[0]
-      const dayLabel = d.toLocaleDateString('en-US', { weekday: 'narrow' })
-      days.push({ date: dateStr, dayLabel, minutes: 0 })
-    }
-
-    // Fetch Focus Logs for user
-    const { data: logs, error } = await supabase
-      .from('focus_logs')
-      .select('minutes_logged, logged_at')
-      .eq('user_id', userId)
-
-    if (!error && logs) {
-      // Map minutes logged into corresponding days
-      const minutesByDate: Record<string, number> = {}
-      logs.forEach(log => {
-        const dateKey = new Date(log.logged_at).toISOString().split('T')[0]
-        minutesByDate[dateKey] = (minutesByDate[dateKey] || 0) + (log.minutes_logged || 0)
-      })
-
-      days.forEach(day => {
-        day.minutes = minutesByDate[day.date] || 0
-      })
-    }
-
-    setMatrixDays(days)
-  }
-
   useEffect(() => {
     let isMounted = true
 
@@ -124,6 +77,7 @@ export default function ProfilePage() {
       const forceGuide = new URLSearchParams(window.location.search).get('guide') === '1'
       const hasSeenGuide = userMeta.goalcircle_quick_guide_seen === true || localStorage.getItem(guideStorageKey) === '1'
       if (forceGuide || !hasSeenGuide) setShowQuickGuide(true)
+      if (new URLSearchParams(window.location.search).get('edit') === '1') setShowEditModal(true)
       setFullName(userMeta.full_name || userMeta.name || currentUser.email?.split('@')[0] || 'User')
       setHandle(userMeta.handle || `@${currentUser.email?.split('@')[0] || 'member'}`)
 
@@ -137,7 +91,6 @@ export default function ProfilePage() {
 
       await Promise.all([
         fetchUserStats(currentUser.id),
-        fetchConsistencyMatrix(currentUser.id),
       ])
 
       if (isMounted) setLoading(false)
@@ -149,42 +102,6 @@ export default function ProfilePage() {
       isMounted = false
     }
   }, [router])
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-
-    const formattedHandle = handle.startsWith('@') ? handle : `@${handle}`
-
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        full_name: fullName,
-        handle: formattedHandle,
-      }
-    })
-
-    if (!error) {
-      setUser((prev) => prev ? ({
-        ...prev,
-        user_metadata: {
-          ...prev.user_metadata,
-          full_name: fullName,
-          handle: formattedHandle,
-        }
-      }) : prev)
-      setHandle(formattedHandle)
-      setShowEditModal(false)
-    } else {
-      console.error('Failed to update profile:', error)
-    }
-
-    setSaving(false)
-  }
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
 
   const handleQuickGuideComplete = async () => {
     if (!user) {
@@ -208,13 +125,6 @@ export default function ProfilePage() {
   }
 
   // Helper for matrix color intensity
-  const getIntensityClass = (minutes: number) => {
-    if (minutes === 0) return 'bg-slate-100 border-slate-200 dark:bg-slate-800/80 dark:border-slate-800'
-    if (minutes < 15) return 'bg-amber-900/60 border-amber-800 text-amber-200'
-    if (minutes < 30) return 'bg-amber-600 border-amber-500 text-slate-950'
-    return 'bg-amber-400 border-amber-300 text-slate-950 font-black shadow-sm shadow-amber-500/30'
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex items-center justify-center">
@@ -291,63 +201,6 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      <QuickActionsWidget />
-
-      {user && <TodoWidget userId={user.id} />}
-
-      {/* CONSISTENCY MATRIX (LAST 30 DAYS WITH TOOLTIPS & LABELS) */}
-      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xs font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider">
-            Consistency Matrix
-          </h2>
-          <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md">
-            Last 30 Days
-          </span>
-        </div>
-
-        {/* Hover/Tap Active Tooltip Indicator */}
-        <div className="h-5 text-center">
-          {hoveredDay ? (
-            <p className="text-[10px] font-bold text-slate-300 animate-fade-in">
-              <span className="text-amber-400">{hoveredDay.date}</span>: {hoveredDay.minutes} mins logged
-            </p>
-          ) : (
-            <p className="text-[10px] text-slate-500">Tap or hover any square to inspect activity</p>
-          )}
-        </div>
-
-        {/* Grid Display (6 Columns x 5 Rows) */}
-        <div className="grid grid-cols-6 gap-2 pt-1">
-          {matrixDays.map((day, idx) => (
-            <div
-              key={idx}
-              onMouseEnter={() => setHoveredDay(day)}
-              onMouseLeave={() => setHoveredDay(null)}
-              onClick={() => setHoveredDay(day)}
-              className={`h-9 rounded-xl border flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 ${getIntensityClass(
-                day.minutes
-              )}`}
-            >
-              <span className="text-[8px] opacity-60 font-bold">{day.dayLabel}</span>
-              {day.minutes > 0 && (
-                <span className="text-[9px] font-black">{day.minutes}m</span>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Matrix Legend */}
-        <div className="flex items-center justify-end gap-1.5 text-[9px] text-slate-400 pt-1">
-          <span>Less</span>
-          <div className="w-2.5 h-2.5 rounded bg-slate-800 border border-slate-800"></div>
-          <div className="w-2.5 h-2.5 rounded bg-amber-900/60 border border-amber-800"></div>
-          <div className="w-2.5 h-2.5 rounded bg-amber-600 border border-amber-500"></div>
-          <div className="w-2.5 h-2.5 rounded bg-amber-400 border border-amber-300"></div>
-          <span>More</span>
-        </div>
-      </div>
-
       {/* MEMORY REELS (DYNAMIC MONTH CALCULATIONS) */}
       <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
         <h2 className="text-xs font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider">
@@ -371,59 +224,16 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* SIGN OUT AT BOTTOM */}
-      <div className="pt-2 text-center">
-        <button
-          onClick={handleSignOut}
-          className="text-xs font-extrabold text-rose-400 hover:text-rose-300 bg-rose-500/10 border border-rose-500/20 px-6 py-2.5 rounded-2xl transition"
-        >
-          Sign Out of GoalCircle
-        </button>
-      </div>
-
-      {/* MODAL: EDIT PROFILE */}
+      {/* MODAL: EDIT PROFILE (the only place to edit profile details) */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
-            <h3 className="text-base font-black">Edit Profile Details</h3>
-            <form onSubmit={handleUpdateProfile} className="space-y-3">
-              <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Display Name</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-white rounded-xl text-xs focus:outline-none focus:border-amber-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Handle</label>
-                <input
-                  type="text"
-                  value={handle}
-                  onChange={(e) => setHandle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-white rounded-xl text-xs focus:outline-none focus:border-amber-500"
-                  required
-                />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition disabled:opacity-50"
-                >
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-700 transition"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/70 p-4 backdrop-blur-sm sm:items-center" onClick={() => setShowEditModal(false)}>
+          <div className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900" onClick={(event) => event.stopPropagation()}>
+            <h3 className="mb-3 text-base font-black">Edit profile</h3>
+            <ProfileEditor onCancel={() => setShowEditModal(false)} onSaved={(saved) => {
+              setFullName(saved.fullName); setHandle(`@${saved.username}`)
+              setUser((prev) => prev ? ({ ...prev, user_metadata: { ...prev.user_metadata, full_name: saved.fullName, handle: `@${saved.username}`, avatar_url: saved.avatarUrl } }) : prev)
+              setShowEditModal(false)
+            }} />
           </div>
         </div>
       )}
