@@ -143,7 +143,11 @@ export default function TodayPage() {
   const isPaused = (goal: Goal) => goal.status === 'paused' && Boolean(goal.pause_until && new Date(goal.pause_until) > new Date())
   const weekMet = (goal: Goal) => (weekDays.get(goal.id)?.size || 0) >= (goal.times_per_week || 1)
   // Only goals that are actually due today count: a weekly goal that already hit its target isn't.
-  const activeGoals = visibleGoals.filter((goal) => !isPaused(goal) && !(goal.frequency === 'weekly' && weekMet(goal) && !doneToday.has(goal.id)))
+  // A weekly goal only counts as due when today is needed to still hit the week's target;
+  // otherwise it's an optional check-in, so rest days never look like falling behind.
+  const daysLeftInWeek = 7 - ((new Date().getDay() + 6) % 7)
+  const weeklyDue = (goal: Goal) => (goal.times_per_week || 1) - (weekDays.get(goal.id)?.size || 0) >= daysLeftInWeek
+  const activeGoals = visibleGoals.filter((goal) => !isPaused(goal) && (goal.frequency !== 'weekly' || doneToday.has(goal.id) || (!weekMet(goal) && weeklyDue(goal))))
   const checkedCount = activeGoals.filter((goal) => doneToday.has(goal.id)).length
   const studentTasks = batches.filter((batch) => !batch.admin && batch.task)
   const totalDue = activeGoals.length + studentTasks.length

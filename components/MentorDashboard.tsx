@@ -1,5 +1,6 @@
 'use client'
 
+import ClampedText from '@/components/ClampedText'
 import { confirmAction } from '@/lib/confirm'
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
@@ -159,7 +160,7 @@ function TaskCard({ circleId, today, task, onSaved, onDeleted }: { circleId: str
       <div>
         <p className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Today&apos;s task</p>
         <h2 className="mt-1 text-lg font-black leading-snug">{task.title}</h2>
-        {task.details && <p className="mt-1 whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{task.details}</p>}
+        {task.details && <ClampedText text={task.details} className="mt-1 text-sm text-slate-600 dark:text-slate-300" />}
       </div>
       <button type="button" onClick={() => setEditing(true)} aria-label="Edit task" className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><Pencil className="h-4 w-4" /></button>
     </div>
@@ -240,7 +241,7 @@ function StudentList({ rows, now, hasTask, circleId, onNudge, onChanged, flash }
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-bold">{displayName(row)}</span>
-              <span className="block text-xs text-slate-500">Last check-in {timeAgo(row.last_checkin_at)} · {row.days_done_7}/{row.tasks_set_7 || 0} days</span>
+              <span className="block text-xs text-slate-500">Last check-in {timeAgo(row.last_checkin_at)} · {row.days_done_7} of {row.tasks_set_7 || 0} tasks this week</span>
             </span>
             <StatusPill status={row.today_status} quiet={quiet} hours={row.today_hours} />
             <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition ${expanded ? 'rotate-180' : ''}`} />

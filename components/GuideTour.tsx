@@ -19,8 +19,9 @@ export const REPLAY_TOURS_EVENT = 'goalcircle:replay-tours'
 const storageKey = (name: string) => `${TOUR_STORAGE_PREFIX}${name}-done`
 const PAD = 8
 
+const ALL_TIPS_OFF = `${TOUR_STORAGE_PREFIX}all-skipped`
 function readDone(name: string) {
-  try { return window.localStorage.getItem(storageKey(name)) === '1' } catch { return false }
+  try { return window.localStorage.getItem(storageKey(name)) === '1' || window.localStorage.getItem(ALL_TIPS_OFF) === '1' } catch { return false }
 }
 function writeDone(name: string) {
   try { window.localStorage.setItem(storageKey(name), '1') } catch { /* storage unavailable */ }
@@ -90,10 +91,12 @@ export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: 
     return () => { window.clearTimeout(timer); window.removeEventListener('resize', measure); window.removeEventListener('scroll', measure, true) }
   }, [measure, step])
 
-  const finish = () => {
+  const finish = (skipped = false) => {
     setIndex(null)
     if (controlled) onDone?.()
     else writeDone(name)
+    // Skipping one tour means "no more tips": don't greet them with a tour on every page.
+    if (skipped) { try { window.localStorage.setItem(ALL_TIPS_OFF, '1') } catch { /* storage unavailable */ } }
   }
 
   if (!step || index === null) return null
@@ -136,7 +139,7 @@ export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: 
           <h2 className="mt-0.5 text-lg font-black leading-snug">{step.title}</h2>
           <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{step.text}</p>
           <div className="mt-4 flex items-center gap-2">
-            <button type="button" onClick={finish} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Skip</button>
+            <button type="button" onClick={() => finish(true)} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Skip tips</button>
             <span className="flex-1" />
             {index > 0 && <button type="button" onClick={() => setIndex(index - 1)} className="rounded-xl border-2 border-slate-900 px-4 py-2 text-sm font-black">Back</button>}
             <button type="button" onClick={() => (last ? finish() : setIndex(index + 1))} autoFocus className="rounded-xl border-2 border-slate-900 bg-amber-400 px-5 py-2 text-sm font-black text-slate-950 shadow-[2px_2px_0_#0f172a] active:translate-x-px active:translate-y-px active:shadow-none">{last ? 'Got it' : 'Next'}</button>

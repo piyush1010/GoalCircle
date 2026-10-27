@@ -305,7 +305,7 @@ export default function CreateGoalPage() {
 
           <div className={rowClass}>
             <div>
-              <p id="reminder-label" className={`${headingClass} flex items-center gap-1.5`}><BellRing className="h-4 w-4 text-amber-500" />Daily reminder</p>
+              <p id="reminder-label" className={`${headingClass} flex items-center gap-1.5`}><BellRing className="h-4 w-4 text-amber-500" />{frequency === 'daily' ? 'Daily reminder' : 'Reminder'}</p>
               <p className={hintClass}>{remindDaily ? (targetDate ? 'Every day until your target date' : `Every day for ${OPEN_ENDED_REMINDER_DAYS} days`) : 'A nudge in your phone\'s calendar'}</p>
             </div>
             <button type="button" role="switch" aria-checked={remindDaily} aria-labelledby="reminder-label" onClick={() => setRemindDaily((on) => !on)} className={`relative h-7 w-12 shrink-0 rounded-full transition ${remindDaily ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'}`}>
