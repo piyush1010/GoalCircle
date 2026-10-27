@@ -1,5 +1,6 @@
 'use client'
 
+import ClampedText from '@/components/ClampedText'
 import { confirmAction } from '@/lib/confirm'
 import { cheer } from '@/lib/goalie'
 import Image from 'next/image'
@@ -243,7 +244,7 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
     <section data-tour="task" className={card}>
       <p className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Today&apos;s task</p>
       <h2 className="mt-1 text-lg font-black leading-snug">{task.title}</h2>
-      {task.details && <p className="mt-1 whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{task.details}</p>}
+      {task.details && <ClampedText text={task.details} className="mt-1 text-sm text-slate-600 dark:text-slate-300" />}
       <AttachmentList attachments={task.attachments ?? []} />
 
       {!showForm && checkin && <div className="mt-4 flex items-center justify-between rounded-2xl bg-emerald-500/10 px-4 py-3">

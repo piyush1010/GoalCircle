@@ -1,5 +1,6 @@
 'use client'
 
+import ClampedText from '@/components/ClampedText'
 import { confirmAction } from '@/lib/confirm'
 import Image from 'next/image'
 import { useCallback, useEffect, useState } from 'react'
@@ -84,7 +85,7 @@ export default function CircleNotices({ circleId, userId, isAdmin }: { circleId:
             <button type="button" onClick={() => void remove(notice)} aria-label="Delete notice" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:text-rose-500"><Trash2 className="h-4 w-4" /></button>
           </div>}
         </div>
-        {notice.body && <p className="mt-1 whitespace-pre-line text-sm leading-relaxed">{notice.body}</p>}
+        {notice.body && <ClampedText text={notice.body} className="mt-1 text-sm leading-relaxed" />}
         {notice.media_url && (notice.media_type === 'video'
           ? <video src={notice.media_url} controls playsInline className="mt-3 max-h-72 w-full rounded-xl bg-slate-950 object-contain" />
           : <div className="relative mt-3 h-56 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"><Image src={notice.media_url} alt="Notice" fill unoptimized className="object-contain" /></div>)}
