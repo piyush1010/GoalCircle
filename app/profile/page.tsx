@@ -103,11 +103,6 @@ export default function ProfilePage() {
     }
   }, [router])
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
-
   const handleQuickGuideComplete = async () => {
     if (!user) {
       setShowQuickGuide(false)
@@ -227,16 +222,6 @@ export default function ProfilePage() {
             </p>
           </div>
         </div>
-      </div>
-
-      {/* SIGN OUT AT BOTTOM */}
-      <div className="pt-2 text-center">
-        <button
-          onClick={handleSignOut}
-          className="text-xs font-extrabold text-rose-400 hover:text-rose-300 bg-rose-500/10 border border-rose-500/20 px-6 py-2.5 rounded-2xl transition"
-        >
-          Sign Out of GoalCircle
-        </button>
       </div>
 
       {/* MODAL: EDIT PROFILE (the only place to edit profile details) */}
