@@ -60,9 +60,13 @@ export async function pushIsOn() {
   return Boolean(await currentSubscription(false).catch(() => null))
 }
 
-/** On each app open: keep the saved address fresh for whoever is signed in. */
+/**
+ * On each app open: keep the saved address fresh for whoever is signed in. If notifications
+ * were already allowed (for example for the old daily reminder) but this phone never
+ * subscribed, subscribe now, since no permission prompt is needed.
+ */
 export async function syncPush() {
   if (!pushSupported() || Notification.permission !== 'granted') return
-  const subscription = await currentSubscription(false).catch(() => null)
+  const subscription = await currentSubscription(true).catch(() => null)
   if (subscription) await save(subscription).catch(() => undefined)
 }

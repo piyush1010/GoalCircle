@@ -11,7 +11,7 @@ import ProfileAvatar from '@/components/ProfileAvatar'
 import PostMusic from '@/components/PostMusic'
 import ReportBlockModal from '@/components/ReportBlockModal'
 
-interface CommentItem { id: string; post_id: string; user_id: string; body: string; created_at: string }
+interface CommentItem { id: string; post_id: string; user_id: string; body: string; created_at: string; authorName?: string; authorAvatar?: string | null; authorUsername?: string }
 interface FeedPost {
   id: string
   goalId: string
@@ -169,8 +169,13 @@ export default function FeedPage() {
     if (post.commentsLoaded) return
     setLoadingComments(post.id)
     const { data, error: commentsError } = await supabase.from('post_comments').select('id,post_id,user_id,body,created_at').eq('post_id', post.id).order('created_at', { ascending: true }).limit(50)
-    if (commentsError) showToast('Comments could not be loaded.')
-    else setPosts((current) => current.map((item) => item.id === post.id ? { ...item, comments: (data || []) as CommentItem[], commentsLoaded: true } : item))
+    if (commentsError) { showToast('Comments could not be loaded.'); setLoadingComments(null); return }
+    const rows = (data || []) as CommentItem[]
+    const ids = [...new Set(rows.map((row) => row.user_id))]
+    const { data: people } = ids.length ? await supabase.from('profiles').select('id,full_name,display_name,username,avatar_url').in('id', ids) : { data: [] }
+    const byId = new Map(((people || []) as Array<Record<string, string | null>>).map((person) => [String(person.id), person]))
+    const named = rows.map((row) => { const person = byId.get(row.user_id); return { ...row, authorName: String(person?.full_name || person?.display_name || 'GoalCircle member'), authorAvatar: person?.avatar_url ?? null, authorUsername: String(person?.username || '') } })
+    setPosts((current) => current.map((item) => item.id === post.id ? { ...item, comments: named, commentsLoaded: true } : item))
     setLoadingComments(null)
   }
 
@@ -207,7 +212,17 @@ export default function FeedPage() {
     const body = commentText.trim(); setCommentText('')
     const { data, error: commentError } = await supabase.from('post_comments').insert({ post_id: postId, user_id: userId, body }).select('id,post_id,user_id,body,created_at').single()
     if (commentError || !data) { setCommentText(body); showToast('Comment was not saved.'); return }
-    setPosts((current) => current.map((post) => post.id === postId ? { ...post, comments: [...post.comments, data as CommentItem], commentsLoaded: true } : post)); showToast('Comment added')
+    const { data: { session } } = await supabase.auth.getSession()
+    const meta = session?.user.user_metadata || {}
+    const mine = { ...(data as CommentItem), authorName: String(meta.full_name || meta.name || 'You'), authorAvatar: meta.avatar_url ?? null, authorUsername: String(meta.handle || '').replace('@', '') }
+    setPosts((current) => current.map((post) => post.id === postId ? { ...post, comments: [...post.comments, mine], commentsLoaded: true } : post)); showToast('Comment added')
+  }
+
+  const deleteComment = async (postId: string, comment: CommentItem) => {
+    if (comment.user_id !== userId || !(await confirmAction('Delete your comment?'))) return
+    const { data, error: deleteError } = await supabase.from('post_comments').delete().eq('id', comment.id).eq('user_id', comment.user_id).select('id')
+    if (deleteError || !data?.length) { showToast('Comment could not be deleted.'); return }
+    setPosts((current) => current.map((post) => post.id === postId ? { ...post, comments: post.comments.filter((item) => item.id !== comment.id) } : post))
   }
 
   const sharePost = async (post: FeedPost) => {
@@ -275,7 +290,16 @@ export default function FeedPage() {
           {post.musicTitle && post.musicArtist && post.musicPreviewUrl && <PostMusic postId={post.id} title={post.musicTitle} artist={post.musicArtist} artworkUrl={post.musicArtworkUrl} previewUrl={post.musicPreviewUrl} />}
           <div className="p-4">{post.minutes != null && <div className="mb-2 inline-flex items-center gap-1 rounded-lg bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-700 dark:text-amber-300"><Clock3 className="h-3 w-3" />{post.minutes} focused minutes</div>}{editingPost === post.id ? <div className="flex gap-2"><input autoFocus value={editingCaption} onChange={(event) => setEditingCaption(event.target.value)} maxLength={500} className="min-w-0 flex-1 rounded-xl border border-amber-500 bg-slate-50 px-3 py-2 text-sm outline-none dark:bg-[#07101f]" /><button onClick={() => void saveCaption(post)} aria-label="Save caption" className="grid h-10 w-10 place-items-center rounded-xl bg-amber-500 text-slate-950"><Check className="h-4 w-4" /></button><button onClick={() => setEditingPost(null)} aria-label="Cancel editing" className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 dark:border-slate-700"><X className="h-4 w-4" /></button></div> : <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">{post.caption}</p>}
             <div className={`mt-4 grid ${post.userId === userId ? 'grid-cols-3' : 'grid-cols-4'} border-t border-slate-100 pt-3 dark:border-slate-800`}><button onClick={() => void toggleBoost(post)} className={`flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold ${post.boosted ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'text-slate-500'}`}><Bolt className="h-4 w-4" fill={post.boosted ? 'currentColor' : 'none'} />Boost {post.boostCount || ''}</button><button onClick={() => void toggleComments(post)} className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold text-slate-500"><MessageCircle className="h-4 w-4" />Comment {post.commentsLoaded && post.comments.length ? post.comments.length : ''}</button>{post.userId !== userId && <button onClick={() => void nudgeFriend(post)} disabled={nudgingPost === post.id} className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold text-slate-500 disabled:opacity-50"><Hand className="h-4 w-4" />Nudge</button>}<button onClick={() => void sharePost(post)} className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold text-slate-500"><Share2 className="h-4 w-4" />Share</button></div>
-            {openComments === post.id && <div className="mt-3 space-y-3 border-t border-slate-100 pt-3 dark:border-slate-800">{loadingComments === post.id ? <div className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" /> : post.comments.map((comment) => <p key={comment.id} className="rounded-xl bg-slate-50 p-2.5 text-xs dark:bg-[#07101f]">{comment.body}</p>)}<div className="flex gap-2"><input value={commentText} onChange={(event) => setCommentText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void addComment(post.id) } }} maxLength={500} placeholder="Add encouragement…" className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-700 dark:bg-[#07101f]" /><button onClick={() => void addComment(post.id)} disabled={!commentText.trim()} className="rounded-xl bg-amber-500 px-3 text-xs font-black text-slate-950 disabled:opacity-40">Post</button></div></div>}
+            {openComments === post.id && <div className="mt-3 space-y-3 border-t border-slate-100 pt-3 dark:border-slate-800">{loadingComments === post.id ? <div className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" /> : post.comments.map((comment) => <div key={comment.id} className="flex gap-2.5">
+              <ProfileAvatar value={comment.authorAvatar} name={comment.authorName} size={32} className="rounded-full" />
+              <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-slate-100 px-3 py-2 dark:bg-[#07101f]">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="truncate text-sm font-black">{comment.authorName || 'GoalCircle member'}</span>
+                  <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-slate-500">{relativeTime(comment.created_at)}{comment.user_id === userId && <button type="button" onClick={() => void deleteComment(post.id, comment)} aria-label="Delete comment" className="font-bold text-rose-500">Delete</button>}</span>
+                </div>
+                <p className="mt-0.5 whitespace-pre-line break-words text-sm">{comment.body}</p>
+              </div>
+            </div>)}<div className="flex gap-2"><input value={commentText} onChange={(event) => setCommentText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void addComment(post.id) } }} maxLength={500} placeholder="Add encouragement…" className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-700 dark:bg-[#07101f]" /><button onClick={() => void addComment(post.id)} disabled={!commentText.trim()} className="rounded-xl bg-amber-500 px-3 text-xs font-black text-slate-950 disabled:opacity-40">Post</button></div></div>}
           </div>
         </article>)}
         {!loading && !error && hasMore && <button onClick={() => void loadMorePosts()} disabled={loadingMore} className="w-full rounded-2xl border border-slate-200 bg-white py-3 text-xs font-black text-slate-700 shadow-sm disabled:opacity-60 dark:border-slate-700 dark:bg-[#101b2d] dark:text-slate-100">{loadingMore ? 'Loading more…' : 'Load more updates'}</button>}
