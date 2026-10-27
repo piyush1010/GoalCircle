@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import GoalieSays from '@/components/GoalieSays'
 
 export const BUDDY_OFF_KEY = 'goalcircle-goalie-off'
@@ -25,6 +25,24 @@ export default function GoalieBuddy() {
   const pathname = usePathname() || '/'
   const [off, setOff] = useState(true)
   const [say, setSay] = useState<string | undefined>()
+  const [otherGoalie, setOtherGoalie] = useState(false)
+  const own = useRef<HTMLDivElement>(null)
+
+  // Step aside while another Goalie (an empty page, a tour, the check-in helper) is on screen.
+  useEffect(() => {
+    const check = () => {
+      const visible = [...document.querySelectorAll('[aria-label="Poke Goalie"]')].some((element) => {
+        if (own.current?.contains(element)) return false
+        const box = element.getBoundingClientRect()
+        return box.width > 0 && box.bottom > 0 && box.top < window.innerHeight
+      })
+      setOtherGoalie(visible)
+    }
+    check()
+    const timer = window.setInterval(check, 800)
+    window.addEventListener('scroll', check, { passive: true })
+    return () => { window.clearInterval(timer); window.removeEventListener('scroll', check) }
+  }, [pathname])
 
   useEffect(() => {
     const read = () => { try { setOff(window.localStorage.getItem(BUDDY_OFF_KEY) === '1') } catch { setOff(false) } }
@@ -51,7 +69,7 @@ export default function GoalieBuddy() {
   if (off || HIDDEN_ON.some((path) => pathname === path || pathname.startsWith(`${path}/`))) return null
 
   return (
-    <div className="goalie-float pointer-events-none fixed bottom-[5.75rem] right-3 z-40 [&>*]:pointer-events-auto">
+    <div ref={own} aria-hidden={otherGoalie} className={`goalie-float pointer-events-none fixed bottom-[5.75rem] right-3 z-40 transition-all duration-300 [&>*]:pointer-events-auto ${otherGoalie ? 'translate-x-24 opacity-0 [&>*]:pointer-events-none' : ''}`}>
       <GoalieSays key={pathname} say={say} size={46} layout="left" autoHideMs={4000} />
     </div>
   )
