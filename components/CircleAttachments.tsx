@@ -13,6 +13,16 @@ const BUCKET = 'circle-files'
 export const MAX_FILES = 10
 const ACCEPT = 'application/pdf,image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm'
 
+/** Turn a storage error into a reason people can act on. */
+const uploadHint = (message: string) => {
+  if (/size|too large|exceed/i.test(message)) return 'The file is too large.'
+  if (/mime|type/i.test(message)) return 'This file type isn’t supported.'
+  if (/bucket not found/i.test(message)) return 'File storage isn’t set up yet.'
+  if (/security|policy|unauthori|permission|403/i.test(message)) return 'Only the circle’s mentors can attach files.'
+  if (/fetch|network|timeout/i.test(message)) return 'Check your connection and try again.'
+  return `(${message})`
+}
+
 const sizeLabel = (bytes: number) => bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
 
 // Download choice for files not uploaded yet, kept beside the File itself.
@@ -25,8 +35,12 @@ export async function uploadCircleFiles(circleId: string, files: File[]): Promis
   for (const file of files) {
     const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, '-').replace(/^-+|-+$/g, '').slice(-80) || 'file'
     const path = `${circleId}/${crypto.randomUUID()}-${safeName}`
-    const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000' })
-    if (error) throw new Error(`“${file.name}” could not be uploaded.`)
+    let { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000' })
+    if (error && /fetch|network|timeout/i.test(error.message)) {
+      // Mobile networks drop uploads now and then: try once more before giving up.
+      ;({ error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, cacheControl: '31536000', upsert: true }))
+    }
+    if (error) throw new Error(`“${file.name}” could not be uploaded. ${uploadHint(error.message)}`)
     uploaded.push({ path, name: file.name, type: file.type, size: file.size, downloadable: allowsDownload(file) })
   }
   return uploaded
@@ -40,7 +54,7 @@ function DownloadToggle({ on, name, onToggle }: { on: boolean; name: string; onT
   return (
     <button type="button" onClick={onToggle} aria-pressed={on} aria-label={on ? `${name}: students can download. Tap for view only.` : `${name}: view only. Tap to allow download.`} title={on ? 'Students can download' : 'View only'}
       className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-[10px] font-black ${on ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300'}`}>
-      {on ? <Download className="h-3 w-3" /> : <Eye className="h-3 w-3" />}{on ? 'Download' : 'View only'}
+      {on ? <Download className="h-3 w-3" /> : <Eye className="h-3 w-3" />}{on ? 'Can download' : 'View only'}
     </button>
   )
 }
@@ -82,7 +96,7 @@ export function AttachmentPicker({ files, existing = [], onFilesChange, onRemove
           <DownloadToggle on={allowsDownload(file)} name={file.name} onToggle={() => toggleNew(file)} />
           <button type="button" onClick={() => onFilesChange(files.filter((_, i) => i !== index))} aria-label={`Remove ${file.name}`} className="grid h-6 w-6 place-items-center rounded-md hover:text-rose-500"><X className="h-3.5 w-3.5" /></button></li>)}
       </ul>}
-      {total > 0 && <p className="text-[11px] text-slate-500">Students can download these. Tap “Download” to make a file view only.</p>}
+      {total > 0 && <p className="text-[11px] text-slate-500">Tap a file’s label to switch between “Can download” and “View only” for students.</p>}
       {total < MAX_FILES && <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-amber-500 dark:border-slate-700 dark:text-slate-300">
         <Paperclip className="h-4 w-4 text-amber-500" />{preparing ? 'Preparing…' : 'Attach photos, PDFs or videos'}
         <input type="file" multiple accept={ACCEPT} className="sr-only" onChange={(event) => { void add(event.target.files); event.target.value = '' }} />
