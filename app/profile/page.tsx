@@ -16,15 +16,7 @@ const WELCOME_TOUR: TourStep[] = [
   { target: 'nav-progress', title: 'Progress', text: 'Your streaks, check-ins and focus time, all in one place.' },
   { target: 'nav-profile', title: 'Profile', text: 'Your goals and settings. Tap the ? on this page any time to see this tour again.' },
 ]
-import QuickActionsWidget from '@/components/QuickActionsWidget'
-import TodoWidget from '@/components/TodoWidget'
 import { CircleHelp, Film, Flame, Settings as SettingsIcon, Sparkles } from 'lucide-react'
-
-interface DayLog {
-  date: string
-  dayLabel: string
-  minutes: number
-}
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -35,10 +27,6 @@ export default function ProfilePage() {
   const [totalGoals, setTotalGoals] = useState(0)
   const [completedGoals, setCompletedGoals] = useState(0)
   const [currentStreak, setCurrentStreak] = useState(0)
-
-  // Consistency Matrix Data (Last 30 Days)
-  const [matrixDays, setMatrixDays] = useState<DayLog[]>([])
-  const [hoveredDay, setHoveredDay] = useState<DayLog | null>(null)
 
   // Edit Profile Modal
   const [showEditModal, setShowEditModal] = useState(false)
@@ -66,41 +54,6 @@ export default function ProfilePage() {
       const maxStreak = goals.reduce((max, g) => Math.max(max, g.current_streak || 0), 0)
       setCurrentStreak(maxStreak)
     }
-  }
-
-  const fetchConsistencyMatrix = async (userId: string) => {
-    // Generate array for last 30 days
-    const days: DayLog[] = []
-    const today = new Date()
-
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date()
-      d.setDate(today.getDate() - i)
-      const dateStr = d.toISOString().split('T')[0]
-      const dayLabel = d.toLocaleDateString('en-US', { weekday: 'narrow' })
-      days.push({ date: dateStr, dayLabel, minutes: 0 })
-    }
-
-    // Fetch Focus Logs for user
-    const { data: logs, error } = await supabase
-      .from('focus_logs')
-      .select('minutes_logged, logged_at')
-      .eq('user_id', userId)
-
-    if (!error && logs) {
-      // Map minutes logged into corresponding days
-      const minutesByDate: Record<string, number> = {}
-      logs.forEach(log => {
-        const dateKey = new Date(log.logged_at).toISOString().split('T')[0]
-        minutesByDate[dateKey] = (minutesByDate[dateKey] || 0) + (log.minutes_logged || 0)
-      })
-
-      days.forEach(day => {
-        day.minutes = minutesByDate[day.date] || 0
-      })
-    }
-
-    setMatrixDays(days)
   }
 
   useEffect(() => {
@@ -138,7 +91,6 @@ export default function ProfilePage() {
 
       await Promise.all([
         fetchUserStats(currentUser.id),
-        fetchConsistencyMatrix(currentUser.id),
       ])
 
       if (isMounted) setLoading(false)
@@ -178,13 +130,6 @@ export default function ProfilePage() {
   }
 
   // Helper for matrix color intensity
-  const getIntensityClass = (minutes: number) => {
-    if (minutes === 0) return 'bg-slate-100 border-slate-200 dark:bg-slate-800/80 dark:border-slate-800'
-    if (minutes < 15) return 'bg-amber-900/60 border-amber-800 text-amber-200'
-    if (minutes < 30) return 'bg-amber-600 border-amber-500 text-slate-950'
-    return 'bg-amber-400 border-amber-300 text-slate-950 font-black shadow-sm shadow-amber-500/30'
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex items-center justify-center">
@@ -259,63 +204,6 @@ export default function ProfilePage() {
         >
           Edit Profile
         </button>
-      </div>
-
-      <QuickActionsWidget />
-
-      {user && <TodoWidget userId={user.id} />}
-
-      {/* CONSISTENCY MATRIX (LAST 30 DAYS WITH TOOLTIPS & LABELS) */}
-      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xs font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider">
-            Consistency Matrix
-          </h2>
-          <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md">
-            Last 30 Days
-          </span>
-        </div>
-
-        {/* Hover/Tap Active Tooltip Indicator */}
-        <div className="h-5 text-center">
-          {hoveredDay ? (
-            <p className="text-[10px] font-bold text-slate-300 animate-fade-in">
-              <span className="text-amber-400">{hoveredDay.date}</span>: {hoveredDay.minutes} mins logged
-            </p>
-          ) : (
-            <p className="text-[10px] text-slate-500">Tap or hover any square to inspect activity</p>
-          )}
-        </div>
-
-        {/* Grid Display (6 Columns x 5 Rows) */}
-        <div className="grid grid-cols-6 gap-2 pt-1">
-          {matrixDays.map((day, idx) => (
-            <div
-              key={idx}
-              onMouseEnter={() => setHoveredDay(day)}
-              onMouseLeave={() => setHoveredDay(null)}
-              onClick={() => setHoveredDay(day)}
-              className={`h-9 rounded-xl border flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 ${getIntensityClass(
-                day.minutes
-              )}`}
-            >
-              <span className="text-[8px] opacity-60 font-bold">{day.dayLabel}</span>
-              {day.minutes > 0 && (
-                <span className="text-[9px] font-black">{day.minutes}m</span>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Matrix Legend */}
-        <div className="flex items-center justify-end gap-1.5 text-[9px] text-slate-400 pt-1">
-          <span>Less</span>
-          <div className="w-2.5 h-2.5 rounded bg-slate-800 border border-slate-800"></div>
-          <div className="w-2.5 h-2.5 rounded bg-amber-900/60 border border-amber-800"></div>
-          <div className="w-2.5 h-2.5 rounded bg-amber-600 border border-amber-500"></div>
-          <div className="w-2.5 h-2.5 rounded bg-amber-400 border border-amber-300"></div>
-          <span>More</span>
-        </div>
       </div>
 
       {/* MEMORY REELS (DYNAMIC MONTH CALCULATIONS) */}

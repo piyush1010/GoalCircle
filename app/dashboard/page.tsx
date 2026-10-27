@@ -1,5 +1,7 @@
 'use client'
 
+import TodoWidget from '@/components/TodoWidget'
+import ConsistencyMatrix from '@/components/ConsistencyMatrix'
 import { confirmAction } from '@/lib/confirm'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
@@ -93,14 +95,6 @@ export default function DashboardPage() {
     return totals
   }, {}), [logs, today])
 
-  const week = useMemo(() => Array.from({ length: 7 }, (_, index) => {
-    const date = new Date()
-    date.setHours(0, 0, 0, 0)
-    date.setDate(date.getDate() - (6 - index))
-    const key = dayKey(date)
-    const minutes = logs.filter((log) => dayKey(new Date(log.logged_at)) === key).reduce((sum, log) => sum + (log.minutes_logged || 0), 0)
-    return { key, label: date.toLocaleDateString('en', { weekday: 'narrow' }), minutes }
-  }), [logs])
 
   const toggleGoal = async (goal: Goal) => {
     if (goal.user_id !== userId) return
@@ -166,7 +160,9 @@ export default function DashboardPage() {
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]"><h2 className="mb-3 text-[10px] font-black uppercase tracking-wider text-slate-500">Consistency · last 7 days</h2><div className="grid grid-cols-7 gap-2 text-center">{week.map((day) => <div key={day.key} className="space-y-1.5" title={`${day.minutes} minutes`}><div className={`grid aspect-square place-items-center rounded-lg text-xs font-black ${day.minutes > 0 ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>{day.minutes > 0 && <Check className="h-3.5 w-3.5" />}</div><span className="text-[9px] font-bold text-slate-400">{day.label}</span></div>)}</div></section>
+      {userId && <div className="mb-6"><TodoWidget userId={userId} /></div>}
+
+      {userId && <ConsistencyMatrix userId={userId} />}
     </main>
   )
 }
