@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, ChevronDown, Flame, PauseCircle, Plus, Timer, Trash2, UsersRound } from 'lucide-react'
 import GoalieMessage from '@/components/GoalieMessage'
+import InstallNudge from '@/components/InstallNudge'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
 import MonthRing, { type MonthDay } from '@/components/MonthRing'
 import TodoWidget from '@/components/TodoWidget'
@@ -164,6 +165,8 @@ export default function TodayPage() {
       <section data-tour="today-ring" className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
         <MonthRing days={month} monthName={monthName} />
       </section>
+
+      <InstallNudge />
 
       {/* Quick numbers, swipe sideways */}
       <div className="-mx-4 mt-3 flex snap-x gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">

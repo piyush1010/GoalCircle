@@ -36,10 +36,11 @@ export default function GoalieBuddy() {
         const box = element.getBoundingClientRect()
         return box.width > 0 && box.bottom > 0 && box.top < window.innerHeight
       })
-      setOtherGoalie(visible)
+      // Also step aside during tours, prompts and confirmations.
+      setOtherGoalie(visible || Boolean(document.querySelector('[role="dialog"], [role="alertdialog"]')))
     }
     check()
-    const timer = window.setInterval(check, 800)
+    const timer = window.setInterval(check, 500)
     window.addEventListener('scroll', check, { passive: true })
     return () => { window.clearInterval(timer); window.removeEventListener('scroll', check) }
   }, [pathname])

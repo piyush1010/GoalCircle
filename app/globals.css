@@ -62,8 +62,12 @@ textarea {
 }
 
 .landing-enter {
-  opacity: 0;
-  animation: landing-enter 700ms cubic-bezier(.2,.75,.25,1) forwards;
+  /* Never fully invisible: if animations are slow or paused, the hero still shows. */
+  animation: landing-enter-soft 600ms cubic-bezier(.2,.75,.25,1) both;
+}
+@keyframes landing-enter-soft {
+  from { opacity: .35; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .landing-delay-1 { animation-delay: 80ms; }

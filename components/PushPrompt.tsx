@@ -1,37 +1,45 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { GoalieBot } from '@/components/GoalieBot'
+import { CHEER_EVENT } from '@/lib/goalie'
 import { enablePush, PUSH_ASKED_KEY, pushSupported, syncPush } from '@/lib/push'
 import { supabase } from '@/utils/supabase'
 
 const ASK_AGAIN_DAYS = 7
-const ASK_ON = ['/feed', '/circles', '/dashboard', '/profile']
+/** Fire with a title, e.g. after joining a batch or posting a task, to ask at a meaningful moment. */
+export const PUSH_MOMENT_EVENT = 'goalcircle:push-moment'
 
-/** Goalie asks once (and again after a week if dismissed) to turn on phone notifications. */
+/**
+ * Goalie asks to turn on phone notifications right after someone's check-in, when the reason is
+ * obvious ("Want me to remind you tomorrow?"), instead of on first open. Asks again after a week
+ * if dismissed.
+ */
 export default function PushPrompt() {
-  const pathname = usePathname() || '/'
   const [show, setShow] = useState(false)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<string | null>(null)
+  const [title, setTitle] = useState('Nice work! Want a reminder tomorrow?')
 
   useEffect(() => {
     if (!pushSupported()) return
+    void supabase.auth.getSession().then(({ data: { session } }) => { if (session?.user && Notification.permission === 'granted') void syncPush() })
     let timer: number | undefined
-    void (async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) return
-      if (Notification.permission === 'granted') { void syncPush(); return }
-      if (Notification.permission === 'denied') return
+    const ask = (heading: string, delay: number) => {
+      if (Notification.permission !== 'default') return
       let askedAt = 0
       try { askedAt = Number(window.localStorage.getItem(PUSH_ASKED_KEY) || 0) } catch { /* storage unavailable */ }
       if (Date.now() - askedAt < ASK_AGAIN_DAYS * 86_400_000) return
-      if (!ASK_ON.some((path) => pathname === path || pathname.startsWith(`${path}/`))) return
-      timer = window.setTimeout(() => setShow(true), 4000)
-    })()
-    return () => window.clearTimeout(timer)
-  }, [pathname])
+      timer = window.setTimeout(() => { setTitle(heading); setShow(true) }, delay)
+    }
+    const afterCheckin = () => ask('Nice work! Want a reminder tomorrow?', 4200) // after Goalie's cheer
+    const atMoment = (event: Event) => ask(String((event as CustomEvent<string>).detail || 'Want a buzz when it matters?'), 1500)
+    window.addEventListener(CHEER_EVENT, afterCheckin)
+    window.addEventListener(PUSH_MOMENT_EVENT, atMoment)
+    // The cheer can fire just before a page change; catch it on the next page too.
+    try { if (window.sessionStorage.getItem('goalcircle-cheer') === '1') afterCheckin() } catch { /* storage unavailable */ }
+    return () => { window.removeEventListener(CHEER_EVENT, afterCheckin); window.removeEventListener(PUSH_MOMENT_EVENT, atMoment); window.clearTimeout(timer) }
+  }, [])
 
   if (!show) return null
 
@@ -50,8 +58,8 @@ export default function PushPrompt() {
       <div className="flex items-start gap-3">
         <GoalieBot size={52} mood="wave" />
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-black leading-snug">{note ? 'Notifications' : 'Can I buzz you?'}</h2>
-          <p className="mt-1 text-sm font-medium text-slate-700">{note || 'Only when your mentor posts a task, someone nudges you, or a friend comments. No spam, promise.'}</p>
+          <h2 className="text-base font-black leading-snug">{note ? 'Notifications' : title}</h2>
+          <p className="mt-1 text-sm font-medium text-slate-700">{note || 'I’ll buzz you when your mentor posts a task, someone nudges you, or a friend comments. No spam, promise.'}</p>
         </div>
       </div>
       {!note && <div className="mt-3 flex justify-end gap-2">
