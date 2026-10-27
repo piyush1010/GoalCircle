@@ -11,14 +11,13 @@ export const BUDDY_EVENT = 'goalcircle:goalie-buddy'
 const PAGE_LINES: { match: (path: string) => boolean; line: string }[] = [
   { match: (path) => path === '/feed', line: 'See who showed up today 👀' },
   { match: (path) => path === '/circles', line: 'Your people are here 💛' },
-  { match: (path) => path.startsWith('/circles/'), line: 'Your batch is waiting!' },
   { match: (path) => path === '/dashboard', line: 'One day at a time ☀️' },
   { match: (path) => path === '/profile', line: 'Looking good! 😎' },
   { match: (path) => path === '/create', line: 'What are we starting today? ✨' },
   { match: (path) => path.startsWith('/goal/'), line: 'One step at a time 💪' },
 ]
 // Pages where Goalie already appears, or where it would distract.
-const HIDDEN_ON = ['/check-in', '/focus', '/create-goal', '/settings', '/login', '/signup']
+const HIDDEN_ON = ['/check-in', '/focus', '/create-goal', '/settings', '/login', '/signup', '/circles/']
 
 /** Goalie floats in the corner on every page, says hi briefly, and can be poked. */
 export default function GoalieBuddy() {
@@ -67,7 +66,8 @@ export default function GoalieBuddy() {
     return () => window.clearTimeout(timer)
   }, [pathname])
 
-  if (off || HIDDEN_ON.some((path) => pathname === path || pathname.startsWith(`${path}/`))) return null
+  // Batch pages are full of buttons in the corner Goalie would sit on; the tour has its own Goalie.
+  if (off || HIDDEN_ON.some((path) => path.endsWith('/') ? pathname.startsWith(path) : pathname === path || pathname.startsWith(`${path}/`))) return null
 
   return (
     <div ref={own} aria-hidden={otherGoalie} className={`goalie-float pointer-events-none fixed bottom-[5.75rem] right-3 z-40 transition-all duration-300 [&>*]:pointer-events-auto ${otherGoalie ? 'translate-x-24 opacity-0 [&>*]:pointer-events-none' : ''}`}>

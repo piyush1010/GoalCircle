@@ -19,6 +19,7 @@ import {
   UsersRound,
 } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
+import SignedInRedirect from '@/components/SignedInRedirect'
 
 export const metadata: Metadata = {
   title: 'GoalCircle — Goals become real when you show up',
@@ -72,6 +73,7 @@ const faqs = [
 export default function HomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f8fafc] text-slate-950 dark:bg-[#07101f] dark:text-slate-50">
+      <SignedInRedirect />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_70%_0%,rgba(245,158,11,0.18),transparent_42%),radial-gradient(circle_at_12%_25%,rgba(56,189,248,0.10),transparent_30%)] dark:bg-[radial-gradient(circle_at_70%_0%,rgba(245,158,11,0.16),transparent_38%),radial-gradient(circle_at_12%_25%,rgba(56,189,248,0.08),transparent_28%)]" />
 
       <header className="relative z-20 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl dark:border-slate-800/80 dark:bg-[#07101f]/75">
