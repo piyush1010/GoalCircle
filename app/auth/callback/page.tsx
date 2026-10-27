@@ -14,7 +14,7 @@ function OAuthCallback() {
     const requestedNext = searchParams.get('next')
     return requestedNext?.startsWith('/') && !requestedNext.startsWith('//')
       ? requestedNext
-      : '/profile'
+      : '/dashboard'
   }, [searchParams])
 
   useEffect(() => {
@@ -49,7 +49,7 @@ function OAuthCallback() {
 
       if (!isActive) return
 
-      // New here: create the profile from the Google account and open Profile, where Goalie's tour starts.
+      // New here: create the profile from the Google account and open Today, where Goalie's tour starts.
       if (!profile?.is_onboarded) {
         setMessage('Preparing your profile…')
         const meta = user.user_metadata || {}
@@ -62,7 +62,7 @@ function OAuthCallback() {
           if (profileError.code !== '23505') break // not a username clash: carry on, Profile can fix it
         }
         if (!isActive) return
-        router.replace(nextPath === '/profile' ? '/profile' : nextPath)
+        router.replace(nextPath)
         return
       }
 
