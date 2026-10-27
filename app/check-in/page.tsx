@@ -8,7 +8,7 @@ import Image from 'next/image'
 import { ArrowLeft, Camera, CircleDashed, Images, LockKeyhole, Music2, Video, X } from 'lucide-react'
 import GoalieMessage from '@/components/GoalieMessage'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
-import { MAX_VIDEO_SECONDS, mediaLimitError, shrinkImage } from '@/lib/media'
+import { MAX_VIDEO_SECONDS, mediaLimitError, shrinkImage, toLocalFile, UNREADABLE_FILE } from '@/lib/media'
 import { supabase } from '@/utils/supabase'
 
 const CHECKIN_TOUR: TourStep[] = [
@@ -84,6 +84,7 @@ export default function CheckInPage() {
     if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) { setError('Choose an image or short video.'); return }
     const limit = mediaLimitError(file)
     if (limit) { setError(limit); return }
+    try { file = await toLocalFile(file) } catch { setError(UNREADABLE_FILE); return }
     if (file.type.startsWith('image/')) file = await shrinkImage(file)
     if (file.type.startsWith('video/')) {
       const videoUrl = URL.createObjectURL(file)

@@ -12,7 +12,7 @@ import CircleNotices from '@/components/CircleNotices'
 import MentorDashboard, { type DashboardRow } from '@/components/MentorDashboard'
 import { AttachmentList, type Attachment } from '@/components/CircleAttachments'
 import { examLabel, localDateString } from '@/lib/exams'
-import { mediaLimitError, shrinkImage } from '@/lib/media'
+import { mediaLimitError, shrinkImage, toLocalFile, UNREADABLE_FILE } from '@/lib/media'
 import { supabase } from '@/utils/supabase'
 
 interface Circle { id: string; owner_id: string; name: string; description: string | null; exam: string | null; visibility: 'public' | 'private'; invite_code: string | null }
@@ -189,6 +189,7 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
     if (!picked.type.startsWith('image/') && !picked.type.startsWith('video/')) { setError('Choose a photo or a video.'); return }
     const limit = mediaLimitError(picked)
     if (limit) { setError(limit); return }
+    try { picked = await toLocalFile(picked) } catch { setError(UNREADABLE_FILE); return }
     if (picked.type.startsWith('image/')) picked = await shrinkImage(picked)
     if (preview) URL.revokeObjectURL(preview)
     setFile(picked); setPreview(URL.createObjectURL(picked)); setError(null)

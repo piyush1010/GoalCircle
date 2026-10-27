@@ -7,7 +7,7 @@ import { AlignLeft, ArrowLeft, BellRing, CalendarDays, Camera, CircleCheck, Down
 import { OPEN_ENDED_REMINDER_DAYS, calendarFileName, createGoalCalendarBundle, createGoogleCalendarUrl, createGoogleDailyReminderUrl, type DailyReminder, type GoalCalendarEvent } from '@/lib/calendar'
 import MusicPicker, { type SelectedTrack } from '@/components/MusicPicker'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
-import { MAX_VIDEO_SECONDS, mediaLimitError, shrinkImage } from '@/lib/media'
+import { MAX_VIDEO_SECONDS, mediaLimitError, shrinkImage, toLocalFile, UNREADABLE_FILE } from '@/lib/media'
 import { supabase } from '@/utils/supabase'
 
 const CREATE_TOUR: TourStep[] = [
@@ -105,6 +105,7 @@ export default function CreateGoalPage() {
       setError(limit)
       return
     }
+    try { file = await toLocalFile(file) } catch { setError(UNREADABLE_FILE); return }
     if (actualType === 'image') file = await shrinkImage(file)
     if (actualType === 'video') {
       const url = URL.createObjectURL(file)

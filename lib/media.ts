@@ -60,3 +60,16 @@ export function mediaLimitError(file: File): string | null {
   if (file.type.startsWith('image/') && file.size > MAX_PHOTO_INPUT_BYTES) return 'This photo is too large.'
   return null
 }
+
+/**
+ * Copy a picked file into memory right away. On Android, files picked from WhatsApp, Drive or
+ * Downloads are often read lazily and the phone can withdraw access before the upload starts,
+ * which shows up as a network error. Reading them now makes the upload reliable.
+ */
+export async function toLocalFile(file: File): Promise<File> {
+  const data = await file.arrayBuffer()
+  return new File([data], file.name, { type: file.type, lastModified: file.lastModified })
+}
+
+
+export const UNREADABLE_FILE = 'This file couldn’t be read. If it’s in WhatsApp or Google Drive, download it to your phone first, then choose it again.'
