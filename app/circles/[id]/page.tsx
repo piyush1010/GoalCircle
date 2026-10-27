@@ -67,33 +67,52 @@ export default function CirclePage() {
     else setDashboard((data || []) as DashboardRow[])
   }, [circleId, today])
 
+  const cacheKey = `goalcircle-circle-${circleId}`
+
+  // Show the last view of this circle instantly, then refresh it.
+  useEffect(() => {
+    try {
+      const cached = JSON.parse(window.localStorage.getItem(cacheKey) || 'null')
+      if (cached?.circle && cached.today === today) {
+        setCircle(cached.circle); setRole(cached.role); setMemberCount(cached.memberCount); setTask(cached.task); setCheckin(cached.checkin)
+        if (cached.userId) setUserId(cached.userId)
+        if (Array.isArray(cached.dashboard)) setDashboard(cached.dashboard)
+        setLoading(false)
+      }
+    } catch { /* no cache */ }
+  }, [cacheKey, today])
+
   const load = useCallback(async () => {
-    setLoading(true); setError(null)
+    setError(null)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) { router.replace(`/login?next=/circles/${circleId}`); return }
     const uid = session.user.id
     setUserId(uid)
-    const [circleResult, roleResult, countResult, taskResult] = await Promise.all([
+    // Everything in one round trip. The dashboard only returns rows for the circle's mentors.
+    const [circleResult, roleResult, countResult, taskResult, checkinResult, dashboardResult] = await Promise.all([
       supabase.from('circles').select('id,owner_id,name,description,exam,visibility,invite_code').eq('id', circleId).maybeSingle(),
       supabase.from('circle_memberships').select('role').eq('circle_id', circleId).eq('user_id', uid).maybeSingle(),
       supabase.from('circle_memberships').select('user_id', { count: 'exact', head: true }).eq('circle_id', circleId),
       supabase.from('circle_tasks').select('id,title,details,task_date,attachments').eq('circle_id', circleId).eq('task_date', today).maybeSingle(),
+      supabase.from('circle_task_checkins').select('status,hours,note,media_url,media_type,circle_tasks!inner(task_date)').eq('circle_id', circleId).eq('user_id', uid).eq('circle_tasks.task_date', today).maybeSingle(),
+      supabase.rpc('circle_dashboard', { target_circle: circleId, on_date: today }),
     ])
     if (!circleResult.data) { setNotFound(true); setLoading(false); return }
     const loadedCircle = circleResult.data as Circle
+    const loadedTask = (taskResult.data as Task | null) ?? null
+    const loadedCheckin = loadedTask && checkinResult.data ? (({ status, hours, note, media_url, media_type }) => ({ status, hours, note, media_url, media_type }))(checkinResult.data as unknown as Checkin) as Checkin : null
+    const admin = loadedCircle.owner_id === uid || ['owner', 'moderator'].includes(roleResult.data?.role ?? '')
+    const rows = admin && !dashboardResult.error ? (dashboardResult.data || []) as DashboardRow[] : []
+    if (admin && dashboardResult.error) setError('Student progress could not be loaded.')
     setCircle(loadedCircle)
     setRole(roleResult.data?.role ?? null)
     setMemberCount(countResult.count || 0)
-    const loadedTask = (taskResult.data as Task | null) ?? null
     setTask(loadedTask)
-    if (loadedTask) {
-      const { data } = await supabase.from('circle_task_checkins').select('status,hours,note,media_url,media_type').eq('task_id', loadedTask.id).eq('user_id', uid).maybeSingle()
-      setCheckin((data as Checkin | null) ?? null)
-    } else setCheckin(null)
-    const admin = loadedCircle.owner_id === uid || ['owner', 'moderator'].includes(roleResult.data?.role ?? '')
-    if (admin) await loadDashboard()
+    setCheckin(loadedCheckin)
+    setDashboard(rows)
     setLoading(false)
-  }, [circleId, loadDashboard, router, today])
+    try { window.localStorage.setItem(cacheKey, JSON.stringify({ today, userId: uid, circle: loadedCircle, role: roleResult.data?.role ?? null, memberCount: countResult.count || 0, task: loadedTask, checkin: loadedCheckin, dashboard: rows.slice(0, 150) })) } catch { /* storage full */ }
+  }, [cacheKey, circleId, router, today])
 
   useEffect(() => { void Promise.resolve().then(load) }, [load])
 

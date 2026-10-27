@@ -138,3 +138,23 @@ textarea {
 @keyframes goalie-float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-3px, -6px); } }
 .goalie-float { animation: goalie-float 5s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .goalie-float { animation: none; } }
+
+/* ===== Readability (pilot feedback: text too small, too faint) =====
+   Tiny sizes are raised to readable minimums, secondary text is darker in light mode, and the
+   base weight is slightly heavier. Unlayered rules here override Tailwind's utilities. */
+body { font-weight: 500; }
+.text-\[8px\] { font-size: 10px; }
+.text-\[9px\] { font-size: 11px; }
+.text-\[10px\] { font-size: 11.5px; }
+.text-\[11px\] { font-size: 12.5px; }
+.text-xs { font-size: 0.8125rem; line-height: 1.15rem; }
+html:not(.dark) .text-slate-400 { color: var(--color-slate-500); }
+html:not(.dark) .text-slate-500 { color: var(--color-slate-600); }
+html.dark .text-slate-500 { color: var(--color-slate-400); }
+html.dark .text-slate-400 { color: var(--color-slate-300); }
+input::placeholder, textarea::placeholder { color: var(--color-slate-500); opacity: 1; }
+html.dark input::placeholder, html.dark textarea::placeholder { color: var(--color-slate-400); }
+
+/* Month ring colours */
+:root { --ring-missed: #e2e8f0; --ring-future: #f1f5f9; }
+.dark { --ring-missed: #26344b; --ring-future: #172338; }

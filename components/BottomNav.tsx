@@ -3,16 +3,16 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CircleUserRound, Flame, LayoutDashboard, Plus, UsersRound } from 'lucide-react'
+import { CircleUserRound, Flame, Plus, Sun, UsersRound } from 'lucide-react'
 
 export default function BottomNav() {
   const pathname = usePathname()
 
   const navItems = [
-    { label: 'Feed', href: '/feed', icon: Flame, tour: 'nav-feed' },
+    { label: 'Today', href: '/dashboard', icon: Sun, tour: 'nav-progress' },
     { label: 'Circles', href: '/circles', icon: UsersRound, tour: 'nav-circles' },
     { label: 'Create', href: '/create', icon: Plus, primary: true, tour: 'nav-create' },
-    { label: 'Progress', href: '/dashboard', icon: LayoutDashboard, tour: 'nav-progress' },
+    { label: 'Feed', href: '/feed', icon: Flame, tour: 'nav-feed' },
     { label: 'Profile', href: '/profile', icon: CircleUserRound, tour: 'nav-profile' },
   ]
 

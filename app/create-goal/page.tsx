@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlignLeft, ArrowLeft, BellRing, CalendarDays, Camera, CircleCheck, Download, ExternalLink, Film, Globe2, ImagePlus, LockKeyhole, Music2, X } from 'lucide-react'
+import { AlignLeft, ArrowLeft, BellRing, Camera, CircleCheck, Film, Globe2, ImagePlus, LockKeyhole, Music2, X } from 'lucide-react'
 import { OPEN_ENDED_REMINDER_DAYS, calendarFileName, createGoalCalendarBundle, createGoogleCalendarUrl, createGoogleDailyReminderUrl, type DailyReminder, type GoalCalendarEvent } from '@/lib/calendar'
 import MusicPicker, { type SelectedTrack } from '@/components/MusicPicker'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
@@ -230,20 +230,17 @@ export default function CreateGoalPage() {
           <CircleCheck className="mx-auto h-12 w-12 text-amber-500" />
           <h1 className="mt-3 text-xl font-black tracking-tight">Goal created</h1>
           <p className="mt-1 text-sm font-semibold">{created.title}</p>
-          <p className="mx-auto mt-3 max-w-sm text-sm text-slate-500 dark:text-slate-400">Add it to your calendar so your phone reminds you, even when GoalCircle is closed.</p>
-
-          <div className="mt-6 space-y-3 text-left">
-            {created.reminder && <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-              <p className="flex items-center gap-2 text-sm font-black"><BellRing className="h-4 w-4 text-amber-500" />Daily reminder at {reminderTime}</p>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{created.targetDate ? 'Every day until your target date.' : `Every day for the next ${OPEN_ENDED_REMINDER_DAYS} days.`}</p>
-              <button type="button" onClick={() => openInNewTab(createGoogleDailyReminderUrl(reminderFor(created)))} className={calendarButtonClass}><ExternalLink className="h-4 w-4" />Add reminder to Google Calendar</button>
-            </div>}
-            {targetEvent && <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-              <p className="flex items-center gap-2 text-sm font-black"><CalendarDays className="h-4 w-4 text-amber-500" />Target date: {new Date(`${targetEvent.targetDate}T00:00:00`).toLocaleDateString()}</p>
-              <button type="button" onClick={() => openInNewTab(createGoogleCalendarUrl(targetEvent))} className={calendarButtonClass}><ExternalLink className="h-4 w-4" />Add target date to Google Calendar</button>
-            </div>}
-            <button type="button" onClick={() => downloadCalendar(created)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-700 transition hover:border-amber-500 dark:border-slate-700 dark:text-slate-200"><Download className="h-4 w-4 text-amber-500" />Apple Calendar / Outlook (one file with everything)</button>
-          </div>
+          {(created.reminder || targetEvent) && <>
+            <p className="mx-auto mt-3 max-w-sm text-sm text-slate-600 dark:text-slate-300">{created.reminder ? `Want a daily reminder at ${reminderTime}?` : 'Add your target date to your calendar?'}</p>
+            <div className="mt-5 space-y-2">
+              <button type="button" onClick={() => {
+                // iPhone: a calendar file opens Apple Calendar. Android: Google Calendar.
+                if (/iPhone|iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document) downloadCalendar(created)
+                else openInNewTab(created.reminder ? createGoogleDailyReminderUrl(reminderFor(created)) : createGoogleCalendarUrl(targetEvent!))
+              }} className={calendarButtonClass}><BellRing className="h-4 w-4" />Add to my calendar</button>
+              <button type="button" onClick={() => downloadCalendar(created)} className="w-full py-1 text-sm font-bold text-slate-600 underline-offset-2 hover:underline dark:text-slate-300">Use a different calendar app</button>
+            </div>
+          </>}
 
           <button type="button" onClick={continueToGoal} className="mt-6 w-full rounded-2xl bg-amber-500 py-4 text-base font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400">Continue</button>
         </section>

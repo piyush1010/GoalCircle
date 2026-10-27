@@ -11,7 +11,7 @@ function AuthForm() {
   const requestedNext = searchParams.get('next')
   const nextPath = requestedNext?.startsWith('/') && !requestedNext.startsWith('//')
     ? requestedNext
-    : '/profile'
+    : '/dashboard'
 
   // Mode state: 'signin' or 'signup'
   const [mode, setMode] = useState<'signin' | 'signup'>(() =>

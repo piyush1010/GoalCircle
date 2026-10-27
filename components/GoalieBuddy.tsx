@@ -12,7 +12,7 @@ const PAGE_LINES: { match: (path: string) => boolean; line: string }[] = [
   { match: (path) => path === '/feed', line: 'See who showed up today 👀' },
   { match: (path) => path === '/circles', line: 'Your people are here 💛' },
   { match: (path) => path.startsWith('/circles/'), line: 'Your batch is waiting!' },
-  { match: (path) => path === '/dashboard', line: 'Look how far you’ve come 📈' },
+  { match: (path) => path === '/dashboard', line: 'One day at a time ☀️' },
   { match: (path) => path === '/profile', line: 'Looking good! 😎' },
   { match: (path) => path === '/create', line: 'What are we starting today? ✨' },
   { match: (path) => path.startsWith('/goal/'), line: 'One step at a time 💪' },

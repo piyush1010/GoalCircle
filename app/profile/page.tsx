@@ -13,7 +13,7 @@ const WELCOME_TOUR: TourStep[] = [
   { target: 'nav-create', title: 'Start here', text: "Create a goal, or post today's progress on one you already have." },
   { target: 'nav-feed', title: 'Feed', text: 'See progress from people you follow. Boost a win, comment or send a nudge.' },
   { target: 'nav-circles', title: 'Circles', text: "Join your mentor's batch with an invite link, or start a group with friends." },
-  { target: 'nav-progress', title: 'Progress', text: 'Your streaks, check-ins and focus time, all in one place.' },
+  { target: 'nav-progress', title: 'Today', text: 'Your home: today’s goals and how many days you’ve shown up this month.' },
   { target: 'nav-profile', title: 'Profile', text: 'Your goals and settings. Tap the ? on this page any time to see this tour again.' },
 ]
 import { CircleHelp, Film, Flame, Settings as SettingsIcon, Sparkles } from 'lucide-react'
@@ -73,10 +73,8 @@ export default function ProfilePage() {
       setUser(currentUser)
 
       const userMeta = currentUser.user_metadata || {}
-      const guideStorageKey = `goalcircle.quick-guide.${currentUser.id}`
       const forceGuide = new URLSearchParams(window.location.search).get('guide') === '1'
-      const hasSeenGuide = userMeta.goalcircle_quick_guide_seen === true || localStorage.getItem(guideStorageKey) === '1'
-      if (forceGuide || !hasSeenGuide) setShowQuickGuide(true)
+      if (forceGuide) setShowQuickGuide(true)
       if (new URLSearchParams(window.location.search).get('edit') === '1') setShowEditModal(true)
       setFullName(userMeta.full_name || userMeta.name || currentUser.email?.split('@')[0] || 'User')
       setHandle(userMeta.handle || `@${currentUser.email?.split('@')[0] || 'member'}`)
