@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { Music2, Pause, Play, Volume2, VolumeX } from 'lucide-react'
+import { CLIP_SECONDS, clipOf } from '@/components/MusicPicker'
 
 interface PostMusicProps {
   postId: string
@@ -16,6 +17,9 @@ export default function PostMusic({ postId, title, artist, artworkUrl, previewUr
   const audioRef = useRef<HTMLAudioElement>(null)
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
+  // Plays only the part the person chose (older posts play from the start).
+  const clip = clipOf(previewUrl)
+  const clipEnd = clip.end ?? (clip.start ? clip.start + CLIP_SECONDS : null)
 
   useEffect(() => {
     const pauseOtherPosts = (event: Event) => {
@@ -37,8 +41,10 @@ export default function PostMusic({ postId, title, artist, artworkUrl, previewUr
       return
     }
     window.dispatchEvent(new CustomEvent('goalcircle:music-play', { detail: postId }))
+    if (audio.currentTime < clip.start || (clipEnd !== null && audio.currentTime >= clipEnd)) audio.currentTime = clip.start
     try {
       await audio.play()
+      if (audio.currentTime < clip.start) audio.currentTime = clip.start
       setPlaying(true)
     } catch {
       setPlaying(false)
@@ -57,7 +63,10 @@ export default function PostMusic({ postId, title, artist, artworkUrl, previewUr
       <div className="min-w-0 flex-1"><p className="truncate text-[11px] font-black">{title}</p><p className="truncate text-[9px] text-slate-400">{artist}</p></div>
       <button type="button" onClick={toggleMute} aria-label={muted ? 'Unmute music' : 'Mute music'} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/10">{muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}</button>
       <button type="button" onClick={() => void togglePlay()} aria-label={playing ? 'Pause music' : 'Play music'} className="grid h-8 w-8 place-items-center rounded-full bg-amber-500 text-slate-950">{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
-      <audio ref={audioRef} src={previewUrl} preload="none" onEnded={() => setPlaying(false)} />
+      <audio ref={audioRef} src={clip.base} preload="none" onEnded={() => setPlaying(false)} onTimeUpdate={(event) => {
+        const audio = event.currentTarget
+        if (clipEnd !== null && audio.currentTime >= clipEnd) { audio.pause(); audio.currentTime = clip.start; setPlaying(false) }
+      }} />
     </div>
   )
 }
