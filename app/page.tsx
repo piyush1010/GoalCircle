@@ -19,6 +19,7 @@ import {
   UsersRound,
 } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
+import SignedInRedirect from '@/components/SignedInRedirect'
 
 export const metadata: Metadata = {
   title: 'GoalCircle — Goals become real when you show up',
@@ -72,6 +73,7 @@ const faqs = [
 export default function HomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f8fafc] text-slate-950 dark:bg-[#07101f] dark:text-slate-50">
+      <SignedInRedirect />
       <div className="pointer-events-none fixed inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_70%_0%,rgba(245,158,11,0.18),transparent_42%),radial-gradient(circle_at_12%_25%,rgba(56,189,248,0.10),transparent_30%)] dark:bg-[radial-gradient(circle_at_70%_0%,rgba(245,158,11,0.16),transparent_38%),radial-gradient(circle_at_12%_25%,rgba(56,189,248,0.08),transparent_28%)]" />
 
       <header className="relative z-20 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl dark:border-slate-800/80 dark:bg-[#07101f]/75">
@@ -112,7 +114,7 @@ export default function HomePage() {
               <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-400 bg-clip-text text-transparent">show up.</span>
             </h1>
             <p className="landing-enter landing-delay-3 mt-6 max-w-2xl text-pretty text-base font-medium leading-7 text-slate-600 sm:text-lg dark:text-slate-300">
-              GoalCircle is a social home for meaningful goals. Make a commitment, share daily proof, and stay accountable with friends who want to see you win.
+              Set a goal, check in every day, and stay accountable with friends or your mentor’s batch. Built for aspirants who want to stop restarting.
             </p>
 
             <div className="landing-enter landing-delay-4 mt-8 flex flex-col gap-3 sm:flex-row">
@@ -137,23 +139,23 @@ export default function HomePage() {
               <div className="overflow-hidden rounded-[2.15rem] bg-slate-50 dark:bg-[#0b1526]">
                 <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
                   <div><p className="flex items-center gap-1.5 text-sm font-black"><UsersRound className="h-4 w-4 text-amber-500" />Today&apos;s circle</p><p className="text-[10px] font-semibold text-slate-500">Proof over promises</p></div>
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-amber-500 text-xs font-black text-slate-950">AM</span>
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-amber-500 text-xs font-black text-slate-950">RS</span>
                 </div>
 
                 <div className="space-y-3 p-3.5">
                   <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-[#111e31]">
                     <div className="flex items-center gap-3 p-4">
-                      <span className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-600 text-xs font-black text-white">AM</span>
-                      <div className="min-w-0 flex-1"><p className="truncate text-xs font-black">Alex Morgan</p><p className="text-[10px] font-semibold text-slate-400">Day 14 · Run my first 5K</p></div>
+                      <span className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-600 text-xs font-black text-white">RS</span>
+                      <div className="min-w-0 flex-1"><p className="truncate text-xs font-black">Riya Sharma</p><p className="text-[10px] font-semibold text-slate-400">Day 14 · UPSC: revise Polity daily</p></div>
                       <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[9px] font-black text-emerald-600 dark:text-emerald-400">On track</span>
                     </div>
                     <div className="relative grid aspect-[16/10] place-items-center overflow-hidden bg-[linear-gradient(145deg,#16324a,#256d67_46%,#e9a23b)]">
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_65%_25%,rgba(255,255,255,.28),transparent_26%)]" />
                       <div className="relative grid h-16 w-16 place-items-center rounded-full border border-white/30 bg-slate-950/35 text-white backdrop-blur"><Play className="ml-1 h-6 w-6 fill-current" /></div>
-                      <span className="absolute bottom-3 left-3 rounded-full bg-slate-950/60 px-2.5 py-1 text-[9px] font-black text-white backdrop-blur">Morning run · 3.2 km</span>
+                      <span className="absolute bottom-3 left-3 rounded-full bg-slate-950/60 px-2.5 py-1 text-[9px] font-black text-white backdrop-blur">Polity · 2 h 10 min</span>
                     </div>
                     <div className="p-4">
-                      <p className="text-xs font-semibold leading-5 text-slate-700 dark:text-slate-200">Didn&apos;t feel like going. Went anyway. New personal best today.</p>
+                      <p className="text-xs font-semibold leading-5 text-slate-700 dark:text-slate-200">Didn&apos;t feel like studying. Did 2 hours anyway. Chapter 5 done.</p>
                       <div className="mt-3 flex items-center gap-4 border-t border-slate-100 pt-3 text-[10px] font-black text-slate-500 dark:border-slate-800 dark:text-slate-400">
                         <span className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400"><Flame className="h-3.5 w-3.5 fill-current" /> 24 boosts</span>
                         <span className="inline-flex items-center gap-1.5"><MessageCircle className="h-3.5 w-3.5" /> 8 comments</span>

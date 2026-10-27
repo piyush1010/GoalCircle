@@ -47,6 +47,10 @@ const timeAgo = (value: string | null) => {
 }
 const whatsappUrl = (text: string) => `https://wa.me/?text=${encodeURIComponent(text)}`
 
+/** The message mentors forward to their WhatsApp group: what it is, and exactly what to tap. */
+export const inviteMessage = (circleName: string, link: string) =>
+  `Join our batch "${circleName}" on GoalCircle 🎯\nI'll post the daily task there; check in once you finish it.\n\n1. Open: ${link}\n2. Tap "Continue with Google"\n3. Add it to your home screen (Chrome ⋮ → Add to Home screen) so you don't miss tasks.`
+
 export default function MentorDashboard({ circleId, circleName, today, task, rows, inviteLink, onTaskSaved, onTaskDeleted, onChanged, onCopyInvite, flash }: {
   circleId: string; circleName: string; today: string; task: Task | null; rows: DashboardRow[]; inviteLink: string
   onTaskSaved: (task: Task) => void; onTaskDeleted: () => void; onChanged: () => void; onCopyInvite: () => void; flash: (text: string) => void
@@ -64,6 +68,16 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
     else flash(data === 0 ? 'Already nudged in the last 3 hours' : `Nudge sent to ${data} ${data === 1 ? 'student' : 'students'}`)
   }
 
+  const inviteCard = <section className={`${card} text-center`}>
+          <UserPlus className="mx-auto h-8 w-8 text-amber-500" />
+          <h2 className="mt-2 text-base font-black">{rows.length === 0 && view === 'students' ? 'No students yet' : 'Invite your students'}</h2>
+          <p className="mt-1 text-sm text-slate-500">Send the invite to your WhatsApp group. It explains the steps, so students join on their own.</p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <a href={whatsappUrl(inviteMessage(circleName, inviteLink))} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-3 text-sm font-black text-white"><MessageCircle className="h-4 w-4" />WhatsApp</a>
+            <button type="button" onClick={onCopyInvite} className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700"><Copy className="h-4 w-4" />Copy link</button>
+          </div>
+        </section>
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800" role="tablist">
@@ -73,15 +87,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
       {view === 'today' && <>
         <TaskCard key={task?.id ?? 'new'} circleId={circleId} today={today} task={task} onSaved={onTaskSaved} onDeleted={onTaskDeleted} />
 
-        {rows.length === 0 ? <section className={`${card} text-center`}>
-          <UserPlus className="mx-auto h-8 w-8 text-amber-500" />
-          <h2 className="mt-2 text-base font-black">Invite your students</h2>
-          <p className="mt-1 text-sm text-slate-500">Share the invite link in your WhatsApp group. Students join in one tap.</p>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <a href={whatsappUrl(`Join "${circleName}" on GoalCircle for daily tasks and check-ins: ${inviteLink}`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-3 text-sm font-black text-white"><MessageCircle className="h-4 w-4" />WhatsApp</a>
-            <button type="button" onClick={onCopyInvite} className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700"><Copy className="h-4 w-4" />Copy link</button>
-          </div>
-        </section> : <section className={card}>
+        {rows.length === 0 ? inviteCard : <section className={card}>
           <h2 className="text-sm font-black">Today at a glance</h2>
           <div className="mt-3 grid grid-cols-3 gap-2 text-center">
             <Stat label="Done" value={done.length} tone="text-emerald-600 dark:text-emerald-400" onClick={() => setView('students')} />
@@ -96,7 +102,8 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
         </section>}
       </>}
 
-      {view === 'students' && <StudentList rows={rows} now={now} hasTask={!!task} circleId={circleId} onNudge={nudge} onChanged={onChanged} flash={flash} />}
+      {view === 'students' && rows.length === 0 && inviteCard}
+      {view === 'students' && rows.length > 0 && <StudentList rows={rows} now={now} hasTask={!!task} circleId={circleId} onNudge={nudge} onChanged={onChanged} flash={flash} />}
     </div>
   )
 }
@@ -134,6 +141,7 @@ function TaskCard({ circleId, today, task, onSaved, onDeleted }: { circleId: str
     void removeCircleFiles(removed.map((file) => file.path))
     setFiles([]); setKept(attachments); setEditing(false)
     onSaved(result.data as Task)
+    if (!task) window.dispatchEvent(new CustomEvent('goalcircle:push-moment', { detail: 'Task posted! Want a buzz when students comment or need you?' }))
   }
 
   const remove = async () => {

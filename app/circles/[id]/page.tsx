@@ -9,7 +9,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, CheckCircle2, CircleHelp, Copy, ImagePlus, LockKeyhole, LogOut, Pencil, Share2, Timer, Users, X } from 'lucide-react'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
 import CircleNotices from '@/components/CircleNotices'
-import MentorDashboard, { type DashboardRow } from '@/components/MentorDashboard'
+import MentorDashboard, { inviteMessage, type DashboardRow } from '@/components/MentorDashboard'
 import { AttachmentList, type Attachment } from '@/components/CircleAttachments'
 import { examLabel, localDateString } from '@/lib/exams'
 import { mediaLimitError, shrinkImage, toLocalFile, UNREADABLE_FILE } from '@/lib/media'
@@ -121,7 +121,7 @@ export default function CirclePage() {
   const inviteLink = circle?.invite_code ? `${typeof window !== 'undefined' ? window.location.origin : ''}/circles/join/${circle.invite_code}` : ''
   const shareInvite = async () => {
     if (!circle || !inviteLink) return
-    const text = `Join "${circle.name}" on GoalCircle for daily tasks and check-ins: ${inviteLink}`
+    const text = inviteMessage(circle.name, inviteLink)
     if (navigator.share) { try { await navigator.share({ text }); return } catch { /* cancelled */ } }
     await navigator.clipboard.writeText(inviteLink); flash('Invite link copied')
   }

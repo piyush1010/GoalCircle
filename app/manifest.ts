@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'GoalCircle — Social accountability for meaningful goals',
     short_name: 'GoalCircle',
     description: 'Set meaningful goals, share progress and stay accountable with people who want to see you win.',
-    start_url: '/profile',
+    start_url: '/dashboard',
     scope: '/',
     display: 'standalone',
     background_color: '#07101f',
