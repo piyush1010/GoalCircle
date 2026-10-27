@@ -226,7 +226,7 @@ export default function SettingsPage() {
               </button>
             ))}
           </div>
-          <p className="mt-2 text-[10px] leading-4 text-slate-400">Changes apply across GoalCircle and stay on this device.</p>
+          <p className="mt-2 text-[10px] leading-4 text-slate-400">Changes apply across GoalYaar and stay on this device.</p>
         </div>
 
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
@@ -286,7 +286,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between"><div><h3 className="text-xs font-bold text-slate-900 dark:text-white">Quiet hours</h3><p className="text-[10px] text-slate-400">Pause reminders and social prompts overnight</p></div><button type="button" onClick={() => saveQuietHours(!quietHoursEnabled)} aria-pressed={quietHoursEnabled} className={`relative h-6 w-11 rounded-full transition-colors ${quietHoursEnabled ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'}`}><span className={`absolute top-1 block h-4 w-4 rounded-full bg-white transition-transform ${quietHoursEnabled ? 'left-6' : 'left-1'}`} /></button></div>
           {quietHoursEnabled && <div className="mt-3 grid grid-cols-2 gap-2"><label className="text-[10px] font-bold text-slate-500">From<input type="time" value={quietHoursStart} onChange={(event) => saveQuietHours(true, event.target.value, quietHoursEnd)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label><label className="text-[10px] font-bold text-slate-500">Until<input type="time" value={quietHoursEnd} onChange={(event) => saveQuietHours(true, quietHoursStart, event.target.value)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label></div>}
         </div>
-        <p className="text-[10px] leading-relaxed text-slate-400">You will receive one browser reminder after this time while GoalCircle is open. Background push delivery will be enabled in the next notification release.</p>
+        <p className="text-[10px] leading-relaxed text-slate-400">You will receive one browser reminder after this time while GoalYaar is open. Background push delivery will be enabled in the next notification release.</p>
       </div>
 
       <InstallAppCard />
@@ -373,7 +373,7 @@ export default function SettingsPage() {
           onClick={handleSignOut}
           className="w-full py-2.5 px-3 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center justify-between transition"
         >
-          <span className="inline-flex items-center gap-2"><LogOut className="h-4 w-4" />Log Out of GoalCircle</span>
+          <span className="inline-flex items-center gap-2"><LogOut className="h-4 w-4" />Log Out of GoalYaar</span>
           <span>→</span>
         </button>
       </div>

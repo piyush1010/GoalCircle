@@ -118,7 +118,7 @@ function AuthForm() {
           }`}
         >
           <UserPlus className="h-4 w-4 shrink-0" />
-          <span><span className="block text-xs font-black">Create account</span><span className={`block text-[9px] font-semibold ${mode === 'signup' ? 'text-slate-800/70' : 'text-slate-400'}`}>New to GoalCircle</span></span>
+          <span><span className="block text-xs font-black">Create account</span><span className={`block text-[9px] font-semibold ${mode === 'signup' ? 'text-slate-800/70' : 'text-slate-400'}`}>New to GoalYaar</span></span>
         </button>
       </div>
 
@@ -126,7 +126,7 @@ function AuthForm() {
       <div className="text-center space-y-1">
         <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-amber-500 text-slate-950"><Target className="h-5 w-5" /></span>
         <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
-          {mode === 'signup' ? 'Create your account' : 'Sign in to GoalCircle'}
+          {mode === 'signup' ? 'Create your account' : 'Sign in to GoalYaar'}
         </h1>
         <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
           {mode === 'signup'

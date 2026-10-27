@@ -53,7 +53,7 @@ function OAuthCallback() {
       if (!profile?.is_onboarded) {
         setMessage('Preparing your profile…')
         const meta = user.user_metadata || {}
-        const fullName = String(meta.full_name || meta.name || user.email?.split('@')[0] || 'GoalCircle member').slice(0, 60)
+        const fullName = String(meta.full_name || meta.name || user.email?.split('@')[0] || 'GoalYaar member').slice(0, 60)
         const base = (user.email?.split('@')[0] || 'member').toLowerCase().replace(/[^a-z0-9_.]/g, '').slice(0, 24) || 'member'
         for (let attempt = 0; attempt < 4; attempt += 1) {
           const username = attempt === 0 ? base : `${base}${Math.floor(100 + Math.random() * 900)}`

@@ -104,7 +104,7 @@ export default function FeedPage() {
         const emailName = authorId === currentUserId ? email?.split('@')[0] : null
         return {
           id: String(row.id), goalId: String(row.goal_id), userId: authorId,
-          userName: String(profile?.full_name || profile?.display_name || emailName || 'GoalCircle member'),
+          userName: String(profile?.full_name || profile?.display_name || emailName || 'GoalYaar member'),
           username: String(profile?.username || profile?.handle || 'member').replace(/^@/, ''),
           avatarUrl: profile?.avatar_url ? String(profile.avatar_url) : null,
           goalTitle: String(goal?.title || 'Personal goal'), streak: Number(goal?.current_streak || 0), streakUnit: goal?.frequency === 'weekly' ? 'w' : 'd', oneTime: goal?.frequency === 'once',
@@ -176,7 +176,7 @@ export default function FeedPage() {
     const ids = [...new Set(rows.map((row) => row.user_id))]
     const { data: people } = ids.length ? await supabase.from('profiles').select('id,full_name,display_name,username,avatar_url').in('id', ids) : { data: [] }
     const byId = new Map(((people || []) as Array<Record<string, string | null>>).map((person) => [String(person.id), person]))
-    const named = rows.map((row) => { const person = byId.get(row.user_id); return { ...row, authorName: String(person?.full_name || person?.display_name || 'GoalCircle member'), authorAvatar: person?.avatar_url ?? null, authorUsername: String(person?.username || '') } })
+    const named = rows.map((row) => { const person = byId.get(row.user_id); return { ...row, authorName: String(person?.full_name || person?.display_name || 'GoalYaar member'), authorAvatar: person?.avatar_url ?? null, authorUsername: String(person?.username || '') } })
     setPosts((current) => current.map((item) => item.id === post.id ? { ...item, comments: named, commentsLoaded: true } : item))
     setLoadingComments(null)
   }
@@ -296,7 +296,7 @@ export default function FeedPage() {
               <ProfileAvatar value={comment.authorAvatar} name={comment.authorName} size={32} className="rounded-full" />
               <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-slate-100 px-3 py-2 dark:bg-[#07101f]">
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-sm font-black">{comment.authorName || 'GoalCircle member'}</span>
+                  <span className="truncate text-sm font-black">{comment.authorName || 'GoalYaar member'}</span>
                   <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-slate-500">{relativeTime(comment.created_at)}{comment.user_id === userId && <button type="button" onClick={() => void deleteComment(post.id, comment)} aria-label="Delete comment" className="font-bold text-rose-500">Delete</button>}</span>
                 </div>
                 <p className="mt-0.5 whitespace-pre-line break-words text-sm">{comment.body}</p>

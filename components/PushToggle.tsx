@@ -34,7 +34,7 @@ export default function PushToggle() {
       <div className="flex items-center gap-3">
         <BellRing className="h-5 w-5 shrink-0 text-amber-500" />
         <span className="flex-1"><span className="block text-sm font-bold">Phone notifications</span>
-          <span className="block text-xs text-slate-500">{supported ? 'Tasks, notices, nudges and comments, even when the app is closed.' : 'On iPhone: add GoalCircle to your Home Screen from Safari first.'}</span></span>
+          <span className="block text-xs text-slate-500">{supported ? 'Tasks, notices, nudges and comments, even when the app is closed.' : 'On iPhone: add GoalYaar to your Home Screen from Safari first.'}</span></span>
         {supported && <button type="button" role="switch" aria-checked={on} aria-label="Phone notifications" onClick={() => void toggle()} disabled={busy} className={`relative h-6 w-11 shrink-0 rounded-full transition disabled:opacity-60 ${on ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-700'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[1.375rem]' : 'left-0.5'}`} /></button>}
       </div>
       {note && <p role="status" className="mt-2 text-xs font-semibold text-rose-600">{note}</p>}

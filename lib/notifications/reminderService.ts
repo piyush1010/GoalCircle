@@ -10,7 +10,7 @@ export async function scheduleDailyGoalReminder(goalId: string, goalTitle: strin
   await LocalNotifications.schedule({
     notifications: [
       {
-        title: "GoalCircle reminder",
+        title: "GoalYaar reminder",
         body: `Time to complete your habit: "${goalTitle}"!`,
         id: Math.abs(hashCode(goalId)),
         schedule: {

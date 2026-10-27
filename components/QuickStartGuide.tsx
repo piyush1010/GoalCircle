@@ -24,7 +24,7 @@ interface GuideStep {
 
 const guideSteps: GuideStep[] = [
   {
-    eyebrow: 'Welcome to GoalCircle',
+    eyebrow: 'Welcome to GoalYaar',
     title: 'Turn an intention into a visible commitment',
     description:
       'Start by declaring one meaningful goal. You decide whether it is public or private, and you stay in control of what you share.',
@@ -58,7 +58,7 @@ const guideSteps: GuideStep[] = [
   },
   {
     eyebrow: 'Profile and notifications',
-    title: 'Your GoalCircle, at a glance',
+    title: 'Your GoalYaar, at a glance',
     description:
       'Profile is your home after sign-in. Manage your identity and settings here, and use notifications to keep up with nudges, comments, and circle invites.',
     icon: CircleUserRound,
@@ -185,7 +185,7 @@ export default function QuickStartGuide({ open, onComplete }: QuickStartGuidePro
               onClick={() => (isLastStep ? closeGuide() : setStepIndex((current) => current + 1))}
               className="ml-auto rounded-xl bg-amber-500 px-5 py-3 text-xs font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 active:scale-[0.98]"
             >
-              {isLastStep ? 'Start using GoalCircle' : 'Next'}
+              {isLastStep ? 'Start using GoalYaar' : 'Next'}
             </button>
           </div>
         </div>

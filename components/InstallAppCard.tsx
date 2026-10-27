@@ -13,7 +13,7 @@ export default function InstallAppCard() {
   useEffect(() => {
     const refresh = () => setInstallAvailable(Boolean(getInstallPrompt()))
     const unsubscribe = subscribeToInstallPrompt(refresh)
-    const installed = () => { setIsInstalled(true); setMessage('GoalCircle is installed.') }
+    const installed = () => { setIsInstalled(true); setMessage('GoalYaar is installed.') }
     const loadDeviceState = window.setTimeout(() => {
       setIsInstalled(window.matchMedia('(display-mode: standalone)').matches)
       setIsIos(/iPad|iPhone|iPod/.test(navigator.userAgent))
@@ -28,7 +28,7 @@ export default function InstallAppCard() {
     if (!prompt) return
     await prompt.prompt()
     const choice = await prompt.userChoice
-    if (choice.outcome === 'accepted') setMessage('Installing GoalCircle…')
+    if (choice.outcome === 'accepted') setMessage('Installing GoalYaar…')
     else setMessage('Installation cancelled. You can try again later.')
     setInstallPrompt(null)
   }
@@ -38,8 +38,8 @@ export default function InstallAppCard() {
       <div className="flex items-start gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><Smartphone className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-xs font-black">Install GoalCircle</h3>
-          <p className="mt-1 text-[10px] leading-4 text-slate-500">Open GoalCircle from your home screen with an app-like layout.</p>
+          <h3 className="text-xs font-black">Install GoalYaar</h3>
+          <p className="mt-1 text-[10px] leading-4 text-slate-500">Open GoalYaar from your home screen with an app-like layout.</p>
         </div>
       </div>
 
@@ -50,7 +50,7 @@ export default function InstallAppCard() {
       ) : isIos ? (
         <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-[10px] leading-4 text-slate-600 dark:bg-slate-950 dark:text-slate-300">In Safari, tap Share and choose <strong>Add to Home Screen</strong>.</p>
       ) : (
-        <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-[10px] leading-4 text-slate-500 dark:bg-slate-950">Your browser will show an install option when GoalCircle is eligible.</p>
+        <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-[10px] leading-4 text-slate-500 dark:bg-slate-950">Your browser will show an install option when GoalYaar is eligible.</p>
       )}
       {message && <p role="status" className="mt-2 text-[10px] font-semibold text-slate-500">{message}</p>}
     </section>

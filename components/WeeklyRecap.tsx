@@ -24,8 +24,8 @@ export default function WeeklyRecap({ userId }: { userId: string }) {
   }, [checkins])
 
   const share = async () => {
-    const text = `My GoalCircle week: ${stats.done} completed check-ins, ${stats.focused} focus minutes, ${stats.consistency}% consistency.`
-    if (navigator.share) { try { await navigator.share({ title: 'My GoalCircle week', text }); return } catch { return } }
+    const text = `My GoalYaar week: ${stats.done} completed check-ins, ${stats.focused} focus minutes, ${stats.consistency}% consistency.`
+    if (navigator.share) { try { await navigator.share({ title: 'My GoalYaar week', text }); return } catch { return } }
     await navigator.clipboard.writeText(text); setCopied(true); window.setTimeout(() => setCopied(false), 1800)
   }
 

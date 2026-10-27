@@ -63,7 +63,7 @@ export default function ProfileEditor({ onSaved, onCancel }: { onSaved: (profile
 
   return (
     <form onSubmit={save} className="space-y-3">
-      {userId && <AvatarEditor userId={userId} value={avatarUrl} name={fullName || username || 'GoalCircle member'} onSaved={(value) => void saveAvatar(value)} />}
+      {userId && <AvatarEditor userId={userId} value={avatarUrl} name={fullName || username || 'GoalYaar member'} onSaved={(value) => void saveAvatar(value)} />}
       <div className="border-t border-slate-100 pt-3 dark:border-slate-800" />
       <label className="block"><span className="mb-1 block text-xs font-bold text-slate-600 dark:text-slate-300">Name</span>
         <input value={fullName} onChange={(event) => setFullName(event.target.value)} maxLength={60} autoComplete="name" className={field} /></label>

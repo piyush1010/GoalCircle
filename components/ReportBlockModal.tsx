@@ -74,7 +74,7 @@ export default function ReportBlockModal({ targetUserId, isOpen, onClose }: { ta
         ) : (
           <div className="text-center py-4">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">
-              Report recorded. Thank you for helping keep GoalCircle focused and respectful.
+              Report recorded. Thank you for helping keep GoalYaar focused and respectful.
             </p>
             <button onClick={onClose} className="px-4 py-2 bg-amber-500 text-black font-semibold rounded-xl text-sm">
               Close

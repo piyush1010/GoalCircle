@@ -10,7 +10,7 @@ interface MemoryReelProps {
   userName?: string
 }
 
-export default function MemoryReel({ habitTitle, streakCount, userName = 'GoalCircle Builder' }: MemoryReelProps) {
+export default function MemoryReel({ habitTitle, streakCount, userName = 'GoalYaar Builder' }: MemoryReelProps) {
   const cardRef = useRef<HTMLDivElement>(null)
 
   const downloadCard = async () => {
@@ -39,7 +39,7 @@ export default function MemoryReel({ habitTitle, streakCount, userName = 'GoalCi
 
         {/* Card Header */}
         <div className="z-10 flex justify-between items-center">
-          <span className="text-xs uppercase tracking-widest font-bold text-white/80">GoalCircle Reel</span>
+          <span className="text-xs uppercase tracking-widest font-bold text-white/80">GoalYaar Reel</span>
           <span className="text-xs px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md font-semibold">
             Milestone
           </span>
@@ -54,7 +54,7 @@ export default function MemoryReel({ habitTitle, streakCount, userName = 'GoalCi
         {/* Card Footer */}
         <div className="z-10 flex justify-between items-end text-xs text-white/70 pt-4 border-t border-white/10">
           <span>@{userName}</span>
-          <span>goalcircle.app</span>
+          <span>goalyaar.com</span>
         </div>
       </div>
 

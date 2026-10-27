@@ -4,14 +4,14 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 import AppShell from '@/components/AppShell'
 
 export const metadata: Metadata = {
-  title: 'GoalCircle',
+  title: 'GoalYaar',
   description: 'Track habits, build daily consistency, and stay accountable.',
-  applicationName: 'GoalCircle',
+  applicationName: 'GoalYaar',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'GoalCircle',
+    title: 'GoalYaar',
   },
   icons: {
     icon: [

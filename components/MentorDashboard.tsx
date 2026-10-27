@@ -50,7 +50,7 @@ const whatsappUrl = (text: string) => `https://wa.me/?text=${encodeURIComponent(
 
 /** The message mentors forward to their WhatsApp group: what it is, and exactly what to tap. */
 export const inviteMessage = (circleName: string, link: string) =>
-  `Join our batch "${circleName}" on GoalCircle 🎯\nI'll post the daily task there; check in once you finish it.\n\n1. Open: ${link}\n2. Tap "Continue with Google"\n3. Add it to your home screen (Chrome ⋮ → Add to Home screen) so you don't miss tasks.`
+  `Join our batch "${circleName}" on GoalYaar 🎯\nI'll post the daily task there; check in once you finish it.\n\n1. Open: ${link}\n2. Tap "Continue with Google"\n3. Add it to your home screen (Chrome ⋮ → Add to Home screen) so you don't miss tasks.`
 
 export default function MentorDashboard({ circleId, circleName, today, task, rows, inviteLink, onTaskSaved, onTaskDeleted, onChanged, onCopyInvite, flash }: {
   circleId: string; circleName: string; today: string; task: Task | null; rows: DashboardRow[]; inviteLink: string
@@ -98,7 +98,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
           </div>
           {task && notDone.length > 0 && <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
             <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 py-3 text-sm font-black text-slate-950"><BellRing className="h-4 w-4" />Nudge {notDone.length} who haven&apos;t done it</button>
-            <a href={whatsappUrl(`Reminder for ${circleName}: today's task is "${task.title}". Please check in on GoalCircle once it's done.`)} target="_blank" rel="noreferrer" aria-label="Send reminder on WhatsApp" className="grid w-12 place-items-center rounded-xl bg-emerald-500 text-white"><MessageCircle className="h-5 w-5" /></a>
+            <a href={whatsappUrl(`Reminder for ${circleName}: today's task is "${task.title}". Please check in on GoalYaar once it's done.`)} target="_blank" rel="noreferrer" aria-label="Send reminder on WhatsApp" className="grid w-12 place-items-center rounded-xl bg-emerald-500 text-white"><MessageCircle className="h-5 w-5" /></a>
           </div>}
           {!task && <p className="mt-4 text-center text-xs text-slate-500">Set today&apos;s task above to start tracking.</p>}
         </section>}
