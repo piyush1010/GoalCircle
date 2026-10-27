@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { Download, Eye, FileText, Paperclip, X } from 'lucide-react'
-import { mediaLimitError, shrinkImage } from '@/lib/media'
+import { mediaLimitError, shrinkImage, toLocalFile } from '@/lib/media'
 import { supabase } from '@/utils/supabase'
 
 /** `downloadable`: false when the mentor marked the file view only. Missing means students can download. */
@@ -78,9 +78,13 @@ export function AttachmentPicker({ files, existing = [], onFilesChange, onRemove
     const room = MAX_FILES - total
     if (allowed.length > room) onError(`You can attach up to ${MAX_FILES} files.`)
     setPreparing(true)
-    const ready = await Promise.all(allowed.slice(0, Math.max(0, room)).map((file) => (file.type.startsWith('image/') ? shrinkImage(file) : Promise.resolve(file))))
+    const ready: File[] = []
+    for (const file of allowed.slice(0, Math.max(0, room))) {
+      try { ready.push(file.type.startsWith('image/') ? await shrinkImage(await toLocalFile(file)) : await toLocalFile(file)) }
+      catch { onError(`“${file.name}” couldn’t be read. If it’s in WhatsApp or Google Drive, download it to your phone first, then attach it.`) }
+    }
     setPreparing(false)
-    onFilesChange([...files, ...ready])
+    if (ready.length) onFilesChange([...files, ...ready])
   }
 
   const toggleNew = (file: File) => { downloadChoice.set(file, !allowsDownload(file)); onFilesChange([...files]) }
