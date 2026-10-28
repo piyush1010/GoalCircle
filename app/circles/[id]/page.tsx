@@ -1,5 +1,7 @@
 'use client'
 
+import { uploadBatchProof } from '@/lib/proof'
+import ProofMedia from '@/components/ProofMedia'
 import ClampedText from '@/components/ClampedText'
 import CircleAvatar from '@/components/CircleAvatar'
 import { confirmAction } from '@/lib/confirm'
@@ -297,11 +299,10 @@ function StudentToday({ circleId, userId, task, checkin, progress, onSaved }: { 
     let mediaUrl = checkin?.media_url ?? null
     let mediaType = checkin?.media_type ?? null
     if (file) {
-      const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || (file.type.startsWith('video/') ? 'mp4' : 'jpg')
-      const path = `${userId}/circle-${circleId}/${crypto.randomUUID()}.${extension}`
-      const { error: uploadError } = await supabase.storage.from('goal-media').upload(path, file, { contentType: file.type, cacheControl: '31536000' })
-      if (uploadError) { setError('Your photo or video could not be uploaded.'); setSaving(false); return }
-      mediaUrl = supabase.storage.from('goal-media').getPublicUrl(path).data.publicUrl
+      // Private: only you, your mentor, and (if you share it) your batch can open it.
+      const uploaded = await uploadBatchProof(userId, circleId, file)
+      if ('error' in uploaded) { setError(uploaded.error); setSaving(false); return }
+      mediaUrl = uploaded.ref
       mediaType = file.type.startsWith('video/') ? 'video' : 'image'
     }
     const row: Checkin = { status, ...(mediaUrl && (shareWithBatch || checkin?.shared) ? { shared: shareWithBatch } : {}), minutes: minutesValue, hours: minutesValue === null ? null : Math.min(24, Math.round(minutesValue / 6) / 10), note: note.trim() || null, media_url: mediaUrl, media_type: mediaType }
@@ -401,7 +402,7 @@ function BatchToday({ progress }: { progress: Progress }) {
     </div>
     {names.length > 0 && <p className="mt-1.5 text-xs text-slate-500">{names.join(', ')}{rest > 0 ? ` and ${rest} more` : ''} {others.length === 1 ? 'has' : 'have'} checked in.</p>}
     {photos.length > 0 && <div className="mt-3 grid grid-cols-3 gap-1.5">
-      {photos.map((person, index) => <div key={index} className="relative aspect-square overflow-hidden rounded-xl bg-slate-200 dark:bg-slate-800"><Image src={person.media_url!} alt={`${person.name}'s proof`} fill unoptimized className="object-cover" /><span className="absolute inset-x-0 bottom-0 truncate bg-black/50 px-1.5 py-0.5 text-[11px] font-semibold text-white">{person.me ? 'You' : person.name.split(' ')[0]}</span></div>)}
+      {photos.map((person, index) => <div key={index} className="relative aspect-square overflow-hidden rounded-xl bg-slate-200 dark:bg-slate-800"><ProofMedia src={person.media_url!} type="image" alt={`${person.name}'s proof`} fill className="object-cover" /><span className="absolute inset-x-0 bottom-0 truncate bg-black/50 px-1.5 py-0.5 text-[11px] font-semibold text-white">{person.me ? 'You' : person.name.split(' ')[0]}</span></div>)}
     </div>}
   </div>
 }
