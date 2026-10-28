@@ -22,14 +22,14 @@ import ThemeToggle from '@/components/ThemeToggle'
 import SignedInRedirect from '@/components/SignedInRedirect'
 
 export const metadata: Metadata = {
-  title: 'GoalCircle — Goals become real when you show up',
+  title: 'GoalYaar — Goals become real when you show up',
   description:
     'Announce your goals, share daily progress, and stay accountable with friends and trusted circles.',
   openGraph: {
-    title: 'GoalCircle — Goals become real when you show up',
+    title: 'GoalYaar — Goals become real when you show up',
     description: 'Set a meaningful goal, share honest progress, and stay accountable with people you trust.',
     url: 'https://goalcircle-ivory.vercel.app',
-    siteName: 'GoalCircle',
+    siteName: 'GoalYaar',
     type: 'website',
   },
 }
@@ -78,11 +78,11 @@ export default function HomePage() {
 
       <header className="relative z-20 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl dark:border-slate-800/80 dark:bg-[#07101f]/75">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5" aria-label="GoalCircle home">
+          <Link href="/" className="flex items-center gap-2.5" aria-label="GoalYaar home">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20">
               <Target className="h-5 w-5" strokeWidth={2.7} />
             </span>
-            <span className="text-lg font-black tracking-[-0.04em]">GoalCircle</span>
+            <span className="text-lg font-black tracking-[-0.04em]">GoalYaar</span>
           </Link>
 
           <nav className="flex items-center gap-2" aria-label="Landing page navigation">
@@ -234,7 +234,7 @@ export default function HomePage() {
           <div className="landing-reveal">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Questions, answered</p>
             <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] sm:text-4xl">Accountability without giving up control.</h2>
-            <p className="mt-4 max-w-lg text-sm font-medium leading-6 text-slate-600 dark:text-slate-400">GoalCircle is designed around intentional sharing. You decide what to share, who sees it, and when a goal stays private.</p>
+            <p className="mt-4 max-w-lg text-sm font-medium leading-6 text-slate-600 dark:text-slate-400">GoalYaar is designed around intentional sharing. You decide what to share, who sees it, and when a goal stays private.</p>
             <Link href="/privacy" className="mt-5 inline-flex items-center gap-2 text-sm font-black text-amber-600 hover:text-amber-500 dark:text-amber-400">Read our privacy approach <ArrowRight className="h-4 w-4" /></Link>
           </div>
           <div className="landing-reveal space-y-3">
@@ -264,7 +264,7 @@ export default function HomePage() {
 
       <footer className="border-t border-slate-200 px-4 py-8 dark:border-slate-800">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
-          <div className="flex items-center gap-2 text-sm font-black"><Target className="h-4 w-4 text-amber-500" /> GoalCircle</div>
+          <div className="flex items-center gap-2 text-sm font-black"><Target className="h-4 w-4 text-amber-500" /> GoalYaar</div>
           <p className="text-xs font-medium text-slate-500">Built for progress, accountability, and people who keep showing up.</p>
           <div className="flex items-center gap-4"><Link href="/privacy" className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white">Privacy</Link><Link href="/login" className="text-xs font-black text-amber-600 hover:text-amber-500 dark:text-amber-400">Sign in</Link></div>
         </div>

@@ -69,7 +69,7 @@ function wrapCalendar(eventBlocks: string[][]) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//GoalCircle//Goal calendar//EN',
+    'PRODID:-//GoalYaar//Goal calendar//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     ...eventBlocks.flat(),
@@ -90,7 +90,7 @@ export function createGoogleCalendarUrl(event: GoalCalendarEvent) {
     action: 'TEMPLATE',
     text: `Goal target: ${event.title}`,
     dates: `${dates.start}/${dates.end}`,
-    details: `Target date for “${event.title}” on GoalCircle.\n\nOpen goal: ${event.url}`,
+    details: `Target date for “${event.title}” on GoalYaar.\n\nOpen goal: ${event.url}`,
   })
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`
@@ -100,12 +100,12 @@ function targetDateEventLines(event: GoalCalendarEvent, stamp: string) {
   const dates = getGoalCalendarDates(event.targetDate)
   return [
     'BEGIN:VEVENT',
-    `UID:${escapeIcsText(event.goalId)}@goalcircle.app`,
+    `UID:${escapeIcsText(event.goalId)}@goalyaar.com`,
     `DTSTAMP:${stamp}`,
     `DTSTART;VALUE=DATE:${dates.start}`,
     `DTEND;VALUE=DATE:${dates.end}`,
     `SUMMARY:${escapeIcsText(`Goal target: ${event.title}`)}`,
-    `DESCRIPTION:${escapeIcsText(`Target date for “${event.title}” on GoalCircle.\n\nOpen goal: ${event.url}`)}`,
+    `DESCRIPTION:${escapeIcsText(`Target date for “${event.title}” on GoalYaar.\n\nOpen goal: ${event.url}`)}`,
     `URL:${escapeIcsText(event.url)}`,
     'STATUS:CONFIRMED',
     'END:VEVENT',
@@ -143,8 +143,8 @@ export function getDailyReminderSchedule(reminder: Pick<DailyReminder, 'time' | 
 
 function reminderText(reminder: DailyReminder) {
   return {
-    summary: `GoalCircle: ${reminder.title}`,
-    details: `Time to work on “${reminder.title}”. Check in on GoalCircle to keep your streak.\n\nOpen goal: ${reminder.url}`,
+    summary: `GoalYaar: ${reminder.title}`,
+    details: `Time to work on “${reminder.title}”. Check in on GoalYaar to keep your streak.\n\nOpen goal: ${reminder.url}`,
   }
 }
 
@@ -166,7 +166,7 @@ function dailyReminderEventLines(reminder: DailyReminder, stamp: string, now: Da
   const { summary, details } = reminderText(reminder)
   return [
     'BEGIN:VEVENT',
-    `UID:${escapeIcsText(reminder.goalId)}-daily@goalcircle.app`,
+    `UID:${escapeIcsText(reminder.goalId)}-daily@goalyaar.com`,
     `DTSTAMP:${stamp}`,
     `DTSTART:${toCalendarDateTime(start)}`,
     `DTEND:${toCalendarDateTime(end)}`,

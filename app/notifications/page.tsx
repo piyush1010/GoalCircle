@@ -10,7 +10,7 @@ interface NotificationItem {
   id: string
   recipient_id: string
   actor_id: string | null
-  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap' | 'goal_collaboration_invite' | 'goal_collaboration_accepted' | 'circle_task' | 'circle_post'
+  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap' | 'goal_collaboration_invite' | 'goal_collaboration_accepted' | 'circle_task' | 'circle_post' | 'circle_leave'
   post_id: string | null
   circle_id: string | null
   goal_id: string | null
@@ -36,10 +36,11 @@ const details = {
   goal_collaboration_accepted: { icon: Check, title: 'Collaborator joined', copy: 'accepted your shared-goal invitation.' },
   circle_task: { icon: CheckCheck, title: 'New task from your mentor', copy: 'set a new task in your circle.' },
   circle_post: { icon: UsersRound, title: 'New notice in your circle', copy: 'posted a new notice in your circle.' },
+  circle_leave: { icon: UsersRound, title: 'A student left your circle', copy: 'left your circle.' },
 }
 
 function NotificationIcon({ kind }: { kind: NotificationItem['kind'] }) {
-  const Icon = details[kind].icon
+  const Icon = (details[kind] ?? details.nudge).icon
   return <Icon className="h-5 w-5 text-amber-500" />
 }
 
@@ -75,7 +76,7 @@ export default function NotificationsPage() {
     const collaborations = (collaborationData || []) as unknown as CollaborationRequest[]
     const actorIds = [...new Set([...rows.flatMap((item) => item.actor_id ? [item.actor_id] : []), ...requests.map((item) => item.requester_id), ...collaborations.map((item) => item.invited_by)])]
     const { data: profiles } = actorIds.length ? await supabase.from('profiles').select('id,full_name,username').in('id', actorIds) : { data: [] }
-    setActorNames(Object.fromEntries(((profiles || []) as Array<Record<string, unknown>>).map((profile) => [String(profile.id), String(profile.full_name || profile.username || 'A GoalCircle friend')])))
+    setActorNames(Object.fromEntries(((profiles || []) as Array<Record<string, unknown>>).map((profile) => [String(profile.id), String(profile.full_name || profile.username || 'A GoalYaar friend')])))
     setPartnerRequests(requests); setCollaborationRequests(collaborations); setNotifications(rows); setLoading(false)
   }, [router])
 
@@ -126,8 +127,8 @@ export default function NotificationsPage() {
       <div className="space-y-3">
         {loading && [1, 2, 3].map((item) => <div key={item} className="h-24 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}
         {!loading && error && <div className="rounded-2xl border border-rose-300 bg-white p-6 text-center dark:border-rose-900 dark:bg-slate-900"><p className="text-sm font-black">Could not load notifications</p><p className="mt-1 text-xs text-slate-500">{error}</p><button onClick={() => void loadNotifications()} className="mt-4 rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-slate-950">Retry</button></div>}
-        {!loading && partnerRequests.map((request) => <article key={request.id} className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 dark:bg-amber-500/10"><div className="flex items-start gap-3"><span className="rounded-xl bg-white p-2 dark:bg-slate-950"><HeartHandshake className="h-5 w-5 text-amber-500" /></span><div className="min-w-0 flex-1"><h3 className="text-xs font-black">Accountability invitation</h3><p className="mt-0.5 text-xs text-slate-500">{actorNames[request.requester_id] || 'A GoalCircle member'} wants to support your consistency.</p></div></div><div className="mt-3 grid grid-cols-2 gap-2"><button onClick={() => void respondToPartnerRequest(request, 'accepted')} className="inline-flex items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-xs font-black text-slate-950"><Check className="h-3.5 w-3.5" />Accept</button><button onClick={() => void respondToPartnerRequest(request, 'declined')} className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 py-2 text-xs font-black dark:border-slate-700"><X className="h-3.5 w-3.5" />Decline</button></div></article>)}
-        {!loading && collaborationRequests.map((request) => <article key={request.goal_id} className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 dark:bg-amber-500/10"><div className="flex items-start gap-3"><span className="rounded-xl bg-white p-2 dark:bg-slate-950"><UsersRound className="h-5 w-5 text-amber-500" /></span><div className="min-w-0 flex-1"><h3 className="text-xs font-black">Join a shared goal</h3><p className="mt-0.5 text-xs text-slate-500">{actorNames[request.invited_by] || 'A GoalCircle member'} invited you to collaborate on <span className="font-bold text-slate-700 dark:text-slate-200">{request.goal?.title || 'a goal'}</span>. You can add check-ins, while the owner keeps editing control.</p></div></div><div className="mt-3 grid grid-cols-2 gap-2"><button onClick={() => void respondToCollaboration(request, 'accepted')} className="inline-flex items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-xs font-black text-slate-950"><Check className="h-3.5 w-3.5" />Accept</button><button onClick={() => void respondToCollaboration(request, 'declined')} className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 py-2 text-xs font-black dark:border-slate-700"><X className="h-3.5 w-3.5" />Decline</button></div></article>)}
+        {!loading && partnerRequests.map((request) => <article key={request.id} className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 dark:bg-amber-500/10"><div className="flex items-start gap-3"><span className="rounded-xl bg-white p-2 dark:bg-slate-950"><HeartHandshake className="h-5 w-5 text-amber-500" /></span><div className="min-w-0 flex-1"><h3 className="text-xs font-black">Accountability invitation</h3><p className="mt-0.5 text-xs text-slate-500">{actorNames[request.requester_id] || 'A GoalYaar member'} wants to support your consistency.</p></div></div><div className="mt-3 grid grid-cols-2 gap-2"><button onClick={() => void respondToPartnerRequest(request, 'accepted')} className="inline-flex items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-xs font-black text-slate-950"><Check className="h-3.5 w-3.5" />Accept</button><button onClick={() => void respondToPartnerRequest(request, 'declined')} className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 py-2 text-xs font-black dark:border-slate-700"><X className="h-3.5 w-3.5" />Decline</button></div></article>)}
+        {!loading && collaborationRequests.map((request) => <article key={request.goal_id} className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 dark:bg-amber-500/10"><div className="flex items-start gap-3"><span className="rounded-xl bg-white p-2 dark:bg-slate-950"><UsersRound className="h-5 w-5 text-amber-500" /></span><div className="min-w-0 flex-1"><h3 className="text-xs font-black">Join a shared goal</h3><p className="mt-0.5 text-xs text-slate-500">{actorNames[request.invited_by] || 'A GoalYaar member'} invited you to collaborate on <span className="font-bold text-slate-700 dark:text-slate-200">{request.goal?.title || 'a goal'}</span>. You can add check-ins, while the owner keeps editing control.</p></div></div><div className="mt-3 grid grid-cols-2 gap-2"><button onClick={() => void respondToCollaboration(request, 'accepted')} className="inline-flex items-center justify-center gap-1 rounded-xl bg-amber-500 py-2 text-xs font-black text-slate-950"><Check className="h-3.5 w-3.5" />Accept</button><button onClick={() => void respondToCollaboration(request, 'declined')} className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 py-2 text-xs font-black dark:border-slate-700"><X className="h-3.5 w-3.5" />Decline</button></div></article>)}
         {!loading && !error && notifications.length === 0 && partnerRequests.length === 0 && collaborationRequests.length === 0 && <div className="rounded-3xl border border-dashed border-slate-300 p-9 text-center dark:border-slate-700"><Bell className="mx-auto mb-3 h-8 w-8 text-amber-500" /><h2 className="font-black">All quiet for now</h2><p className="mt-1 text-xs text-slate-500">Boosts, comments, follows, nudges, and circle invitations will appear here.</p></div>}
         {notifications.filter((item) => item.kind !== 'goal_collaboration_invite' || !collaborationRequests.some((request) => request.goal_id === item.goal_id)).map((item) => (
           <Link
@@ -146,14 +147,14 @@ export default function NotificationsPage() {
             <div className="flex-1 space-y-0.5">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-slate-900 dark:text-white">
-                  {details[item.kind].title}
+                  {(details[item.kind] ?? details.nudge).title}
                 </h3>
                 <span className="text-[10px] text-slate-400 font-medium">
                   {relativeTime(item.created_at)}
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-snug">
-                {item.message || `${item.actor_id ? actorNames[item.actor_id] || 'A GoalCircle friend' : 'GoalCircle'} ${details[item.kind].copy}`}
+                {item.message || `${item.actor_id ? actorNames[item.actor_id] || 'A GoalYaar friend' : 'GoalYaar'} ${(details[item.kind] ?? details.nudge).copy}`}
               </p>
             </div>
           </Link>

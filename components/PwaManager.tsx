@@ -7,7 +7,7 @@ export default function PwaManager() {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).catch((error) => {
-        console.warn('GoalCircle service worker registration failed:', error)
+        console.warn('GoalYaar service worker registration failed:', error)
       })
     }
 

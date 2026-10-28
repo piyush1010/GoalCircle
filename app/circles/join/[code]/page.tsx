@@ -65,7 +65,7 @@ export default function JoinCirclePage() {
         {loading && <div className="mx-auto h-24 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />}
         {!loading && signedOut && <>
           <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-amber-500/10 text-amber-500"><Users className="h-7 w-7" /></span>
-          <p className="mt-4 text-sm font-semibold text-slate-600 dark:text-slate-300">{preview ? `${preview.owner_name} invited you to join` : 'You’re invited to join a batch on GoalCircle'}</p>
+          <p className="mt-4 text-sm font-semibold text-slate-600 dark:text-slate-300">{preview ? `${preview.owner_name} invited you to join` : 'You’re invited to join a batch on GoalYaar'}</p>
           {preview && <h1 className="mt-1 text-2xl font-black tracking-tight">{preview.name}</h1>}
           {preview && <p className="mt-2 flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-300">{examLabel(preview.exam) && <span className="rounded-md bg-amber-500/10 px-1.5 py-0.5 font-bold text-amber-700 dark:text-amber-300">{examLabel(preview.exam)}</span>}<span>{preview.member_count} {preview.member_count === 1 ? 'member' : 'members'}</span></p>}
           <ul className="mx-auto mt-5 max-w-xs space-y-2 text-left text-sm text-slate-700 dark:text-slate-300">

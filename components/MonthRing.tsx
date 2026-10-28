@@ -56,7 +56,7 @@ export default function MonthRing({ days, monthName }: { days: MonthDay[]; month
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{picked.future ? 'Coming up' : picked.active ? `${picked.checkins ? `${picked.checkins} check-in${picked.checkins > 1 ? 's' : ''}` : ''}${picked.checkins && picked.minutes ? ' · ' : ''}${picked.minutes ? `${picked.minutes} min` : ''}` : 'Missed'}</span>
           </> : <>
             <span className="text-4xl font-black leading-none">{shown}</span>
-            <span className="mt-1 text-sm font-bold text-slate-600 dark:text-slate-300">of {sofar} days</span>
+            <span className="mt-1 text-sm font-bold text-slate-600 dark:text-slate-300">of {sofar} days so far</span>
             <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{monthName}</span>
           </>}
         </div>

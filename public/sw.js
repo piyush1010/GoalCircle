@@ -33,8 +33,8 @@ self.addEventListener('push', (event) => {
   } catch {
     data = { body: event.data.text() }
   }
-  event.waitUntil(self.registration.showNotification(data.title || 'GoalCircle', {
-    body: data.body || 'You have a new GoalCircle update.',
+  event.waitUntil(self.registration.showNotification(data.title || 'GoalYaar', {
+    body: data.body || 'You have a new GoalYaar update.',
     icon: '/goalcircle-icon-192.png',
     badge: '/goalcircle-icon-192.png',
     tag: data.tag || 'goalcircle-update',

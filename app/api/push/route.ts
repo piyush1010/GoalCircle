@@ -23,12 +23,13 @@ function compose({ notification: n, actor, circle }: PushRequest) {
     nudge: n.circle_id ? `Reminder from ${where} 👋` : `${who} nudged you 👋`,
     circle_task: `New task in ${where}`,
     circle_post: `New notice in ${where}`,
+    circle_leave: `A student left ${where}`,
     accountability_invite: `${who} wants to be your accountability partner`,
     challenge_invite: `${who} challenged you`,
     goal_collaboration_invite: `${who} invited you to a shared goal`,
     goal_collaboration_accepted: `${who} joined your shared goal`,
     streak: 'Keep your streak alive 🔥',
-    weekly_recap: 'Your week on GoalCircle',
+    weekly_recap: 'Your week on GoalYaar',
   }
   const fallbackBody: Record<string, string> = {
     boost: 'Tap to see it.', comment: 'Tap to read and reply.', follow: 'Tap to see their profile.',
@@ -40,8 +41,8 @@ function compose({ notification: n, actor, circle }: PushRequest) {
     : n.circle_id ? `/circles/${n.circle_id}`
     : '/notifications'
   return {
-    title: titles[n.kind] || 'GoalCircle',
-    body: n.message ? (n.kind === 'accountability_invite' || n.kind.startsWith('goal_collaboration') ? `${who} ${n.message}` : n.message) : (fallbackBody[n.kind] || 'Open GoalCircle to see it.'),
+    title: titles[n.kind] || 'GoalYaar',
+    body: n.message ? (n.kind === 'accountability_invite' || n.kind.startsWith('goal_collaboration') ? `${who} ${n.message}` : n.message) : (fallbackBody[n.kind] || 'Open GoalYaar to see it.'),
     url,
     // One notification per circle or post, so 3 nudges don't stack into 3 alerts.
     tag: `${n.kind}-${n.circle_id || n.post_id || n.goal_id || n.id}`,

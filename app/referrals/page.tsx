@@ -8,7 +8,7 @@ export default function ReferralsPage() {
   const referralCode = "GOALCIRCLE-ELITE-2026";
 
   function copyCode() {
-    navigator.clipboard.writeText(`https://goalcircle.app/signup?ref=${referralCode}`);
+    navigator.clipboard.writeText(`https://goalyaar.com/signup?ref=${referralCode}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -31,7 +31,7 @@ export default function ReferralsPage() {
           <input
             type="text"
             readOnly
-            value={`https://goalcircle.app/signup?ref=${referralCode}`}
+            value={`https://goalyaar.com/signup?ref=${referralCode}`}
             className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-700 dark:text-slate-300"
           />
           <button

@@ -101,7 +101,7 @@ const INITIAL_LEADERBOARD: LeaderboardUser[] = [
     handle: '@you',
     avatar: 'YO',
     category: 'work',
-    categoryLabel: 'GoalCircle Dev',
+    categoryLabel: 'GoalYaar Dev',
     streakDays: 14,
     totalHours: 42,
     cheers: 39,

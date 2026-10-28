@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'GoalCircle — Social accountability for meaningful goals',
-    short_name: 'GoalCircle',
+    name: 'GoalYaar — Social accountability for meaningful goals',
+    short_name: 'GoalYaar',
     description: 'Set meaningful goals, share progress and stay accountable with people who want to see you win.',
     start_url: '/dashboard',
     scope: '/',
