@@ -236,7 +236,7 @@ export default function TodayPage() {
               <CircleAvatar name={batch.name} url={batch.avatarUrl} size={40} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">{batch.task ? `From your mentor · ${batch.name}` : batch.name}</span>
-                <span className="block truncate text-base font-bold">{batch.task ?? 'No task from your mentor today'}</span>
+                <span className="line-clamp-2 break-words text-base font-bold leading-snug">{batch.task ?? 'No task from your mentor today'}</span>
               </span>
               {batch.task && (batch.done
                 ? batch.status === 'missed' ? <span className="shrink-0 text-sm font-semibold text-slate-500">Missed</span> : <span className={doneTag}><CheckCircle2 className="h-4 w-4" />{batch.status === 'partial' ? 'Partly' : 'Done'}</span>
@@ -251,8 +251,8 @@ export default function TodayPage() {
               const done = doneToday.has(goal.id) || (weekly && weekMet(goal))
               return <article key={goal.id} className={row}>
                 <div className="min-w-0 flex-1">
-                  <Link href={`/goal/${goal.id}`} className={`block truncate text-base font-bold ${done ? 'text-slate-500' : ''}`}>{goal.title}</Link>
-                  <p className="mt-0.5 truncate text-sm text-slate-500">
+                  <Link href={`/goal/${goal.id}`} className={`line-clamp-2 break-words text-base font-bold leading-snug ${done ? 'text-slate-500' : ''}`}>{goal.title}</Link>
+                  <p className="mt-0.5 line-clamp-2 text-sm text-slate-500">
                     {once ? 'One-time goal'
                       : weekly ? `${goal.times_per_week} times a week · ${Math.min(daysThisWeek, goal.times_per_week || 1)} of ${goal.times_per_week}`
                       : `Every day · ${goal.current_streak || 0}-day streak`}
@@ -277,8 +277,8 @@ export default function TodayPage() {
           {mentorBatches.map((batch) => <Link key={batch.id} href={`/circles/${batch.id}`} className={`${row} transition hover:bg-slate-50 dark:hover:bg-slate-800/50`}>
             <CircleAvatar name={batch.name} url={batch.avatarUrl} size={40} />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-base font-bold">{batch.name}</span>
-              <span className="block truncate text-sm text-slate-500">{batch.task ? `Today: ${batch.task}` : 'No task posted today'}</span>
+              <span className="line-clamp-2 break-words text-base font-bold leading-snug">{batch.name}</span>
+              <span className="mt-0.5 line-clamp-2 text-sm text-slate-500">{batch.task ? `Today: ${batch.task}` : 'No task posted today'}</span>
             </span>
             <span className={batch.task ? ghostButton : inkButton}>{batch.task ? 'Students' : 'Post task'}</span>
           </Link>)}

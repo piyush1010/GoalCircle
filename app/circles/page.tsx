@@ -197,7 +197,7 @@ function TodayLine({ circle }: { circle: CircleView }) {
   return <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-3 dark:border-slate-800">
     <div className="min-w-0 flex-1">
       <p className="text-xs font-semibold text-slate-500">Today</p>
-      <p className="truncate text-sm font-semibold">{today.task ?? (circle.owned ? 'No task posted yet' : 'No task from your mentor yet')}</p>
+      <p className="line-clamp-2 text-sm font-semibold">{today.task ?? (circle.owned ? 'No task posted yet' : 'No task from your mentor yet')}</p>
       {!circle.owned && today.task && today.members ? <p className="text-xs text-slate-500">{today.checkedIn} of {today.members} checked in</p> : null}
     </div>
     {right}
