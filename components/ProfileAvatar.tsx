@@ -9,7 +9,7 @@ export const AVATAR_PRESETS = [
   { id: 'sprout', label: 'Teal', glyph: '', colors: ['#DFEAE6', '#1F5A4C'] },
   { id: 'nova', label: 'Plum', glyph: '', colors: ['#EAE2EC', '#5B3866'] },
   { id: 'summit', label: 'Clay', glyph: '', colors: ['#ECE3E0', '#7A3B2C'] },
-  { id: 'wave', label: 'Ink', glyph: '', colors: ['#121212', '#FAFAF7'] },
+  { id: 'wave', label: 'Ink', glyph: '', colors: ['#101B2D', '#FAFAF7'] },
   { id: 'echo', label: 'Olive', glyph: '', colors: ['#E7E9DD', '#4D5626'] },
   { id: 'spark', label: 'Sand', glyph: '', colors: ['#F1ECE2', '#5C5C57'] },
 ] as const

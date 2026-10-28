@@ -10,7 +10,7 @@ import { supabase } from '@/utils/supabase'
 
 interface Notice { id: string; body: string | null; media_url: string | null; media_type: 'image' | 'video' | null; pinned: boolean; created_at: string; attachments: Attachment[] }
 
-const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#16181B]'
+const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101B2D]'
 
 export default function CircleNotices({ circleId, userId, isAdmin }: { circleId: string; userId: string; isAdmin: boolean }) {
   const [notices, setNotices] = useState<Notice[]>([])
@@ -64,7 +64,7 @@ export default function CircleNotices({ circleId, userId, isAdmin }: { circleId:
       </div>
 
       {isAdmin && composing && <div className={card}>
-        <textarea value={body} onChange={(event) => setBody(event.target.value)} rows={3} maxLength={2000} autoFocus placeholder="e.g. Mock test this Sunday at 9 AM. Notes attached." className="max-h-72 min-h-[5rem] w-full resize-none [field-sizing:content] rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-amber-500 dark:border-slate-700 dark:bg-[#0E0F11]" />
+        <textarea value={body} onChange={(event) => setBody(event.target.value)} rows={3} maxLength={2000} autoFocus placeholder="e.g. Mock test this Sunday at 9 AM. Notes attached." className="max-h-72 min-h-[5rem] w-full resize-none [field-sizing:content] rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-amber-500 dark:border-slate-700 dark:bg-[#07101F]" />
         <div className="mt-2"><AttachmentPicker files={files} onFilesChange={setFiles} onError={setError} /></div>
         <div className="mt-3 flex items-center gap-2">
           <button type="button" onClick={() => setPinned((on) => !on)} aria-pressed={pinned} className={`inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold ${pinned ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 text-slate-500 dark:border-slate-700'}`}><Pin className="h-3.5 w-3.5" />Pin</button>

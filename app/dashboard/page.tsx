@@ -4,7 +4,7 @@ import CircleAvatar from '@/components/CircleAvatar'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, ChevronDown, Plus, Trash2 } from 'lucide-react'
+import { CalendarCheck2, CheckCircle2, ChevronDown, Flame, Plus, Timer, Trash2 } from 'lucide-react'
 import GoalieMessage from '@/components/GoalieMessage'
 import InstallNudge from '@/components/InstallNudge'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
@@ -175,7 +175,7 @@ export default function TodayPage() {
   if (loading) {
     return <main className="mx-auto min-h-screen max-w-xl space-y-4 px-4 pb-28 pt-5" aria-busy="true">
       <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-      <div className="h-36 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+      <div className="h-48 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
       {[1, 2].map((item) => <div key={item} className="h-20 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}
     </main>
   }
@@ -183,10 +183,12 @@ export default function TodayPage() {
   const shownDays = month.filter((day) => day.active).length
   const soFar = month.filter((day) => !day.future).length
   const weekTime = weekMinutes >= 60 ? `${Math.floor(weekMinutes / 60)} h ${weekMinutes % 60 ? `${weekMinutes % 60} m` : ''}`.trim() : `${weekMinutes} min`
-  const row = 'flex items-center gap-3 px-4 py-3.5'
-  const ghostButton = 'shrink-0 rounded-xl border border-slate-300 px-3.5 py-2 text-sm font-semibold dark:border-slate-600'
-  const inkButton = 'shrink-0 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white dark:bg-slate-50 dark:text-slate-900'
-  const doneTag = 'inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-amber-700 dark:text-amber-400'
+  const row = 'flex items-center gap-3 px-4 py-3'
+  const ghostButton = 'shrink-0 rounded-xl border border-slate-300 px-3.5 py-2 text-sm font-bold dark:border-slate-600'
+  const inkButton = 'shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 shadow-sm transition hover:bg-amber-400 active:scale-95'
+  const doneTag = 'inline-flex shrink-0 items-center gap-1 rounded-lg bg-emerald-500/10 px-2.5 py-1.5 text-sm font-bold text-emerald-700 dark:text-emerald-400'
+  const card = 'rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900'
+  const todayPct = totalDue ? Math.round((totalDone / totalDue) * 100) : 0
   const studentBatches = batches.filter((batch) => !batch.admin)
   const mentorBatches = batches.filter((batch) => batch.admin)
 
@@ -194,39 +196,47 @@ export default function TodayPage() {
     <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-6">
       <GuideTour name="welcome" steps={WELCOME_TOUR} />
 
-      <header className="mb-5">
-        <p className="text-sm font-medium text-slate-500">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-        <h1 className="mt-1 text-[26px] font-semibold leading-tight tracking-tight">{greeting()}{firstName ? `, ${firstName}` : ''}</h1>
-        <p className="mt-1 text-base text-slate-500">{totalDue === 0 ? 'Nothing due yet today.' : totalDone === totalDue ? 'All done for today.' : `${totalDone} of ${totalDue} done today`}</p>
+      <header className="mb-4">
+        <p className="text-sm font-semibold text-slate-500">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+        <h1 className="mt-0.5 text-[26px] font-extrabold leading-tight tracking-tight">{greeting()}{firstName ? `, ${firstName}` : ''}</h1>
       </header>
 
       {error && <div role="alert" className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"><span>{error}</span><button onClick={() => void load()} className="shrink-0 font-bold underline">Retry</button></div>}
 
-      {/* Showing up, day after day: the ring plus three numbers, as plain text */}
-      <section data-tour="today-ring" className="flex items-center gap-5 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <MonthRing days={month} monthName={monthName} compact />
-        <div className="min-w-0 flex-1">
-          <p className="text-3xl font-semibold leading-none tracking-tight tabular-nums">{shownDays}<span className="text-base font-medium text-slate-500"> / {soFar} days</span></p>
-          <p className="mt-1 text-sm text-slate-500">showed up in {monthName}</p>
-          <div className="my-3 h-px bg-slate-200 dark:bg-slate-800" />
-          <p className="text-sm"><span className="font-semibold">{dailyStreak}-day</span> <span className="text-slate-500">streak</span></p>
-          <p className="mt-0.5 text-sm"><span className="font-semibold">{weekTime}</span> <span className="text-slate-500">this week</span></p>
+      {/* Today's progress and consistency, at a glance */}
+      <section data-tour="today-ring" className={`${card} p-4`}>
+        <div className="flex items-center gap-4">
+          <MonthRing days={month} monthName={monthName} compact />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Today</p>
+            <p className="mt-0.5 text-2xl font-extrabold leading-tight tracking-tight tabular-nums">
+              {totalDue === 0 ? 'Nothing due yet' : totalDone === totalDue ? 'All done' : <>{totalDone}<span className="text-base font-semibold text-slate-500"> of {totalDue} done</span></>}
+            </p>
+            {totalDue > 0 && <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" role="progressbar" aria-valuenow={todayPct} aria-valuemin={0} aria-valuemax={100} aria-label="Done today">
+              <div className={`h-full rounded-full transition-[width] duration-500 ${totalDone === totalDue ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${Math.max(todayPct, 4)}%` }} />
+            </div>}
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><Flame className="h-4 w-4 text-orange-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{dailyStreak}</p><p className="mt-1 text-xs font-semibold text-slate-500">day streak</p></div>
+          <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><CalendarCheck2 className="h-4 w-4 text-emerald-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{shownDays}<span className="text-sm font-semibold text-slate-500">/{soFar}</span></p><p className="mt-1 text-xs font-semibold text-slate-500">days in {monthName.slice(0, 3)}</p></div>
+          <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><Timer className="h-4 w-4 text-sky-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{weekTime}</p><p className="mt-1 text-xs font-semibold text-slate-500">this week</p></div>
         </div>
       </section>
 
       <InstallNudge />
 
       {/* Everything to do today, in one list: the mentor's task first, then your goals */}
-      <section data-tour="today-checkin" className="mt-6">
-        <div className="mb-2 flex items-baseline justify-between"><h2 className="text-lg font-semibold">Today</h2><Link href="/create-goal" className="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white"><Plus className="h-4 w-4" />New goal</Link></div>
+      <section data-tour="today-checkin" className="mt-5">
+        <div className="mb-2 flex items-baseline justify-between"><h2 className="text-lg font-extrabold">Today</h2><Link href="/create-goal" className="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white"><Plus className="h-4 w-4" />New goal</Link></div>
         {goals.length === 0 && batches.length === 0
           ? <GoalieMessage title="Your next streak starts here" message="Choose one small thing you can do every day. I'll help you keep going." actionLabel="Create a goal" href="/create-goal" />
-          : <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
+          : <div className={`divide-y divide-slate-100 overflow-hidden dark:divide-slate-800 ${card}`}>
             {studentBatches.map((batch) => <Link key={batch.id} href={`/circles/${batch.id}`} className={`${row} transition hover:bg-slate-50 dark:hover:bg-slate-800/50`}>
               <CircleAvatar name={batch.name} url={batch.avatarUrl} size={40} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">{batch.task ? `From your mentor · ${batch.name}` : batch.name}</span>
-                <span className="block truncate text-base font-semibold">{batch.task ?? 'No task from your mentor today'}</span>
+                <span className="block truncate text-base font-bold">{batch.task ?? 'No task from your mentor today'}</span>
               </span>
               {batch.task && (batch.done
                 ? batch.status === 'missed' ? <span className="shrink-0 text-sm font-semibold text-slate-500">Missed</span> : <span className={doneTag}><CheckCircle2 className="h-4 w-4" />{batch.status === 'partial' ? 'Partly' : 'Done'}</span>
@@ -241,7 +251,7 @@ export default function TodayPage() {
               const done = doneToday.has(goal.id) || (weekly && weekMet(goal))
               return <article key={goal.id} className={row}>
                 <div className="min-w-0 flex-1">
-                  <Link href={`/goal/${goal.id}`} className={`block truncate text-base font-semibold ${done ? 'text-slate-500' : ''}`}>{goal.title}</Link>
+                  <Link href={`/goal/${goal.id}`} className={`block truncate text-base font-bold ${done ? 'text-slate-500' : ''}`}>{goal.title}</Link>
                   <p className="mt-0.5 truncate text-sm text-slate-500">
                     {once ? 'One-time goal'
                       : weekly ? `${goal.times_per_week} times a week · ${Math.min(daysThisWeek, goal.times_per_week || 1)} of ${goal.times_per_week}`
@@ -261,13 +271,13 @@ export default function TodayPage() {
         {finishedOnce > 0 && <p className="mt-2 px-1 text-sm text-slate-500">{finishedOnce} one-time goal{finishedOnce > 1 ? 's' : ''} completed</p>}
       </section>
 
-      {mentorBatches.length > 0 && <section className="mt-6">
-        <h2 className="mb-2 text-lg font-semibold">{mentorBatches.length === 1 ? 'Your batch' : 'Your batches'}</h2>
-        <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
+      {mentorBatches.length > 0 && <section className="mt-5">
+        <h2 className="mb-2 text-lg font-extrabold">{mentorBatches.length === 1 ? 'Your batch' : 'Your batches'}</h2>
+        <div className={`divide-y divide-slate-100 overflow-hidden dark:divide-slate-800 ${card}`}>
           {mentorBatches.map((batch) => <Link key={batch.id} href={`/circles/${batch.id}`} className={`${row} transition hover:bg-slate-50 dark:hover:bg-slate-800/50`}>
             <CircleAvatar name={batch.name} url={batch.avatarUrl} size={40} />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-base font-semibold">{batch.name}</span>
+              <span className="block truncate text-base font-bold">{batch.name}</span>
               <span className="block truncate text-sm text-slate-500">{batch.task ? `Today: ${batch.task}` : 'No task posted today'}</span>
             </span>
             <span className={batch.task ? ghostButton : inkButton}>{batch.task ? 'Students' : 'Post task'}</span>
@@ -275,8 +285,8 @@ export default function TodayPage() {
         </div>
       </section>}
 
-      {userId && <section className="mt-6">
-        <button type="button" onClick={() => setStepsOpen((open) => !open)} aria-expanded={stepsOpen} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-left text-base font-semibold dark:border-slate-800 dark:bg-slate-900">
+      {userId && <section className="mt-5">
+        <button type="button" onClick={() => setStepsOpen((open) => !open)} aria-expanded={stepsOpen} className={`flex w-full items-center justify-between px-4 py-3 text-left text-base font-bold ${card}`}>
           Small steps for today <ChevronDown className={`h-5 w-5 text-slate-400 transition ${stepsOpen ? 'rotate-180' : ''}`} />
         </button>
         {stepsOpen && <div className="mt-2"><TodoWidget userId={userId} /></div>}

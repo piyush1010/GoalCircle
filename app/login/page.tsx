@@ -95,9 +95,9 @@ function AuthForm() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl md:p-8 dark:border-slate-700/70 dark:bg-[#16181B]">
+    <div className="w-full max-w-md space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl md:p-8 dark:border-slate-700/70 dark:bg-[#101B2D]">
       {/* TABS FOR CLEAR SIGN IN / SIGN UP SELECTION */}
-      <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-slate-200 bg-slate-100 p-1.5 dark:border-slate-800 dark:bg-[#0E0F11]" aria-label="Choose authentication mode">
+      <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-slate-200 bg-slate-100 p-1.5 dark:border-slate-800 dark:bg-[#07101F]" aria-label="Choose authentication mode">
         <button
           type="button"
           aria-pressed={mode === 'signin'}
@@ -188,7 +188,7 @@ function AuthForm() {
 
       <div className="relative flex items-center justify-center">
         <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
-        <span className="absolute bg-white px-3 text-xs font-bold uppercase text-slate-500 dark:bg-[#16181B]">
+        <span className="absolute bg-white px-3 text-xs font-bold uppercase text-slate-500 dark:bg-[#101B2D]">
           or email
         </span>
       </div>
@@ -205,7 +205,7 @@ function AuthForm() {
               placeholder="Your name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#0E0F11] dark:text-white"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101F] dark:text-white"
               required={mode === 'signup'}
             />
           </div>
@@ -220,7 +220,7 @@ function AuthForm() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#0E0F11] dark:text-white"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101F] dark:text-white"
             required
           />
         </div>
@@ -234,7 +234,7 @@ function AuthForm() {
             placeholder={mode === 'signup' ? 'At least 8 characters' : 'Your password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#0E0F11] dark:text-white"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101F] dark:text-white"
             required
             minLength={mode === 'signup' ? 8 : undefined}
           />
@@ -244,7 +244,7 @@ function AuthForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2.5 bg-slate-900 dark:bg-slate-50 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-bold text-xs rounded-xl transition disabled:opacity-50 mt-2"
+          className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm font-bold text-sm rounded-xl transition disabled:opacity-50 mt-2"
         >
           {loading ? 'Processing...' : mode === 'signup' ? 'Create account' : 'Sign in'}
         </button>
@@ -273,7 +273,7 @@ function AuthForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-900 dark:bg-[#0E0F11] dark:text-slate-100">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 text-slate-900 dark:bg-[#07101F] dark:text-slate-100">
       <Suspense
         fallback={
           <div className="text-xs text-slate-500 font-semibold animate-pulse">

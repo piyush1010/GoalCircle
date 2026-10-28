@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'goalcircle-shell-v2'
+const CACHE_VERSION = 'goalcircle-shell-v3'
 const SHELL_ASSETS = ['/', '/login', '/goalyaar-icon-192.png', '/goalyaar-icon-512.png']
 
 self.addEventListener('install', (event) => {

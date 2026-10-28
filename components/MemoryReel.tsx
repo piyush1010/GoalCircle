@@ -31,7 +31,7 @@ export default function MemoryReel({ habitTitle, streakCount, userName = 'GoalYa
       {/* Milestone Card (Downloadable target) */}
       <div
         ref={cardRef}
-        className="w-full max-w-sm p-6 rounded-2xl bg-[#121212] text-white border border-white/20 relative overflow-hidden flex flex-col justify-between min-h-[220px]"
+        className="w-full max-w-sm p-6 rounded-2xl bg-[#101B2D] text-white border border-white/20 relative overflow-hidden flex flex-col justify-between min-h-[220px]"
       >
         {/* Background Decorative Circles */}
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-xl" />

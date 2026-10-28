@@ -30,13 +30,13 @@ const visibilityOptions = [
   { value: 'private' as const, label: 'Private', description: 'Only you can see it. Nothing is posted.', icon: LockKeyhole },
 ]
 
-const sectionClass = 'rounded-3xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-700/70 dark:bg-[#16181B]'
+const sectionClass = 'rounded-3xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-700/70 dark:bg-[#101B2D]'
 const headingClass = 'block text-sm font-bold text-slate-900 dark:text-white'
-const fieldClass = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#0E0F11]'
+const fieldClass = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#07101F]'
 const calendarButtonClass = 'mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-50 py-2.5 text-sm font-bold text-white dark:text-slate-900 transition hover:bg-slate-800 dark:hover:bg-white'
 const rowClass = 'flex items-center justify-between gap-4 py-4'
 const hintClass = 'mt-0.5 text-xs text-slate-500 dark:text-slate-400'
-const compactFieldClass = 'rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold outline-none transition [color-scheme:light] focus:border-amber-500 dark:border-slate-700 dark:bg-[#0E0F11] dark:[color-scheme:dark]'
+const compactFieldClass = 'rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold outline-none transition [color-scheme:light] focus:border-amber-500 dark:border-slate-700 dark:bg-[#07101F] dark:[color-scheme:dark]'
 const uploadClass = 'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 px-3 py-6 text-center text-xs font-bold text-slate-600 transition hover:border-amber-500 dark:border-slate-700 dark:text-slate-300'
 
 const templates = [
@@ -253,7 +253,7 @@ export default function CreateGoalPage() {
   return (
     <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4">
       <header className="mb-6 flex items-center gap-3">
-        <button type="button" onClick={() => router.back()} aria-label="Go back" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 bg-white transition hover:border-amber-500 dark:border-slate-700 dark:bg-[#16181B]"><ArrowLeft className="h-4 w-4" /></button>
+        <button type="button" onClick={() => router.back()} aria-label="Go back" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 bg-white transition hover:border-amber-500 dark:border-slate-700 dark:bg-[#101B2D]"><ArrowLeft className="h-4 w-4" /></button>
         <div>
           <h1 className="text-xl font-bold tracking-tight">Create a goal</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Set it. Share it. Show up.</p>

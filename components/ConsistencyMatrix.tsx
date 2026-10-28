@@ -37,7 +37,7 @@ export default function ConsistencyMatrix({ userId }: { userId: string }) {
   }, [userId])
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/70 dark:bg-[#16181B]">
+    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/70 dark:bg-[#101B2D]">
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Consistency · last 30 days</h2>
         <span className="text-xs font-bold text-slate-400">{days.filter((day) => day.minutes > 0).length}/30 days</span>

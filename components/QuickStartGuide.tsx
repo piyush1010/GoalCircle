@@ -112,9 +112,9 @@ export default function QuickStartGuide({ open, onComplete }: QuickStartGuidePro
         aria-modal="true"
         aria-labelledby="quick-guide-title"
         aria-describedby="quick-guide-description"
-        className="w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-white shadow-2xl dark:border-slate-700 dark:bg-[#16181B]"
+        className="w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-white shadow-2xl dark:border-slate-700 dark:bg-[#101B2D]"
       >
-        <div className="relative overflow-hidden border-b border-slate-200 bg-slate-50 px-6 pb-7 pt-6 dark:border-slate-800 dark:bg-[#0E0F11]">
+        <div className="relative overflow-hidden border-b border-slate-200 bg-slate-50 px-6 pb-7 pt-6 dark:border-slate-800 dark:bg-[#07101F]">
           <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-amber-500/15 blur-2xl" />
           <button
             type="button"
@@ -128,7 +128,7 @@ export default function QuickStartGuide({ open, onComplete }: QuickStartGuidePro
           <div className={`relative mb-5 grid h-14 w-14 place-items-center rounded-2xl shadow-lg ${step.accent}`}>
             <Icon className="h-6 w-6" strokeWidth={2.4} />
             {SecondaryIcon && (
-              <span className="absolute -bottom-2 -right-2 grid h-7 w-7 place-items-center rounded-xl border-2 border-white bg-slate-700 text-white dark:border-[#0E0F11]">
+              <span className="absolute -bottom-2 -right-2 grid h-7 w-7 place-items-center rounded-xl border-2 border-white bg-slate-700 text-white dark:border-[#07101F]">
                 <SecondaryIcon className="h-3.5 w-3.5" />
               </span>
             )}
