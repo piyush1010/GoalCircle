@@ -134,7 +134,7 @@ function NudgePanel({ task, circleName, notDone, unfinished, quiet, onNudge }: {
     task ? { key: 'pending', label: 'Not checked in', rows: notDone,
       app: `Reminder: today's task is "${task.title}". Check in once it's done.`,
       group: `Reminder for ${circleName}: today's task is "${task.title}". If you haven't checked in yet, please do it on GoalYaar once it's done.` } : null,
-    task ? { key: 'unfinished', label: 'Missed or partly done', rows: unfinished,
+    task ? { key: 'unfinished', label: "Didn't finish", rows: unfinished,
       app: "Couldn't finish today's task? That's okay. Do what you can and update your check-in.",
       group: `${circleName}: if you couldn't finish today's task, that's okay. Do what you can and update your check-in on GoalYaar.` } : null,
     { key: 'quiet', label: 'Quiet 2+ days', rows: quiet,
@@ -154,17 +154,17 @@ function NudgePanel({ task, circleName, notDone, unfinished, quiet, onNudge }: {
       {groups.map((item) => {
         const active = item.key === current.key
         return <button key={item.key} type="button" role="radio" aria-checked={active} disabled={item.rows.length === 0} onClick={() => setPicked(item.key)}
-          className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition disabled:opacity-40 ${active ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-50 dark:bg-slate-50 dark:text-slate-900' : 'border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-200'}`}>
+          className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold transition disabled:cursor-default disabled:border-dashed disabled:text-slate-400 ${active ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-50 dark:bg-slate-50 dark:text-slate-900' : 'border-slate-300 text-slate-700 dark:border-slate-600 dark:text-slate-200'}`}>
           {item.label} <span className="tabular-nums opacity-70">{item.rows.length}</span>
         </button>
       })}
     </div>
-    <p className="mt-2 line-clamp-2 text-sm text-slate-500">“{current.app}”</p>
+    <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300"><span className="font-semibold text-slate-900 dark:text-white">Message: </span><span className="line-clamp-3">{current.app}</span></p>
     <div className="mt-3 grid grid-cols-2 gap-2">
-      <button type="button" onClick={() => void send()} disabled={sending} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white disabled:opacity-60 dark:bg-slate-50 dark:text-slate-900"><BellRing className="h-4 w-4" />{sending ? 'Sending…' : `Nudge ${current.rows.length}`}</button>
-      <a href={whatsappUrl(current.group)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-[#25D366] py-3 text-sm font-bold text-[#06371F]"><MessageCircle className="h-4 w-4" />WhatsApp group</a>
+      <button type="button" onClick={() => void send()} disabled={sending} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white disabled:opacity-60 dark:bg-slate-50 dark:text-slate-900"><BellRing className="h-4 w-4 shrink-0" />{sending ? 'Sending…' : `Nudge ${current.rows.length}`}</button>
+      <a href={whatsappUrl(current.group)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-[#1FAF55] py-3 text-sm font-bold text-white"><MessageCircle className="h-4 w-4 shrink-0" />WhatsApp</a>
     </div>
-    <p className="mt-2 text-xs text-slate-500">Nudge sends a notification to just these students. WhatsApp opens a message for your group, without names.</p>
+    <p className="mt-2 text-xs text-slate-500">Nudge notifies just these students. WhatsApp sends one message to your group, with no names.</p>
   </div>
 }
 
