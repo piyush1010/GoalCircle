@@ -73,7 +73,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
 
   const nudge = async (ids: string[]) => {
     if (ids.length === 0) return
-    const { data, error } = await supabase.rpc('nudge_circle_members', { target_circle: circleId, member_ids: ids, note: task ? `Reminder: today's task is "${task.title}".` : null })
+    const { data, error } = await supabase.rpc('nudge_circle_members', { target_circle: circleId, member_ids: ids, note: task ? `Reminder: today's task is "${task.title}".` : 'Your mentor is checking on you. Keep going today!' })
     if (error) flash('Nudge could not be sent')
     else flash(data === 0 ? 'Already nudged in the last 3 hours' : `Nudge sent to ${data} ${data === 1 ? 'student' : 'students'}`)
   }
@@ -310,7 +310,7 @@ function StudentList({ rows, now, hasTask, taskId, circleId, onNudge, onChanged,
               ? <video src={row.today_media_url} controls playsInline className="max-h-56 w-full rounded-xl bg-slate-950 object-contain" />
               : <div className="relative h-48 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"><Image src={row.today_media_url} alt={`${displayName(row)}'s proof`} fill unoptimized className="object-contain" /></div>)}
             <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
-              <button type="button" onClick={() => void onNudge([row.user_id])} disabled={!hasTask && !quiet} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 py-2.5 text-xs font-bold text-white dark:text-slate-900 disabled:opacity-50"><BellRing className="h-4 w-4" />Nudge</button>
+              <button type="button" onClick={() => void onNudge([row.user_id])} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 py-2.5 text-xs font-bold text-white dark:text-slate-900 disabled:opacity-50"><BellRing className="h-4 w-4" />Nudge</button>
               <a href={whatsappUrl(`Hi ${displayName(row).split(' ')[0]}, just checking in. How is your preparation going today?`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-2.5 text-xs font-bold text-white"><MessageCircle className="h-4 w-4" />WhatsApp</a>
               <button type="button" onClick={() => void remove(row)} aria-label={`Remove ${displayName(row)}`} className="grid w-10 place-items-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-500 dark:border-slate-700"><UserMinus className="h-4 w-4" /></button>
             </div>
