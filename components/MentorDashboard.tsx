@@ -133,13 +133,13 @@ function NudgePanel({ task, circleName, notDone, unfinished, quiet, onNudge }: {
   const groups = ([
     task ? { key: 'pending', label: 'Not checked in', rows: notDone,
       app: `Reminder: today's task is "${task.title}". Check in once it's done.`,
-      group: `Reminder for ${circleName}: today's task is "${task.title}". If you haven't checked in yet, please do it on GoalYaar once it's done.` } : null,
+      group: `Reminder (${circleName}): today's task is "${task.title}". Please check in on GoalYaar once it's done.` } : null,
     task ? { key: 'unfinished', label: "Didn't finish", rows: unfinished,
       app: "Couldn't finish today's task? That's okay. Do what you can and update your check-in.",
-      group: `${circleName}: if you couldn't finish today's task, that's okay. Do what you can and update your check-in on GoalYaar.` } : null,
+      group: `(${circleName}) Couldn't finish today's task? That's okay. Do what you can and update your check-in on GoalYaar.` } : null,
     { key: 'quiet', label: 'Quiet 2+ days', rows: quiet,
       app: task ? `Haven't seen you in a couple of days. Today's task is "${task.title}". Start small.` : "Haven't seen you in a couple of days. Everything okay? Start small today.",
-      group: `${circleName}: if you've been away for a few days, start small today and check in on GoalYaar. Every day counts.` },
+      group: `(${circleName}) Haven't seen you in a couple of days. Start small today and check in on GoalYaar. Every day counts.` },
   ].filter(Boolean) as { key: NudgeGroup; label: string; rows: DashboardRow[]; app: string; group: string }[])
   const available = groups.filter((item) => item.rows.length > 0)
   const [picked, setPicked] = useState<NudgeGroup | null>(null)
@@ -164,7 +164,7 @@ function NudgePanel({ task, circleName, notDone, unfinished, quiet, onNudge }: {
       <button type="button" onClick={() => void send()} disabled={sending} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white disabled:opacity-60 dark:bg-slate-50 dark:text-slate-900"><BellRing className="h-4 w-4 shrink-0" />{sending ? 'Sending…' : `Nudge ${current.rows.length}`}</button>
       <a href={whatsappUrl(current.group)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-[#1FAF55] py-3 text-sm font-bold text-white"><MessageCircle className="h-4 w-4 shrink-0" />WhatsApp</a>
     </div>
-    <p className="mt-2 text-xs text-slate-500">Nudge notifies just these students. WhatsApp sends one message to your group, with no names.</p>
+    <p className="mt-2 text-xs text-slate-500">Nudge notifies just these students in the app. WhatsApp opens the message so you can send it to your group or to one student.</p>
   </div>
 }
 
