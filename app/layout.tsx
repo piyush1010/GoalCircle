@@ -8,6 +8,7 @@ import AppShell from '@/components/AppShell'
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'swap' })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://goalyaar.in'),
   title: 'GoalYaar',
   description: 'Track habits, build daily consistency, and stay accountable.',
   applicationName: 'GoalYaar',

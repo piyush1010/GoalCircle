@@ -54,7 +54,7 @@ export default function MemoryReel({ habitTitle, streakCount, userName = 'GoalYa
         {/* Card Footer */}
         <div className="z-10 flex justify-between items-end text-xs text-white/70 pt-4 border-t border-white/10">
           <span>@{userName}</span>
-          <span>goalyaar.com</span>
+          <span>goalyaar.in</span>
         </div>
       </div>
 

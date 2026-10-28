@@ -40,6 +40,7 @@ export default function SettingsPage() {
     async function fetchProfileData() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { router.replace('/login?next=/settings'); return }
         if (user) {
           setUserId(user.id)
           const { data } = await supabase

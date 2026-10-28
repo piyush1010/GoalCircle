@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { ArrowRight, CheckCircle2, Plus, Target, UsersRound, XCircle } from 'lucide-react'
 import { localDateString } from '@/lib/exams'
@@ -14,6 +15,7 @@ interface GoalRow { id: string; title: string; doneToday: boolean }
  * mentor is waiting for), then your own goals, then "Start a new goal".
  */
 export default function CreatePage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [batchTasks, setBatchTasks] = useState<BatchTask[]>([])
   const [goals, setGoals] = useState<GoalRow[]>([])
@@ -22,7 +24,7 @@ export default function CreatePage() {
     void (async () => {
       const { data: { session } } = await supabase.auth.getSession()
       const uid = session?.user.id
-      if (!uid) { setLoading(false); return }
+      if (!uid) { router.replace('/login?next=/create'); return }
       const today = localDateString()
       const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0)
       const [memberships, ownGoals, todaysPosts] = await Promise.all([
@@ -48,7 +50,7 @@ export default function CreatePage() {
       }
       setLoading(false)
     })()
-  }, [])
+  }, [router])
 
   const nothing = !loading && batchTasks.length === 0 && goals.length === 0
 
