@@ -74,7 +74,7 @@ export async function POST(request: Request) {
   if (!body.notification || !targets.length) return NextResponse.json({ sent: 0 })
 
   const payload = compose(body)
-  const keys = { publicKey, privateKey, subject: 'https://goalcircle-ivory.vercel.app' }
+  const keys = { publicKey, privateKey, subject: 'https://goalyaar.in' }
   const results = await Promise.all(targets.map(async (target) => {
     try {
       const status = await sendPush(target, payload, keys)

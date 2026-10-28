@@ -100,7 +100,7 @@ function targetDateEventLines(event: GoalCalendarEvent, stamp: string) {
   const dates = getGoalCalendarDates(event.targetDate)
   return [
     'BEGIN:VEVENT',
-    `UID:${escapeIcsText(event.goalId)}@goalyaar.com`,
+    `UID:${escapeIcsText(event.goalId)}@goalyaar.in`,
     `DTSTAMP:${stamp}`,
     `DTSTART;VALUE=DATE:${dates.start}`,
     `DTEND;VALUE=DATE:${dates.end}`,
@@ -166,7 +166,7 @@ function dailyReminderEventLines(reminder: DailyReminder, stamp: string, now: Da
   const { summary, details } = reminderText(reminder)
   return [
     'BEGIN:VEVENT',
-    `UID:${escapeIcsText(reminder.goalId)}-daily@goalyaar.com`,
+    `UID:${escapeIcsText(reminder.goalId)}-daily@goalyaar.in`,
     `DTSTAMP:${stamp}`,
     `DTSTART:${toCalendarDateTime(start)}`,
     `DTEND:${toCalendarDateTime(end)}`,

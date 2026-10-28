@@ -1,14 +1,18 @@
 'use client';
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react';
 
 import { useState } from 'react';
 import { Share2, Copy, Check } from 'lucide-react';
 
-export default function ReferralsPage() {
+// Not finished (sample data only), so the page isn't shown yet. Kept for later.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function ReferralsPreview() {
   const [copied, setCopied] = useState(false);
   const referralCode = "GOALCIRCLE-ELITE-2026";
 
   function copyCode() {
-    navigator.clipboard.writeText(`https://goalyaar.com/signup?ref=${referralCode}`);
+    navigator.clipboard.writeText(`https://goalyaar.in/signup?ref=${referralCode}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -31,7 +35,7 @@ export default function ReferralsPage() {
           <input
             type="text"
             readOnly
-            value={`https://goalyaar.com/signup?ref=${referralCode}`}
+            value={`https://goalyaar.in/signup?ref=${referralCode}`}
             className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-700 dark:text-slate-300"
           />
           <button
@@ -45,4 +49,11 @@ export default function ReferralsPage() {
       </div>
     </div>
   );
+}
+
+/** Hidden until it shows real data: anyone opening this address goes to Today. */
+export default function HiddenPage() {
+  const router = useRouter()
+  useEffect(() => { router.replace('/dashboard') }, [router])
+  return null
 }

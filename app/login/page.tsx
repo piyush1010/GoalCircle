@@ -26,6 +26,17 @@ function AuthForm() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
+  // Email accounts: send a link that opens /reset-password to choose a new password.
+  const sendReset = async () => {
+    setErrorMsg(null); setSuccessMsg(null)
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) { setErrorMsg('Type your email above first, then tap Forgot password.'); return }
+    setLoading(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/reset-password` })
+    setLoading(false)
+    if (error) setErrorMsg(error.message)
+    else setSuccessMsg('Check your email for a link to set a new password.')
+  }
+
   const handleGoogleAuth = async () => {
     setErrorMsg(null)
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
@@ -220,13 +231,14 @@ function AuthForm() {
           </label>
           <input
             type="password"
-            placeholder={mode === 'signup' ? 'At least 6 characters' : 'Your password'}
+            placeholder={mode === 'signup' ? 'At least 8 characters' : 'Your password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#0E0F11] dark:text-white"
             required
-            minLength={8}
+            minLength={mode === 'signup' ? 8 : undefined}
           />
+          {mode === 'signin' && <button type="button" onClick={() => void sendReset()} disabled={loading} className="mt-2 text-xs font-semibold text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline dark:hover:text-white">Forgot password?</button>}
         </div>
 
         <button

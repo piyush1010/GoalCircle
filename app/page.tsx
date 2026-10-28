@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'GoalYaar — Goals become real when you show up',
     description: 'Set a meaningful goal, share honest progress, and stay accountable with people you trust.',
-    url: 'https://goalcircle-ivory.vercel.app',
+    url: 'https://goalyaar.in',
     siteName: 'GoalYaar',
     type: 'website',
   },

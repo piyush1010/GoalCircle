@@ -39,7 +39,10 @@ export default function SettingsPage() {
   useEffect(() => {
     async function fetchProfileData() {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        // getSession works offline and never throws when signed out (getUser can).
+        const { data: { session } } = await supabase.auth.getSession()
+        const user = session?.user
+        if (!user) { router.replace('/login?next=/settings'); return }
         if (user) {
           setUserId(user.id)
           const { data } = await supabase
@@ -59,7 +62,7 @@ export default function SettingsPage() {
       }
     }
     fetchProfileData()
-  }, [])
+  }, [router])
 
   useEffect(() => {
     const reminderPreferences = readReminderPreferences()

@@ -81,7 +81,7 @@ export default function JoinCirclePage() {
           <ul className="mx-auto mt-5 max-w-xs space-y-2 text-left text-sm text-slate-700 dark:text-slate-300">
             <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />Get your mentor&apos;s daily task</li>
             <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />Check in with one tap when it&apos;s done</li>
-            <li className="flex gap-2"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />Only your mentor sees your check-ins here</li>
+            <li className="flex gap-2"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />Your notes stay between you and your mentor</li>
           </ul>
           <button type="button" onClick={() => void continueWithGoogle()} disabled={signingIn} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-slate-50 py-4 text-base font-bold text-white dark:text-slate-900 disabled:opacity-60">{signingIn ? 'Opening Google…' : 'Continue with Google'}</button>
           <p className="mt-2 text-xs text-slate-500">New or returning, it&apos;s the same button. Free.</p>
@@ -98,7 +98,7 @@ export default function JoinCirclePage() {
           <ul className="mx-auto mt-5 max-w-xs space-y-2 text-left text-sm text-slate-600 dark:text-slate-300">
             <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />Get your mentor&apos;s daily task</li>
             <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />Check in with one tap when it&apos;s done</li>
-            <li className="flex gap-2"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />Only your mentor sees your check-ins here. Your personal goals stay private.</li>
+            <li className="flex gap-2"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />Your notes stay between you and your mentor. Classmates only see that you checked in, and a photo if you choose to share it.</li>
           </ul>
           <button type="button" onClick={() => void join()} disabled={joining} className="mt-6 w-full rounded-2xl bg-slate-900 dark:bg-slate-50 py-4 text-base font-bold text-white dark:text-slate-900 transition hover:bg-slate-800 dark:hover:bg-white disabled:opacity-60">{joining ? 'Joining…' : 'Join batch'}</button>
         </>}

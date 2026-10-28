@@ -1,4 +1,6 @@
 'use client'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 import React, { useState } from 'react'
 import { useTheme } from '@/components/ThemeProvider'
@@ -109,7 +111,9 @@ const INITIAL_LEADERBOARD: LeaderboardUser[] = [
   },
 ]
 
-export default function LeaderboardPage() {
+// Not finished (sample data only), so the page isn't shown yet. Kept for later.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function LeaderboardPreview() {
   const { theme, setTheme } = useTheme()
   const [timeframe, setTimeframe] = useState<Timeframe>('weekly')
   const [activeCategory, setActiveCategory] = useState<Category>('all')
@@ -360,4 +364,11 @@ export default function LeaderboardPage() {
 
     </div>
   )
+}
+
+/** Hidden until it shows real data: anyone opening this address goes to Today. */
+export default function HiddenPage() {
+  const router = useRouter()
+  useEffect(() => { router.replace('/dashboard') }, [router])
+  return null
 }
