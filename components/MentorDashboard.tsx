@@ -57,7 +57,7 @@ const whatsappUrl = (text: string) => `https://wa.me/?text=${encodeURIComponent(
 
 /** The message mentors forward to their WhatsApp group: what it is, and exactly what to tap. */
 export const inviteMessage = (circleName: string, link: string) =>
-  `Join our batch "${circleName}" on GoalYaar\nI'll post the daily task there; check in once you finish it.\n\n1. Open: ${link}\n2. Tap "Continue with Google"\n3. Add it to your home screen (Chrome ⋮ → Add to Home screen) so you don't miss tasks.`
+  `Join our batch "${circleName}" on GoalYaar\nI'll post the daily task there; check in once you finish it.\n\n1. Open: ${link}\n2. Tap "Continue with Google"\n3. Add it to your home screen so you don't miss tasks:\n   Android: Chrome ⋮ → Add to Home screen\n   iPhone: Safari Share → Add to Home Screen`
 
 export default function MentorDashboard({ circleId, circleName, today, task, rows, inviteLink, onTaskSaved, onTaskDeleted, onChanged, onCopyInvite, flash }: {
   circleId: string; circleName: string; today: string; task: Task | null; rows: DashboardRow[]; inviteLink: string
@@ -111,7 +111,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
             <Stat label="Quiet 2+ days" value={quiet.length} tone="text-rose-600 dark:text-rose-400" onClick={() => setView('students')} />
           </div>}
           {task && notDone.length > 0 && <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-            <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 py-3 text-sm font-bold text-white dark:text-slate-900"><BellRing className="h-4 w-4" />Nudge {notDone.length} who haven&apos;t checked in</button>
+            <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 py-3 text-sm font-bold text-white dark:text-slate-900"><BellRing className="h-4 w-4" />Nudge {notDone.length} <span className="hidden min-[360px]:inline">who haven&apos;t checked in</span><span className="min-[360px]:hidden">pending</span></button>
             <a href={whatsappUrl(`Reminder for ${circleName}: today's task is "${task.title}". Please check in on GoalYaar once it's done.`)} target="_blank" rel="noreferrer" aria-label="Send reminder on WhatsApp" className="grid w-12 place-items-center rounded-xl bg-emerald-500 text-white"><MessageCircle className="h-5 w-5" /></a>
           </div>}
           {!task && <p className="mt-4 text-center text-xs text-slate-500">Set today&apos;s task above to start tracking.</p>}
@@ -221,9 +221,9 @@ function UpcomingTasks({ circleId, today }: { circleId: string; today: string })
 
   const planned = tasks.length
   return <section className={card}>
-    <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="flex w-full items-center justify-between text-left">
-      <span><span className="block text-base font-bold">Plan ahead</span><span className="block text-sm text-slate-600 dark:text-slate-300">{planned ? `${planned} of the next 7 days planned` : 'Set tasks for the coming week in one go'}</span></span>
-      <ChevronDown className={`h-5 w-5 transition ${open ? 'rotate-180' : ''}`} />
+    <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="flex w-full items-center justify-between gap-3 text-left">
+      <span className="min-w-0"><span className="block text-base font-bold">Plan ahead</span><span className="block text-sm text-slate-600 dark:text-slate-300">{planned ? `${planned} of the next 7 days planned` : 'Set tasks for the coming week in one go'}</span></span>
+      <ChevronDown className={`h-5 w-5 shrink-0 transition ${open ? 'rotate-180' : ''}`} />
     </button>
     {open && <div className="mt-3 space-y-2">{days.map((day) => {
       const existing = tasks.find((item) => item.task_date === day) ?? null

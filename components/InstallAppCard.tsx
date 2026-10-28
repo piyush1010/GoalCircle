@@ -16,7 +16,7 @@ export default function InstallAppCard() {
     const installed = () => { setIsInstalled(true); setMessage('GoalYaar is installed.') }
     const loadDeviceState = window.setTimeout(() => {
       setIsInstalled(window.matchMedia('(display-mode: standalone)').matches)
-      setIsIos(/iPad|iPhone|iPod/.test(navigator.userAgent))
+      setIsIos((/iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)))
       refresh()
     }, 0)
     window.addEventListener('appinstalled', installed)

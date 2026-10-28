@@ -208,7 +208,7 @@ export default function TodayPage() {
         <div className="flex items-center gap-4">
           <MonthRing days={month} monthName={monthName} compact />
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Today</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Your progress</p>
             <p className="mt-0.5 text-2xl font-extrabold leading-tight tracking-tight tabular-nums">
               {totalDue === 0 ? 'Nothing due yet' : totalDone === totalDue ? 'All done' : <>{totalDone}<span className="text-base font-semibold text-slate-500"> of {totalDue} done</span></>}
             </p>
@@ -219,7 +219,7 @@ export default function TodayPage() {
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2">
           <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><Flame className="h-4 w-4 text-orange-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{dailyStreak}</p><p className="mt-1 text-xs font-semibold text-slate-500">day streak</p></div>
-          <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><CalendarCheck2 className="h-4 w-4 text-emerald-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{shownDays}<span className="text-sm font-semibold text-slate-500">/{soFar}</span></p><p className="mt-1 text-xs font-semibold text-slate-500">days in {monthName.slice(0, 3)}</p></div>
+          <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><CalendarCheck2 className="h-4 w-4 text-emerald-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{shownDays}<span className="text-sm font-semibold text-slate-500">/{soFar}</span></p><p className="mt-1 text-xs font-semibold text-slate-500">this month</p></div>
           <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><Timer className="h-4 w-4 text-sky-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{weekTime}</p><p className="mt-1 text-xs font-semibold text-slate-500">this week</p></div>
         </div>
       </section>

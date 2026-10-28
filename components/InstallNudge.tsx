@@ -16,9 +16,9 @@ export default function InstallNudge() {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
     let dismissedAt = 0
     try { dismissedAt = Number(window.localStorage.getItem(DISMISS_KEY) || 0) } catch { /* storage unavailable */ }
-    const mobile = /Android|iPhone|iPad|iPod/.test(navigator.userAgent)
+    const mobile = /Android|iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
     const timer = window.setTimeout(() => {
-      setIos(/iPhone|iPad|iPod/.test(navigator.userAgent))
+      setIos((/iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)))
       setCanPrompt(Boolean(getInstallPrompt()))
       setShow(mobile && !standalone && Date.now() - dismissedAt > 7 * 86_400_000)
     }, 0)
@@ -42,7 +42,7 @@ export default function InstallNudge() {
       <Smartphone className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold">Keep GoalYaar on your home screen</p>
-        <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">{canPrompt ? 'One tap, and it opens like an app.' : ios ? 'In Safari: tap Share, then “Add to Home Screen”. Needed for reminders on iPhone.' : 'In Chrome: tap ⋮ (top right), then “Add to Home screen”.'}</p>
+        <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">{canPrompt ? 'One tap, and it opens like an app.' : ios ? 'In Safari: tap Share, then “Add to Home Screen”. On iPhone, reminders only work once it’s on your home screen.' : 'In Chrome: tap ⋮ (top right), then “Add to Home screen”.'}</p>
         {canPrompt && <button type="button" onClick={() => void install()} className="mt-2 rounded-xl bg-slate-900 dark:bg-slate-50 px-4 py-2 text-sm font-bold text-white dark:text-slate-900">Install</button>}
       </div>
       <button type="button" onClick={dismiss} aria-label="Hide" className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-slate-500"><X className="h-4 w-4" /></button>
