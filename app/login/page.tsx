@@ -95,7 +95,7 @@ function AuthForm() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl md:p-8 dark:border-slate-700/70 dark:bg-[#101B2D]">
+    <div className="w-full max-w-md space-y-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6 md:p-8 dark:border-slate-700/70 dark:bg-[#101B2D]">
       {/* TABS FOR CLEAR SIGN IN / SIGN UP SELECTION */}
       <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-slate-200 bg-slate-100 p-1.5 dark:border-slate-800 dark:bg-[#07101F]" aria-label="Choose authentication mode">
         <button
@@ -112,7 +112,7 @@ function AuthForm() {
               : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
           }`}
         >
-          <LogIn className="h-4 w-4 shrink-0" />
+          <LogIn className="hidden h-4 w-4 shrink-0 sm:block" />
           <span><span className="block text-sm font-bold sm:text-xs">Sign in</span><span className={`hidden text-[11px] font-semibold sm:block ${mode === 'signin' ? 'opacity-75' : 'text-slate-400'}`}>Existing member</span></span>
         </button>
         <button
@@ -129,7 +129,7 @@ function AuthForm() {
               : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
           }`}
         >
-          <UserPlus className="h-4 w-4 shrink-0" />
+          <UserPlus className="hidden h-4 w-4 shrink-0 sm:block" />
           <span><span className="block text-sm font-bold sm:text-xs">Create account</span><span className={`hidden text-[11px] font-semibold sm:block ${mode === 'signup' ? 'opacity-75' : 'text-slate-400'}`}>New to GoalYaar</span></span>
         </button>
       </div>
