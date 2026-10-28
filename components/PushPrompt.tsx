@@ -48,7 +48,7 @@ export default function PushPrompt() {
     setBusy(true)
     const result = await enablePush()
     setBusy(false)
-    if (result === 'on') { setNote('Done! I’ll buzz you when it matters 🔔'); window.setTimeout(() => setShow(false), 2200) }
+    if (result === 'on') { setNote('Done! I’ll let you know when it matters.'); window.setTimeout(() => setShow(false), 2200) }
     else if (result === 'blocked') { setNote('Notifications are blocked. You can allow them in your browser’s site settings.'); window.setTimeout(() => setShow(false), 4000) }
     else setShow(false)
   }
@@ -58,13 +58,13 @@ export default function PushPrompt() {
       <div className="flex items-start gap-3">
         <GoalieBot size={52} mood="wave" />
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-black leading-snug">{note ? 'Notifications' : title}</h2>
+          <h2 className="text-base font-bold leading-snug">{note ? 'Notifications' : title}</h2>
           <p className="mt-1 text-sm font-medium text-slate-700">{note || 'I’ll buzz you when your mentor posts a task, someone nudges you, or a friend comments. No spam, promise.'}</p>
         </div>
       </div>
       {!note && <div className="mt-3 flex justify-end gap-2">
         <button type="button" onClick={later} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Not now</button>
-        <button type="button" onClick={() => void allow()} disabled={busy} className="rounded-xl border-2 border-slate-900 bg-amber-400 px-5 py-2 text-sm font-black shadow-[2px_2px_0_#0f172a] disabled:opacity-60">{busy ? 'One sec…' : 'Allow'}</button>
+        <button type="button" onClick={() => void allow()} disabled={busy} className="rounded-xl border-2 border-slate-900 bg-amber-400 px-5 py-2 text-sm font-bold shadow-[2px_2px_0_#0f172a] disabled:opacity-60">{busy ? 'One sec…' : 'Allow'}</button>
       </div>}
     </div>
   )

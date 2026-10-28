@@ -181,11 +181,11 @@ export default function TodayPage() {
       <GuideTour name="welcome" steps={WELCOME_TOUR} />
 
       <header className="mb-4">
-        <p className="text-sm font-bold text-slate-600 dark:text-slate-300">{greeting()}{firstName ? `, ${firstName}` : ''} 👋</p>
-        <h1 className="text-2xl font-black tracking-tight">{totalDue === 0 ? 'Let’s start today' : totalDone === totalDue ? 'All done today! 🎉' : `${totalDue - totalDone} to go today`}</h1>
+        <p className="text-sm font-bold text-slate-600 dark:text-slate-300">{greeting()}{firstName ? `, ${firstName}` : ''}</p>
+        <h1 className="text-2xl font-bold tracking-tight">{totalDue === 0 ? 'Let’s start today' : totalDone === totalDue ? 'All done for today' : `${totalDue - totalDone} to go today`}</h1>
       </header>
 
-      {error && <div role="alert" className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"><span>{error}</span><button onClick={() => void load()} className="shrink-0 font-black underline">Retry</button></div>}
+      {error && <div role="alert" className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"><span>{error}</span><button onClick={() => void load()} className="shrink-0 font-bold underline">Retry</button></div>}
 
       {/* The 80%: showing up, day after day */}
       <section data-tour="today-ring" className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
@@ -202,28 +202,28 @@ export default function TodayPage() {
       </div>
 
       {batches.length > 0 && <section data-tour="today-checkin" className="mt-5">
-        <h2 className="mb-2 text-lg font-black">{batches.length === 1 ? 'Your batch' : 'Your circles'}</h2>
+        <h2 className="mb-2 text-lg font-bold">{batches.length === 1 ? 'Your batch' : 'Your circles'}</h2>
         <div className="space-y-2.5">{batches.map((batch) => (
           <Link key={batch.id} href={`/circles/${batch.id}`} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:border-amber-500 dark:border-slate-700/70 dark:bg-[#101b2d]">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400"><UsersRound className="h-5 w-5" /></span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-base font-black">{batch.name}</span>
+              <span className="block truncate text-base font-bold">{batch.name}</span>
               {!batch.admin && batch.task && <span className="block text-xs font-bold text-amber-700 dark:text-amber-400">From your mentor</span>}
               <span className="block truncate text-sm font-semibold text-slate-600 dark:text-slate-300">{batch.task ? batch.task : batch.admin ? 'No task posted today' : 'No task from your mentor today'}</span>
             </span>
             {batch.admin
-              ? <span className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-sm font-black dark:border-slate-700">{batch.task ? 'Students' : 'Post task'}</span>
+              ? <span className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold dark:border-slate-700">{batch.task ? 'Students' : 'Post task'}</span>
               : batch.task && (batch.done
                 ? batch.status === 'missed'
-                  ? <span className="shrink-0 rounded-xl bg-slate-200 px-3 py-2 text-sm font-black text-slate-700 dark:bg-slate-800 dark:text-slate-200">Missed</span>
-                  : <span className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-black text-white"><CheckCircle2 className="h-4 w-4" />{batch.status === 'partial' ? 'Partly' : 'Done'}</span>
-                : <span className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-black text-slate-950">Check in</span>)}
+                  ? <span className="shrink-0 rounded-xl bg-slate-200 px-3 py-2 text-sm font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">Missed</span>
+                  : <span className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-bold text-white"><CheckCircle2 className="h-4 w-4" />{batch.status === 'partial' ? 'Partly' : 'Done'}</span>
+                : <span className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950">Check in</span>)}
           </Link>
         ))}</div>
       </section>}
 
       <section data-tour={batches.length ? 'today-goals' : 'today-checkin'} className="mt-5">
-        <div className="mb-2 flex items-center justify-between"><h2 className="text-lg font-black">Today’s goals</h2><Link href="/create-goal" className="flex items-center gap-1 text-sm font-black text-amber-600 dark:text-amber-400"><Plus className="h-4 w-4" />New goal</Link></div>
+        <div className="mb-2 flex items-center justify-between"><h2 className="text-lg font-bold">Today’s goals</h2><Link href="/create-goal" className="flex items-center gap-1 text-sm font-bold text-amber-600 dark:text-amber-400"><Plus className="h-4 w-4" />New goal</Link></div>
         {goals.length === 0 && batches.length > 0
           ? <Link href="/create-goal" className="block rounded-2xl border border-dashed border-slate-300 p-4 text-center text-sm font-bold text-slate-600 dark:border-slate-700 dark:text-slate-300">Add a personal goal too, like “Revise 2 hours daily”</Link>
           : goals.length === 0
@@ -236,7 +236,7 @@ export default function TodayPage() {
             const done = doneToday.has(goal.id) || (weekly && weekMet(goal))
             return <article key={goal.id} className={`flex items-center gap-3 rounded-2xl border p-3.5 shadow-sm ${done ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30' : 'border-slate-200 bg-white dark:border-slate-700/70 dark:bg-[#101b2d]'}`}>
               <div className="min-w-0 flex-1">
-                <Link href={`/goal/${goal.id}`} className="block truncate text-base font-black">{goal.title}</Link>
+                <Link href={`/goal/${goal.id}`} className="block truncate text-base font-bold">{goal.title}</Link>
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
                   {once ? <span>One-time goal</span>
                     : weekly ? <><span>{Math.min(daysThisWeek, goal.times_per_week || 1)} of {goal.times_per_week} this week</span><span className="inline-flex items-center gap-1"><Flame className="h-3.5 w-3.5 text-orange-500" />{goal.current_streak || 0} wk</span></>
@@ -246,17 +246,17 @@ export default function TodayPage() {
                 </p>
               </div>
               {!paused && (done
-                ? <span className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-black text-white"><CheckCircle2 className="h-4 w-4" />{weekly && !doneToday.has(goal.id) ? 'Week done' : 'Done'}</span>
-                : <Link href={`/check-in?goal=${goal.id}`} className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-black text-slate-950 shadow-sm">Check in</Link>)}
+                ? <span className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-bold text-white"><CheckCircle2 className="h-4 w-4" />{weekly && !doneToday.has(goal.id) ? 'Week done' : 'Done'}</span>
+                : <Link href={`/check-in?goal=${goal.id}`} className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 shadow-sm">Check in</Link>)}
               {!goal.shared && <button type="button" onClick={() => void deleteGoal(goal)} disabled={busyGoalId === goal.id} aria-label={`Delete ${goal.title}`} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-500 disabled:opacity-40"><Trash2 className="h-4 w-4" /></button>}
             </article>
           })}</div>}
       </section>
 
-      {finishedOnce > 0 && <p className="mt-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">🎉 {finishedOnce} one-time goal{finishedOnce > 1 ? 's' : ''} completed</p>}
+      {finishedOnce > 0 && <p className="mt-3 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">{finishedOnce} one-time goal{finishedOnce > 1 ? 's' : ''} completed</p>}
 
       {userId && <section className="mt-5">
-        <button type="button" onClick={() => setStepsOpen((open) => !open)} aria-expanded={stepsOpen} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-base font-black shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
+        <button type="button" onClick={() => setStepsOpen((open) => !open)} aria-expanded={stepsOpen} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-base font-bold shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
           Small steps for today <ChevronDown className={`h-5 w-5 transition ${stepsOpen ? 'rotate-180' : ''}`} />
         </button>
         {stepsOpen && <div className="mt-2"><TodoWidget userId={userId} /></div>}

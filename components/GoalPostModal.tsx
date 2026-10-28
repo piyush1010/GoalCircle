@@ -224,7 +224,7 @@ export default function GoalPostModal({
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-amber-500" />
-              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
                 Log Progress
               </h2>
             </div>
@@ -241,7 +241,7 @@ export default function GoalPostModal({
             <div className="space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                     Select Goal
                   </label>
                   <Link
@@ -282,7 +282,7 @@ export default function GoalPostModal({
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                   {visibility === 'public' ? <><Globe2 className="h-3.5 w-3.5" />Public post</> : <><LockKeyhole className="h-3.5 w-3.5" />Private (only me)</>}
                 </span>
-                <div className="flex bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg text-[10px] font-bold">
+                <div className="flex bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-bold">
                   <button
                     type="button"
                     onClick={() => setVisibility('public')}
@@ -310,7 +310,7 @@ export default function GoalPostModal({
             </div>
 
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
                 Notes & Reflections / Caption
               </label>
               <textarea
@@ -324,10 +324,10 @@ export default function GoalPostModal({
 
             <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-3 bg-slate-50/50 dark:bg-slate-950/50">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1">
                   <Music2 className="h-3.5 w-3.5" /> Attach Track
                 </span>
-                <div className="flex bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg text-[10px] font-bold">
+                <div className="flex bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-bold">
                   <button
                     type="button"
                     onClick={() => setAudioTab('search')}
@@ -359,7 +359,7 @@ export default function GoalPostModal({
                     <button
                       type="button"
                       onClick={() => setSourceFilter('all')}
-                      className={`px-2 py-0.5 rounded-md text-[9px] font-bold border transition ${
+                      className={`px-2 py-0.5 rounded-md text-[11px] font-bold border transition ${
                         sourceFilter === 'all'
                           ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent'
                           : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'
@@ -370,7 +370,7 @@ export default function GoalPostModal({
                     <button
                       type="button"
                       onClick={() => setSourceFilter('spotify')}
-                      className={`px-2 py-0.5 rounded-md text-[9px] font-bold border transition ${
+                      className={`px-2 py-0.5 rounded-md text-[11px] font-bold border transition ${
                         sourceFilter === 'spotify'
                           ? 'bg-emerald-600 text-white border-transparent'
                           : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'
@@ -381,7 +381,7 @@ export default function GoalPostModal({
                     <button
                       type="button"
                       onClick={() => setSourceFilter('itunes')}
-                      className={`px-2 py-0.5 rounded-md text-[9px] font-bold border transition ${
+                      className={`px-2 py-0.5 rounded-md text-[11px] font-bold border transition ${
                         sourceFilter === 'itunes'
                           ? 'bg-rose-600 text-white border-transparent'
                           : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'
@@ -416,7 +416,7 @@ export default function GoalPostModal({
                               {selectedTrack.source}
                             </span>
                           </div>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                             {selectedTrack.artist}
                           </p>
                         </div>
@@ -463,7 +463,7 @@ export default function GoalPostModal({
                                     {track.title}
                                   </p>
                                   <span
-                                    className={`text-[8px] font-black uppercase px-1 py-0.2 rounded ${
+                                    className={`text-[8px] font-bold uppercase px-1 py-0.2 rounded ${
                                       track.source === 'Spotify'
                                         ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                                         : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
@@ -472,7 +472,7 @@ export default function GoalPostModal({
                                     {track.source}
                                   </span>
                                 </div>
-                                <p className="text-[9px] text-slate-400 truncate">
+                                <p className="text-[11px] text-slate-400 truncate">
                                   {track.artist}
                                 </p>
                               </div>
@@ -482,7 +482,7 @@ export default function GoalPostModal({
                               <button
                                 type="button"
                                 onClick={(e) => toggleAudioPreview(track.previewUrl, e)}
-                                className="px-2 py-0.5 text-[9px] font-bold rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-slate-950 transition"
+                                className="px-2 py-0.5 text-[11px] font-bold rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-slate-950 transition"
                               >
                                 {playingPreviewUrl === track.previewUrl ? <><Pause className="mr-1 inline h-3 w-3" />Pause</> : <><Play className="mr-1 inline h-3 w-3" />Play</>}
                               </button>
@@ -511,7 +511,7 @@ export default function GoalPostModal({
                     className="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400 cursor-pointer"
                   />
                   {uploadedAudio && (
-                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
                       ✓ Attached: {uploadedAudio.name}
                     </p>
                   )}
@@ -521,7 +521,7 @@ export default function GoalPostModal({
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                   <span className="inline-flex items-center gap-1.5"><ImagePlus className="h-3.5 w-3.5" />Attach photo or video proof</span>
                 </label>
                 {mediaPreview && (
@@ -529,7 +529,7 @@ export default function GoalPostModal({
                     <button
                       type="button"
                       onClick={() => setFitMode('cover')}
-                      className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md border transition ${
+                      className={`text-[11px] font-extrabold px-2 py-0.5 rounded-md border transition ${
                         fitMode === 'cover'
                           ? 'bg-amber-500 text-slate-950 border-amber-500'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
@@ -540,7 +540,7 @@ export default function GoalPostModal({
                     <button
                       type="button"
                       onClick={() => setFitMode('contain')}
-                      className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md border transition ${
+                      className={`text-[11px] font-extrabold px-2 py-0.5 rounded-md border transition ${
                         fitMode === 'contain'
                           ? 'bg-amber-500 text-slate-950 border-amber-500'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
@@ -581,7 +581,7 @@ export default function GoalPostModal({
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
                     Click to upload <span className="text-slate-400 font-normal">or drag & drop</span>
                   </p>
-                  <p className="text-[10px] text-slate-400 mt-1">Supports PNG, JPG, MP4, MOV</p>
+                  <p className="text-xs text-slate-400 mt-1">Supports PNG, JPG, MP4, MOV</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -608,7 +608,7 @@ export default function GoalPostModal({
                     )}
 
                     <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none">
-                      <span className="bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/10 flex items-center gap-1.5 truncate max-w-[60%]">
+                      <span className="bg-slate-950/80 backdrop-blur-md text-white text-xs font-bold px-2.5 py-1 rounded-full border border-white/10 flex items-center gap-1.5 truncate max-w-[60%]">
                         {mediaFile?.type.startsWith('video/') ? <Video className="h-3.5 w-3.5" /> : <ImagePlus className="h-3.5 w-3.5" />}
                         <span className="truncate">{mediaFile?.name}</span>
                       </span>
@@ -618,7 +618,7 @@ export default function GoalPostModal({
                           <button
                             type="button"
                             onClick={() => setIsPreviewLightBoxOpen(true)}
-                            className="bg-slate-950/80 hover:bg-slate-900 text-white px-2 py-1 rounded-full text-[10px] font-bold transition border border-white/10 flex items-center gap-1"
+                            className="bg-slate-950/80 hover:bg-slate-900 text-white px-2 py-1 rounded-full text-xs font-bold transition border border-white/10 flex items-center gap-1"
                           >
                             <Expand className="mr-1 inline h-3 w-3" /> Full View
                           </button>
@@ -649,7 +649,7 @@ export default function GoalPostModal({
                   {!mediaFile?.type.startsWith('video/') && (
                     <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 space-y-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase w-20">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase w-20">
                           Frame Height:
                         </span>
                         <input
@@ -665,7 +665,7 @@ export default function GoalPostModal({
                       {fitMode === 'cover' && (
                         <>
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase w-20">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase w-20">
                               Position Y:
                             </span>
                             <input
@@ -679,7 +679,7 @@ export default function GoalPostModal({
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase w-20">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase w-20">
                               Zoom ({zoomLevel}%):
                             </span>
                             <input
@@ -701,7 +701,7 @@ export default function GoalPostModal({
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20 transition-all mt-2"
+              className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all mt-2"
             >
               ✓ Complete Check-In
             </button>

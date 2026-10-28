@@ -155,7 +155,7 @@ export default function ProfilePage() {
       
       {/* HEADER WITH SETTINGS BUTTON */}
       <div className="flex justify-between items-center pt-2">
-        <h1 className="text-xl font-black tracking-wide">Profile</h1>
+        <h1 className="text-xl font-bold tracking-wide">Profile</h1>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -184,7 +184,7 @@ export default function ProfilePage() {
         <div className="flex items-center gap-4">
           <ProfileAvatar value={avatarUrl} name={displayName} size={56} className="rounded-2xl border-2 border-amber-500/50 shadow-md" />
           <div>
-            <h2 className="text-base font-black">{displayName}</h2>
+            <h2 className="text-base font-bold">{displayName}</h2>
             <p className="text-xs font-semibold text-amber-500">{displayHandle}</p>
           </div>
         </div>
@@ -192,15 +192,15 @@ export default function ProfilePage() {
         {/* STAT PILLS WITH LIVE SUPABASE DATA */}
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
-            <p className="text-base font-black text-amber-500">{totalGoals}</p>
+            <p className="text-base font-bold text-amber-500">{totalGoals}</p>
             <p className="text-[11px] font-extrabold uppercase text-slate-500">Goals</p>
           </div>
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
-            <p className="inline-flex items-center justify-center gap-1 text-base font-black text-amber-500"><Flame className="h-4 w-4" />{currentStreak}</p>
+            <p className="inline-flex items-center justify-center gap-1 text-base font-bold text-amber-500"><Flame className="h-4 w-4" />{currentStreak}</p>
             <p className="text-[11px] font-extrabold uppercase text-slate-500">Streak</p>
           </div>
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
-            <p className="text-base font-black text-emerald-400">{completedGoals}</p>
+            <p className="text-base font-bold text-emerald-400">{completedGoals}</p>
             <p className="text-[11px] font-extrabold uppercase text-slate-500">Days showed up</p>
           </div>
         </div>
@@ -215,21 +215,21 @@ export default function ProfilePage() {
 
       {/* MEMORY REELS (DYNAMIC MONTH CALCULATIONS) */}
       <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
-        <h2 className="text-xs font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider">
+        <h2 className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 tracking-wider">
           Memory Reels
         </h2>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-3.5 space-y-2 text-center">
             <Film className="mx-auto h-6 w-6 text-amber-500" />
             <h3 className="text-xs font-extrabold">{currentMonthName} Recap</h3>
-            <p className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 py-1 px-2 rounded-lg">
+            <p className="text-[11px] text-emerald-400 font-bold bg-emerald-500/10 py-1 px-2 rounded-lg">
               Generated Automatically
             </p>
           </div>
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-3.5 space-y-2 text-center opacity-70">
             <Sparkles className="mx-auto h-6 w-6 text-slate-400" />
             <h3 className="text-xs font-extrabold text-slate-300">{nextMonthName} Recap</h3>
-            <p className="text-[9px] text-amber-400 font-bold bg-amber-500/10 py-1 px-2 rounded-lg">
+            <p className="text-[11px] text-amber-400 font-bold bg-amber-500/10 py-1 px-2 rounded-lg">
               Unlocks in {daysRemainingInMonth} days
             </p>
           </div>
@@ -240,7 +240,7 @@ export default function ProfilePage() {
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/70 p-4 backdrop-blur-sm sm:items-center" onClick={() => setShowEditModal(false)}>
           <div className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900" onClick={(event) => event.stopPropagation()}>
-            <h3 className="mb-3 text-base font-black">Edit profile</h3>
+            <h3 className="mb-3 text-base font-bold">Edit profile</h3>
             <ProfileEditor onCancel={() => setShowEditModal(false)} onSaved={(saved) => {
               setFullName(saved.fullName); setHandle(`@${saved.username}`)
               setUser((prev) => prev ? ({ ...prev, user_metadata: { ...prev.user_metadata, full_name: saved.fullName, handle: `@${saved.username}`, avatar_url: saved.avatarUrl } }) : prev)

@@ -140,7 +140,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
         <ProfileAvatar value={profile.avatar_url} name={profile.full_name || profile.username} size={80} className="mx-auto rounded-full border-2 border-amber-500 shadow-lg" />
 
         <div className="space-y-1">
-          <h1 className="text-xl font-black">
+          <h1 className="text-xl font-bold">
             {profile.full_name || profile.username}
           </h1>
           <p className="text-xs font-bold text-amber-500">@{profile.username}</p>
@@ -154,18 +154,18 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-3 pt-2">
           <div className="p-3 bg-slate-50 border border-slate-200 dark:bg-slate-950/60 dark:border-slate-800/80 rounded-2xl">
-            <div className="flex items-center justify-center gap-1.5 text-amber-500 font-black text-lg">
+            <div className="flex items-center justify-center gap-1.5 text-amber-500 font-bold text-lg">
               <Flame size={18} />
               <span>{totalStreaks}</span>
             </div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Streaks</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Streaks</p>
           </div>
           <div className="p-3 bg-slate-50 border border-slate-200 dark:bg-slate-950/60 dark:border-slate-800/80 rounded-2xl">
-            <div className="flex items-center justify-center gap-1.5 text-emerald-400 font-black text-lg">
+            <div className="flex items-center justify-center gap-1.5 text-emerald-400 font-bold text-lg">
               <Target size={18} />
               <span>{goals.length}</span>
             </div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Active Goals</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Goals</p>
           </div>
         </div>
 
@@ -210,7 +210,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
               className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl flex items-center justify-between"
             >
               <div className="space-y-1">
-                <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md">
                   {goal.category || 'General'}
                 </span>
                 <p className="text-xs font-bold">{goal.title}</p>

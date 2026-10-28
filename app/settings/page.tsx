@@ -161,7 +161,7 @@ export default function SettingsPage() {
     <div className="p-4 max-w-md mx-auto space-y-5 pb-28 text-slate-800 dark:text-slate-200 select-none">
       {/* Header */}
       <div className="pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <h1 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+        <h1 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Settings className="h-4 w-4 text-amber-500" /> App Settings
         </h1>
         <button
@@ -183,7 +183,7 @@ export default function SettingsPage() {
       {/* SECTION 2: THEME & LANDING VIEW */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-4">
         <div>
-          <label className="flex items-center gap-1.5 text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-2">
+          <label className="flex items-center gap-1.5 text-xs uppercase font-extrabold text-slate-400 tracking-wider mb-2">
             <Palette className="h-3.5 w-3.5" /> Theme Preference
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -205,7 +205,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-          <label className="mb-2 flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+          <label className="mb-2 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-slate-400">
             <Type className="h-3.5 w-3.5" /> Text Size
           </label>
           <div className="grid grid-cols-3 gap-2" aria-label="Choose text size">
@@ -221,26 +221,26 @@ export default function SettingsPage() {
                 aria-pressed={fontSize === option.value}
                 className={`rounded-xl border px-2 py-2.5 text-center transition ${fontSize === option.value ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400'}`}
               >
-                <span className={`block font-black ${option.value === 'small' ? 'text-xs' : option.value === 'large' ? 'text-xl' : 'text-base'}`}>{option.sample}</span>
-                <span className="mt-0.5 block text-[10px] font-bold">{option.label}</span>
+                <span className={`block font-bold ${option.value === 'small' ? 'text-xs' : option.value === 'large' ? 'text-xl' : 'text-base'}`}>{option.sample}</span>
+                <span className="mt-0.5 block text-xs font-bold">{option.label}</span>
               </button>
             ))}
           </div>
-          <p className="mt-2 text-[10px] leading-4 text-slate-400">Changes apply across GoalYaar and stay on this device.</p>
+          <p className="mt-2 text-xs leading-4 text-slate-400">Changes apply across GoalYaar and stay on this device.</p>
         </div>
 
       </div>
 
       {/* SECTION 3: NOTIFICATIONS & REMINDERS */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
-        <label className="flex items-center gap-1.5 text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">
+        <label className="flex items-center gap-1.5 text-xs uppercase font-extrabold text-slate-400 tracking-wider">
           <Bell className="h-3.5 w-3.5" /> Notifications & Reminders
         </label>
 
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xs font-bold text-slate-900 dark:text-white">Daily browser reminder</h3>
-            <p className="text-[10px] text-slate-400">A streak-saver prompt at your chosen time</p>
+            <p className="text-xs text-slate-400">A streak-saver prompt at your chosen time</p>
           </div>
           <button
             type="button"
@@ -271,17 +271,17 @@ export default function SettingsPage() {
           </div>
         )}
         <div className="border-t border-slate-100 pt-3 dark:border-slate-800">
-          <div className="flex items-center justify-between"><div><h3 className="text-xs font-bold text-slate-900 dark:text-white">Quiet hours</h3><p className="text-[10px] text-slate-400">Pause reminders and social prompts overnight</p></div><button type="button" onClick={() => saveQuietHours(!quietHoursEnabled)} aria-pressed={quietHoursEnabled} className={`relative h-6 w-11 rounded-full transition-colors ${quietHoursEnabled ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'}`}><span className={`absolute top-1 block h-4 w-4 rounded-full bg-white transition-transform ${quietHoursEnabled ? 'left-6' : 'left-1'}`} /></button></div>
-          {quietHoursEnabled && <div className="mt-3 grid grid-cols-2 gap-2"><label className="text-[10px] font-bold text-slate-500">From<input type="time" value={quietHoursStart} onChange={(event) => saveQuietHours(true, event.target.value, quietHoursEnd)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label><label className="text-[10px] font-bold text-slate-500">Until<input type="time" value={quietHoursEnd} onChange={(event) => saveQuietHours(true, quietHoursStart, event.target.value)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label></div>}
+          <div className="flex items-center justify-between"><div><h3 className="text-xs font-bold text-slate-900 dark:text-white">Quiet hours</h3><p className="text-xs text-slate-400">Pause reminders and social prompts overnight</p></div><button type="button" onClick={() => saveQuietHours(!quietHoursEnabled)} aria-pressed={quietHoursEnabled} className={`relative h-6 w-11 rounded-full transition-colors ${quietHoursEnabled ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'}`}><span className={`absolute top-1 block h-4 w-4 rounded-full bg-white transition-transform ${quietHoursEnabled ? 'left-6' : 'left-1'}`} /></button></div>
+          {quietHoursEnabled && <div className="mt-3 grid grid-cols-2 gap-2"><label className="text-xs font-bold text-slate-500">From<input type="time" value={quietHoursStart} onChange={(event) => saveQuietHours(true, event.target.value, quietHoursEnd)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label><label className="text-xs font-bold text-slate-500">Until<input type="time" value={quietHoursEnd} onChange={(event) => saveQuietHours(true, quietHoursStart, event.target.value)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label></div>}
         </div>
-        <p className="text-[10px] leading-relaxed text-slate-400">A gentle reminder at this time while GoalYaar is open. For reminders when the app is closed, turn on Phone notifications below.</p>
+        <p className="text-xs leading-relaxed text-slate-400">A gentle reminder at this time while GoalYaar is open. For reminders when the app is closed, turn on Phone notifications below.</p>
       </div>
 
       <InstallAppCard />
 
       {/* SECTION 4: PRIVACY & DATA */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
-        <label className="flex items-center gap-1.5 text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">
+        <label className="flex items-center gap-1.5 text-xs uppercase font-extrabold text-slate-400 tracking-wider">
           <Shield className="h-3.5 w-3.5" /> Privacy & Data Export
         </label>
 
@@ -343,7 +343,7 @@ export default function SettingsPage() {
 
       {/* SECTION 5: ACCOUNT SECURITY & SIGN OUT */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-2">
-        <label className="block text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-1">
+        <label className="block text-xs uppercase font-extrabold text-slate-400 tracking-wider mb-1">
           Security & Account Actions
         </label>
 

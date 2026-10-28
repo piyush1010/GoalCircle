@@ -38,21 +38,21 @@ export default function InstallAppCard() {
       <div className="flex items-start gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><Smartphone className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-xs font-black">Install GoalYaar</h3>
-          <p className="mt-1 text-[10px] leading-4 text-slate-500">Open GoalYaar from your home screen with an app-like layout.</p>
+          <h3 className="text-xs font-bold">Install GoalYaar</h3>
+          <p className="mt-1 text-xs leading-4 text-slate-500">Open GoalYaar from your home screen with an app-like layout.</p>
         </div>
       </div>
 
       {isInstalled ? (
-        <p className="mt-3 inline-flex items-center gap-2 text-[10px] font-black text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" />Installed on this device</p>
+        <p className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" />Installed on this device</p>
       ) : installAvailable ? (
-        <button type="button" onClick={() => void install()} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-xs font-black text-slate-950"><Download className="h-4 w-4" />Install app</button>
+        <button type="button" onClick={() => void install()} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-xs font-bold text-slate-950"><Download className="h-4 w-4" />Install app</button>
       ) : isIos ? (
-        <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-[10px] leading-4 text-slate-600 dark:bg-slate-950 dark:text-slate-300">In Safari, tap Share and choose <strong>Add to Home Screen</strong>.</p>
+        <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-xs leading-4 text-slate-600 dark:bg-slate-950 dark:text-slate-300">In Safari, tap Share and choose <strong>Add to Home Screen</strong>.</p>
       ) : (
-        <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-[10px] leading-4 text-slate-500 dark:bg-slate-950">Your browser will show an install option when GoalYaar is eligible.</p>
+        <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-xs leading-4 text-slate-500 dark:bg-slate-950">Your browser will show an install option when GoalYaar is eligible.</p>
       )}
-      {message && <p role="status" className="mt-2 text-[10px] font-semibold text-slate-500">{message}</p>}
+      {message && <p role="status" className="mt-2 text-xs font-semibold text-slate-500">{message}</p>}
     </section>
   )
 }

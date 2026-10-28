@@ -133,10 +133,10 @@ export default function QuickStartGuide({ open, onComplete }: QuickStartGuidePro
               </span>
             )}
           </div>
-          <p className="relative text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">
+          <p className="relative text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">
             {step.eyebrow}
           </p>
-          <h2 id="quick-guide-title" className="relative mt-2 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+          <h2 id="quick-guide-title" className="relative mt-2 text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
             {step.title}
           </h2>
           <p id="quick-guide-description" className="relative mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
@@ -157,7 +157,7 @@ export default function QuickStartGuide({ open, onComplete }: QuickStartGuidePro
                 />
               ))}
             </div>
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
               {stepIndex + 1} / {guideSteps.length}
             </span>
           </div>
@@ -167,7 +167,7 @@ export default function QuickStartGuide({ open, onComplete }: QuickStartGuidePro
               <button
                 type="button"
                 onClick={() => setStepIndex((current) => current - 1)}
-                className="rounded-xl border border-slate-200 px-4 py-3 text-xs font-black text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="rounded-xl border border-slate-200 px-4 py-3 text-xs font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
               >
                 Back
               </button>
@@ -183,7 +183,7 @@ export default function QuickStartGuide({ open, onComplete }: QuickStartGuidePro
             <button
               type="button"
               onClick={() => (isLastStep ? closeGuide() : setStepIndex((current) => current + 1))}
-              className="ml-auto rounded-xl bg-amber-500 px-5 py-3 text-xs font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 active:scale-[0.98]"
+              className="ml-auto rounded-xl bg-amber-500 px-5 py-3 text-xs font-bold text-slate-950 transition hover:bg-amber-400 active:scale-[0.98]"
             >
               {isLastStep ? 'Start using GoalYaar' : 'Next'}
             </button>

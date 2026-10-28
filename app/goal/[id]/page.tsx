@@ -214,14 +214,14 @@ export default function GoalDetailPage() {
       <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl p-5 space-y-4 mb-6 shadow-xl">
         <div className="flex items-start justify-between">
           <div>
-            {editing ? <div className="space-y-2"><input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} maxLength={100} className="w-full rounded-xl border border-amber-500 bg-slate-50 px-3 py-2 text-sm font-bold outline-none dark:bg-slate-950" /><label className="block text-[10px] font-bold uppercase text-slate-500">Achievement date<input type="date" value={editTargetDate} min={new Date().toISOString().slice(0, 10)} onChange={(event) => setEditTargetDate(event.target.value)} className="mt-1 block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs normal-case dark:border-slate-700 dark:bg-slate-950" /></label><div className="flex gap-2"><button onClick={() => void saveGoal()} disabled={updating} className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-black text-slate-950"><Check className="h-3.5 w-3.5" />Save</button><button onClick={() => setEditing(false)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold dark:border-slate-700"><X className="h-3.5 w-3.5" />Cancel</button></div></div> : <h1 className="text-lg font-black">{goal.title}</h1>}
+            {editing ? <div className="space-y-2"><input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} maxLength={100} className="w-full rounded-xl border border-amber-500 bg-slate-50 px-3 py-2 text-sm font-bold outline-none dark:bg-slate-950" /><label className="block text-xs font-bold uppercase text-slate-500">Achievement date<input type="date" value={editTargetDate} min={new Date().toISOString().slice(0, 10)} onChange={(event) => setEditTargetDate(event.target.value)} className="mt-1 block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs normal-case dark:border-slate-700 dark:bg-slate-950" /></label><div className="flex gap-2"><button onClick={() => void saveGoal()} disabled={updating} className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-slate-950"><Check className="h-3.5 w-3.5" />Save</button><button onClick={() => setEditing(false)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold dark:border-slate-700"><X className="h-3.5 w-3.5" />Cancel</button></div></div> : <h1 className="text-lg font-bold">{goal.title}</h1>}
             <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-amber-400">
               <Flame className="h-3.5 w-3.5" /> {(goal as { frequency?: string }).frequency === 'once' ? 'One-time goal' : (goal as { frequency?: string }).frequency === 'weekly' ? `${goal.current_streak || 0} week streak` : `${goal.current_streak || 0} day streak`}
             </p>
-            {goal.target_date && <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-slate-500"><CalendarDays className="h-3 w-3" />Target {new Date(`${goal.target_date}T00:00:00`).toLocaleDateString()}</p>}
+            {goal.target_date && <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-slate-500"><CalendarDays className="h-3 w-3" />Target {new Date(`${goal.target_date}T00:00:00`).toLocaleDateString()}</p>}
             {goal.target_date && !editing && <GoalCalendarActions goalId={goal.id} title={goal.title} targetDate={goal.target_date} />}
-            {isOwner && !editing && <Link href={`/focus?goal=${goal.id}`} className="mt-2 inline-flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] font-black text-amber-700 transition hover:bg-amber-500/20 dark:text-amber-300"><Timer className="h-3.5 w-3.5" />Start focus</Link>}
-            {isPaused && <p className="mt-1 text-[10px] font-bold text-sky-500">Paused until {new Date(goal.pause_until as string).toLocaleDateString()}</p>}
+            {isOwner && !editing && <Link href={`/focus?goal=${goal.id}`} className="mt-2 inline-flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] font-bold text-amber-700 transition hover:bg-amber-500/20 dark:text-amber-300"><Timer className="h-3.5 w-3.5" />Start focus</Link>}
+            {isPaused && <p className="mt-1 text-xs font-bold text-sky-500">Paused until {new Date(goal.pause_until as string).toLocaleDateString()}</p>}
           </div>
           {isOwner && !isPaused && <button
             onClick={toggleGoalCompletion}
@@ -237,28 +237,28 @@ export default function GoalDetailPage() {
         </div>
 
         {message && <p role="status" className="rounded-xl bg-amber-500/10 p-3 text-xs font-semibold text-amber-700 dark:text-amber-300">{message}</p>}
-        {isOwner && !isCompleted && !isPaused && Number(goal.pause_count || 0) === 0 && <button onClick={() => void pauseGoal()} disabled={updating} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-300 bg-sky-50 px-4 py-2.5 text-xs font-black text-sky-700 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-300"><PauseCircle className="h-4 w-4" />Use one-time 7-day compassionate pause</button>}
+        {isOwner && !isCompleted && !isPaused && Number(goal.pause_count || 0) === 0 && <button onClick={() => void pauseGoal()} disabled={updating} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-300 bg-sky-50 px-4 py-2.5 text-xs font-bold text-sky-700 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-300"><PauseCircle className="h-4 w-4" />Use one-time 7-day compassionate pause</button>}
 
         {/* Milestone Statistics */}
         <div className="grid grid-cols-3 gap-2 pt-2">
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 dark:bg-slate-950 dark:border-slate-800/60 text-center">
-            <p className="text-lg font-black text-amber-400">{trackedCount || posts.length}</p>
-            <p className="text-[10px] text-slate-500">Check-ins</p>
+            <p className="text-lg font-bold text-amber-400">{trackedCount || posts.length}</p>
+            <p className="text-xs text-slate-500">Check-ins</p>
           </div>
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 dark:bg-slate-950 dark:border-slate-800/60 text-center">
-            <p className="text-lg font-black text-emerald-400">{consistencyRate}%</p>
-            <p className="text-[10px] text-slate-500">Consistency</p>
+            <p className="text-lg font-bold text-emerald-400">{consistencyRate}%</p>
+            <p className="text-xs text-slate-500">Consistency</p>
           </div>
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 dark:bg-slate-950 dark:border-slate-800/60 text-center">
-            <p className="text-lg font-black text-sky-500">{doneCount}</p>
-            <p className="text-[10px] text-slate-500">Done days</p>
+            <p className="text-lg font-bold text-sky-500">{doneCount}</p>
+            <p className="text-xs text-slate-500">Done days</p>
           </div>
         </div>
       </div>
 
       {userId && <GoalCollaborators goalId={goal.id} ownerId={goal.user_id} currentUserId={userId} />}
 
-      {!isCompleted && !isPaused && <Link href={`/check-in?goal=${goal.id}`} className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-xs font-black text-slate-950 shadow-lg shadow-amber-500/20"><Plus className="h-4 w-4" />Add a check-in</Link>}
+      {!isCompleted && !isPaused && <Link href={`/check-in?goal=${goal.id}`} className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-xs font-bold text-slate-950"><Plus className="h-4 w-4" />Add a check-in</Link>}
 
       {/* Progress Posts Timeline */}
       <div className="space-y-3">
@@ -278,7 +278,7 @@ export default function GoalDetailPage() {
           posts.map(p => (
             <div key={p.id} className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl p-4 space-y-2">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2"><span className="text-[10px] font-mono text-slate-500">{new Date(p.created_at).toLocaleDateString()}</span>{p.checkin_status && <span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${p.checkin_status === 'done' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : p.checkin_status === 'partial' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-slate-200 text-slate-500 dark:bg-slate-800'}`}>{p.checkin_status}</span>}</div>
+                <div className="flex items-center gap-2"><span className="text-xs font-mono text-slate-500">{new Date(p.created_at).toLocaleDateString()}</span>{p.checkin_status && <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold uppercase ${p.checkin_status === 'done' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : p.checkin_status === 'partial' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-slate-200 text-slate-500 dark:bg-slate-800'}`}>{p.checkin_status}</span>}</div>
                 {p.user_id === userId && <button type="button" onClick={() => void deleteProgressPost(p)} disabled={deletingPostId === p.id} aria-label="Delete progress update" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:opacity-50 dark:hover:bg-rose-950/30"><Trash2 className="h-3.5 w-3.5" /></button>}
               </div>
               {p.caption && <p className="text-xs text-slate-700 dark:text-slate-200">{p.caption}</p>}

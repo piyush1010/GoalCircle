@@ -59,7 +59,7 @@ export default function CircleNotices({ circleId, userId, isAdmin }: { circleId:
   return (
     <section data-tour="notices" className="mt-3 space-y-3">
       <div className="flex items-center justify-between px-1">
-        <h2 className="flex items-center gap-1.5 text-sm font-black"><Megaphone className="h-4 w-4 text-amber-500" />Notices</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-bold"><Megaphone className="h-4 w-4 text-amber-500" />Notices</h2>
         {isAdmin && !composing && <button type="button" onClick={() => setComposing(true)} className="text-xs font-bold text-amber-600 dark:text-amber-400">+ New notice</button>}
       </div>
 
@@ -70,7 +70,7 @@ export default function CircleNotices({ circleId, userId, isAdmin }: { circleId:
           <button type="button" onClick={() => setPinned((on) => !on)} aria-pressed={pinned} className={`inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold ${pinned ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 text-slate-500 dark:border-slate-700'}`}><Pin className="h-3.5 w-3.5" />Pin</button>
           <span className="flex-1" />
           <button type="button" onClick={clearComposer} className="h-10 rounded-xl px-3 text-xs font-bold text-slate-500">Cancel</button>
-          <button type="button" onClick={() => void post()} disabled={posting} className="h-10 rounded-xl bg-amber-500 px-4 text-xs font-black text-slate-950 disabled:opacity-60">{posting ? 'Posting…' : 'Post'}</button>
+          <button type="button" onClick={() => void post()} disabled={posting} className="h-10 rounded-xl bg-amber-500 px-4 text-xs font-bold text-slate-950 disabled:opacity-60">{posting ? 'Posting…' : 'Post'}</button>
         </div>
         {error && <p role="alert" className="mt-2 text-sm font-semibold text-rose-600">{error}</p>}
       </div>}

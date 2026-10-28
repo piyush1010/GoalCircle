@@ -1,9 +1,10 @@
 'use client'
 
+import LogoMark from '@/components/LogoMark'
 import React, { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
-import { LogIn, Target, UserPlus } from 'lucide-react'
+import { LogIn, UserPlus } from 'lucide-react'
 
 function AuthForm() {
   const router = useRouter()
@@ -101,7 +102,7 @@ function AuthForm() {
           }`}
         >
           <LogIn className="h-4 w-4 shrink-0" />
-          <span><span className="block text-xs font-black">Sign in</span><span className={`block text-[9px] font-semibold ${mode === 'signin' ? 'text-slate-800/70' : 'text-slate-400'}`}>Existing member</span></span>
+          <span><span className="block text-xs font-bold">Sign in</span><span className={`block text-[11px] font-semibold ${mode === 'signin' ? 'text-slate-800/70' : 'text-slate-400'}`}>Existing member</span></span>
         </button>
         <button
           type="button"
@@ -118,14 +119,14 @@ function AuthForm() {
           }`}
         >
           <UserPlus className="h-4 w-4 shrink-0" />
-          <span><span className="block text-xs font-black">Create account</span><span className={`block text-[9px] font-semibold ${mode === 'signup' ? 'text-slate-800/70' : 'text-slate-400'}`}>New to GoalYaar</span></span>
+          <span><span className="block text-xs font-bold">Create account</span><span className={`block text-[11px] font-semibold ${mode === 'signup' ? 'text-slate-800/70' : 'text-slate-400'}`}>New to GoalYaar</span></span>
         </button>
       </div>
 
       {/* DYNAMIC HEADER */}
       <div className="text-center space-y-1">
-        <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-amber-500 text-slate-950"><Target className="h-5 w-5" /></span>
-        <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+        <LogoMark size={48} className="mx-auto mb-3" />
+        <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
           {mode === 'signup' ? 'Create your account' : 'Sign in to GoalYaar'}
         </h1>
         <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
@@ -176,7 +177,7 @@ function AuthForm() {
 
       <div className="relative flex items-center justify-center">
         <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
-        <span className="absolute bg-white px-3 text-[10px] font-bold uppercase text-slate-500 dark:bg-[#101b2d]">
+        <span className="absolute bg-white px-3 text-xs font-bold uppercase text-slate-500 dark:bg-[#101b2d]">
           or email
         </span>
       </div>
@@ -185,7 +186,7 @@ function AuthForm() {
       <form onSubmit={handleSubmit} className="space-y-3">
         {mode === 'signup' && (
           <div>
-            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+            <label className="block text-xs font-bold uppercase text-slate-400 mb-1">
               Full Name
             </label>
             <input
@@ -200,7 +201,7 @@ function AuthForm() {
         )}
 
         <div>
-          <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+          <label className="block text-xs font-bold uppercase text-slate-400 mb-1">
             Email Address
           </label>
           <input
@@ -214,7 +215,7 @@ function AuthForm() {
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+          <label className="block text-xs font-bold uppercase text-slate-400 mb-1">
             Password
           </label>
           <input
@@ -231,7 +232,7 @@ function AuthForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition shadow-lg shadow-amber-500/20 disabled:opacity-50 mt-2"
+          className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition disabled:opacity-50 mt-2"
         >
           {loading ? 'Processing...' : mode === 'signup' ? 'Create account' : 'Sign in'}
         </button>

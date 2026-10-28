@@ -9,12 +9,12 @@ export const BUDDY_EVENT = 'goalcircle:goalie-buddy'
 
 // A short hello per page, said once per visit to that page in a session.
 const PAGE_LINES: { match: (path: string) => boolean; line: string }[] = [
-  { match: (path) => path === '/feed', line: 'See who showed up today 👀' },
-  { match: (path) => path === '/circles', line: 'Your people are here 💛' },
-  { match: (path) => path === '/dashboard', line: 'One day at a time ☀️' },
-  { match: (path) => path === '/profile', line: 'Looking good! 😎' },
-  { match: (path) => path === '/create', line: 'What are we starting today? ✨' },
-  { match: (path) => path.startsWith('/goal/'), line: 'One step at a time 💪' },
+  { match: (path) => path === '/feed', line: 'See who showed up today' },
+  { match: (path) => path === '/circles', line: 'Your people are here' },
+  { match: (path) => path === '/dashboard', line: 'One day at a time' },
+  { match: (path) => path === '/profile', line: 'Looking good!' },
+  { match: (path) => path === '/create', line: 'What are we starting today?' },
+  { match: (path) => path.startsWith('/goal/'), line: 'One step at a time' },
 ]
 // Pages where Goalie already appears, or where it would distract.
 const HIDDEN_ON = ['/check-in', '/focus', '/create-goal', '/settings', '/login', '/signup', '/circles/']

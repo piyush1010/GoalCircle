@@ -135,14 +135,14 @@ export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: 
       <div className={`guide-card absolute inset-x-4 mx-auto flex max-w-md select-none ${atTop ? 'top-4 flex-col-reverse' : 'bottom-20 flex-col'}`}>
         {/* Comic speech bubble */}
         <div className="relative rounded-[28px] border-[3px] border-slate-900 bg-white p-4 text-slate-900 shadow-[5px_5px_0_#0f172a]">
-          <p className="text-[11px] font-black uppercase tracking-wider text-amber-600">Goalie · {index + 1} of {active.length}</p>
-          <h2 className="mt-0.5 text-lg font-black leading-snug">{step.title}</h2>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600">Goalie · {index + 1} of {active.length}</p>
+          <h2 className="mt-0.5 text-lg font-bold leading-snug">{step.title}</h2>
           <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{step.text}</p>
           <div className="mt-4 flex items-center gap-2">
             <button type="button" onClick={() => finish(true)} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Skip tips</button>
             <span className="flex-1" />
-            {index > 0 && <button type="button" onClick={() => setIndex(index - 1)} className="rounded-xl border-2 border-slate-900 px-4 py-2 text-sm font-black">Back</button>}
-            <button type="button" onClick={() => (last ? finish() : setIndex(index + 1))} autoFocus className="rounded-xl border-2 border-slate-900 bg-amber-400 px-5 py-2 text-sm font-black text-slate-950 shadow-[2px_2px_0_#0f172a] active:translate-x-px active:translate-y-px active:shadow-none">{last ? 'Got it' : 'Next'}</button>
+            {index > 0 && <button type="button" onClick={() => setIndex(index - 1)} className="rounded-xl border-2 border-slate-900 px-4 py-2 text-sm font-bold">Back</button>}
+            <button type="button" onClick={() => (last ? finish() : setIndex(index + 1))} autoFocus className="rounded-xl border-2 border-slate-900 bg-amber-400 px-5 py-2 text-sm font-bold text-slate-950 shadow-[2px_2px_0_#0f172a] active:translate-x-px active:translate-y-px active:shadow-none">{last ? 'Got it' : 'Next'}</button>
           </div>
           {/* Tail pointing at Goalie */}
           <svg width="36" height="26" viewBox="0 0 36 26" aria-hidden="true" className={`absolute left-12 ${atTop ? '-top-[23px] -scale-y-100' : '-bottom-[23px]'}`}>
