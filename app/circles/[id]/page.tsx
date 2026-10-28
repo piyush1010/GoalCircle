@@ -1,6 +1,7 @@
 'use client'
 
 import ClampedText from '@/components/ClampedText'
+import CircleAvatar from '@/components/CircleAvatar'
 import { confirmAction } from '@/lib/confirm'
 import { cheer } from '@/lib/goalie'
 import Image from 'next/image'
@@ -58,6 +59,8 @@ export default function CirclePage() {
   const [error, setError] = useState<string | null>(null)
   const [tourReplay, setTourReplay] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [photoBusy, setPhotoBusy] = useState(false)
 
   const isAdmin = !!circle && (circle.owner_id === userId || role === 'owner' || role === 'moderator')
   const isMember = isAdmin || !!role
@@ -117,6 +120,36 @@ export default function CirclePage() {
 
   useEffect(() => { void Promise.resolve().then(load) }, [load])
 
+  // The batch photo loads on its own, so the page never waits for it.
+  useEffect(() => {
+    void supabase.from('circles').select('avatar_url').eq('id', circleId).maybeSingle().then(({ data, error: photoError }) => {
+      if (!photoError) setAvatarUrl((data as { avatar_url?: string | null } | null)?.avatar_url ?? null)
+    })
+  }, [circleId])
+
+  const changePhoto = async (chosen?: File) => {
+    if (!chosen || !userId) return
+    if (!chosen.type.startsWith('image/')) { setError('Choose a photo or logo image.'); return }
+    setPhotoBusy(true); setError(null)
+    let file: File = chosen
+    try { file = await shrinkImage(await toLocalFile(chosen)) } catch { setError(UNREADABLE_FILE); setPhotoBusy(false); return }
+    const path = `${userId}/circle-${circleId}/photo-${crypto.randomUUID()}.${file.type === 'image/webp' ? 'webp' : 'jpg'}`
+    const { error: uploadError } = await supabase.storage.from('goal-media').upload(path, file, { contentType: file.type, cacheControl: '31536000' })
+    if (uploadError) { setError('The photo could not be uploaded. Please try again.'); setPhotoBusy(false); return }
+    const url = supabase.storage.from('goal-media').getPublicUrl(path).data.publicUrl
+    const { error: saveError } = await supabase.from('circles').update({ avatar_url: url }).eq('id', circleId)
+    setPhotoBusy(false)
+    if (saveError) { setError('The photo was uploaded but could not be saved to the batch.'); return }
+    setAvatarUrl(url); flash('Batch photo updated')
+  }
+
+  const removePhoto = async () => {
+    if (!(await confirmAction('Remove the batch photo? The batch will show its initials instead.'))) return
+    const { error: saveError } = await supabase.from('circles').update({ avatar_url: null }).eq('id', circleId)
+    if (saveError) setError('The photo could not be removed.')
+    else { setAvatarUrl(null); flash('Batch photo removed') }
+  }
+
   const flash = (text: string) => { setMessage(text); window.setTimeout(() => setMessage(null), 3000) }
 
   const inviteLink = circle?.invite_code ? `${typeof window !== 'undefined' ? window.location.origin : ''}/circles/join/${circle.invite_code}` : ''
@@ -150,6 +183,13 @@ export default function CirclePage() {
     <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4">
       <header className="mb-4 flex items-start gap-3">
         <button type="button" onClick={() => router.push('/circles')} aria-label="Back to circles" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101b2d]"><ArrowLeft className="h-4 w-4" /></button>
+        {isAdmin
+          ? <label className="relative shrink-0 cursor-pointer" title="Change batch photo">
+              <CircleAvatar name={circle.name} url={avatarUrl} size={44} className={photoBusy ? 'opacity-50' : ''} />
+              <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-slate-900 text-white dark:border-[#07101f]"><Pencil className="h-2.5 w-2.5" /></span>
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="Change batch photo" onChange={(event) => { void changePhoto(event.target.files?.[0]); event.target.value = '' }} />
+            </label>
+          : <CircleAvatar name={circle.name} url={avatarUrl} size={44} />}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-xl font-bold tracking-tight">{circle.name}</h1>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">
@@ -159,11 +199,13 @@ export default function CirclePage() {
           </p>
         </div>
         {isMember && <button type="button" onClick={() => setTourReplay((n) => n + 1)} aria-label="Show the guide" className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-500 hover:text-amber-500 dark:border-slate-700"><CircleHelp className="h-4 w-4" /></button>}
-        {!isAdmin && isMember && <div className="relative shrink-0">
+        {isMember && (!isAdmin || avatarUrl) && <div className="relative shrink-0">
           <button type="button" onClick={() => setMenuOpen((open) => !open)} aria-label="More options" aria-expanded={menuOpen} className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 text-slate-500 dark:border-slate-700"><MoreHorizontal className="h-4 w-4" /></button>
           {menuOpen && <button type="button" aria-hidden="true" tabIndex={-1} onClick={() => setMenuOpen(false)} className="fixed inset-0 z-10 cursor-default" />}
           {menuOpen && <div className="absolute right-0 top-11 z-20 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-[#101b2d]">
-            <button type="button" onClick={() => void leave()} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><LogOut className="h-4 w-4" />Leave circle</button>
+            {isAdmin
+              ? <button type="button" onClick={() => { setMenuOpen(false); void removePhoto() }} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><X className="h-4 w-4" />Remove photo</button>
+              : <button type="button" onClick={() => void leave()} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><LogOut className="h-4 w-4" />Leave circle</button>}
           </div>}
         </div>}
         {isAdmin && <button type="button" data-tour="invite" onClick={() => void shareInvite()} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-xs font-bold text-slate-950"><Share2 className="h-4 w-4" />Invite</button>}

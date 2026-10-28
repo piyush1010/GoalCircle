@@ -1,5 +1,6 @@
 'use client'
 
+import CircleAvatar from '@/components/CircleAvatar'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -24,7 +25,7 @@ interface Goal {
   is_completed?: boolean | null
   shared?: boolean
 }
-interface BatchCard { id: string; name: string; admin: boolean; task: string | null; done: boolean; status: 'done' | 'partial' | 'missed' | null }
+interface BatchCard { id: string; name: string; admin: boolean; task: string | null; done: boolean; status: 'done' | 'partial' | 'missed' | null; avatarUrl?: string | null }
 // checkin: counts as showing up. logged: any check-in today, including an honest "Missed".
 interface Activity { goal_id: string | null; at: string; minutes: number; checkin: boolean; logged?: boolean }
 
@@ -91,6 +92,11 @@ export default function TodayPage() {
     const taskByCircle = new Map(((tasksResult.data || []) as Array<{ circle_id: string; title: string }>).map((row) => [row.circle_id, row.title]))
     const statusByCircle = new Map(batchCheckins.filter((row) => row.circle_tasks?.task_date === todayKey).map((row) => [row.circle_id, row.status]))
     setBatches(memberships.map((row) => ({ id: row.circles!.id, name: row.circles!.name, admin: row.circles!.owner_id === user.id || ['owner', 'moderator'].includes(row.role), task: taskByCircle.get(row.circles!.id) ?? null, done: statusByCircle.has(row.circles!.id), status: statusByCircle.get(row.circles!.id) ?? null })))
+    if (circleIds.length) void supabase.from('circles').select('id,avatar_url').in('id', circleIds).then(({ data, error: photoError }) => {
+      if (photoError || !data) return
+      const byId = new Map(data.map((row) => [row.id as string, (row as { avatar_url?: string | null }).avatar_url ?? null]))
+      setBatches((items) => items.map((item) => ({ ...item, avatarUrl: byId.get(item.id) ?? null })))
+    })
     const failed = goalsResult.error || postsResult.error || logsResult.error || collabResult.error || sharedResult.error
     if (failed) { setError('Your day could not be loaded. Pull down or tap Retry.'); setLoading(false); return }
 
@@ -205,7 +211,7 @@ export default function TodayPage() {
         <h2 className="mb-2 text-lg font-bold">{batches.length === 1 ? 'Your batch' : 'Your circles'}</h2>
         <div className="space-y-2.5">{batches.map((batch) => (
           <Link key={batch.id} href={`/circles/${batch.id}`} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:border-amber-500 dark:border-slate-700/70 dark:bg-[#101b2d]">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400"><UsersRound className="h-5 w-5" /></span>
+            <CircleAvatar name={batch.name} url={batch.avatarUrl} size={44} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-base font-bold">{batch.name}</span>
               {!batch.admin && batch.task && <span className="block text-xs font-bold text-amber-700 dark:text-amber-400">From your mentor</span>}

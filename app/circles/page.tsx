@@ -7,12 +7,16 @@ import { useRouter } from 'next/navigation'
 import { BookOpen, BriefcaseBusiness, ChevronRight, Dumbbell, Globe2, LockKeyhole, LogOut, MoreHorizontal, Plus, Repeat2, Target, Trash2, Users, X, type LucideIcon } from 'lucide-react'
 import { EXAMS, examLabel } from '@/lib/exams'
 import GoalieMessage from '@/components/GoalieMessage'
+import CircleAvatar from '@/components/CircleAvatar'
+import { localDateString } from '@/lib/exams'
 import { supabase } from '@/utils/supabase'
 import CircleChallenges from '@/components/CircleChallenges'
 
 type Category = 'all' | 'work' | 'fitness' | 'learning' | 'habits'
 interface CircleRow { id: string; owner_id: string; name: string; description: string | null; category: Exclude<Category, 'all'>; emoji: string; created_at: string; visibility: 'public' | 'private'; exam: string | null }
-interface CircleView extends CircleRow { memberCount: number; joined: boolean; owned: boolean }
+type TodayStatus = 'done' | 'partial' | 'missed' | null
+interface CircleToday { task: string | null; mine: TodayStatus; checkedIn: number }
+interface CircleView extends CircleRow { memberCount: number; joined: boolean; owned: boolean; avatarUrl?: string | null; today?: CircleToday }
 const categories: Array<{ id: Category; label: string; icon: LucideIcon }> = [
   { id: 'all', label: 'All', icon: Globe2 }, { id: 'work', label: 'Deep Work', icon: BriefcaseBusiness },
   { id: 'fitness', label: 'Fitness', icon: Dumbbell }, { id: 'learning', label: 'Learning', icon: BookOpen },
@@ -55,9 +59,38 @@ export default function CirclesPage() {
     const memberships = (membershipResult.data || []) as Array<{ circle_id: string; user_id: string }>
     const next = ((circleResult.data || []) as CircleRow[]).map((circle) => ({ ...circle, owned: circle.owner_id === uid, joined: circle.owner_id === uid || memberships.some((m) => m.circle_id === circle.id && m.user_id === uid), memberCount: new Set([circle.owner_id, ...memberships.filter((m) => m.circle_id === circle.id).map((m) => m.user_id)]).size }))
     setCircles(next)
+    void loadExtras(uid, next)
     try { window.localStorage.setItem(`goalcircle-circles-${uid}`, JSON.stringify(next.filter((circle) => circle.joined).slice(0, 30))) } catch { /* storage full */ }
     setLoading(false)
   }, [router])
+
+  // Photos and today's progress load after the list, so the list itself never waits on them.
+  const loadExtras = useCallback(async (uid: string, list: CircleView[]) => {
+    const joinedIds = list.filter((circle) => circle.joined).map((circle) => circle.id)
+    const [avatars, tasks] = await Promise.all([
+      supabase.from('circles').select('id,avatar_url').in('id', list.map((circle) => circle.id)),
+      joinedIds.length ? supabase.from('circle_tasks').select('id,circle_id,title').in('circle_id', joinedIds).eq('task_date', localDateString()) : Promise.resolve({ data: [], error: null }),
+    ])
+    const taskRows = (tasks.data || []) as Array<{ id: string; circle_id: string; title: string }>
+    const { data: checkins } = taskRows.length
+      ? await supabase.from('circle_task_checkins').select('task_id,user_id,status').in('task_id', taskRows.map((task) => task.id))
+      : { data: [] as Array<{ task_id: string; user_id: string; status: string }> }
+    const avatarById = new Map(((avatars.error ? [] : avatars.data) || []).map((row) => [row.id as string, (row as { avatar_url?: string | null }).avatar_url ?? null]))
+    const rows = (checkins || []) as Array<{ task_id: string; user_id: string; status: string }>
+    setCircles((items) => items.map((circle) => {
+      const task = taskRows.find((row) => row.circle_id === circle.id)
+      const forTask = task ? rows.filter((row) => row.task_id === task.id) : []
+      return {
+        ...circle,
+        avatarUrl: avatarById.get(circle.id) ?? circle.avatarUrl ?? null,
+        today: circle.joined ? {
+          task: task?.title ?? null,
+          mine: (forTask.find((row) => row.user_id === uid)?.status as TodayStatus) ?? null,
+          checkedIn: forTask.filter((row) => row.user_id !== uid && row.status !== 'missed').length,
+        } : undefined,
+      }
+    }))
+  }, [])
 
   useEffect(() => { void Promise.resolve().then(loadCircles) }, [loadCircles])
   // Discover only lists public circles. Private batches are reached by invite link.
@@ -108,7 +141,7 @@ export default function CirclesPage() {
     <div className="space-y-3">
       {loading && [1, 2].map((item) => <div key={item} className="h-36 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" />)}
       {!loading && displayed.length === 0 && <GoalieMessage title={tab === 'my' ? 'No circles yet' : 'No circles to discover yet'} message={tab === 'my' ? 'Got an invite link from your mentor? Open it to join. Mentor? Create a private batch for your students.' : 'Create the first accountability circle.'} actionLabel="Create a circle" onAction={() => setShowCreate(true)} />}
-      {displayed.map((circle) => <article key={circle.id} className="relative rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-[#101b2d]"><Link href={`/circles/${circle.id}`} aria-label={`Open ${circle.name}`} className="absolute inset-0 rounded-3xl" /><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 gap-3"><div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><CategoryIcon category={circle.category} className="h-5 w-5" /></div><div className="min-w-0"><Link href={`/circles/${circle.id}`} className="group flex items-center gap-1"><h2 className="truncate text-sm font-bold group-hover:text-amber-600">{circle.name}</h2><ChevronRight className="h-4 w-4 shrink-0 text-slate-400" /></Link><p className="mt-0.5 flex items-center gap-1 text-[11px] font-bold text-slate-400">{circle.visibility === 'private' && <LockKeyhole className="h-3 w-3" />}{examLabel(circle.exam) || categories.find((c) => c.id === circle.category)?.label} · {circle.memberCount} {circle.memberCount === 1 ? 'member' : 'members'}</p></div></div><div className="relative z-10 flex shrink-0 gap-1.5">{!circle.owned && !circle.joined
+      {displayed.map((circle) => <article key={circle.id} className="relative rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-[#101b2d]"><Link href={`/circles/${circle.id}`} aria-label={`Open ${circle.name}`} className="absolute inset-0 rounded-3xl" /><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 gap-3"><CircleAvatar name={circle.name} url={circle.avatarUrl} size={52} /><div className="min-w-0"><Link href={`/circles/${circle.id}`} className="group flex items-center gap-1"><h2 className="truncate text-base font-bold group-hover:text-amber-600">{circle.name}</h2>{circle.owned && <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">Mentor</span>}<ChevronRight className="h-4 w-4 shrink-0 text-slate-400" /></Link><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-500">{circle.visibility === 'private' && <LockKeyhole className="h-3 w-3" />}{examLabel(circle.exam) || categories.find((c) => c.id === circle.category)?.label} · {circle.memberCount} {circle.memberCount === 1 ? 'member' : 'members'}</p></div></div><div className="relative z-10 flex shrink-0 gap-1.5">{!circle.owned && !circle.joined
   ? <button onClick={() => void toggleMembership(circle)} disabled={busyId === circle.id} className="inline-flex items-center gap-1 rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-bold text-slate-950 disabled:opacity-60">{busyId === circle.id ? 'Saving…' : 'Join'}</button>
   : <div className="relative">
     {/* Leave and Delete live behind a menu so they can't be tapped by accident. */}
@@ -119,8 +152,34 @@ export default function CirclesPage() {
         ? <button type="button" onClick={() => { setMenuFor(null); void deleteCircle(circle) }} disabled={busyId === circle.id} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><Trash2 className="h-4 w-4" />Delete circle</button>
         : <button type="button" onClick={() => { setMenuFor(null); void toggleMembership(circle) }} disabled={busyId === circle.id} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><LogOut className="h-4 w-4" />Leave circle</button>}
     </div>}
-  </div>}</div></div>{circle.description && <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{circle.description}</p>}</article>)}
+  </div>}</div></div>{circle.description && <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{circle.description}</p>}
+      {circle.today && <TodayLine circle={circle} />}</article>)}
+      {!loading && tab === 'my' && displayed.length > 0 && displayed.length < 3 && <div className="rounded-3xl border border-dashed border-slate-300 p-5 text-sm leading-relaxed text-slate-600 dark:border-slate-700 dark:text-slate-300">
+        <p className="font-semibold text-slate-800 dark:text-slate-100">Joining another batch?</p>
+        <p className="mt-1">Open the invite link your mentor shared on WhatsApp. You&apos;ll be added in one tap.</p>
+        {!circles.some((circle) => circle.owned) && <><p className="mt-4 font-semibold text-slate-800 dark:text-slate-100">Teaching a batch?</p><p className="mt-1">Create a private batch, post one task a day, and see who checked in. <button type="button" onClick={() => setShowCreate(true)} className="font-semibold text-amber-700 underline underline-offset-2 dark:text-amber-400">Create a batch</button></p></>}
+      </div>}
     </div>
     {showCreate && <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/75 p-4 backdrop-blur-sm"><div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-[#101b2d]"><div className="mb-4 flex items-center justify-between"><h2 className="font-bold">Create a circle</h2><button onClick={() => setShowCreate(false)} aria-label="Close"><X className="h-5 w-5" /></button></div><form onSubmit={createCircle} className="space-y-3"><label className="block text-xs font-bold uppercase text-slate-500">Name<input required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} placeholder="UPSC daily sprints" className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold normal-case dark:border-slate-700 dark:bg-[#07101f]" /></label><div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Who can join">{([['private', 'Private batch', 'Invite link only', LockKeyhole], ['public', 'Public group', 'Anyone can join', Globe2]] as const).map(([value, label, hint, Icon]) => <button type="button" role="radio" aria-checked={newVisibility === value} key={value} onClick={() => setNewVisibility(value)} className={`rounded-2xl border p-3 text-left ${newVisibility === value ? 'border-amber-500 bg-amber-500/10' : 'border-slate-200 dark:border-slate-700'}`}><Icon className={`mb-1 h-4 w-4 ${newVisibility === value ? 'text-amber-500' : 'text-slate-400'}`} /><span className="block text-sm font-bold">{label}</span><span className="block text-[11px] text-slate-500">{hint}</span></button>)}</div>{newVisibility === 'public' && <label className="block text-xs font-bold uppercase text-slate-500">Category<select value={newCategory} onChange={(e) => setNewCategory(e.target.value as Exclude<Category, 'all'>)} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm normal-case dark:border-slate-700 dark:bg-[#07101f]">{categories.filter((c) => c.id !== 'all').map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select></label>}<label className="block text-xs font-bold uppercase text-slate-500">Exam<select value={newExam} onChange={(e) => setNewExam(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm normal-case dark:border-slate-700 dark:bg-[#07101f]"><option value="">No exam</option>{EXAMS.map((exam) => <option key={exam.id} value={exam.id}>{exam.label}</option>)}</select></label><label className="block text-xs font-bold uppercase text-slate-500">Description <span className="font-semibold normal-case text-slate-400">(optional)</span><textarea rows={3} maxLength={300} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={newVisibility === 'private' ? 'e.g. Daily answer writing for Mains 2027' : 'What will members accomplish together?'} className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm normal-case dark:border-slate-700 dark:bg-[#07101f]" /></label><button disabled={busyId === 'create'} className="w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 disabled:opacity-60">{busyId === 'create' ? 'Creating…' : 'Create circle'}</button></form></div></div>}
   </main>
+}
+
+/** Today's task on a batch card: progress for mentors, your own status for students. */
+function TodayLine({ circle }: { circle: CircleView }) {
+  const today = circle.today!
+  const students = Math.max(0, circle.memberCount - 1)
+  let right: React.ReactNode = null
+  if (circle.owned) right = today.task ? <span className="shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">{today.checkedIn} of {students} checked in</span> : <span className="shrink-0 text-sm font-semibold text-amber-700 dark:text-amber-400">Post task</span>
+  else if (today.task) right = today.mine === 'done' || today.mine === 'partial'
+    ? <span className="shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">Checked in</span>
+    : today.mine === 'missed'
+      ? <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">Missed</span>
+      : <span className="shrink-0 rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold text-slate-950">Check in</span>
+  return <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+    <div className="min-w-0 flex-1">
+      <p className="text-xs font-semibold text-slate-500">Today</p>
+      <p className="truncate text-sm font-semibold">{today.task ?? (circle.owned ? 'No task posted yet' : 'No task from your mentor yet')}</p>
+    </div>
+    {right}
+  </div>
 }
