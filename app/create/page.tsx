@@ -73,9 +73,9 @@ export default function CreatePage() {
           <div className="space-y-2">
             {batchTasks.map((task) => {
               const done = task.status === 'done' || task.status === 'partial'
-              return <Link key={task.circleId} href={`/circles/${task.circleId}`} className={`group flex items-center gap-4 rounded-3xl border p-4 transition ${done ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30' : task.status === 'missed' ? 'border-slate-200 bg-white dark:border-slate-700 dark:bg-[#16181B]' : 'border-amber-500/50 bg-amber-500/10 hover:border-amber-500'}`}>
-                <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${done ? 'bg-emerald-500 text-white' : task.status === 'missed' ? 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300' : 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900'}`}>{done ? <CheckCircle2 className="h-5 w-5" /> : task.status === 'missed' ? <XCircle className="h-5 w-5" /> : <UsersRound className="h-5 w-5" />}</div>
-                <div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-amber-700 dark:text-amber-400">{task.circleName}</p><h3 className="truncate text-base font-bold">{task.title}</h3><p className="text-sm text-slate-600 dark:text-slate-300">{done ? 'Checked in. Tap to edit.' : task.status === 'missed' ? 'Marked missed. Tap to change.' : 'Tap to check in'}</p></div>
+              return <Link key={task.circleId} href={`/circles/${task.circleId}`} className={`group flex items-center gap-4 rounded-3xl border p-4 transition ${done ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30' : task.status === 'missed' ? 'border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101B2D]' : 'border-amber-500/50 bg-amber-500/10 hover:border-amber-500'}`}>
+                <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${done ? 'bg-emerald-500 text-white' : task.status === 'missed' ? 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300' : 'bg-amber-500/15 text-amber-700 dark:text-amber-400'}`}>{done ? <CheckCircle2 className="h-5 w-5" /> : task.status === 'missed' ? <XCircle className="h-5 w-5" /> : <UsersRound className="h-5 w-5" />}</div>
+                <div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-amber-700 dark:text-amber-400">{task.circleName}</p><h3 className="line-clamp-2 break-words leading-snug text-base font-bold">{task.title}</h3><p className="text-sm text-slate-600 dark:text-slate-300">{done ? 'Checked in. Tap to edit.' : task.status === 'missed' ? 'Marked missed. Tap to change.' : 'Tap to check in'}</p></div>
                 <ArrowRight className="h-5 w-5 shrink-0 text-amber-500 transition group-hover:translate-x-1" />
               </Link>
             })}
@@ -84,11 +84,11 @@ export default function CreatePage() {
 
         {goals.length > 0 && <section>
           <h2 className="mb-2 px-1 text-xs font-bold uppercase tracking-wider text-slate-500">Your goals</h2>
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#16181B]">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101B2D]">
             {goals.map((goal, index) => <Link key={goal.id} href={`/check-in?goal=${goal.id}`} className={`flex items-center gap-3 px-4 py-3.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/50 ${index ? 'border-t border-slate-100 dark:border-slate-800' : ''}`}>
               {goal.doneToday ? <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" /> : <Target className="h-5 w-5 shrink-0 text-amber-500" />}
-              <span className="min-w-0 flex-1 truncate text-base font-bold">{goal.title}</span>
-              <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${goal.doneToday ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900'}`}>{goal.doneToday ? 'Done' : 'Check in'}</span>
+              <span className="line-clamp-2 min-w-0 flex-1 break-words text-base font-bold leading-snug">{goal.title}</span>
+              <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${goal.doneToday ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'bg-amber-500 text-slate-950'}`}>{goal.doneToday ? 'Done' : 'Check in'}</span>
             </Link>)}
           </div>
         </section>}

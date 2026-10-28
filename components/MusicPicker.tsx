@@ -189,7 +189,7 @@ export default function MusicPicker({ open, selected, onClose, onSelect }: Music
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="music-picker-title">
-      <div className="max-h-[82vh] w-full max-w-lg overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-[#16181B] sm:rounded-3xl">
+      <div className="max-h-[82vh] w-full max-w-lg overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-[#101B2D] sm:rounded-3xl">
         <div className="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-800">
           <div className="flex items-center gap-2">{cropping && <button type="button" onClick={() => { stopAudio(); setCropping(null) }} aria-label="Change song" className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><ArrowLeft className="h-4 w-4" /></button>}<div><h2 id="music-picker-title" className="text-base font-bold">{cropping ? 'Pick the part' : 'Add music'}</h2><p className="text-xs text-slate-500">{cropping ? `Slide to choose ${CLIP_SECONDS} seconds` : 'Search and preview available tracks'}</p></div></div>
           <button type="button" onClick={close} aria-label="Close music search" className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-4 w-4" /></button>
@@ -220,7 +220,7 @@ export default function MusicPicker({ open, selected, onClose, onSelect }: Music
           <button type="button" onClick={useThisPart} className="mt-6 w-full rounded-xl bg-slate-900 dark:bg-slate-50 py-3.5 text-sm font-bold text-white dark:text-slate-900">Use this part</button>
           {selected?.id === cropping.id && <button type="button" onClick={() => { onSelect(null); close() }} className="mt-2 w-full py-2 text-xs font-bold text-slate-500">Remove music</button>}
         </div> : <div className="p-4">
-          <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 dark:border-slate-700 dark:bg-[#0E0F11]"><Search className="h-4 w-4 text-slate-400" /><input autoFocus value={query} onChange={(event) => { const value = event.target.value; setQuery(value); if (value.trim().length < 2) setResults([]) }} placeholder="Search songs or artists" className="min-w-0 flex-1 bg-transparent py-3 text-sm outline-none" /></label>
+          <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 dark:border-slate-700 dark:bg-[#07101F]"><Search className="h-4 w-4 text-slate-400" /><input autoFocus value={query} onChange={(event) => { const value = event.target.value; setQuery(value); if (value.trim().length < 2) setResults([]) }} placeholder="Search songs or artists" className="min-w-0 flex-1 bg-transparent py-3 text-sm outline-none" /></label>
           <div className="mt-3 max-h-[55vh] space-y-1 overflow-y-auto">
             {query.trim().length < 2 && <div className="py-12 text-center"><Music2 className="mx-auto h-7 w-7 text-amber-500" /><p className="mt-2 text-xs font-bold">Find a soundtrack for your goal</p></div>}
             {searching && <div className="space-y-2">{[1, 2, 3].map((item) => <div key={item} className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />)}</div>}

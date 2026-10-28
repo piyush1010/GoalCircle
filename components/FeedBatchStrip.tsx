@@ -35,7 +35,7 @@ export default function FeedBatchStrip({ userId }: { userId: string }) {
 
   if (!batches.length) return null
   return <section aria-label="Your batches today" className="mb-4 space-y-2">
-    {batches.map((batch) => <Link key={batch.id} href={`/circles/${batch.id}`} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:border-slate-400 dark:border-slate-700/70 dark:bg-[#16181B]">
+    {batches.map((batch) => <Link key={batch.id} href={`/circles/${batch.id}`} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:border-slate-400 dark:border-slate-700/70 dark:bg-[#101B2D]">
       <CircleAvatar name={batch.name} size={40} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold">{batch.name} · today</span>

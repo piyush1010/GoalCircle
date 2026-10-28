@@ -34,7 +34,7 @@ const principles = [
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-950 dark:bg-[#0E0F11] dark:text-slate-50 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-950 dark:bg-[#07101F] dark:text-slate-50 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <header className="flex items-center justify-between border-b border-slate-200 pb-5 dark:border-slate-800">
           <Link href="/" className="flex items-center gap-2.5 font-bold"><LogoMark size={36} />GoalYaar</Link>
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
 
           <div className="mt-12 grid gap-4 sm:grid-cols-2">
             {principles.map(({ icon: Icon, title, copy }) => (
-              <article key={title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-[#16181B]">
+              <article key={title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-[#101B2D]">
                 <span className="mb-5 grid h-11 w-11 place-items-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><Icon className="h-5 w-5" /></span>
                 <h2 className="font-bold">{title}</h2>
                 <p className="mt-2 text-sm font-medium leading-6 text-slate-600 dark:text-slate-400">{copy}</p>

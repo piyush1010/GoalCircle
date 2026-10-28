@@ -37,8 +37,8 @@ const minutesOf = (row: DashboardRow) => row.today_minutes ?? (row.today_hours !
 type Sort = 'last' | 'name' | 'newest'
 const QUIET_MS = 2 * 24 * 60 * 60 * 1000
 
-const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#16181B]'
-const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#0E0F11]'
+const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101B2D]'
+const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#07101F]'
 
 const displayName = (row: DashboardRow) => row.full_name || row.username || 'Student'
 const isQuiet = (row: DashboardRow, now: number) => {
@@ -57,7 +57,7 @@ const whatsappUrl = (text: string) => `https://wa.me/?text=${encodeURIComponent(
 
 /** The message mentors forward to their WhatsApp group: what it is, and exactly what to tap. */
 export const inviteMessage = (circleName: string, link: string) =>
-  `Join our batch "${circleName}" on GoalYaar\nI'll post the daily task there; check in once you finish it.\n\n1. Open: ${link}\n2. Tap "Continue with Google"\n3. Add it to your home screen (Chrome ⋮ → Add to Home screen) so you don't miss tasks.`
+  `Join our batch "${circleName}" on GoalYaar\nI'll post the daily task there; check in once you finish it.\n\n1. Open: ${link}\n2. Tap "Continue with Google"\n3. Add it to your home screen so you don't miss tasks:\n   Android: Chrome ⋮ → Add to Home screen\n   iPhone: Safari Share → Add to Home Screen`
 
 export default function MentorDashboard({ circleId, circleName, today, task, rows, inviteLink, onTaskSaved, onTaskDeleted, onChanged, onCopyInvite, flash }: {
   circleId: string; circleName: string; today: string; task: Task | null; rows: DashboardRow[]; inviteLink: string
@@ -111,7 +111,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
             <Stat label="Quiet 2+ days" value={quiet.length} tone="text-rose-600 dark:text-rose-400" onClick={() => setView('students')} />
           </div>}
           {task && notDone.length > 0 && <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-            <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 py-3 text-sm font-bold text-white dark:text-slate-900"><BellRing className="h-4 w-4" />Nudge {notDone.length} who haven&apos;t checked in</button>
+            <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 py-3 text-sm font-bold text-white dark:text-slate-900"><BellRing className="h-4 w-4" />Nudge {notDone.length} <span className="hidden min-[360px]:inline">who haven&apos;t checked in</span><span className="min-[360px]:hidden">pending</span></button>
             <a href={whatsappUrl(`Reminder for ${circleName}: today's task is "${task.title}". Please check in on GoalYaar once it's done.`)} target="_blank" rel="noreferrer" aria-label="Send reminder on WhatsApp" className="grid w-12 place-items-center rounded-xl bg-emerald-500 text-white"><MessageCircle className="h-5 w-5" /></a>
           </div>}
           {!task && <p className="mt-4 text-center text-xs text-slate-500">Set today&apos;s task above to start tracking.</p>}
@@ -126,7 +126,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
 }
 
 function Stat({ label, value, tone, onClick }: { label: string; value: number; tone: string; onClick: () => void }) {
-  return <button type="button" onClick={onClick} className="rounded-2xl bg-slate-50 py-3 transition hover:bg-slate-100 dark:bg-[#0E0F11] dark:hover:bg-slate-800">
+  return <button type="button" onClick={onClick} className="rounded-2xl bg-slate-50 py-3 transition hover:bg-slate-100 dark:bg-[#07101F] dark:hover:bg-slate-800">
     <span className={`block text-2xl font-bold ${tone}`}>{value}</span>
     <span className="block text-[11px] font-semibold text-slate-500">{label}</span>
   </button>
@@ -193,7 +193,7 @@ function TaskCard({ circleId, today, task, onSaved, onDeleted, dayLabel = 'today
     {error && <p role="alert" className="mt-2 text-sm font-semibold text-rose-600">{error}</p>}
     <div className="mt-3 flex gap-2">
       {(task || !forToday) && <button type="button" onClick={() => { if (!task) { onDeleted(); return } setEditing(false); setTitle(task.title); setDetails(task.details ?? ''); setKept(task.attachments ?? []); setFiles([]) }} className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700">Cancel</button>}
-      <button type="button" onClick={() => void save()} disabled={saving} className="flex-[2] rounded-xl bg-slate-900 dark:bg-slate-50 py-3 text-sm font-bold text-white dark:text-slate-900 disabled:opacity-60">{saving ? 'Saving…' : task ? 'Save changes' : forToday ? 'Post task' : 'Schedule task'}</button>
+      <button type="button" onClick={() => void save()} disabled={saving} className="flex-[2] rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 shadow-sm hover:bg-amber-400 disabled:opacity-60">{saving ? 'Saving…' : task ? 'Save changes' : forToday ? 'Post task' : 'Schedule task'}</button>
     </div>
     {task && <button type="button" onClick={() => void remove()} disabled={saving} className="mt-3 w-full text-center text-xs font-bold text-rose-600 disabled:opacity-60 dark:text-rose-400">Delete this task</button>}
   </section>
@@ -221,9 +221,9 @@ function UpcomingTasks({ circleId, today }: { circleId: string; today: string })
 
   const planned = tasks.length
   return <section className={card}>
-    <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="flex w-full items-center justify-between text-left">
-      <span><span className="block text-base font-bold">Plan ahead</span><span className="block text-sm text-slate-600 dark:text-slate-300">{planned ? `${planned} of the next 7 days planned` : 'Set tasks for the coming week in one go'}</span></span>
-      <ChevronDown className={`h-5 w-5 transition ${open ? 'rotate-180' : ''}`} />
+    <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="flex w-full items-center justify-between gap-3 text-left">
+      <span className="min-w-0"><span className="block text-base font-bold">Plan ahead</span><span className="block text-sm text-slate-600 dark:text-slate-300">{planned ? `${planned} of the next 7 days planned` : 'Set tasks for the coming week in one go'}</span></span>
+      <ChevronDown className={`h-5 w-5 shrink-0 transition ${open ? 'rotate-180' : ''}`} />
     </button>
     {open && <div className="mt-3 space-y-2">{days.map((day) => {
       const existing = tasks.find((item) => item.task_date === day) ?? null
@@ -278,7 +278,7 @@ function StudentList({ rows, now, hasTask, taskId, circleId, onNudge, onChanged,
       <div className="flex flex-1 gap-1.5 overflow-x-auto pb-1">
         {filters.map(([value, label]) => <button type="button" key={value} onClick={() => setFilter(value)} aria-pressed={filter === value} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition ${filter === value ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 text-slate-500 dark:border-slate-700'}`}>{label}</button>)}
       </div>
-      <select value={sort} onChange={(event) => setSort(event.target.value as Sort)} aria-label="Sort students" className="shrink-0 rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold dark:border-slate-700 dark:bg-[#16181B]">
+      <select value={sort} onChange={(event) => setSort(event.target.value as Sort)} aria-label="Sort students" className="shrink-0 rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold dark:border-slate-700 dark:bg-[#101B2D]">
         <option value="last">Last check-in</option>
         <option value="name">Name</option>
         <option value="newest">Newest</option>
@@ -287,7 +287,7 @@ function StudentList({ rows, now, hasTask, taskId, circleId, onNudge, onChanged,
 
     {visible.length === 0 && <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700">No students match.</p>}
 
-    <ul className="divide-y divide-slate-100 overflow-hidden rounded-3xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-700/70 dark:bg-[#16181B]">
+    <ul className="divide-y divide-slate-100 overflow-hidden rounded-3xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-700/70 dark:bg-[#101B2D]">
       {visible.map((row) => {
         const quiet = isQuiet(row, now)
         const expanded = open === row.user_id
@@ -304,7 +304,7 @@ function StudentList({ rows, now, hasTask, taskId, circleId, onNudge, onChanged,
             <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition ${expanded ? 'rotate-180' : ''}`} />
           </button>
           {expanded && <div className="space-y-3 px-4 pb-4">
-            {row.today_note && <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-[#0E0F11]">“{row.today_note}”</p>}
+            {row.today_note && <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-[#07101F]">“{row.today_note}”</p>}
             {row.today_status && taskId && <ReplyBox key={`${row.user_id}-${row.today_reply ?? ''}`} taskId={taskId} studentId={row.user_id} existing={row.today_reply ?? null} onSent={onChanged} flash={flash} />}
             {row.today_media_url && (row.today_media_type === 'video'
               ? <ProofMedia src={row.today_media_url} type="video" alt={`${displayName(row)}'s proof`} className="max-h-56 w-full rounded-xl bg-slate-950 object-contain" />
@@ -414,7 +414,7 @@ function WeeklyReport({ circleId, circleName, today, flash }: { circleId: string
         </li>
       })}
     </ul>}
-    {slipping.length > 0 && <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-[#0E0F11]"><span className="font-semibold">Needs a nudge:</span> {slipping.map(name).join(', ')}</p>}
+    {slipping.length > 0 && <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-[#07101F]"><span className="font-semibold">Needs a nudge:</span> {slipping.map(name).join(', ')}</p>}
     {rows.length > 0 && <div className="mt-4 grid grid-cols-2 gap-2">
       <a href={whatsappUrl(summary())} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white"><MessageCircle className="h-4 w-4" />Share summary</a>
       <button type="button" onClick={downloadCsv} className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700"><Download className="h-4 w-4" />Download CSV</button>
