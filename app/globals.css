@@ -185,4 +185,4 @@ html.dark input::placeholder, html.dark textarea::placeholder { color: var(--col
 
 /* Month ring colours */
 :root { --ring-missed: #E3E2DC; --ring-future: #F0EFEA; }
-.dark { --ring-missed: #2A2D32; --ring-future: #1C1E22; }
+.dark { --ring-missed: #3A3D43; --ring-future: #24262A; }

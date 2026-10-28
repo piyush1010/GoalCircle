@@ -175,7 +175,7 @@ export default function TodayPage() {
   if (loading) {
     return <main className="mx-auto min-h-screen max-w-xl space-y-4 px-4 pb-28 pt-5" aria-busy="true">
       <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-      <div className="mx-auto h-52 w-52 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
+      <div className="h-36 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
       {[1, 2].map((item) => <div key={item} className="h-20 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}
     </main>
   }

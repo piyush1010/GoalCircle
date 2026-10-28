@@ -214,7 +214,7 @@ export default function CirclePage() {
         {isMember && <div className="relative shrink-0">
           <button type="button" onClick={() => setMenuOpen((open) => !open)} aria-label="More options" aria-expanded={menuOpen} className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 text-slate-500 dark:border-slate-700"><MoreHorizontal className="h-4 w-4" /></button>
           {menuOpen && <button type="button" aria-hidden="true" tabIndex={-1} onClick={() => setMenuOpen(false)} className="fixed inset-0 z-10 cursor-default" />}
-          {menuOpen && <div className="absolute right-0 top-11 z-20 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-[#16181B]">
+          {menuOpen && <div className="absolute right-0 top-11 z-20 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-[#16181B]">
             {isAdmin
               ? <>
                 <button type="button" onClick={() => { setMenuOpen(false); setEditing(true) }} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800"><Pencil className="h-4 w-4" />Edit batch details</button>
