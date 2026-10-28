@@ -11,6 +11,7 @@ import PushToggle from '@/components/PushToggle'
 import { supabase } from '@/utils/supabase'
 import { Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, Type, UserRound } from 'lucide-react'
 import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
+import { readDailyReminder, saveDailyReminder } from '@/lib/notifications/dailyReminder'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -69,6 +70,11 @@ export default function SettingsPage() {
       setQuietHoursStart(reminderPreferences.quietHoursStart)
       setQuietHoursEnd(reminderPreferences.quietHoursEnd)
     }, 0)
+    // The server copy wins (it may have been turned on from the "remind me" prompt).
+    void readDailyReminder().then((server) => {
+      if (!server) return
+      setNotificationsEnabled(server.enabled); setReminderTime(server.time)
+    })
     return () => window.clearTimeout(loadPreferences)
   }, [])
 
@@ -76,32 +82,23 @@ export default function SettingsPage() {
     setTheme(mode)
   }
 
+  // One daily reminder: sent to your phone if you haven't checked in by that hour
+  // (needs Phone notifications), and shown in the app if it's open.
   const handleNotificationsToggle = async () => {
-    if (notificationsEnabled) {
-      setNotificationsEnabled(false)
-      saveReminderPreferences({ enabled: false, time: reminderTime, quietHoursEnabled, quietHoursStart, quietHoursEnd })
-      setSaveMessage('Daily reminder turned off.')
-      return
-    }
-
-    if (!('Notification' in window)) {
-      setSaveMessage('Notifications are not supported by this browser.')
-      return
-    }
-    const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission()
-    if (permission !== 'granted') {
-      setSaveMessage('Allow notifications in your browser to use reminders.')
-      return
-    }
-    setNotificationsEnabled(true)
-    saveReminderPreferences({ enabled: true, time: reminderTime, quietHoursEnabled, quietHoursStart, quietHoursEnd })
-    setSaveMessage(`Daily reminder set for ${reminderTime}.`)
+    const next = !notificationsEnabled
+    setNotificationsEnabled(next)
+    saveReminderPreferences({ enabled: next, time: reminderTime, quietHoursEnabled, quietHoursStart, quietHoursEnd })
+    const saved = await saveDailyReminder(next, reminderTime)
+    if (!next) { setSaveMessage('Daily reminder turned off.'); return }
+    const pushOn = typeof Notification !== 'undefined' && Notification.permission === 'granted'
+    setSaveMessage(!saved ? `Reminder set for ${formatHour(reminderTime)} on this device.` : pushOn ? `We’ll remind you at ${formatHour(reminderTime)} if you haven’t checked in.` : `Reminder set for ${formatHour(reminderTime)}. Turn on Phone notifications so it reaches you when the app is closed.`)
   }
 
   const handleReminderTimeChange = (time: string) => {
     setReminderTime(time)
     saveReminderPreferences({ enabled: notificationsEnabled, time, quietHoursEnabled, quietHoursStart, quietHoursEnd })
-    if (notificationsEnabled) setSaveMessage(`Reminder time updated to ${time}.`)
+    void saveDailyReminder(notificationsEnabled, time)
+    if (notificationsEnabled) setSaveMessage(`Reminder time changed to ${formatHour(time)}.`)
   }
 
   const saveQuietHours = (enabled: boolean, start = quietHoursStart, end = quietHoursEnd) => {
@@ -240,8 +237,8 @@ export default function SettingsPage() {
 
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-xs font-bold text-slate-900 dark:text-white">Daily browser reminder</h3>
-            <p className="text-xs text-slate-400">A streak-saver prompt at your chosen time</p>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Daily reminder</h3>
+            <p className="text-xs text-slate-500">Once a day, only if you haven&apos;t checked in yet</p>
           </div>
           <button
             type="button"
@@ -262,20 +259,22 @@ export default function SettingsPage() {
 
         {notificationsEnabled && (
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Daily Streak Saver Reminder</span>
-            <input
-              type="time"
-              value={reminderTime}
+            <label htmlFor="reminder-hour" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Remind me at</label>
+            <select
+              id="reminder-hour"
+              value={`${reminderTime.slice(0, 2)}:00`}
               onChange={(e) => handleReminderTimeChange(e.target.value)}
-              className="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
-            />
+              className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-900 focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+            >
+              {Array.from({ length: 18 }, (_, index) => index + 6).map((hour) => { const value = `${String(hour).padStart(2, '0')}:00`; return <option key={value} value={value}>{formatHour(value)}</option> })}
+            </select>
           </div>
         )}
         <div className="border-t border-slate-100 pt-3 dark:border-slate-800">
           <div className="flex items-center justify-between"><div><h3 className="text-xs font-bold text-slate-900 dark:text-white">Quiet hours</h3><p className="text-xs text-slate-400">Pause reminders and social prompts overnight</p></div><button type="button" onClick={() => saveQuietHours(!quietHoursEnabled)} aria-pressed={quietHoursEnabled} className={`relative h-6 w-11 rounded-full transition-colors ${quietHoursEnabled ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'}`}><span className={`absolute top-1 block h-4 w-4 rounded-full bg-white transition-transform ${quietHoursEnabled ? 'left-6' : 'left-1'}`} /></button></div>
           {quietHoursEnabled && <div className="mt-3 grid grid-cols-2 gap-2"><label className="text-xs font-bold text-slate-500">From<input type="time" value={quietHoursStart} onChange={(event) => saveQuietHours(true, event.target.value, quietHoursEnd)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label><label className="text-xs font-bold text-slate-500">Until<input type="time" value={quietHoursEnd} onChange={(event) => saveQuietHours(true, quietHoursStart, event.target.value)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label></div>}
         </div>
-        <p className="text-xs leading-relaxed text-slate-400">A gentle reminder at this time while GoalYaar is open. For reminders when the app is closed, turn on Phone notifications above.</p>
+        <p className="text-xs leading-relaxed text-slate-500">The daily reminder reaches your phone when Phone notifications are on. Each goal can also go in your phone&apos;s calendar when you create it.</p>
       </div>
 
       <InstallAppCard />
@@ -367,4 +366,9 @@ export default function SettingsPage() {
       </div>
     </div>
   )
+}
+
+function formatHour(time: string) {
+  const hour = Number(time.slice(0, 2))
+  return `${hour % 12 || 12} ${hour < 12 ? 'AM' : 'PM'}`
 }

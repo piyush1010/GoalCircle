@@ -15,7 +15,7 @@ import CircleChallenges from '@/components/CircleChallenges'
 type Category = 'all' | 'work' | 'fitness' | 'learning' | 'habits'
 interface CircleRow { id: string; owner_id: string; name: string; description: string | null; category: Exclude<Category, 'all'>; emoji: string; created_at: string; visibility: 'public' | 'private'; exam: string | null }
 type TodayStatus = 'done' | 'partial' | 'missed' | null
-interface CircleToday { task: string | null; mine: TodayStatus; checkedIn: number }
+interface CircleToday { task: string | null; mine: TodayStatus; checkedIn: number; members?: number }
 interface CircleView extends CircleRow { memberCount: number; joined: boolean; owned: boolean; avatarUrl?: string | null; today?: CircleToday }
 const categories: Array<{ id: Category; label: string; icon: LucideIcon }> = [
   { id: 'all', label: 'All', icon: Globe2 }, { id: 'work', label: 'Deep Work', icon: BriefcaseBusiness },
@@ -75,6 +75,14 @@ export default function CirclesPage() {
     const { data: checkins } = taskRows.length
       ? await supabase.from('circle_task_checkins').select('task_id,user_id,status').in('task_id', taskRows.map((task) => task.id))
       : { data: [] as Array<{ task_id: string; user_id: string; status: string }> }
+    // Students can't read classmates' rows; the count comes from a small summary instead.
+    const studentCircles = list.filter((circle) => circle.joined && !circle.owned && taskRows.some((task) => task.circle_id === circle.id))
+    const counts = new Map<string, { checked: number; members: number }>()
+    await Promise.all(studentCircles.map(async (circle) => {
+      const { data } = await supabase.rpc('circle_today_progress', { target_circle: circle.id, on_date: localDateString() })
+      const row = Array.isArray(data) ? data[0] as { checked_in: number; members: number } | undefined : undefined
+      if (row) counts.set(circle.id, { checked: row.checked_in, members: row.members })
+    }))
     const avatarById = new Map(((avatars.error ? [] : avatars.data) || []).map((row) => [row.id as string, (row as { avatar_url?: string | null }).avatar_url ?? null]))
     const rows = (checkins || []) as Array<{ task_id: string; user_id: string; status: string }>
     setCircles((items) => items.map((circle) => {
@@ -86,7 +94,8 @@ export default function CirclesPage() {
         today: circle.joined ? {
           task: task?.title ?? null,
           mine: (forTask.find((row) => row.user_id === uid)?.status as TodayStatus) ?? null,
-          checkedIn: forTask.filter((row) => row.user_id !== uid && row.status !== 'missed').length,
+          checkedIn: counts.get(circle.id)?.checked ?? forTask.filter((row) => row.user_id !== uid && row.status !== 'missed').length,
+          members: counts.get(circle.id)?.members,
         } : undefined,
       }
     }))
@@ -189,6 +198,7 @@ function TodayLine({ circle }: { circle: CircleView }) {
     <div className="min-w-0 flex-1">
       <p className="text-xs font-semibold text-slate-500">Today</p>
       <p className="truncate text-sm font-semibold">{today.task ?? (circle.owned ? 'No task posted yet' : 'No task from your mentor yet')}</p>
+      {!circle.owned && today.task && today.members ? <p className="text-xs text-slate-500">{today.checkedIn} of {today.members} checked in</p> : null}
     </div>
     {right}
   </div>

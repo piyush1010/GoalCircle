@@ -24,15 +24,15 @@ export const GOALIE_LINES = {
     'So quiet… let’s change that.',
   ],
   fall: [
-    'Woah! You knocked me over 😵‍💫',
+    'Woah! You knocked me over!',
     'Oww, my antenna! I’m okay.',
   ],
   angry: [
     'Hey! Stop poking me!',
-    'I’m telling on you! 😤',
+    'I’m telling on you!',
   ],
   forgive: [
-    'Okay, I’m not mad anymore 🥺',
+    'Okay, I’m not mad anymore.',
     'Friends again?',
   ],
   tap: [

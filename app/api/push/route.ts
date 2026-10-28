@@ -24,6 +24,7 @@ function compose({ notification: n, actor, circle }: PushRequest) {
     circle_task: `New task in ${where}`,
     circle_post: `New notice in ${where}`,
     circle_leave: `A student left ${where}`,
+    circle_reply: `Your mentor replied in ${where}`,
     accountability_invite: `${who} wants to be your accountability partner`,
     challenge_invite: `${who} challenged you`,
     goal_collaboration_invite: `${who} invited you to a shared goal`,

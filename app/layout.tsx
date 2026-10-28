@@ -19,10 +19,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/goalcircle-icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/goalcircle-icon-512.png', sizes: '512x512', type: 'image/png' },
+      { url: '/goalyaar-icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/goalyaar-icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: '/goalcircle-icon-192.png',
+    apple: '/goalyaar-icon-192.png',
   },
 }
 

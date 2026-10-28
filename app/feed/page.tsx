@@ -9,6 +9,7 @@ import { Bell, Bolt, Check, Clock3, Flame, Hand, LockKeyhole, MessageCircle, Mor
 import { supabase } from '@/utils/supabase'
 import ProfileAvatar from '@/components/ProfileAvatar'
 import PostMusic from '@/components/PostMusic'
+import FeedBatchStrip from '@/components/FeedBatchStrip'
 import ReportBlockModal from '@/components/ReportBlockModal'
 
 interface CommentItem { id: string; post_id: string; user_id: string; body: string; created_at: string; authorName?: string; authorAvatar?: string | null; authorUsername?: string }
@@ -282,6 +283,7 @@ export default function FeedPage() {
       </header>
 
       <div className="space-y-4 px-3 py-4">
+        {userId && <FeedBatchStrip userId={userId} />}
         {loading && [1, 2].map((item) => <div key={item} className="h-72 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" />)}
         {!loading && error && <div className="rounded-3xl border border-rose-200 bg-white p-7 text-center dark:border-rose-900/60 dark:bg-[#101b2d]"><Target className="mx-auto mb-3 h-7 w-7 text-rose-500" /><p className="text-sm font-bold">Feed unavailable</p><p className="mt-1 text-xs text-slate-500">{error}</p><button onClick={() => void loadFeed()} className="mt-4 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950">Retry</button></div>}
         {!loading && !error && displayedPosts.length === 0 && <div className="rounded-3xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700"><Target className="mx-auto mb-3 h-8 w-8 text-amber-500" /><h2 className="font-bold">No check-ins here yet</h2><p className="mb-4 mt-1 text-xs text-slate-500">Be the first to share real progress.</p><Link href="/check-in" className="inline-flex rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950">Post a check-in</Link></div>}

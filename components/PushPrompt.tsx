@@ -1,5 +1,7 @@
 'use client'
 
+import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
+import { saveDailyReminder } from '@/lib/notifications/dailyReminder'
 import { useEffect, useState } from 'react'
 import { GoalieBot } from '@/components/GoalieBot'
 import { CHEER_EVENT } from '@/lib/goalie'
@@ -48,7 +50,15 @@ export default function PushPrompt() {
     setBusy(true)
     const result = await enablePush()
     setBusy(false)
-    if (result === 'on') { setNote('Done! I’ll let you know when it matters.'); window.setTimeout(() => setShow(false), 2200) }
+    if (result === 'on') {
+      // Saying yes here also turns on the one daily reminder (8 PM, only if you haven't checked in).
+      if (!readReminderPreferences().enabled) {
+        const prefs = readReminderPreferences()
+        saveReminderPreferences({ ...prefs, enabled: true, time: '20:00' })
+        void saveDailyReminder(true, '20:00')
+      }
+      setNote('Done! I’ll remind you at 8 PM if you haven’t checked in. Change it in Settings.'); window.setTimeout(() => setShow(false), 3200)
+    }
     else if (result === 'blocked') { setNote('Notifications are blocked. You can allow them in your browser’s site settings.'); window.setTimeout(() => setShow(false), 4000) }
     else setShow(false)
   }
