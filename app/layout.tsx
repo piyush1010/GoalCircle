@@ -1,7 +1,11 @@
 import type { Metadata, Viewport } from 'next'
+import { Geist } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import AppShell from '@/components/AppShell'
+
+// One calm typeface across the app.
+const geist = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'swap' })
 
 export const metadata: Metadata = {
   title: 'GoalYaar',
@@ -36,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={geist.variable} suppressHydrationWarning>
       <body className="min-h-screen font-sans antialiased">
         <ThemeProvider>
           <AppShell>{children}</AppShell>

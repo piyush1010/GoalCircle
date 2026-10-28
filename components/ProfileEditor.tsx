@@ -75,7 +75,7 @@ export default function ProfileEditor({ onSaved, onCancel }: { onSaved: (profile
       {error && <p role="alert" className="text-xs font-semibold text-rose-600">{error}</p>}
       <div className="flex gap-2 pt-1">
         <button type="button" onClick={onCancel} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-bold dark:border-slate-700">Cancel</button>
-        <button type="submit" disabled={saving || !userId} className="flex-[2] rounded-xl bg-amber-500 py-2.5 text-sm font-black text-slate-950 disabled:opacity-50">{saving ? 'Saving…' : 'Save'}</button>
+        <button type="submit" disabled={saving || !userId} className="flex-[2] rounded-xl bg-amber-500 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50">{saving ? 'Saving…' : 'Save'}</button>
       </div>
     </form>
   )

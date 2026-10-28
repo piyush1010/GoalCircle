@@ -54,7 +54,7 @@ const whatsappUrl = (text: string) => `https://wa.me/?text=${encodeURIComponent(
 
 /** The message mentors forward to their WhatsApp group: what it is, and exactly what to tap. */
 export const inviteMessage = (circleName: string, link: string) =>
-  `Join our batch "${circleName}" on GoalYaar 🎯\nI'll post the daily task there; check in once you finish it.\n\n1. Open: ${link}\n2. Tap "Continue with Google"\n3. Add it to your home screen (Chrome ⋮ → Add to Home screen) so you don't miss tasks.`
+  `Join our batch "${circleName}" on GoalYaar\nI'll post the daily task there; check in once you finish it.\n\n1. Open: ${link}\n2. Tap "Continue with Google"\n3. Add it to your home screen (Chrome ⋮ → Add to Home screen) so you don't miss tasks.`
 
 export default function MentorDashboard({ circleId, circleName, today, task, rows, inviteLink, onTaskSaved, onTaskDeleted, onChanged, onCopyInvite, flash }: {
   circleId: string; circleName: string; today: string; task: Task | null; rows: DashboardRow[]; inviteLink: string
@@ -76,10 +76,10 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
 
   const inviteCard = <section className={`${card} text-center`}>
           <UserPlus className="mx-auto h-8 w-8 text-amber-500" />
-          <h2 className="mt-2 text-base font-black">{rows.length === 0 && view === 'students' ? 'No students yet' : 'Invite your students'}</h2>
+          <h2 className="mt-2 text-base font-bold">{rows.length === 0 && view === 'students' ? 'No students yet' : 'Invite your students'}</h2>
           <p className="mt-1 text-sm text-slate-500">Send the invite to your WhatsApp group. It explains the steps, so students join on their own.</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <a href={whatsappUrl(inviteMessage(circleName, inviteLink))} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-3 text-sm font-black text-white"><MessageCircle className="h-4 w-4" />WhatsApp</a>
+            <a href={whatsappUrl(inviteMessage(circleName, inviteLink))} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white"><MessageCircle className="h-4 w-4" />WhatsApp</a>
             <button type="button" onClick={onCopyInvite} className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700"><Copy className="h-4 w-4" />Copy link</button>
           </div>
         </section>
@@ -95,7 +95,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
         <UpcomingTasks circleId={circleId} today={today} />
 
         {rows.length === 0 ? inviteCard : <section className={card}>
-          <h2 className="text-sm font-black">Today at a glance</h2>
+          <h2 className="text-sm font-bold">Today at a glance</h2>
           <div className="mt-3 grid grid-cols-4 gap-2 text-center">
             <Stat label="Checked in" value={done.length} tone="text-emerald-600 dark:text-emerald-400" onClick={() => setView('students')} />
             <Stat label="Missed" value={missed.length} tone="text-slate-600 dark:text-slate-300" onClick={() => setView('students')} />
@@ -103,7 +103,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
             <Stat label="Quiet 2+ days" value={quiet.length} tone="text-rose-600 dark:text-rose-400" onClick={() => setView('students')} />
           </div>
           {task && notDone.length > 0 && <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-            <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 py-3 text-sm font-black text-slate-950"><BellRing className="h-4 w-4" />Nudge {notDone.length} who haven&apos;t checked in</button>
+            <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950"><BellRing className="h-4 w-4" />Nudge {notDone.length} who haven&apos;t checked in</button>
             <a href={whatsappUrl(`Reminder for ${circleName}: today's task is "${task.title}". Please check in on GoalYaar once it's done.`)} target="_blank" rel="noreferrer" aria-label="Send reminder on WhatsApp" className="grid w-12 place-items-center rounded-xl bg-emerald-500 text-white"><MessageCircle className="h-5 w-5" /></a>
           </div>}
           {!task && <p className="mt-4 text-center text-xs text-slate-500">Set today&apos;s task above to start tracking.</p>}
@@ -118,7 +118,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
 
 function Stat({ label, value, tone, onClick }: { label: string; value: number; tone: string; onClick: () => void }) {
   return <button type="button" onClick={onClick} className="rounded-2xl bg-slate-50 py-3 transition hover:bg-slate-100 dark:bg-[#07101f] dark:hover:bg-slate-800">
-    <span className={`block text-2xl font-black ${tone}`}>{value}</span>
+    <span className={`block text-2xl font-bold ${tone}`}>{value}</span>
     <span className="block text-[11px] font-semibold text-slate-500">{label}</span>
   </button>
 }
@@ -167,7 +167,7 @@ function TaskCard({ circleId, today, task, onSaved, onDeleted, dayLabel = 'today
     <div className="flex items-start justify-between gap-3">
       <div>
         <p className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">{forToday ? 'Today’s task' : `Task for ${dayLabel}`}</p>
-        <h2 className="mt-1 text-lg font-black leading-snug">{task.title}</h2>
+        <h2 className="mt-1 text-lg font-bold leading-snug">{task.title}</h2>
         {task.details && <ClampedText text={task.details} className="mt-1 text-sm text-slate-600 dark:text-slate-300" />}
       </div>
       <button type="button" onClick={() => setEditing(true)} aria-label="Edit task" className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><Pencil className="h-4 w-4" /></button>
@@ -176,7 +176,7 @@ function TaskCard({ circleId, today, task, onSaved, onDeleted, dayLabel = 'today
   </section>
 
   return <section data-tour={forToday ? 'task' : undefined} className={card}>
-    <label htmlFor={`task-title-${today}`} className="block text-sm font-black">{forToday ? (task ? 'Edit today’s task' : 'Set today’s task') : (task ? `Edit task for ${dayLabel}` : `Plan a task for ${dayLabel}`)}</label>
+    <label htmlFor={`task-title-${today}`} className="block text-sm font-bold">{forToday ? (task ? 'Edit today’s task' : 'Set today’s task') : (task ? `Edit task for ${dayLabel}` : `Plan a task for ${dayLabel}`)}</label>
     <p className="mt-0.5 text-xs text-slate-500">{forToday ? 'Students get a notification and check in against it.' : 'Students see it and get a notification that morning at 6 AM.'}</p>
     <input id={`task-title-${today}`} value={title} onChange={(event) => setTitle(event.target.value)} maxLength={140} placeholder="e.g. Write 2 GS2 answers + revise Polity ch. 5" className={`${field} mt-3 font-semibold`} />
     <textarea value={details} onChange={(event) => setDetails(event.target.value)} rows={3} maxLength={1000} placeholder="Details or instructions (optional)" className={`${field} mt-2 max-h-72 min-h-[5rem] resize-none [field-sizing:content]`} />
@@ -184,7 +184,7 @@ function TaskCard({ circleId, today, task, onSaved, onDeleted, dayLabel = 'today
     {error && <p role="alert" className="mt-2 text-sm font-semibold text-rose-600">{error}</p>}
     <div className="mt-3 flex gap-2">
       {(task || !forToday) && <button type="button" onClick={() => { if (!task) { onDeleted(); return } setEditing(false); setTitle(task.title); setDetails(task.details ?? ''); setKept(task.attachments ?? []); setFiles([]) }} className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700">Cancel</button>}
-      <button type="button" onClick={() => void save()} disabled={saving} className="flex-[2] rounded-xl bg-amber-500 py-3 text-sm font-black text-slate-950 disabled:opacity-60">{saving ? 'Saving…' : task ? 'Save changes' : forToday ? 'Post task' : 'Schedule task'}</button>
+      <button type="button" onClick={() => void save()} disabled={saving} className="flex-[2] rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 disabled:opacity-60">{saving ? 'Saving…' : task ? 'Save changes' : forToday ? 'Post task' : 'Schedule task'}</button>
     </div>
     {task && <button type="button" onClick={() => void remove()} disabled={saving} className="mt-3 w-full text-center text-xs font-bold text-rose-600 disabled:opacity-60 dark:text-rose-400">Delete this task</button>}
   </section>
@@ -213,7 +213,7 @@ function UpcomingTasks({ circleId, today }: { circleId: string; today: string })
   const planned = tasks.length
   return <section className={card}>
     <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="flex w-full items-center justify-between text-left">
-      <span><span className="block text-base font-black">Plan ahead</span><span className="block text-sm text-slate-600 dark:text-slate-300">{planned ? `${planned} of the next 7 days planned` : 'Set tasks for the coming week in one go'}</span></span>
+      <span><span className="block text-base font-bold">Plan ahead</span><span className="block text-sm text-slate-600 dark:text-slate-300">{planned ? `${planned} of the next 7 days planned` : 'Set tasks for the coming week in one go'}</span></span>
       <ChevronDown className={`h-5 w-5 transition ${open ? 'rotate-180' : ''}`} />
     </button>
     {open && <div className="mt-3 space-y-2">{days.map((day) => {
@@ -222,7 +222,7 @@ function UpcomingTasks({ circleId, today }: { circleId: string; today: string })
         onSaved={(saved) => { setTasks((list) => [...list.filter((item) => item.task_date !== day), saved].sort((a, b) => a.task_date.localeCompare(b.task_date))); setEditingDay(null) }}
         onDeleted={() => { setTasks((list) => list.filter((item) => item.task_date !== day)); setEditingDay(null) }} />
       return <button type="button" key={day} onClick={() => setEditingDay(day)} className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 px-3.5 py-3 text-left transition hover:border-amber-500 dark:border-slate-700">
-        <span className="w-24 shrink-0 text-sm font-black capitalize">{dayName(day, today)}</span>
+        <span className="w-24 shrink-0 text-sm font-bold capitalize">{dayName(day, today)}</span>
         <span className={`min-w-0 flex-1 truncate text-sm ${existing ? 'font-semibold' : 'text-slate-500'}`}>{existing ? existing.title : '+ Add task'}</span>
         {existing && <Pencil className="h-4 w-4 shrink-0 text-slate-400" />}
       </button>
@@ -284,7 +284,7 @@ function StudentList({ rows, now, hasTask, circleId, onNudge, onChanged, flash }
         const expanded = open === row.user_id
         return <li key={row.user_id}>
           <button type="button" onClick={() => setOpen(expanded ? null : row.user_id)} aria-expanded={expanded} className="flex w-full items-center gap-3 px-4 py-3 text-left">
-            <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-100 text-sm font-black text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-100 text-sm font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               {row.avatar_url ? <Image src={row.avatar_url} alt="" width={40} height={40} unoptimized className="h-10 w-10 object-cover" /> : displayName(row).charAt(0).toUpperCase()}
             </span>
             <span className="min-w-0 flex-1">
@@ -300,8 +300,8 @@ function StudentList({ rows, now, hasTask, circleId, onNudge, onChanged, flash }
               ? <video src={row.today_media_url} controls playsInline className="max-h-56 w-full rounded-xl bg-slate-950 object-contain" />
               : <div className="relative h-48 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"><Image src={row.today_media_url} alt={`${displayName(row)}'s proof`} fill unoptimized className="object-contain" /></div>)}
             <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
-              <button type="button" onClick={() => void onNudge([row.user_id])} disabled={!hasTask && !quiet} className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 py-2.5 text-xs font-black text-slate-950 disabled:opacity-50"><BellRing className="h-4 w-4" />Nudge</button>
-              <a href={whatsappUrl(`Hi ${displayName(row).split(' ')[0]}, just checking in. How is your preparation going today?`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-2.5 text-xs font-black text-white"><MessageCircle className="h-4 w-4" />WhatsApp</a>
+              <button type="button" onClick={() => void onNudge([row.user_id])} disabled={!hasTask && !quiet} className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 py-2.5 text-xs font-bold text-slate-950 disabled:opacity-50"><BellRing className="h-4 w-4" />Nudge</button>
+              <a href={whatsappUrl(`Hi ${displayName(row).split(' ')[0]}, just checking in. How is your preparation going today?`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-2.5 text-xs font-bold text-white"><MessageCircle className="h-4 w-4" />WhatsApp</a>
               <button type="button" onClick={() => void remove(row)} aria-label={`Remove ${displayName(row)}`} className="grid w-10 place-items-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-500 dark:border-slate-700"><UserMinus className="h-4 w-4" /></button>
             </div>
           </div>}

@@ -17,10 +17,10 @@ function compose({ notification: n, actor, circle }: PushRequest) {
   const who = actor || 'Someone'
   const where = circle || 'your circle'
   const titles: Record<string, string> = {
-    boost: `${who} boosted your progress 🔥`,
+    boost: `${who} boosted your progress`,
     comment: `${who} commented on your post`,
     follow: `${who} started following you`,
-    nudge: n.circle_id ? `Reminder from ${where} 👋` : `${who} nudged you 👋`,
+    nudge: n.circle_id ? `Reminder from ${where}` : `${who} nudged you`,
     circle_task: `New task in ${where}`,
     circle_post: `New notice in ${where}`,
     circle_leave: `A student left ${where}`,
@@ -28,7 +28,7 @@ function compose({ notification: n, actor, circle }: PushRequest) {
     challenge_invite: `${who} challenged you`,
     goal_collaboration_invite: `${who} invited you to a shared goal`,
     goal_collaboration_accepted: `${who} joined your shared goal`,
-    streak: 'Keep your streak alive 🔥',
+    streak: 'Keep your streak alive',
     weekly_recap: 'Your week on GoalYaar',
   }
   const fallbackBody: Record<string, string> = {

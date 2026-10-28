@@ -51,7 +51,7 @@ export default function GoalDetailClient({ goalId }: { goalId: string }) {
         ) : (
           <div className="space-y-4">
             <div className="bg-[#0d1117] border border-gray-800 rounded-2xl p-5 space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-400 px-2.5 py-1 rounded-full">
+              <span className="text-xs font-bold uppercase tracking-wider bg-purple-500/20 text-purple-400 px-2.5 py-1 rounded-full">
                 {goal.category || 'General'}
               </span>
               <h1 className="text-xl font-bold text-white">{goal.title}</h1>

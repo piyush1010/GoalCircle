@@ -32,7 +32,7 @@ export default function ConfirmHost() {
         <p className="text-sm font-semibold leading-relaxed">{request.message}</p>
         <div className="mt-5 flex gap-2">
           <button type="button" onClick={() => answer(false)} className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700">Cancel</button>
-          <button type="button" onClick={() => answer(true)} autoFocus className={`flex-1 rounded-xl py-3 text-sm font-black ${request.danger ? 'bg-rose-600 text-white' : 'bg-amber-500 text-slate-950'}`}>{request.confirmLabel}</button>
+          <button type="button" onClick={() => answer(true)} autoFocus className={`flex-1 rounded-xl py-3 text-sm font-bold ${request.danger ? 'bg-rose-600 text-white' : 'bg-amber-500 text-slate-950'}`}>{request.confirmLabel}</button>
         </div>
       </div>
     </div>

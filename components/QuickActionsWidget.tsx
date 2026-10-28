@@ -25,7 +25,7 @@ const actions = [
 export default function QuickActionsWidget() {
   return (
     <section aria-labelledby="quick-actions-title" className="space-y-2">
-      <h2 id="quick-actions-title" className="px-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+      <h2 id="quick-actions-title" className="px-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
         Quick actions
       </h2>
       <div className="grid grid-cols-3 gap-2">
@@ -38,8 +38,8 @@ export default function QuickActionsWidget() {
             <span className="mb-2 grid h-8 w-8 place-items-center rounded-xl bg-amber-500/10 text-amber-600 transition group-hover:bg-amber-500 group-hover:text-slate-950 dark:text-amber-400">
               <Icon className="h-4 w-4" />
             </span>
-            <span className="block text-xs font-black text-slate-900 dark:text-white">{label}</span>
-            <span className="mt-0.5 block text-[9px] leading-3 text-slate-400">{description}</span>
+            <span className="block text-xs font-bold text-slate-900 dark:text-white">{label}</span>
+            <span className="mt-0.5 block text-[11px] leading-3 text-slate-400">{description}</span>
           </Link>
         ))}
       </div>

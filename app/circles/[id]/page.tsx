@@ -37,7 +37,7 @@ const STUDENT_TOUR: TourStep[] = [
 
 const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]'
 const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#07101f]'
-const primary = 'w-full rounded-2xl bg-amber-500 py-3.5 text-sm font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 disabled:opacity-60'
+const primary = 'w-full rounded-2xl bg-amber-500 py-3.5 text-sm font-bold text-slate-950 transition hover:bg-amber-400 disabled:opacity-60'
 
 export default function CirclePage() {
   const params = useParams()
@@ -144,14 +144,14 @@ export default function CirclePage() {
 
   if (loading) return <main className="mx-auto max-w-xl space-y-3 px-4 pt-6"><div className="h-24 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" /><div className="h-48 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" /></main>
 
-  if (notFound || !circle) return <main className="mx-auto max-w-xl px-4 pt-10 text-center"><LockKeyhole className="mx-auto h-10 w-10 text-slate-400" /><h1 className="mt-3 text-lg font-black">Circle not available</h1><p className="mt-1 text-sm text-slate-500">It may be private. Ask your mentor for an invite link.</p><Link href="/circles" className="mt-5 inline-block rounded-xl bg-amber-500 px-4 py-2 text-sm font-black text-slate-950">Back to circles</Link></main>
+  if (notFound || !circle) return <main className="mx-auto max-w-xl px-4 pt-10 text-center"><LockKeyhole className="mx-auto h-10 w-10 text-slate-400" /><h1 className="mt-3 text-lg font-bold">Circle not available</h1><p className="mt-1 text-sm text-slate-500">It may be private. Ask your mentor for an invite link.</p><Link href="/circles" className="mt-5 inline-block rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950">Back to circles</Link></main>
 
   return (
     <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4">
       <header className="mb-4 flex items-start gap-3">
         <button type="button" onClick={() => router.push('/circles')} aria-label="Back to circles" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101b2d]"><ArrowLeft className="h-4 w-4" /></button>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-black tracking-tight">{circle.name}</h1>
+          <h1 className="truncate text-xl font-bold tracking-tight">{circle.name}</h1>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">
             {examLabel(circle.exam) && <span className="rounded-md bg-amber-500/10 px-1.5 py-0.5 font-bold text-amber-700 dark:text-amber-300">{examLabel(circle.exam)}</span>}
             {circle.visibility === 'private' && <span className="inline-flex items-center gap-1"><LockKeyhole className="h-3 w-3" />Private</span>}
@@ -166,7 +166,7 @@ export default function CirclePage() {
             <button type="button" onClick={() => void leave()} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><LogOut className="h-4 w-4" />Leave circle</button>
           </div>}
         </div>}
-        {isAdmin && <button type="button" data-tour="invite" onClick={() => void shareInvite()} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-xs font-black text-slate-950"><Share2 className="h-4 w-4" />Invite</button>}
+        {isAdmin && <button type="button" data-tour="invite" onClick={() => void shareInvite()} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-xs font-bold text-slate-950"><Share2 className="h-4 w-4" />Invite</button>}
       </header>
 
       {message && <p role="status" className="mb-3 rounded-xl bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-700 dark:text-emerald-300">{message}</p>}
@@ -182,7 +182,7 @@ export default function CirclePage() {
       {isMember && <GuideTour name={isAdmin ? 'mentor-circle' : 'student-circle'} steps={isAdmin ? MENTOR_TOUR : STUDENT_TOUR} replayKey={tourReplay} />}
 
       {!isMember && <section className={`${card} text-center`}>
-        <h2 className="text-base font-black">Join this circle</h2>
+        <h2 className="text-base font-bold">Join this circle</h2>
         <p className="mt-1 text-sm text-slate-500">{circle.description || 'Check in daily with the group.'}</p>
         <button type="button" onClick={() => void joinPublic()} className={`${primary} mt-4`}>Join circle</button>
       </section>}
@@ -209,7 +209,7 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
 
   if (!task) return <section data-tour="task" className={`${card} text-center`}>
     <CheckCircle2 className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
-    <h2 className="mt-2 text-base font-black">No task from your mentor today</h2>
+    <h2 className="mt-2 text-base font-bold">No task from your mentor today</h2>
     <p className="mt-1 text-sm text-slate-500">Use the time for your own study. You&apos;ll get a notification when your mentor posts one.</p>
     <Link href={`/focus?circle=${circleId}`} className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-amber-600 dark:text-amber-400"><Timer className="h-4 w-4" />Start a focus session</Link>
   </section>
@@ -255,12 +255,12 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
   return (
     <section data-tour="task" className={card}>
       <p className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Today&apos;s task</p>
-      <h2 className="mt-1 text-lg font-black leading-snug">{task.title}</h2>
+      <h2 className="mt-1 text-lg font-bold leading-snug">{task.title}</h2>
       {task.details && <ClampedText text={task.details} className="mt-1 text-sm text-slate-600 dark:text-slate-300" />}
       <AttachmentList attachments={task.attachments ?? []} />
 
       {!showForm && checkin && <div className={`mt-4 flex items-center justify-between rounded-2xl px-4 py-3 ${checkin.status === 'missed' ? 'bg-slate-100 dark:bg-slate-800' : 'bg-emerald-500/10'}`}>
-        <p className={`flex items-center gap-2 text-sm font-black ${checkin.status === 'missed' ? 'text-slate-600 dark:text-slate-300' : 'text-emerald-700 dark:text-emerald-300'}`}>{checkin.status === 'missed' ? <XCircle className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}{checkin.status === 'done' ? 'Done today' : checkin.status === 'partial' ? 'Partly done' : 'Missed today'}{(() => { const m = checkin.minutes ?? (checkin.hours != null ? Math.round(checkin.hours * 60) : null); return m ? ` · ${m} min` : '' })()}</p>
+        <p className={`flex items-center gap-2 text-sm font-bold ${checkin.status === 'missed' ? 'text-slate-600 dark:text-slate-300' : 'text-emerald-700 dark:text-emerald-300'}`}>{checkin.status === 'missed' ? <XCircle className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}{checkin.status === 'done' ? 'Done today' : checkin.status === 'partial' ? 'Partly done' : 'Missed today'}{(() => { const m = checkin.minutes ?? (checkin.hours != null ? Math.round(checkin.hours * 60) : null); return m ? ` · ${m} min` : '' })()}</p>
         <button type="button" onClick={() => setEditing(true)} className="inline-flex items-center gap-1 text-xs font-bold text-slate-500"><Pencil className="h-3.5 w-3.5" />Edit</button>
       </div>}
 

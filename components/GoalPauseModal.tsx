@@ -103,7 +103,7 @@ export default function GoalPauseModal({
                 }`}
               >
                 Standard Pause
-                <span className="block font-normal text-[10px] opacity-80 mt-0.5">Max 5 consecutive days</span>
+                <span className="block font-normal text-xs opacity-80 mt-0.5">Max 5 consecutive days</span>
               </button>
 
               <button
@@ -116,7 +116,7 @@ export default function GoalPauseModal({
                 }`}
               >
                 Tragedy Pause
-                <span className="block font-normal text-[10px] opacity-80 mt-0.5">Up to 14 days extended</span>
+                <span className="block font-normal text-xs opacity-80 mt-0.5">Up to 14 days extended</span>
               </button>
             </div>
 

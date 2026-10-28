@@ -9,7 +9,7 @@ export default function ClampedText({ text, className = '' }: { text: string; cl
   return (
     <div className={className}>
       <p className={`whitespace-pre-line break-words ${long && !open ? 'line-clamp-4' : ''}`}>{text}</p>
-      {long && <button type="button" onClick={() => setOpen((value) => !value)} className="mt-1 text-sm font-black text-amber-600 dark:text-amber-400">{open ? 'Show less' : 'Show more'}</button>}
+      {long && <button type="button" onClick={() => setOpen((value) => !value)} className="mt-1 text-sm font-bold text-amber-600 dark:text-amber-400">{open ? 'Show less' : 'Show more'}</button>}
     </div>
   )
 }

@@ -29,8 +29,8 @@ export default function BottomNav() {
                 key={item.href}
                 href={item.href}
                 data-tour={item.tour}
-                aria-label="Create"
-                className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/30 transition hover:bg-amber-400 active:scale-95 dark:border-[#0b1220]"
+                aria-label="Check in"
+                className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-amber-500 text-slate-950 transition hover:bg-amber-400 active:scale-95 dark:border-[#0b1220]"
               >
                 <Icon aria-hidden="true" className="h-6 w-6" strokeWidth={2.6} />
               </Link>
@@ -50,7 +50,7 @@ export default function BottomNav() {
               }`}
             >
               <Icon aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={isActive ? 2.7 : 2} />
-              <span className="text-[10px] tracking-tight">{item.label}</span>
+              <span className="text-xs tracking-tight">{item.label}</span>
             </Link>
           )
         })}

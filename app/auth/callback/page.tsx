@@ -80,7 +80,7 @@ function OAuthCallback() {
     <main className="flex min-h-dvh items-center justify-center bg-slate-50 px-6 text-slate-950 dark:bg-slate-950 dark:text-white">
       <div className="text-center">
         <span className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-amber-500 text-slate-950"><Target className="h-6 w-6" /></span>
-        <h1 className="text-xl font-black">{message}</h1>
+        <h1 className="text-xl font-bold">{message}</h1>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           <LoaderCircle className="mr-1.5 inline h-4 w-4 animate-spin" /> You will be redirected automatically.
         </p>

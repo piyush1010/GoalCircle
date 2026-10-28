@@ -53,7 +53,7 @@ export async function removeCircleFiles(paths: string[]) {
 function DownloadToggle({ on, name, onToggle }: { on: boolean; name: string; onToggle: () => void }) {
   return (
     <button type="button" onClick={onToggle} aria-pressed={on} aria-label={on ? `${name}: students can download. Tap for view only.` : `${name}: view only. Tap to allow download.`} title={on ? 'Students can download' : 'View only'}
-      className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-[10px] font-black ${on ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300'}`}>
+      className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-xs font-bold ${on ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300'}`}>
       {on ? <Download className="h-3 w-3" /> : <Eye className="h-3 w-3" />}{on ? 'Can download' : 'View only'}
     </button>
   )
@@ -205,7 +205,7 @@ function Viewer({ file, url, canDownload, onClose }: { file: Attachment; url: st
       <div className="flex items-center gap-2 px-4 py-3 text-white">
         <p className="min-w-0 flex-1 truncate text-sm font-bold">{file.name}</p>
         {canDownload
-          ? <button type="button" onClick={() => void downloadFile(file)} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-amber-500 px-3 text-xs font-black text-slate-950"><Download className="h-4 w-4" />Download</button>
+          ? <button type="button" onClick={() => void downloadFile(file)} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-amber-500 px-3 text-xs font-bold text-slate-950"><Download className="h-4 w-4" />Download</button>
           : <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-400"><Eye className="h-3.5 w-3.5" />View only</span>}
         <button type="button" onClick={onClose} autoFocus aria-label="Close" className="grid h-9 w-9 place-items-center rounded-xl bg-white/10"><X className="h-5 w-5" /></button>
       </div>
@@ -240,7 +240,7 @@ export function AttachmentList({ attachments, isAdmin = false }: { attachments: 
   const videos = attachments.filter((file) => file.type.startsWith('video/'))
   const documents = attachments.filter((file) => !file.type.startsWith('image/') && !file.type.startsWith('video/'))
   const canDownload = (file: Attachment) => isAdmin || file.downloadable !== false
-  const badge = (file: Attachment) => isAdmin && <span className={`text-[10px] font-black ${file.downloadable !== false ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>{file.downloadable !== false ? 'Students can download' : 'View only for students'}</span>
+  const badge = (file: Attachment) => isAdmin && <span className={`text-xs font-bold ${file.downloadable !== false ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>{file.downloadable !== false ? 'Students can download' : 'View only for students'}</span>
 
   return (
     <div className="mt-3 space-y-2">
@@ -248,7 +248,7 @@ export function AttachmentList({ attachments, isAdmin = false }: { attachments: 
         {images.map((file) => <button type="button" key={file.path} onClick={() => urls[file.path] && setOpen(file)} onContextMenu={(event) => { if (!canDownload(file)) event.preventDefault() }} aria-label={`Open ${file.name}`}
           className="relative block aspect-[4/3] overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950" style={{ WebkitTouchCallout: canDownload(file) ? undefined : 'none' }}>
           {urls[file.path] && <Image src={urls[file.path]} alt={file.name} fill unoptimized draggable={false} className="pointer-events-none object-cover" />}
-          {isAdmin && <span className={`absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-black ${file.downloadable !== false ? 'bg-emerald-500 text-white' : 'bg-slate-900/70 text-white'}`}>{file.downloadable !== false ? <Download className="h-3 w-3" /> : <Eye className="h-3 w-3" />}{file.downloadable !== false ? 'Download' : 'View only'}</span>}
+          {isAdmin && <span className={`absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-bold ${file.downloadable !== false ? 'bg-emerald-500 text-white' : 'bg-slate-900/70 text-white'}`}>{file.downloadable !== false ? <Download className="h-3 w-3" /> : <Eye className="h-3 w-3" />}{file.downloadable !== false ? 'Download' : 'View only'}</span>}
         </button>)}
       </div>}
       {videos.map((file) => urls[file.path] && <div key={file.path}>
@@ -257,7 +257,7 @@ export function AttachmentList({ attachments, isAdmin = false }: { attachments: 
       </div>)}
       {documents.map((file) => <div key={file.path} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 transition hover:border-amber-500 dark:border-slate-700">
         <button type="button" onClick={() => urls[file.path] && setOpen(file)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-rose-500/10 text-[10px] font-black text-rose-600 dark:text-rose-300">PDF</span>
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-rose-500/10 text-xs font-bold text-rose-600 dark:text-rose-300">PDF</span>
           <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{file.name}</span><span className="block text-xs text-slate-500">{sizeLabel(file.size)} · tap to open{isAdmin ? '' : canDownload(file) ? '' : ' · view only'}</span>{badge(file)}</span>
         </button>
         {canDownload(file) && <button type="button" onClick={() => void downloadFile(file)} aria-label={`Download ${file.name}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-amber-600 hover:bg-amber-500/10 dark:text-amber-400"><Download className="h-4 w-4" /></button>}

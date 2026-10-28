@@ -31,9 +31,9 @@ const visibilityOptions = [
 ]
 
 const sectionClass = 'rounded-3xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]'
-const headingClass = 'block text-sm font-black text-slate-900 dark:text-white'
+const headingClass = 'block text-sm font-bold text-slate-900 dark:text-white'
 const fieldClass = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#07101f]'
-const calendarButtonClass = 'mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-sm font-black text-slate-950 transition hover:bg-amber-400'
+const calendarButtonClass = 'mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-amber-400'
 const rowClass = 'flex items-center justify-between gap-4 py-4'
 const hintClass = 'mt-0.5 text-xs text-slate-500 dark:text-slate-400'
 const compactFieldClass = 'rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold outline-none transition [color-scheme:light] focus:border-amber-500 dark:border-slate-700 dark:bg-[#07101f] dark:[color-scheme:dark]'
@@ -230,7 +230,7 @@ export default function CreateGoalPage() {
       <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-8">
         <section className={`${sectionClass} text-center`}>
           <CircleCheck className="mx-auto h-12 w-12 text-amber-500" />
-          <h1 className="mt-3 text-xl font-black tracking-tight">Goal created</h1>
+          <h1 className="mt-3 text-xl font-bold tracking-tight">Goal created</h1>
           <p className="mt-1 text-sm font-semibold">{created.title}</p>
           {(created.reminder || targetEvent) && <>
             <p className="mx-auto mt-3 max-w-sm text-sm text-slate-600 dark:text-slate-300">{created.reminder ? `Want a daily reminder at ${reminderTime}?` : 'Add your target date to your calendar?'}</p>
@@ -244,7 +244,7 @@ export default function CreateGoalPage() {
             </div>
           </>}
 
-          <button type="button" onClick={continueToGoal} className="mt-6 w-full rounded-2xl bg-amber-500 py-4 text-base font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400">Continue</button>
+          <button type="button" onClick={continueToGoal} className="mt-6 w-full rounded-2xl bg-amber-500 py-4 text-base font-bold text-slate-950 transition hover:bg-amber-400">Continue</button>
         </section>
       </main>
     )
@@ -255,7 +255,7 @@ export default function CreateGoalPage() {
       <header className="mb-6 flex items-center gap-3">
         <button type="button" onClick={() => router.back()} aria-label="Go back" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 bg-white transition hover:border-amber-500 dark:border-slate-700 dark:bg-[#101b2d]"><ArrowLeft className="h-4 w-4" /></button>
         <div>
-          <h1 className="text-xl font-black tracking-tight">Create a goal</h1>
+          <h1 className="text-xl font-bold tracking-tight">Create a goal</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Set it. Share it. Show up.</p>
         </div>
       </header>
@@ -287,9 +287,9 @@ export default function CreateGoalPage() {
             {frequency === 'weekly' && <div className="mt-3 flex items-center justify-between">
               <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Times per week</span>
               <div className="flex items-center gap-2">
-                <button type="button" onClick={() => setTimesPerWeek((n) => Math.max(1, n - 1))} aria-label="Fewer times" className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-lg font-black dark:border-slate-700">−</button>
-                <span className="w-8 text-center text-lg font-black">{timesPerWeek}</span>
-                <button type="button" onClick={() => setTimesPerWeek((n) => Math.min(6, n + 1))} aria-label="More times" className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-lg font-black dark:border-slate-700">+</button>
+                <button type="button" onClick={() => setTimesPerWeek((n) => Math.max(1, n - 1))} aria-label="Fewer times" className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-lg font-bold dark:border-slate-700">−</button>
+                <span className="w-8 text-center text-lg font-bold">{timesPerWeek}</span>
+                <button type="button" onClick={() => setTimesPerWeek((n) => Math.min(6, n + 1))} aria-label="More times" className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 text-lg font-bold dark:border-slate-700">+</button>
               </div>
             </div>}
             <p className={`${hintClass} mt-2`}>{frequency === 'daily' ? 'Your streak counts days in a row.' : frequency === 'weekly' ? `Check in any ${timesPerWeek} days a week. Your streak counts weeks you hit it.` : 'For a one-off, like submitting a form. Check in with “Done” to finish it.'}</p>
@@ -359,7 +359,7 @@ export default function CreateGoalPage() {
 
         {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
 
-        <button type="submit" data-tour="goal-publish" disabled={submitting} className="w-full rounded-2xl bg-amber-500 py-4 text-base font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 disabled:opacity-60">{submitting ? 'Publishing…' : isPublic ? 'Publish goal' : 'Create private goal'}</button>
+        <button type="submit" data-tour="goal-publish" disabled={submitting} className="w-full rounded-2xl bg-amber-500 py-4 text-base font-bold text-slate-950 transition hover:bg-amber-400 disabled:opacity-60">{submitting ? 'Publishing…' : isPublic ? 'Publish goal' : 'Create private goal'}</button>
       </form>
 
       <GuideTour name="create-goal" steps={CREATE_TOUR} />

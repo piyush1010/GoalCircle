@@ -24,7 +24,7 @@ export default function FocusRoom({ roomName = 'Silent Pomodoro', initialMinutes
   return (
     <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-4 text-center">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] uppercase font-extrabold text-amber-400 tracking-wider flex items-center gap-1">
+        <span className="text-xs uppercase font-extrabold text-amber-400 tracking-wider flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" /> Live Focus Room
         </span>
         <span className="inline-flex items-center gap-1.5 text-xs text-slate-400"><UsersRound className="h-3.5 w-3.5" />4 working now</span>
@@ -32,7 +32,7 @@ export default function FocusRoom({ roomName = 'Silent Pomodoro', initialMinutes
 
       <h3 className="text-sm font-bold text-white">{roomName}</h3>
 
-      <div className="text-4xl font-black text-amber-400 tracking-wider my-2 font-mono">
+      <div className="text-4xl font-bold text-amber-400 tracking-wider my-2 font-mono">
         {formatTime(timeLeft)}
       </div>
 

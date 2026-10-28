@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import LogoMark from '@/components/LogoMark'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -79,9 +80,7 @@ export default function HomePage() {
       <header className="relative z-20 border-b border-slate-200/70 bg-white/75 backdrop-blur-xl dark:border-slate-800/80 dark:bg-[#07101f]/75">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5" aria-label="GoalYaar home">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20">
-              <Target className="h-5 w-5" strokeWidth={2.7} />
-            </span>
+            <LogoMark size={36} />
             <span className="text-lg font-black tracking-[-0.04em]">GoalYaar</span>
           </Link>
 
@@ -95,7 +94,7 @@ export default function HomePage() {
             <Link href="/login" className="rounded-xl px-3 py-2 text-sm font-extrabold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">
               Sign in
             </Link>
-            <Link href="/login?mode=signup" className="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-amber-400">
+            <Link href="/login?mode=signup" className="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-black text-slate-950 transition hover:-translate-y-0.5 hover:bg-amber-400">
               Create account
             </Link>
           </nav>
@@ -111,14 +110,14 @@ export default function HomePage() {
             </div>
             <h1 className="landing-enter landing-delay-2 text-balance text-5xl font-black leading-[0.98] tracking-[-0.055em] sm:text-6xl lg:text-7xl">
               Goals become real when you{' '}
-              <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-400 bg-clip-text text-transparent">show up.</span>
+              <span className="text-amber-600 dark:text-amber-400">show up.</span>
             </h1>
             <p className="landing-enter landing-delay-3 mt-6 max-w-2xl text-pretty text-base font-medium leading-7 text-slate-600 sm:text-lg dark:text-slate-300">
               Set a goal, check in every day, and stay accountable with friends or your mentor’s batch. Built for aspirants who want to stop restarting.
             </p>
 
             <div className="landing-enter landing-delay-4 mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/login?mode=signup" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-sm font-black text-slate-950 shadow-xl shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-amber-400">
+              <Link href="/login?mode=signup" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-sm font-black text-slate-950 shadow-xl transition hover:-translate-y-0.5 hover:bg-amber-400">
                 Start your first goal <ArrowRight className="h-4 w-4" />
               </Link>
               <a href="#how-it-works" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white/80 px-6 py-3.5 text-sm font-black text-slate-700 transition hover:border-slate-400 hover:bg-white dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900">
@@ -134,29 +133,29 @@ export default function HomePage() {
           </div>
 
           <div className="landing-enter landing-delay-3 relative mx-auto w-full max-w-[31rem]">
-            <div className="absolute -inset-10 rounded-full bg-amber-400/15 blur-3xl" />
+            
             <div className="landing-float relative rotate-[1.5deg] rounded-[2.7rem] border border-slate-300/80 bg-slate-950 p-2.5 shadow-[0_35px_90px_-28px_rgba(15,23,42,0.55)] dark:border-slate-700">
               <div className="overflow-hidden rounded-[2.15rem] bg-slate-50 dark:bg-[#0b1526]">
                 <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-                  <div><p className="flex items-center gap-1.5 text-sm font-black"><UsersRound className="h-4 w-4 text-amber-500" />Today&apos;s circle</p><p className="text-[10px] font-semibold text-slate-500">Proof over promises</p></div>
+                  <div><p className="flex items-center gap-1.5 text-sm font-black"><UsersRound className="h-4 w-4 text-amber-500" />Today&apos;s circle</p><p className="text-xs font-semibold text-slate-500">Proof over promises</p></div>
                   <span className="grid h-9 w-9 place-items-center rounded-full bg-amber-500 text-xs font-black text-slate-950">RS</span>
                 </div>
 
                 <div className="space-y-3 p-3.5">
                   <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-[#111e31]">
                     <div className="flex items-center gap-3 p-4">
-                      <span className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-600 text-xs font-black text-white">RS</span>
-                      <div className="min-w-0 flex-1"><p className="truncate text-xs font-black">Riya Sharma</p><p className="text-[10px] font-semibold text-slate-400">Day 14 · UPSC: revise Polity daily</p></div>
-                      <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[9px] font-black text-emerald-600 dark:text-emerald-400">On track</span>
+                      <span className="grid h-10 w-10 place-items-center rounded-full bg-slate-700 text-xs font-black text-white">RS</span>
+                      <div className="min-w-0 flex-1"><p className="truncate text-xs font-black">Riya Sharma</p><p className="text-xs font-semibold text-slate-400">Day 14 · UPSC: revise Polity daily</p></div>
+                      <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[11px] font-black text-emerald-600 dark:text-emerald-400">On track</span>
                     </div>
                     <div className="relative grid aspect-[16/10] place-items-center overflow-hidden bg-[linear-gradient(145deg,#16324a,#256d67_46%,#e9a23b)]">
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_65%_25%,rgba(255,255,255,.28),transparent_26%)]" />
                       <div className="relative grid h-16 w-16 place-items-center rounded-full border border-white/30 bg-slate-950/35 text-white backdrop-blur"><Play className="ml-1 h-6 w-6 fill-current" /></div>
-                      <span className="absolute bottom-3 left-3 rounded-full bg-slate-950/60 px-2.5 py-1 text-[9px] font-black text-white backdrop-blur">Polity · 2 h 10 min</span>
+                      <span className="absolute bottom-3 left-3 rounded-full bg-slate-950/60 px-2.5 py-1 text-[11px] font-black text-white backdrop-blur">Polity · 2 h 10 min</span>
                     </div>
                     <div className="p-4">
                       <p className="text-xs font-semibold leading-5 text-slate-700 dark:text-slate-200">Didn&apos;t feel like studying. Did 2 hours anyway. Chapter 5 done.</p>
-                      <div className="mt-3 flex items-center gap-4 border-t border-slate-100 pt-3 text-[10px] font-black text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                      <div className="mt-3 flex items-center gap-4 border-t border-slate-100 pt-3 text-xs font-black text-slate-500 dark:border-slate-800 dark:text-slate-400">
                         <span className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400"><Flame className="h-3.5 w-3.5 fill-current" /> 24 boosts</span>
                         <span className="inline-flex items-center gap-1.5"><MessageCircle className="h-3.5 w-3.5" /> 8 comments</span>
                         <span className="ml-auto inline-flex items-center gap-1.5"><BellRing className="h-3.5 w-3.5" /> Nudge</span>
@@ -171,7 +170,7 @@ export default function HomePage() {
                       ['6', 'friends'],
                     ].map(([value, label]) => (
                       <div key={label} className="rounded-2xl border border-slate-200 bg-white p-3 text-center dark:border-slate-700 dark:bg-[#111e31]">
-                        <p className="text-lg font-black text-amber-500">{value}</p><p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
+                        <p className="text-lg font-black text-amber-500">{value}</p><p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
                       </div>
                     ))}
                   </div>
@@ -180,7 +179,7 @@ export default function HomePage() {
             </div>
             <div className="landing-float landing-float-delayed absolute -bottom-5 -left-5 hidden items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:flex dark:border-slate-700 dark:bg-[#111e31]">
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/10 text-emerald-500"><Check className="h-5 w-5" /></span>
-              <div><p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Check-in complete</p><p className="text-xs font-black">Momentum protected</p></div>
+              <div><p className="text-xs font-black uppercase tracking-wide text-slate-400">Check-in complete</p><p className="text-xs font-black">Momentum protected</p></div>
             </div>
           </div>
         </div>
@@ -199,7 +198,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="landing-reveal mx-auto max-w-2xl text-center">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">How it works</p>
-            <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] sm:text-5xl">A simple loop that keeps you <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-400 bg-clip-text text-transparent">moving.</span></h2>
+            <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] sm:text-5xl">A simple loop that keeps you <span className="text-amber-600 dark:text-amber-400">moving.</span></h2>
             <p className="mt-4 text-sm font-medium leading-6 text-slate-600 dark:text-slate-400">No complicated system to maintain. Just a meaningful goal, honest progress, and the right people beside you.</p>
           </div>
 
@@ -252,7 +251,7 @@ export default function HomePage() {
         <div className="landing-reveal relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] bg-slate-950 px-6 py-14 text-center text-white shadow-2xl sm:px-12 lg:py-20 dark:border dark:border-slate-800">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,.28),transparent_42%)]" />
           <div className="relative">
-            <span className="mx-auto mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-amber-500 text-slate-950"><Target className="h-6 w-6" /></span>
+            <LogoMark size={48} className="mx-auto mb-5" />
             <h2 className="text-balance text-3xl font-black tracking-[-0.04em] sm:text-5xl">Your goal deserves more than good intentions.</h2>
             <p className="mx-auto mt-4 max-w-xl text-sm font-medium leading-6 text-slate-300 sm:text-base">Start small. Share the commitment. Show up again tomorrow.</p>
             <Link href="/login?mode=signup" className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-sm font-black text-slate-950 transition hover:-translate-y-0.5 hover:bg-amber-400">
@@ -264,7 +263,7 @@ export default function HomePage() {
 
       <footer className="border-t border-slate-200 px-4 py-8 dark:border-slate-800">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
-          <div className="flex items-center gap-2 text-sm font-black"><Target className="h-4 w-4 text-amber-500" /> GoalYaar</div>
+          <div className="flex items-center gap-2 text-sm font-black"><LogoMark size={20} /> GoalYaar</div>
           <p className="text-xs font-medium text-slate-500">Built for progress, accountability, and people who keep showing up.</p>
           <div className="flex items-center gap-4"><Link href="/privacy" className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white">Privacy</Link><Link href="/login" className="text-xs font-black text-amber-600 hover:text-amber-500 dark:text-amber-400">Sign in</Link></div>
         </div>

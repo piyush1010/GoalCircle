@@ -2,22 +2,22 @@
 export const GOALIE_LINES = {
   welcomeBack: [
     'What took you so long? I missed you!',
-    'You made me wait… but I forgive you 🤗',
-    'There you are! I saved your spot 💛',
+    'You made me wait… but I forgive you',
+    'There you are! I saved your spot',
     'Welcome back! Let’s pick up where we left off.',
   ],
   encourage: [
-    'You can do it! 💪',
+    'You can do it!',
     'Even 10 minutes counts.',
-    'Small steps, big dreams ✨',
-    'I believe in you 💛',
+    'Small steps, big dreams',
+    'I believe in you',
     'Don’t overthink it. Just start.',
   ],
   cheer: [
-    'You did it! So proud of you 🎉',
-    'High five! ✋',
-    'One more day stronger 🌱',
-    'That’s how it’s done 💪',
+    'You did it! So proud of you',
+    'High five!',
+    'One more day stronger',
+    'That’s how it’s done',
   ],
   empty: [
     'Nothing here yet. Let’s start something?',
@@ -28,19 +28,19 @@ export const GOALIE_LINES = {
     'Oww, my antenna! I’m okay.',
   ],
   angry: [
-    'Hey! Stop poking me 😤',
+    'Hey! Stop poking me!',
     'I’m telling on you! 😤',
   ],
   forgive: [
     'Okay, I’m not mad anymore 🥺',
-    'Friends again? 🤝',
+    'Friends again?',
   ],
   tap: [
-    'Hehe, that tickles 😆',
+    'Hehe, that tickles',
     'Boop!',
-    'Studying or poking me? 🤨',
-    'Drink some water 💧',
-    'You’re doing better than you think 💛',
+    'Studying or poking me?',
+    'Drink some water',
+    'You’re doing better than you think',
     'Deep breath. You’ve got this.',
   ],
 } as const

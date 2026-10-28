@@ -138,10 +138,10 @@ export default function LeaderboardPage() {
       {/* HEADER & THEME TOGGLE */}
       <div className="pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
         <div>
-          <h1 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Trophy className="h-4 w-4 text-amber-500" /> Leaderboard
           </h1>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Community standings & consistency rankings
           </p>
         </div>
@@ -156,19 +156,19 @@ export default function LeaderboardPage() {
       </div>
 
       {/* WEEKLY SPRINT COUNTDOWN BANNER */}
-      <div className="p-3 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 rounded-2xl flex items-center justify-between">
+      <div className="p-3 bg-amber-500/5 border border-amber-500/30 rounded-2xl flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Timer className="h-5 w-5 text-amber-500" />
           <div>
-            <span className="text-[10px] font-extrabold text-amber-500 uppercase tracking-wider block">
+            <span className="text-xs font-extrabold text-amber-500 uppercase tracking-wider block">
               Weekly Sprint #38
             </span>
-            <span className="text-xs font-black text-slate-900 dark:text-white">
+            <span className="text-xs font-bold text-slate-900 dark:text-white">
               Ends in 2 days, 14 hours
             </span>
           </div>
         </div>
-        <span className="px-2.5 py-1 rounded-xl bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider">
+        <span className="px-2.5 py-1 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold uppercase tracking-wider">
           Live
         </span>
       </div>
@@ -235,45 +235,45 @@ export default function LeaderboardPage() {
           {/* #2 SILVER */}
           {topThree[1] && (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 text-center shadow-xs relative pt-5">
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white font-black text-xs flex items-center justify-center border-2 border-slate-50 dark:border-slate-950">
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white font-bold text-xs flex items-center justify-center border-2 border-slate-50 dark:border-slate-950">
                 2
               </span>
-              <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-xs font-black text-slate-600 dark:bg-slate-800 dark:text-slate-200">{topThree[1].avatar}</span>
-              <h3 className="text-xs font-black truncate text-slate-900 dark:text-white mt-1">
+              <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-200">{topThree[1].avatar}</span>
+              <h3 className="text-xs font-bold truncate text-slate-900 dark:text-white mt-1">
                 {topThree[1].name}
               </h3>
-              <p className="inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold"><Flame className="h-3 w-3" />{topThree[1].streakDays}d streak</p>
-              <p className="text-[9px] text-slate-400 font-extrabold mt-0.5">{topThree[1].totalHours} hrs</p>
+              <p className="inline-flex items-center gap-1 text-xs text-amber-500 font-bold"><Flame className="h-3 w-3" />{topThree[1].streakDays}d streak</p>
+              <p className="text-[11px] text-slate-400 font-extrabold mt-0.5">{topThree[1].totalHours} hrs</p>
             </div>
           )}
 
           {/* #1 GOLD */}
           {topThree[0] && (
             <div className="bg-white dark:bg-slate-900 border-2 border-amber-500 rounded-2xl p-3 text-center shadow-md relative pt-6 -translate-y-2">
-              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center border-2 border-slate-50 dark:border-slate-950 shadow-sm">
+              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center border-2 border-slate-50 dark:border-slate-950 shadow-sm">
                 1
               </span>
-              <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-amber-500/15 text-xs font-black text-amber-700 dark:text-amber-300">{topThree[0].avatar}</span>
-              <h3 className="text-xs font-black truncate text-slate-900 dark:text-white mt-1">
+              <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-amber-500/15 text-xs font-bold text-amber-700 dark:text-amber-300">{topThree[0].avatar}</span>
+              <h3 className="text-xs font-bold truncate text-slate-900 dark:text-white mt-1">
                 {topThree[0].name}
               </h3>
-              <p className="inline-flex items-center gap-1 text-[10px] text-amber-500 font-black"><Flame className="h-3 w-3" />{topThree[0].streakDays}d streak</p>
-              <p className="text-[9px] text-slate-400 font-extrabold mt-0.5">{topThree[0].totalHours} hrs</p>
+              <p className="inline-flex items-center gap-1 text-xs text-amber-500 font-bold"><Flame className="h-3 w-3" />{topThree[0].streakDays}d streak</p>
+              <p className="text-[11px] text-slate-400 font-extrabold mt-0.5">{topThree[0].totalHours} hrs</p>
             </div>
           )}
 
           {/* #3 BRONZE */}
           {topThree[2] && (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 text-center shadow-xs relative pt-5">
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-amber-700/80 text-white font-black text-xs flex items-center justify-center border-2 border-slate-50 dark:border-slate-950">
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-amber-700/80 text-white font-bold text-xs flex items-center justify-center border-2 border-slate-50 dark:border-slate-950">
                 3
               </span>
-              <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-xs font-black text-slate-600 dark:bg-slate-800 dark:text-slate-200">{topThree[2].avatar}</span>
-              <h3 className="text-xs font-black truncate text-slate-900 dark:text-white mt-1">
+              <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-200">{topThree[2].avatar}</span>
+              <h3 className="text-xs font-bold truncate text-slate-900 dark:text-white mt-1">
                 {topThree[2].name}
               </h3>
-              <p className="inline-flex items-center gap-1 text-[10px] text-amber-500 font-bold"><Flame className="h-3 w-3" />{topThree[2].streakDays}d streak</p>
-              <p className="text-[9px] text-slate-400 font-extrabold mt-0.5">{topThree[2].totalHours} hrs</p>
+              <p className="inline-flex items-center gap-1 text-xs text-amber-500 font-bold"><Flame className="h-3 w-3" />{topThree[2].streakDays}d streak</p>
+              <p className="text-[11px] text-slate-400 font-extrabold mt-0.5">{topThree[2].totalHours} hrs</p>
             </div>
           )}
         </div>
@@ -291,7 +291,7 @@ export default function LeaderboardPage() {
             }`}
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-5 text-center text-xs font-black text-slate-400">
+              <span className="w-5 text-center text-xs font-bold text-slate-400">
                 #{user.rank}
               </span>
               <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-base shrink-0">
@@ -303,12 +303,12 @@ export default function LeaderboardPage() {
                     {user.name}
                   </h4>
                   {user.isCurrentUser && (
-                    <span className="px-1.5 py-0.5 rounded-md bg-amber-500 text-slate-950 text-[9px] font-black uppercase">
+                    <span className="px-1.5 py-0.5 rounded-md bg-amber-500 text-slate-950 text-[11px] font-bold uppercase">
                       You
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-slate-400 truncate">
+                <p className="text-xs text-slate-400 truncate">
                   {user.categoryLabel} • <span className="inline-flex items-center gap-0.5 text-amber-500 font-bold"><Flame className="h-3 w-3" />{user.streakDays}d</span>
                 </p>
               </div>
@@ -316,10 +316,10 @@ export default function LeaderboardPage() {
 
             <div className="flex items-center gap-2 shrink-0">
               <div className="text-right">
-                <span className="block text-xs font-black text-slate-900 dark:text-white">
+                <span className="block text-xs font-bold text-slate-900 dark:text-white">
                   {user.totalHours}h
                 </span>
-                <span className="text-[9px] font-bold text-slate-400">logged</span>
+                <span className="text-[11px] font-bold text-slate-400">logged</span>
               </div>
               <button
                 onClick={() => handleBoost(user.id)}
@@ -327,7 +327,7 @@ export default function LeaderboardPage() {
                 title="Cheer user"
               >
                 <Bolt className="h-3.5 w-3.5" />
-                <span className="text-[10px]">{user.cheers}</span>
+                <span className="text-xs">{user.cheers}</span>
               </button>
             </div>
           </div>
@@ -339,14 +339,14 @@ export default function LeaderboardPage() {
         <div className="fixed bottom-16 left-0 right-0 p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-amber-500/40 z-30">
           <div className="max-w-md mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-1 rounded-xl bg-amber-500 text-slate-950 text-xs font-black">
+              <span className="px-2 py-1 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold">
                 #{currentUser.rank}
               </span>
               <div>
-                <span className="text-xs font-black text-slate-900 dark:text-white block">
+                <span className="text-xs font-bold text-slate-900 dark:text-white block">
                   Your Current Standing
                 </span>
-                <span className="text-[10px] text-slate-400">
+                <span className="text-xs text-slate-400">
                   {currentUser.totalHours} hours logged • {currentUser.streakDays}d streak
                 </span>
               </div>
