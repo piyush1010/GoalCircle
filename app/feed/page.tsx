@@ -75,7 +75,7 @@ export default function FeedPage() {
   const fetchPosts = useCallback(async (currentUserId: string, email: string | undefined, from: number) => {
     // Posts, blocks and follows don't depend on each other: fetch them together.
     const [postsResult, { data: blockRows }, followsResult] = await Promise.all([
-      supabase.from('posts').select('id,user_id,goal_id,caption,media_url,proof_type,checkin_status,visibility,minutes_logged,music_title,music_artist,music_artwork_url,music_preview_url,created_at,goals(title,current_streak,frequency)').order('created_at', { ascending: false }).range(from, from + PAGE_SIZE),
+      supabase.from('posts').select('id,user_id,goal_id,caption,media_url,proof_type,checkin_status,visibility,minutes_logged,music_title,music_artist,music_artwork_url,music_preview_url,created_at,goals(title,current_streak,frequency)').eq('visibility', 'public').order('created_at', { ascending: false }).range(from, from + PAGE_SIZE),
       supabase.from('blocks').select('blocked_id').eq('blocker_id', currentUserId),
       supabase.from('follows').select('following_id').eq('follower_id', currentUserId),
     ])
@@ -131,7 +131,7 @@ export default function FeedPage() {
     const currentUserId = session.user.id
     setUserId(currentUserId)
     // Show the last feed straight away, then refresh it quietly.
-    const cacheKey = `goalcircle-feed-${currentUserId}`
+    const cacheKey = `goalcircle-feed-v2-${currentUserId}`
     try {
       const cached = JSON.parse(window.localStorage.getItem(cacheKey) || 'null') as FeedPost[] | null
       if (cached?.length) { setPosts(cached); setLoading(false) }

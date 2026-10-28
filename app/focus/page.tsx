@@ -1,19 +1,24 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, CheckCircle2, Clock3, Pause, Play, RotateCcw, Target } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock3, Pause, Play, RotateCcw } from 'lucide-react'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
+import { localDateString } from '@/lib/exams'
+import { focusMinutesKey } from '@/lib/focusHandoff'
 import { supabase } from '@/utils/supabase'
 
 const FOCUS_TOUR: TourStep[] = [
   { target: 'focus-modes', title: 'Pick a mode', text: 'Work is 25 minutes, then a short break. Deep work is a longer session.' },
-  { target: 'focus-goal', title: 'Link a goal', text: 'Your focus time is saved to this goal and shows in Progress.' },
+  { target: 'focus-goal', title: 'What are you focusing on?', text: 'Pick a goal or today\'s batch task. The minutes are saved to it.' },
   { target: 'focus-start', title: 'Just start', text: "Press start and do the first five minutes. Starting is the hardest part; it usually gets easier." },
 ]
 
 type TimerMode = 'work' | 'shortBreak' | 'longBreak' | 'deepWork'
 type GoalOption = { id: string; title: string }
+// A focus target: one of your goals, today's batch task, or nothing in particular.
+type Target = { key: string; label: string; goalId: string | null; circleId: string | null }
 const PRESETS: Record<TimerMode, { label: string; minutes: number }> = {
   work: { label: 'Pomodoro', minutes: 25 }, shortBreak: { label: 'Short break', minutes: 5 },
   longBreak: { label: 'Long break', minutes: 15 }, deepWork: { label: 'Deep work', minutes: 45 },
@@ -23,8 +28,8 @@ function weekStart(date: Date) { const d = dayStart(date); const day = d.getDay(
 
 export default function FocusRoomPage() {
   const router = useRouter()
-  const [goals, setGoals] = useState<GoalOption[]>([])
-  const [goalId, setGoalId] = useState('')
+  const [targets, setTargets] = useState<Target[]>([])
+  const [targetKey, setTargetKey] = useState('none')
   const [userId, setUserId] = useState<string | null>(null)
   const [mode, setMode] = useState<TimerMode>('work')
   const [secondsLeft, setSecondsLeft] = useState(PRESETS.work.minutes * 60)
@@ -52,22 +57,49 @@ export default function FocusRoomPage() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) { router.replace('/login?next=/focus'); return }
     setUserId(session.user.id)
-    const { data, error: goalsError } = await supabase.from('goals').select('id,title').eq('user_id', session.user.id).eq('is_completed', false).order('created_at', { ascending: false })
-    if (goalsError) setError('Could not load your goals.')
-    else { const options = (data || []) as GoalOption[]; const requested = new URLSearchParams(window.location.search).get('goal'); setGoals(options); setGoalId(options.some((g) => g.id === requested) ? requested || '' : options[0]?.id || '') }
+    const today = localDateString()
+    const [goalsResult, membershipResult] = await Promise.all([
+      supabase.from('goals').select('id,title').eq('user_id', session.user.id).eq('is_completed', false).order('created_at', { ascending: false }),
+      supabase.from('circle_memberships').select('role, circles(id,name,owner_id)').eq('user_id', session.user.id),
+    ])
+    const batches = ((membershipResult.data || []) as unknown as Array<{ role: string; circles: { id: string; name: string; owner_id: string } | null }>)
+      .filter((row) => row.circles && row.role === 'member' && row.circles.owner_id !== session.user.id).map((row) => row.circles!)
+    const { data: tasks } = batches.length
+      ? await supabase.from('circle_tasks').select('circle_id,title').in('circle_id', batches.map((b) => b.id)).eq('task_date', today)
+      : { data: [] as Array<{ circle_id: string; title: string }> }
+    if (goalsResult.error) setError('Could not load your goals.')
+    const options: Target[] = [
+      ...((tasks || []) as Array<{ circle_id: string; title: string }>).map((task) => ({ key: `c:${task.circle_id}`, label: `${batches.find((b) => b.id === task.circle_id)?.name ?? 'Batch'} · ${task.title}`, goalId: null, circleId: task.circle_id })),
+      ...((goalsResult.data || []) as GoalOption[]).map((goal) => ({ key: `g:${goal.id}`, label: goal.title, goalId: goal.id, circleId: null })),
+      { key: 'none', label: 'Just focus (not linked to anything)', goalId: null, circleId: null },
+    ]
+    const params = new URLSearchParams(window.location.search)
+    const wanted = params.get('circle') ? `c:${params.get('circle')}` : params.get('goal') ? `g:${params.get('goal')}` : ''
+    setTargets(options)
+    setTargetKey(options.some((t) => t.key === wanted) ? wanted : options[0].key)
     try { await loadStats(session.user.id) } catch { setError('Could not load your focus history.') }
     setLoading(false)
   }) }, [loadStats, router])
 
+  const target = targets.find((t) => t.key === targetKey) ?? null
   const saveSession = useCallback(async () => {
-    if (!userId || !goalId || saving) return
+    if (!userId || saving) return
     if (mode === 'shortBreak' || mode === 'longBreak') { setSavedMinutes(0); return }
     const minutes = PRESETS[mode].minutes; setSaving(true); setError(null)
-    const { error: saveError } = await supabase.from('focus_logs').insert({ user_id: userId, goal_id: goalId, minutes_logged: minutes, note: notes.trim() || null })
+    const { error: saveError } = await supabase.from('focus_logs').insert({ user_id: userId, goal_id: target?.goalId ?? null, minutes_logged: minutes, note: notes.trim() || (target?.circleId ? target.label : null) })
     if (saveError) setError('The timer finished, but the session could not be saved. Please try again.')
-    else { setSavedMinutes(minutes); setNotes(''); await loadStats(userId) }
+    else {
+      // Batch task: hand the minutes to the batch check-in so the student doesn't type them.
+      if (target?.circleId) {
+        try {
+          const key = focusMinutesKey(target.circleId, localDateString())
+          window.localStorage.setItem(key, String(Number(window.localStorage.getItem(key) || 0) + minutes))
+        } catch { /* storage unavailable */ }
+      }
+      setSavedMinutes(minutes); setNotes(''); await loadStats(userId)
+    }
     setSaving(false)
-  }, [goalId, loadStats, mode, notes, saving, userId])
+  }, [loadStats, mode, notes, saving, target, userId])
 
   useEffect(() => {
     if (!isRunning) return
@@ -77,7 +109,6 @@ export default function FocusRoomPage() {
 
   const switchMode = (next: TimerMode) => { setIsRunning(false); endAt.current = null; setMode(next); setSecondsLeft(PRESETS[next].minutes * 60); setSavedMinutes(null) }
   const toggleTimer = () => {
-    if (!goalId && mode !== 'shortBreak' && mode !== 'longBreak') { setError('Choose or create a goal before starting a focus session.'); return }
     setError(null); setSavedMinutes(null)
     if (isRunning) { setIsRunning(false); endAt.current = null } else { endAt.current = Date.now() + secondsLeft * 1000; setIsRunning(true) }
   }
@@ -90,14 +121,14 @@ export default function FocusRoomPage() {
     {loading ? <div className="h-96 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" /> : <div className="space-y-4">
       <div data-tour="focus-modes" className="grid grid-cols-4 gap-1 rounded-2xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-[#101b2d]">{(Object.keys(PRESETS) as TimerMode[]).map((preset) => <button key={preset} onClick={() => switchMode(preset)} className={`rounded-xl px-1 py-2 text-[10px] font-black ${mode === preset ? 'bg-amber-500 text-slate-950' : 'text-slate-500'}`}>{PRESETS[preset].label}</button>)}</div>
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-[#101b2d]">
-        <label htmlFor="focus-goal" data-tour="focus-goal" className="mb-2 block text-[10px] font-black uppercase tracking-wider text-slate-500">Active goal</label>
-        {goals.length ? <select id="focus-goal" value={goalId} onChange={(e) => setGoalId(e.target.value)} disabled={isRunning} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold dark:border-slate-700 dark:bg-[#07101f]">{goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}</select> : <button onClick={() => router.push('/create-goal')} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-amber-500 px-3 py-3 text-sm font-bold text-amber-600"><Target className="h-4 w-4" />Create your first goal</button>}
+        <label htmlFor="focus-goal" data-tour="focus-goal" className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-500">Focusing on</label>
+        <select id="focus-goal" value={targetKey} onChange={(e) => setTargetKey(e.target.value)} disabled={isRunning} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold dark:border-slate-700 dark:bg-[#07101f]">{targets.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</select>
         <div className="relative mx-auto my-7 grid h-52 w-52 place-items-center rounded-full" style={{ background: `conic-gradient(#f59e0b ${progress}%, rgb(226 232 240) ${progress}%)` }}><div className="grid h-44 w-44 place-items-center rounded-full bg-white text-center dark:bg-[#101b2d]"><div><div aria-label={`${minutes} minutes ${seconds} seconds remaining`} className="font-mono text-5xl font-black tracking-tight">{minutes}:{seconds}</div><div className="mt-1 text-xs font-bold uppercase tracking-widest text-amber-500">{isRunning ? 'Focusing' : PRESETS[mode].label}</div></div></div></div>
-        <div className="flex justify-center gap-2"><button data-tour="focus-start" onClick={toggleTimer} disabled={saving || (!goals.length && mode !== 'shortBreak' && mode !== 'longBreak')} className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-black text-slate-950 disabled:opacity-50">{isRunning ? <Pause className="h-4 w-4" fill="currentColor" /> : <Play className="h-4 w-4" fill="currentColor" />}{isRunning ? 'Pause' : secondsLeft === total ? 'Start focus' : 'Resume'}</button><button onClick={reset} aria-label="Reset timer" className="grid h-11 w-11 place-items-center rounded-xl bg-slate-100 dark:bg-slate-800"><RotateCcw className="h-4 w-4" /></button></div>
+        <div className="flex justify-center gap-2"><button data-tour="focus-start" onClick={toggleTimer} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-black text-slate-950 disabled:opacity-50">{isRunning ? <Pause className="h-4 w-4" fill="currentColor" /> : <Play className="h-4 w-4" fill="currentColor" />}{isRunning ? 'Pause' : secondsLeft === total ? 'Start focus' : 'Resume'}</button><button onClick={reset} aria-label="Reset timer" className="grid h-11 w-11 place-items-center rounded-xl bg-slate-100 dark:bg-slate-800"><RotateCcw className="h-4 w-4" /></button></div>
       </section>
       <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#101b2d]"><label htmlFor="focus-notes" className="mb-2 block text-[10px] font-black uppercase tracking-wider text-slate-500">Session note <span className="font-medium normal-case">(optional)</span></label><textarea id="focus-notes" value={notes} onChange={(e) => setNotes(e.target.value)} disabled={isRunning} rows={2} maxLength={500} placeholder="What are you working on?" className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-[#07101f]" /></section>
       {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
-      {savedMinutes !== null && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"><CheckCircle2 className="mr-2 inline h-4 w-4" />{savedMinutes ? `${savedMinutes} focus minutes saved.` : 'Break complete. No focus minutes were added.'}</div>}
+      {savedMinutes !== null && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"><CheckCircle2 className="mr-2 inline h-4 w-4" />{savedMinutes ? `${savedMinutes} focus minutes saved.` : 'Break complete. No focus minutes were added.'}{savedMinutes && target?.circleId ? <Link href={`/circles/${target.circleId}`} className="mt-2 block text-amber-700 underline dark:text-amber-300">Go back and check in →</Link> : null}</div>}
       <div className="grid grid-cols-3 gap-3 text-center"><Stat icon={<Clock3 className="mx-auto mb-1 h-4 w-4 text-amber-500" />} value={`${stats.today}m`} label="Today" /><Stat value={`${Math.floor(stats.week / 60)}h ${stats.week % 60}m`} label="This week" accent /><Stat value={String(stats.sessions)} label="Sessions" /></div>
     </div>}
   <GuideTour name="focus" steps={FOCUS_TOUR} />

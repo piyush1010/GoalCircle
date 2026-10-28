@@ -7,18 +7,20 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, CheckCircle2, CircleHelp, Copy, ImagePlus, LockKeyhole, LogOut, Pencil, Share2, Timer, Users, X } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, CircleHelp, ImagePlus, LockKeyhole, LogOut, MoreHorizontal, Pencil, Share2, Timer, Users, X, XCircle } from 'lucide-react'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
 import CircleNotices from '@/components/CircleNotices'
 import MentorDashboard, { inviteMessage, type DashboardRow } from '@/components/MentorDashboard'
 import { AttachmentList, type Attachment } from '@/components/CircleAttachments'
 import { examLabel, localDateString } from '@/lib/exams'
+import { focusMinutesKey } from '@/lib/focusHandoff'
 import { mediaLimitError, shrinkImage, toLocalFile, UNREADABLE_FILE } from '@/lib/media'
 import { supabase } from '@/utils/supabase'
 
 interface Circle { id: string; owner_id: string; name: string; description: string | null; exam: string | null; visibility: 'public' | 'private'; invite_code: string | null }
 interface Task { id: string; title: string; details: string | null; task_date: string; attachments: Attachment[] }
-interface Checkin { status: 'done' | 'partial'; hours: number | null; note: string | null; media_url: string | null; media_type: 'image' | 'video' | null }
+type CheckinStatus = 'done' | 'partial' | 'missed'
+interface Checkin { status: CheckinStatus; hours: number | null; minutes?: number | null; note: string | null; media_url: string | null; media_type: 'image' | 'video' | null }
 
 const MENTOR_TOUR: TourStep[] = [
   { title: "Hi, I'm Goalie!", text: 'This is your batch. In four quick steps I\'ll show you how to run it in a few minutes a day.' },
@@ -29,11 +31,8 @@ const MENTOR_TOUR: TourStep[] = [
 ]
 
 const STUDENT_TOUR: TourStep[] = [
-  { title: "Hi, I'm Goalie!", text: 'This is your batch. Here\'s how to keep your mentor updated in about 10 seconds a day.' },
   { target: 'task', title: "Today's task", text: 'Your mentor posts the task here. You get a notification when it\'s new.' },
-  { target: 'checkin', title: 'Check in', text: 'Pick Done or Partly done, add hours if you like, then save. A photo is optional.' },
-  { target: 'focus', title: 'Hard to start?', text: 'Run a short focus session first. Starting is the hardest part.' },
-  { target: 'notices', title: 'Notices', text: 'Test dates and updates from your mentor appear here.' },
+  { target: 'checkin', title: 'Check in', text: 'Pick Done, Partly done or Missed, then tap Check in. Your mentor sees it straight away.' },
 ]
 
 const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]'
@@ -58,6 +57,7 @@ export default function CirclePage() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tourReplay, setTourReplay] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const isAdmin = !!circle && (circle.owner_id === userId || role === 'owner' || role === 'moderator')
   const isMember = isAdmin || !!role
@@ -95,13 +95,13 @@ export default function CirclePage() {
       supabase.from('circle_memberships').select('role').eq('circle_id', circleId).eq('user_id', uid).maybeSingle(),
       supabase.from('circle_memberships').select('user_id', { count: 'exact', head: true }).eq('circle_id', circleId),
       supabase.from('circle_tasks').select('id,title,details,task_date,attachments').eq('circle_id', circleId).eq('task_date', today).maybeSingle(),
-      supabase.from('circle_task_checkins').select('status,hours,note,media_url,media_type,circle_tasks!inner(task_date)').eq('circle_id', circleId).eq('user_id', uid).eq('circle_tasks.task_date', today).maybeSingle(),
+      supabase.from('circle_task_checkins').select('status,hours,minutes,note,media_url,media_type,circle_tasks!inner(task_date)').eq('circle_id', circleId).eq('user_id', uid).eq('circle_tasks.task_date', today).maybeSingle(),
       supabase.rpc('circle_dashboard', { target_circle: circleId, on_date: today }),
     ])
     if (!circleResult.data) { setNotFound(true); setLoading(false); return }
     const loadedCircle = circleResult.data as Circle
     const loadedTask = (taskResult.data as Task | null) ?? null
-    const loadedCheckin = loadedTask && checkinResult.data ? (({ status, hours, note, media_url, media_type }) => ({ status, hours, note, media_url, media_type }))(checkinResult.data as unknown as Checkin) as Checkin : null
+    const loadedCheckin = loadedTask && checkinResult.data ? (({ status, hours, minutes, note, media_url, media_type }) => ({ status, hours, minutes, note, media_url, media_type }))(checkinResult.data as unknown as Checkin) as Checkin : null
     const admin = loadedCircle.owner_id === uid || ['owner', 'moderator'].includes(roleResult.data?.role ?? '')
     const rows = admin && !dashboardResult.error ? (dashboardResult.data || []) as DashboardRow[] : []
     if (admin && dashboardResult.error) setError('Student progress could not be loaded.')
@@ -135,7 +135,8 @@ export default function CirclePage() {
   }
 
   const leave = async () => {
-    if (!userId || !(await confirmAction('Leave this circle? Your mentor will no longer see your check-ins here.'))) return
+    setMenuOpen(false)
+    if (!userId || !(await confirmAction(`Leave ${circle?.name ?? 'this circle'}? Your mentor will be told, and won't see your check-ins any more.`))) return
     const { error: leaveError } = await supabase.from('circle_memberships').delete().eq('circle_id', circleId).eq('user_id', userId)
     if (leaveError) setError('You could not leave this circle.')
     else router.replace('/circles')
@@ -158,6 +159,13 @@ export default function CirclePage() {
           </p>
         </div>
         {isMember && <button type="button" onClick={() => setTourReplay((n) => n + 1)} aria-label="Show the guide" className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-500 hover:text-amber-500 dark:border-slate-700"><CircleHelp className="h-4 w-4" /></button>}
+        {!isAdmin && isMember && <div className="relative shrink-0">
+          <button type="button" onClick={() => setMenuOpen((open) => !open)} aria-label="More options" aria-expanded={menuOpen} className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 text-slate-500 dark:border-slate-700"><MoreHorizontal className="h-4 w-4" /></button>
+          {menuOpen && <button type="button" aria-hidden="true" tabIndex={-1} onClick={() => setMenuOpen(false)} className="fixed inset-0 z-10 cursor-default" />}
+          {menuOpen && <div className="absolute right-0 top-11 z-20 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-[#101b2d]">
+            <button type="button" onClick={() => void leave()} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><LogOut className="h-4 w-4" />Leave circle</button>
+          </div>}
+        </div>}
         {isAdmin && <button type="button" data-tour="invite" onClick={() => void shareInvite()} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-xs font-black text-slate-950"><Share2 className="h-4 w-4" />Invite</button>}
       </header>
 
@@ -167,7 +175,7 @@ export default function CirclePage() {
       {isAdmin && <MentorDashboard circleId={circleId} circleName={circle.name} today={today} task={task} rows={dashboard} inviteLink={inviteLink}
         onTaskSaved={(saved) => { setTask(saved); void loadDashboard() }} onTaskDeleted={() => { setTask(null); void loadDashboard() }} onChanged={() => void loadDashboard()} onCopyInvite={async () => { await navigator.clipboard.writeText(inviteLink); flash('Invite link copied') }} flash={flash} />}
 
-      {!isAdmin && isMember && userId && <StudentToday circleId={circleId} userId={userId} task={task} checkin={checkin} onSaved={(saved) => { setCheckin(saved); flash('Saved. Your mentor can see it.') }} />}
+      {!isAdmin && isMember && userId && <StudentToday circleId={circleId} userId={userId} task={task} checkin={checkin} onSaved={(saved) => { setCheckin(saved); flash(saved.status === 'missed' ? 'Thanks for being honest. Tomorrow is a fresh start.' : 'Checked in. Your mentor can see it.') }} />}
 
       {isMember && userId && <CircleNotices circleId={circleId} userId={userId} isAdmin={isAdmin} />}
 
@@ -179,15 +187,18 @@ export default function CirclePage() {
         <button type="button" onClick={() => void joinPublic()} className={`${primary} mt-4`}>Join circle</button>
       </section>}
 
-      {!isAdmin && isMember && <button type="button" onClick={() => void leave()} className="mx-auto mt-8 flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-rose-500"><LogOut className="h-3.5 w-3.5" />Leave circle</button>}
     </main>
   )
 }
 
 function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: string; userId: string; task: Task | null; checkin: Checkin | null; onSaved: (checkin: Checkin) => void }) {
   const [editing, setEditing] = useState(false)
-  const [status, setStatus] = useState<'done' | 'partial'>(checkin?.status ?? 'done')
-  const [hours, setHours] = useState(checkin?.hours?.toString() ?? '')
+  const [status, setStatus] = useState<CheckinStatus | null>(checkin?.status ?? null)
+  const [minutes, setMinutes] = useState(() => {
+    const saved = checkin?.minutes ?? (checkin?.hours != null ? Math.round(checkin.hours * 60) : null)
+    if (saved != null) return String(saved)
+    try { return window.localStorage.getItem(focusMinutesKey(circleId, localDateString())) || '' } catch { return '' }
+  })
   const [note, setNote] = useState(checkin?.note ?? '')
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -198,9 +209,9 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
 
   if (!task) return <section data-tour="task" className={`${card} text-center`}>
     <CheckCircle2 className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
-    <h2 className="mt-2 text-base font-black">No task yet today</h2>
-    <p className="mt-1 text-sm text-slate-500">Your mentor hasn&apos;t set today&apos;s task. Keep going with your own goals.</p>
-    <Link href="/focus" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-amber-600 dark:text-amber-400"><Timer className="h-4 w-4" />Start a focus session</Link>
+    <h2 className="mt-2 text-base font-black">No task from your mentor today</h2>
+    <p className="mt-1 text-sm text-slate-500">Use the time for your own study. You&apos;ll get a notification when your mentor posts one.</p>
+    <Link href={`/focus?circle=${circleId}`} className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-amber-600 dark:text-amber-400"><Timer className="h-4 w-4" />Start a focus session</Link>
   </section>
 
   const chooseFile = async (chosen?: File) => {
@@ -216,8 +227,9 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
   }
 
   const save = async () => {
-    const hoursValue = hours.trim() === '' ? null : Number(hours)
-    if (hoursValue !== null && (Number.isNaN(hoursValue) || hoursValue < 0 || hoursValue > 24)) { setError('Hours should be between 0 and 24.'); return }
+    if (!status) { setError('Pick Done, Partly done or Missed first.'); return }
+    const minutesValue = minutes.trim() === '' ? null : Math.round(Number(minutes))
+    if (minutesValue !== null && (Number.isNaN(minutesValue) || minutesValue < 0 || minutesValue > 1440)) { setError('Minutes should be between 0 and 1440.'); return }
     setSaving(true); setError(null)
     let mediaUrl = checkin?.media_url ?? null
     let mediaType = checkin?.media_type ?? null
@@ -229,13 +241,13 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
       mediaUrl = supabase.storage.from('goal-media').getPublicUrl(path).data.publicUrl
       mediaType = file.type.startsWith('video/') ? 'video' : 'image'
     }
-    const row = { status, hours: hoursValue, note: note.trim() || null, media_url: mediaUrl, media_type: mediaType }
+    const row = { status, minutes: minutesValue, hours: minutesValue === null ? null : Math.min(24, Math.round(minutesValue / 6) / 10), note: note.trim() || null, media_url: mediaUrl, media_type: mediaType }
     const { error: saveError } = await supabase.from('circle_task_checkins').upsert({ task_id: task.id, circle_id: circleId, user_id: userId, ...row, updated_at: new Date().toISOString() }, { onConflict: 'task_id,user_id' })
     setSaving(false)
     if (saveError) { setError('Your update could not be saved. Please try again.'); return }
     setEditing(false); setFile(null)
     onSaved(row)
-    cheer()
+    if (status !== 'missed') cheer()
   }
 
   const showForm = editing || !checkin
@@ -247,25 +259,25 @@ function StudentToday({ circleId, userId, task, checkin, onSaved }: { circleId: 
       {task.details && <ClampedText text={task.details} className="mt-1 text-sm text-slate-600 dark:text-slate-300" />}
       <AttachmentList attachments={task.attachments ?? []} />
 
-      {!showForm && checkin && <div className="mt-4 flex items-center justify-between rounded-2xl bg-emerald-500/10 px-4 py-3">
-        <p className="flex items-center gap-2 text-sm font-black text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="h-5 w-5" />{checkin.status === 'done' ? 'Done today' : 'Partly done'}{checkin.hours !== null && ` · ${checkin.hours} h`}</p>
+      {!showForm && checkin && <div className={`mt-4 flex items-center justify-between rounded-2xl px-4 py-3 ${checkin.status === 'missed' ? 'bg-slate-100 dark:bg-slate-800' : 'bg-emerald-500/10'}`}>
+        <p className={`flex items-center gap-2 text-sm font-black ${checkin.status === 'missed' ? 'text-slate-600 dark:text-slate-300' : 'text-emerald-700 dark:text-emerald-300'}`}>{checkin.status === 'missed' ? <XCircle className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}{checkin.status === 'done' ? 'Done today' : checkin.status === 'partial' ? 'Partly done' : 'Missed today'}{(() => { const m = checkin.minutes ?? (checkin.hours != null ? Math.round(checkin.hours * 60) : null); return m ? ` · ${m} min` : '' })()}</p>
         <button type="button" onClick={() => setEditing(true)} className="inline-flex items-center gap-1 text-xs font-bold text-slate-500"><Pencil className="h-3.5 w-3.5" />Edit</button>
       </div>}
 
       {showForm && <div className="mt-4 space-y-3">
-        <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800" role="radiogroup" aria-label="How much did you finish?">
-          {([['done', 'Done'], ['partial', 'Partly done']] as const).map(([value, label]) => <button type="button" role="radio" aria-checked={status === value} key={value} onClick={() => setStatus(value)} className={`rounded-lg py-2.5 text-sm font-bold transition ${status === value ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}>{label}</button>)}
+        <div data-tour="checkin" className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800" role="radiogroup" aria-label="How did today go?">
+          {([['done', 'Done'], ['partial', 'Partly done'], ['missed', 'Missed']] as const).map(([value, label]) => <button type="button" role="radio" aria-checked={status === value} key={value} onClick={() => setStatus(value)} className={`rounded-lg py-2.5 text-sm font-bold transition ${status === value ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}>{label}</button>)}
         </div>
         <div className="flex items-center justify-between gap-3">
-          <label htmlFor="hours" className="text-sm font-semibold text-slate-600 dark:text-slate-300">Hours studied <span className="font-normal text-slate-400">(optional)</span></label>
-          <input id="hours" type="number" inputMode="decimal" min="0" max="24" step="0.5" value={hours} onChange={(event) => setHours(event.target.value)} placeholder="0" className={`${field} w-24 py-2 text-center font-bold`} />
+          <label htmlFor="minutes" className="text-sm font-semibold text-slate-600 dark:text-slate-300">Minutes studied <span className="font-normal text-slate-400">(optional)</span></label>
+          <input id="minutes" type="number" inputMode="numeric" min="0" max="1440" step="5" value={minutes} onChange={(event) => setMinutes(event.target.value)} placeholder="0" className={`${field} w-24 py-2 text-center font-bold`} />
         </div>
-        <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={2} maxLength={500} placeholder="A short note for your mentor (optional)" className={`${field} resize-none`} />
+        <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={2} maxLength={500} placeholder="Note for your mentor (only your mentor sees it)" className={`${field} resize-none`} />
         {preview ? <div className="relative overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950">{file?.type.startsWith('video/') ? <video src={preview} controls playsInline className="max-h-56 w-full object-contain" /> : <div className="relative h-44"><Image src={preview} alt="Your proof" fill unoptimized className="object-contain" /></div>}<button type="button" onClick={() => { if (preview) URL.revokeObjectURL(preview); setPreview(null); setFile(null) }} aria-label="Remove file" className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-slate-950/80 text-white"><X className="h-4 w-4" /></button></div>
           : <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 py-3 text-sm font-bold text-slate-500 transition hover:border-amber-500 dark:border-slate-700"><ImagePlus className="h-4 w-4 text-amber-500" />Add a photo or video (optional)<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" className="sr-only" onChange={(event) => void chooseFile(event.target.files?.[0])} /></label>}
         {error && <p role="alert" className="text-sm font-semibold text-rose-600">{error}</p>}
-        <button type="button" data-tour="checkin" onClick={() => void save()} disabled={saving} className={primary}>{saving ? 'Saving…' : 'Save my update'}</button>
-        <Link href="/focus" data-tour="focus" className="flex items-center justify-center gap-1.5 text-sm font-bold text-amber-600 dark:text-amber-400"><Timer className="h-4 w-4" />Start a focus session first</Link>
+        <button type="button" onClick={() => void save()} disabled={saving || !status} className={primary}>{saving ? 'Saving…' : status ? 'Check in' : 'Pick how today went'}</button>
+        <Link href={`/focus?circle=${circleId}`} data-tour="focus" className="flex items-center justify-center gap-1.5 text-sm font-bold text-amber-600 dark:text-amber-400"><Timer className="h-4 w-4" />Start a focus session first</Link>
       </div>}
     </section>
   )

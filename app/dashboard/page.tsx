@@ -24,16 +24,15 @@ interface Goal {
   is_completed?: boolean | null
   shared?: boolean
 }
-interface BatchCard { id: string; name: string; admin: boolean; task: string | null; done: boolean }
-interface Activity { goal_id: string | null; at: string; minutes: number; checkin: boolean }
+interface BatchCard { id: string; name: string; admin: boolean; task: string | null; done: boolean; status: 'done' | 'partial' | 'missed' | null }
+// checkin: counts as showing up. logged: any check-in today, including an honest "Missed".
+interface Activity { goal_id: string | null; at: string; minutes: number; checkin: boolean; logged?: boolean }
 
+// One short tour. Everything else is explained the first time it's used.
 const WELCOME_TOUR: TourStep[] = [
-  { title: "Hi, I'm Goalie!", text: "This is Today: your goals, and how many days you've shown up this month. One minute tour?" },
-  { target: 'today-ring', title: 'Your month', text: 'Every day you check in or focus fills a piece of the ring. Try not to break the circle.' },
-  { target: 'today-goals', title: 'Check in', text: 'Tap Check in on a goal once you have done it today. That keeps your streak alive.' },
-  { target: 'nav-create', title: 'Start here', text: 'Create a goal, or post today’s progress.' },
-  { target: 'nav-circles', title: 'Circles', text: "Join your mentor's batch with an invite link, or start a group with friends." },
-  { target: 'nav-feed', title: 'Feed', text: 'See who showed up today. Boost a win, comment or send a nudge.' },
+  { target: 'today-checkin', title: "Hi, I'm Goalie! Check in here", text: 'Done today\'s work? Tap Check in. It takes ten seconds.' },
+  { target: 'today-ring', title: 'Your month', text: 'Every day you show up fills a piece of the ring.' },
+  { target: 'nav-create', title: 'Check in from anywhere', text: 'The + button opens the same check-in, from any page.' },
 ]
 
 const localKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -72,7 +71,7 @@ export default function TodayPage() {
     const todayKey = localKey(new Date())
     const [goalsResult, postsResult, logsResult, collabResult, membershipResult] = await Promise.all([
       supabase.from('goals').select(fields).eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('posts').select('goal_id,created_at').eq('user_id', user.id).gte('created_at', since.toISOString()),
+      supabase.from('posts').select('goal_id,created_at,checkin_status').eq('user_id', user.id).gte('created_at', since.toISOString()),
       supabase.from('focus_logs').select('goal_id,minutes_logged,logged_at').eq('user_id', user.id).gte('logged_at', since.toISOString()),
       supabase.from('goal_collaborators').select('goal_id').eq('user_id', user.id).eq('status', 'accepted'),
       supabase.from('circle_memberships').select('role, circles(id,name,owner_id)').eq('user_id', user.id),
@@ -84,11 +83,14 @@ export default function TodayPage() {
     const [sharedResult, tasksResult, myCheckinsResult] = await Promise.all([
       sharedIds.length ? supabase.from('goals').select(fields).in('id', sharedIds) : Promise.resolve({ data: [], error: null }),
       circleIds.length ? supabase.from('circle_tasks').select('circle_id,title').in('circle_id', circleIds).eq('task_date', todayKey) : Promise.resolve({ data: [], error: null }),
-      circleIds.length ? supabase.from('circle_task_checkins').select('circle_id,circle_tasks!inner(task_date)').in('circle_id', circleIds).eq('user_id', user.id).eq('circle_tasks.task_date', todayKey) : Promise.resolve({ data: [], error: null }),
+      // This month's batch check-ins: today's status for the cards, and showing up for the ring.
+      circleIds.length ? supabase.from('circle_task_checkins').select('circle_id,status,minutes,hours,circle_tasks!inner(task_date)').in('circle_id', circleIds).eq('user_id', user.id).gte('circle_tasks.task_date', localKey(monthStart)) : Promise.resolve({ data: [], error: null }),
     ])
+    type BatchCheckin = { circle_id: string; status: 'done' | 'partial' | 'missed'; minutes: number | null; hours: number | null; circle_tasks: { task_date: string } | null }
+    const batchCheckins = (myCheckinsResult.data || []) as unknown as BatchCheckin[]
     const taskByCircle = new Map(((tasksResult.data || []) as Array<{ circle_id: string; title: string }>).map((row) => [row.circle_id, row.title]))
-    const doneCircles = new Set(((myCheckinsResult.data || []) as Array<{ circle_id: string }>).map((row) => row.circle_id))
-    setBatches(memberships.map((row) => ({ id: row.circles!.id, name: row.circles!.name, admin: row.circles!.owner_id === user.id || ['owner', 'moderator'].includes(row.role), task: taskByCircle.get(row.circles!.id) ?? null, done: doneCircles.has(row.circles!.id) })))
+    const statusByCircle = new Map(batchCheckins.filter((row) => row.circle_tasks?.task_date === todayKey).map((row) => [row.circle_id, row.status]))
+    setBatches(memberships.map((row) => ({ id: row.circles!.id, name: row.circles!.name, admin: row.circles!.owner_id === user.id || ['owner', 'moderator'].includes(row.role), task: taskByCircle.get(row.circles!.id) ?? null, done: statusByCircle.has(row.circles!.id), status: statusByCircle.get(row.circles!.id) ?? null })))
     const failed = goalsResult.error || postsResult.error || logsResult.error || collabResult.error || sharedResult.error
     if (failed) { setError('Your day could not be loaded. Pull down or tap Retry.'); setLoading(false); return }
 
@@ -97,8 +99,10 @@ export default function TodayPage() {
     const shared = ((sharedResult.data || []) as Goal[]).filter((goal) => !ownedIds.has(goal.id)).map((goal) => ({ ...goal, shared: true }))
     setGoals([...owned, ...shared])
     setActivity([
-      ...(postsResult.data || []).map((row) => ({ goal_id: row.goal_id, at: row.created_at, minutes: 0, checkin: true })),
+      // "Missed" is honest, but it doesn't fill the ring.
+      ...(postsResult.data || []).map((row) => ({ goal_id: row.goal_id, at: row.created_at, minutes: 0, checkin: row.checkin_status !== 'missed', logged: true })),
       ...(logsResult.data || []).map((row) => ({ goal_id: row.goal_id, at: row.logged_at, minutes: row.minutes_logged || 0, checkin: false })),
+      ...batchCheckins.filter((row) => row.status !== 'missed' && row.circle_tasks).map((row) => ({ goal_id: null, at: `${row.circle_tasks!.task_date}T12:00:00`, minutes: row.minutes ?? (row.hours != null ? Math.round(row.hours * 60) : 0), checkin: true })),
     ])
     setLoading(false)
   }, [router])
@@ -125,7 +129,7 @@ export default function TodayPage() {
     return { month: list, monthName: now.toLocaleDateString(undefined, { month: 'long' }) }
   }, [activity, today])
 
-  const doneToday = useMemo(() => new Set(activity.filter((item) => item.checkin && localKey(new Date(item.at)) === today).map((item) => item.goal_id)), [activity, today])
+  const doneToday = useMemo(() => new Set(activity.filter((item) => item.logged && localKey(new Date(item.at)) === today).map((item) => item.goal_id)), [activity, today])
   const weekMinutes = useMemo(() => {
     const since = Date.now() - 7 * 86_400_000
     return activity.filter((item) => new Date(item.at).getTime() >= since).reduce((sum, item) => sum + item.minutes, 0)
@@ -197,25 +201,28 @@ export default function TodayPage() {
         <span className={chip}><Timer className="h-4 w-4 text-sky-500" />{weekMinutes} min this week</span>
       </div>
 
-      {batches.length > 0 && <section className="mt-5">
+      {batches.length > 0 && <section data-tour="today-checkin" className="mt-5">
         <h2 className="mb-2 text-lg font-black">{batches.length === 1 ? 'Your batch' : 'Your circles'}</h2>
         <div className="space-y-2.5">{batches.map((batch) => (
           <Link key={batch.id} href={`/circles/${batch.id}`} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:border-amber-500 dark:border-slate-700/70 dark:bg-[#101b2d]">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400"><UsersRound className="h-5 w-5" /></span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-base font-black">{batch.name}</span>
-              <span className="block truncate text-sm font-semibold text-slate-600 dark:text-slate-300">{batch.task ? batch.task : batch.admin ? 'No task posted today' : 'No task yet today'}</span>
+              {!batch.admin && batch.task && <span className="block text-xs font-bold text-amber-700 dark:text-amber-400">From your mentor</span>}
+              <span className="block truncate text-sm font-semibold text-slate-600 dark:text-slate-300">{batch.task ? batch.task : batch.admin ? 'No task posted today' : 'No task from your mentor today'}</span>
             </span>
             {batch.admin
               ? <span className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-sm font-black dark:border-slate-700">{batch.task ? 'Students' : 'Post task'}</span>
               : batch.task && (batch.done
-                ? <span className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-black text-white"><CheckCircle2 className="h-4 w-4" />Done</span>
+                ? batch.status === 'missed'
+                  ? <span className="shrink-0 rounded-xl bg-slate-200 px-3 py-2 text-sm font-black text-slate-700 dark:bg-slate-800 dark:text-slate-200">Missed</span>
+                  : <span className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-black text-white"><CheckCircle2 className="h-4 w-4" />{batch.status === 'partial' ? 'Partly' : 'Done'}</span>
                 : <span className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-black text-slate-950">Check in</span>)}
           </Link>
         ))}</div>
       </section>}
 
-      <section data-tour="today-goals" className="mt-5">
+      <section data-tour={batches.length ? 'today-goals' : 'today-checkin'} className="mt-5">
         <div className="mb-2 flex items-center justify-between"><h2 className="text-lg font-black">Today’s goals</h2><Link href="/create-goal" className="flex items-center gap-1 text-sm font-black text-amber-600 dark:text-amber-400"><Plus className="h-4 w-4" />New goal</Link></div>
         {goals.length === 0 && batches.length > 0
           ? <Link href="/create-goal" className="block rounded-2xl border border-dashed border-slate-300 p-4 text-center text-sm font-bold text-slate-600 dark:border-slate-700 dark:text-slate-300">Add a personal goal too, like “Revise 2 hours daily”</Link>

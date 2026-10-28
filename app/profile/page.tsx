@@ -48,12 +48,26 @@ export default function ProfilePage() {
 
     if (!error && goals) {
       setTotalGoals(goals.length)
-      setCompletedGoals(goals.filter(g => g.is_completed).length)
       
       // Calculate max current streak across active goals
       const maxStreak = goals.reduce((max, g) => Math.max(max, g.current_streak || 0), 0)
       setCurrentStreak(maxStreak)
     }
+
+    // 2. Days showed up: the same rule as the ring on Today (a check-in that isn't "Missed",
+    //    focus time, or a batch check-in), counted once per day.
+    const [posts, logs, batch] = await Promise.all([
+      supabase.from('posts').select('created_at').eq('user_id', userId).or('checkin_status.is.null,checkin_status.neq.missed'),
+      supabase.from('focus_logs').select('logged_at').eq('user_id', userId),
+      supabase.from('circle_task_checkins').select('status,circle_tasks(task_date)').eq('user_id', userId).in('status', ['done', 'partial']),
+    ])
+    const dayKey = (value: string) => { const d = new Date(value); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` }
+    const days = new Set<string>([
+      ...(posts.data || []).map((row) => dayKey(row.created_at)),
+      ...(logs.data || []).map((row) => dayKey(row.logged_at)),
+      ...((batch.data || []) as unknown as Array<{ circle_tasks: { task_date: string } | null }>).filter((row) => row.circle_tasks).map((row) => dayKey(`${row.circle_tasks!.task_date}T12:00:00`)),
+    ])
+    setCompletedGoals(days.size)
   }
 
   useEffect(() => {
@@ -179,15 +193,15 @@ export default function ProfilePage() {
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
             <p className="text-base font-black text-amber-500">{totalGoals}</p>
-            <p className="text-[9px] font-extrabold uppercase text-slate-400">Goals</p>
+            <p className="text-[11px] font-extrabold uppercase text-slate-500">Goals</p>
           </div>
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
             <p className="inline-flex items-center justify-center gap-1 text-base font-black text-amber-500"><Flame className="h-4 w-4" />{currentStreak}</p>
-            <p className="text-[9px] font-extrabold uppercase text-slate-400">Streak</p>
+            <p className="text-[11px] font-extrabold uppercase text-slate-500">Streak</p>
           </div>
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
             <p className="text-base font-black text-emerald-400">{completedGoals}</p>
-            <p className="text-[9px] font-extrabold uppercase text-slate-400">Done</p>
+            <p className="text-[11px] font-extrabold uppercase text-slate-500">Days showed up</p>
           </div>
         </div>
 

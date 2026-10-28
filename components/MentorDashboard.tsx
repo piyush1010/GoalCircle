@@ -4,7 +4,7 @@ import ClampedText from '@/components/ClampedText'
 import { confirmAction } from '@/lib/confirm'
 import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BellRing, CheckCircle2, ChevronDown, Clock3, Copy, MessageCircle, Moon, Pencil, Search, UserMinus, UserPlus } from 'lucide-react'
+import { BellRing, CheckCircle2, ChevronDown, Clock3, Copy, MessageCircle, Moon, Pencil, Search, UserMinus, UserPlus, XCircle } from 'lucide-react'
 import { AttachmentList, AttachmentPicker, removeCircleFiles, uploadCircleFiles, type Attachment } from '@/components/CircleAttachments'
 import { supabase } from '@/utils/supabase'
 
@@ -14,8 +14,9 @@ export interface DashboardRow {
   username: string | null
   avatar_url: string | null
   joined_at: string
-  today_status: 'done' | 'partial' | null
+  today_status: 'done' | 'partial' | 'missed' | null
   today_hours: number | null
+  today_minutes?: number | null
   today_note: string | null
   today_media_url: string | null
   today_media_type: 'image' | 'video' | null
@@ -26,7 +27,10 @@ export interface DashboardRow {
 
 interface Task { id: string; title: string; details: string | null; task_date: string; attachments: Attachment[] }
 
-type Filter = 'all' | 'done' | 'not_done' | 'quiet'
+type Filter = 'all' | 'done' | 'missed' | 'not_done' | 'quiet'
+
+const checkedIn = (row: DashboardRow) => row.today_status === 'done' || row.today_status === 'partial'
+const minutesOf = (row: DashboardRow) => row.today_minutes ?? (row.today_hours != null ? Math.round(row.today_hours * 60) : null)
 type Sort = 'last' | 'name' | 'newest'
 const QUIET_MS = 2 * 24 * 60 * 60 * 1000
 
@@ -58,7 +62,8 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
 }) {
   const [view, setView] = useState<'today' | 'students'>('today')
   const [now] = useState(() => Date.now())
-  const done = rows.filter((row) => row.today_status)
+  const done = rows.filter(checkedIn)
+  const missed = rows.filter((row) => row.today_status === 'missed')
   const notDone = rows.filter((row) => !row.today_status)
   const quiet = rows.filter((row) => isQuiet(row, now))
 
@@ -91,13 +96,14 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
 
         {rows.length === 0 ? inviteCard : <section className={card}>
           <h2 className="text-sm font-black">Today at a glance</h2>
-          <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-            <Stat label="Done" value={done.length} tone="text-emerald-600 dark:text-emerald-400" onClick={() => setView('students')} />
+          <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+            <Stat label="Checked in" value={done.length} tone="text-emerald-600 dark:text-emerald-400" onClick={() => setView('students')} />
+            <Stat label="Missed" value={missed.length} tone="text-slate-600 dark:text-slate-300" onClick={() => setView('students')} />
             <Stat label="Not yet" value={notDone.length} tone="text-amber-600 dark:text-amber-400" onClick={() => setView('students')} />
             <Stat label="Quiet 2+ days" value={quiet.length} tone="text-rose-600 dark:text-rose-400" onClick={() => setView('students')} />
           </div>
           {task && notDone.length > 0 && <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-            <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 py-3 text-sm font-black text-slate-950"><BellRing className="h-4 w-4" />Nudge {notDone.length} who haven&apos;t done it</button>
+            <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 py-3 text-sm font-black text-slate-950"><BellRing className="h-4 w-4" />Nudge {notDone.length} who haven&apos;t checked in</button>
             <a href={whatsappUrl(`Reminder for ${circleName}: today's task is "${task.title}". Please check in on GoalYaar once it's done.`)} target="_blank" rel="noreferrer" aria-label="Send reminder on WhatsApp" className="grid w-12 place-items-center rounded-xl bg-emerald-500 text-white"><MessageCircle className="h-5 w-5" /></a>
           </div>}
           {!task && <p className="mt-4 text-center text-xs text-slate-500">Set today&apos;s task above to start tracking.</p>}
@@ -237,7 +243,7 @@ function StudentList({ rows, now, hasTask, circleId, onNudge, onChanged, flash }
     const text = query.trim().toLowerCase()
     return rows
       .filter((row) => !text || displayName(row).toLowerCase().includes(text) || (row.username || '').toLowerCase().includes(text))
-      .filter((row) => filter === 'all' || (filter === 'done' && row.today_status) || (filter === 'not_done' && !row.today_status) || (filter === 'quiet' && isQuiet(row, now)))
+      .filter((row) => filter === 'all' || (filter === 'done' && checkedIn(row)) || (filter === 'missed' && row.today_status === 'missed') || (filter === 'not_done' && !row.today_status) || (filter === 'quiet' && isQuiet(row, now)))
       .sort((a, b) => {
         if (sort === 'name') return displayName(a).localeCompare(displayName(b))
         if (sort === 'newest') return new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime()
@@ -252,7 +258,7 @@ function StudentList({ rows, now, hasTask, circleId, onNudge, onChanged, flash }
     else { flash(`${displayName(row)} removed`); onChanged() }
   }
 
-  const filters: Array<[Filter, string]> = [['all', 'All'], ['done', 'Done today'], ['not_done', 'Not done'], ['quiet', 'Quiet 2+ days']]
+  const filters: Array<[Filter, string]> = [['all', 'All'], ['done', 'Checked in'], ['missed', 'Missed'], ['not_done', 'Not yet'], ['quiet', 'Quiet 2+ days']]
 
   return <section className="space-y-3">
     <div className="relative">
@@ -285,7 +291,7 @@ function StudentList({ rows, now, hasTask, circleId, onNudge, onChanged, flash }
               <span className="block truncate text-sm font-bold">{displayName(row)}</span>
               <span className="block text-xs text-slate-500">Last check-in {timeAgo(row.last_checkin_at)} · {row.days_done_7} of {row.tasks_set_7 || 0} tasks this week</span>
             </span>
-            <StatusPill status={row.today_status} quiet={quiet} hours={row.today_hours} />
+            <StatusPill status={row.today_status} quiet={quiet} minutes={minutesOf(row)} />
             <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition ${expanded ? 'rotate-180' : ''}`} />
           </button>
           {expanded && <div className="space-y-3 px-4 pb-4">
@@ -305,9 +311,11 @@ function StudentList({ rows, now, hasTask, circleId, onNudge, onChanged, flash }
   </section>
 }
 
-function StatusPill({ status, quiet, hours }: { status: DashboardRow['today_status']; quiet: boolean; hours: number | null }) {
-  if (status === 'done') return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="h-3.5 w-3.5" />Done{hours !== null && ` · ${hours}h`}</span>
-  if (status === 'partial') return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-500/10 px-2 py-1 text-[11px] font-bold text-sky-700 dark:text-sky-300"><Clock3 className="h-3.5 w-3.5" />Partly</span>
-  if (quiet) return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-rose-500/10 px-2 py-1 text-[11px] font-bold text-rose-700 dark:text-rose-300"><Moon className="h-3.5 w-3.5" />Quiet</span>
-  return <span className="inline-flex shrink-0 rounded-full bg-amber-500/10 px-2 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300">Not yet</span>
+function StatusPill({ status, quiet, minutes }: { status: DashboardRow['today_status']; quiet: boolean; minutes: number | null }) {
+  const time = minutes ? ` · ${minutes}m` : ''
+  if (status === 'done') return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="h-3.5 w-3.5" />Done{time}</span>
+  if (status === 'partial') return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-500/10 px-2 py-1 text-xs font-bold text-sky-700 dark:text-sky-300"><Clock3 className="h-3.5 w-3.5" />Partly{time}</span>
+  if (status === 'missed') return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-500/10 px-2 py-1 text-xs font-bold text-slate-600 dark:text-slate-300"><XCircle className="h-3.5 w-3.5" />Missed</span>
+  if (quiet) return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-rose-500/10 px-2 py-1 text-xs font-bold text-rose-700 dark:text-rose-300"><Moon className="h-3.5 w-3.5" />Quiet</span>
+  return <span className="inline-flex shrink-0 rounded-full bg-amber-500/10 px-2 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">Not yet</span>
 }
