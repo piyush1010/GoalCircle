@@ -5,7 +5,7 @@ import { BellRing } from 'lucide-react'
 import { disablePush, enablePush, pushIsOn, pushSupported } from '@/lib/push'
 
 /** Settings switch for phone notifications on this device. */
-export default function PushToggle() {
+export default function PushToggle({ embedded = false }: { embedded?: boolean } = {}) {
   const [supported, setSupported] = useState(true)
   const [on, setOn] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -30,7 +30,7 @@ export default function PushToggle() {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className={embedded ? 'border-b border-slate-100 pb-3 dark:border-slate-800' : 'rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900'}>
       <div className="flex items-center gap-3">
         <BellRing className="h-5 w-5 shrink-0 text-amber-500" />
         <span className="flex-1"><span className="block text-sm font-bold">Phone notifications</span>

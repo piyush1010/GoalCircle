@@ -96,12 +96,12 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
 
         {rows.length === 0 ? inviteCard : <section className={card}>
           <h2 className="text-sm font-bold">Today at a glance</h2>
-          <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+          {task && <div className="mt-3 grid grid-cols-4 gap-2 text-center">
             <Stat label="Checked in" value={done.length} tone="text-emerald-600 dark:text-emerald-400" onClick={() => setView('students')} />
             <Stat label="Missed" value={missed.length} tone="text-slate-600 dark:text-slate-300" onClick={() => setView('students')} />
             <Stat label="Not yet" value={notDone.length} tone="text-amber-600 dark:text-amber-400" onClick={() => setView('students')} />
             <Stat label="Quiet 2+ days" value={quiet.length} tone="text-rose-600 dark:text-rose-400" onClick={() => setView('students')} />
-          </div>
+          </div>}
           {task && notDone.length > 0 && <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
             <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950"><BellRing className="h-4 w-4" />Nudge {notDone.length} who haven&apos;t checked in</button>
             <a href={whatsappUrl(`Reminder for ${circleName}: today's task is "${task.title}". Please check in on GoalYaar once it's done.`)} target="_blank" rel="noreferrer" aria-label="Send reminder on WhatsApp" className="grid w-12 place-items-center rounded-xl bg-emerald-500 text-white"><MessageCircle className="h-5 w-5" /></a>
@@ -291,7 +291,7 @@ function StudentList({ rows, now, hasTask, circleId, onNudge, onChanged, flash }
               <span className="block truncate text-sm font-bold">{displayName(row)}</span>
               <span className="block text-xs text-slate-500">Last check-in {timeAgo(row.last_checkin_at)} · {row.days_done_7} of {row.tasks_set_7 || 0} tasks this week</span>
             </span>
-            <StatusPill status={row.today_status} quiet={quiet} minutes={minutesOf(row)} />
+            <StatusPill status={row.today_status} quiet={quiet} minutes={minutesOf(row)} hasTask={hasTask} />
             <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition ${expanded ? 'rotate-180' : ''}`} />
           </button>
           {expanded && <div className="space-y-3 px-4 pb-4">
@@ -311,11 +311,12 @@ function StudentList({ rows, now, hasTask, circleId, onNudge, onChanged, flash }
   </section>
 }
 
-function StatusPill({ status, quiet, minutes }: { status: DashboardRow['today_status']; quiet: boolean; minutes: number | null }) {
+function StatusPill({ status, quiet, minutes, hasTask }: { status: DashboardRow['today_status']; quiet: boolean; minutes: number | null; hasTask: boolean }) {
   const time = minutes ? ` · ${minutes}m` : ''
   if (status === 'done') return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="h-3.5 w-3.5" />Done{time}</span>
   if (status === 'partial') return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-500/10 px-2 py-1 text-xs font-bold text-sky-700 dark:text-sky-300"><Clock3 className="h-3.5 w-3.5" />Partly{time}</span>
   if (status === 'missed') return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-500/10 px-2 py-1 text-xs font-bold text-slate-600 dark:text-slate-300"><XCircle className="h-3.5 w-3.5" />Missed</span>
   if (quiet) return <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-rose-500/10 px-2 py-1 text-xs font-bold text-rose-700 dark:text-rose-300"><Moon className="h-3.5 w-3.5" />Quiet</span>
+  if (!hasTask) return <span className="inline-flex shrink-0 rounded-full bg-slate-500/10 px-2 py-1 text-xs font-bold text-slate-500">No task</span>
   return <span className="inline-flex shrink-0 rounded-full bg-amber-500/10 px-2 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">Not yet</span>
 }

@@ -158,7 +158,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-4 max-w-md mx-auto space-y-5 pb-28 text-slate-800 dark:text-slate-200 select-none">
+    <div className="p-4 max-w-xl mx-auto space-y-5 pb-28 text-slate-800 dark:text-slate-200 select-none">
       {/* Header */}
       <div className="pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
         <h1 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -236,6 +236,7 @@ export default function SettingsPage() {
         <label className="flex items-center gap-1.5 text-xs uppercase font-extrabold text-slate-400 tracking-wider">
           <Bell className="h-3.5 w-3.5" /> Notifications & Reminders
         </label>
+        <PushToggle embedded />
 
         <div className="flex items-center justify-between">
           <div>
@@ -274,7 +275,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between"><div><h3 className="text-xs font-bold text-slate-900 dark:text-white">Quiet hours</h3><p className="text-xs text-slate-400">Pause reminders and social prompts overnight</p></div><button type="button" onClick={() => saveQuietHours(!quietHoursEnabled)} aria-pressed={quietHoursEnabled} className={`relative h-6 w-11 rounded-full transition-colors ${quietHoursEnabled ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'}`}><span className={`absolute top-1 block h-4 w-4 rounded-full bg-white transition-transform ${quietHoursEnabled ? 'left-6' : 'left-1'}`} /></button></div>
           {quietHoursEnabled && <div className="mt-3 grid grid-cols-2 gap-2"><label className="text-xs font-bold text-slate-500">From<input type="time" value={quietHoursStart} onChange={(event) => saveQuietHours(true, event.target.value, quietHoursEnd)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label><label className="text-xs font-bold text-slate-500">Until<input type="time" value={quietHoursEnd} onChange={(event) => saveQuietHours(true, quietHoursStart, event.target.value)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label></div>}
         </div>
-        <p className="text-xs leading-relaxed text-slate-400">A gentle reminder at this time while GoalYaar is open. For reminders when the app is closed, turn on Phone notifications below.</p>
+        <p className="text-xs leading-relaxed text-slate-400">A gentle reminder at this time while GoalYaar is open. For reminders when the app is closed, turn on Phone notifications above.</p>
       </div>
 
       <InstallAppCard />
@@ -335,7 +336,6 @@ export default function SettingsPage() {
         <span className="text-amber-500">→</span>
       </button>
 
-      <PushToggle />
 
       <GoalieToggle />
 
