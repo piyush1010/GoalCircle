@@ -91,10 +91,10 @@ export default function HomePage() {
               <a href="#faq" className="text-xs font-bold text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white">FAQ</a>
             </div>
             <div className="hidden sm:block"><ThemeToggle /></div>
-            <Link href="/login" className="rounded-xl px-3 py-2 text-sm font-extrabold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">
+            <Link href="/login" className="whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-extrabold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">
               Sign in
             </Link>
-            <Link href="/login?mode=signup" className="rounded-xl bg-slate-900 dark:bg-slate-50 px-4 py-2.5 text-sm font-black text-white dark:text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-800 dark:hover:bg-white">
+            <Link href="/login?mode=signup" className="whitespace-nowrap rounded-xl bg-slate-900 dark:bg-slate-50 px-3 py-2.5 text-sm font-black text-white dark:text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-800 dark:hover:bg-white">
               Create account
             </Link>
           </nav>
@@ -117,7 +117,7 @@ export default function HomePage() {
             </p>
 
             <div className="landing-enter landing-delay-4 mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/login?mode=signup" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-slate-50 px-6 py-3.5 text-sm font-black text-white dark:text-slate-900 shadow-xl transition hover:-translate-y-0.5 hover:bg-slate-800 dark:hover:bg-white">
+              <Link href="/login?mode=signup" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-base font-black text-slate-950 shadow-lg shadow-amber-500/25 transition hover:-translate-y-0.5 hover:bg-amber-400">
                 Start your first goal <ArrowRight className="h-4 w-4" />
               </Link>
               <a href="#how-it-works" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white/80 px-6 py-3.5 text-sm font-black text-slate-700 transition hover:border-slate-400 hover:bg-white dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900">
