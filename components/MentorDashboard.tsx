@@ -1,8 +1,8 @@
 'use client'
 
+import ProofMedia from '@/components/ProofMedia'
 import ClampedText from '@/components/ClampedText'
 import { confirmAction } from '@/lib/confirm'
-import Image from 'next/image'
 import ProfileAvatar from '@/components/ProfileAvatar'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BellRing, CheckCircle2, ChevronDown, Clock3, Copy, Download, MessageCircle, Moon, Pencil, Search, Send, UserMinus, UserPlus, XCircle } from 'lucide-react'
@@ -307,8 +307,8 @@ function StudentList({ rows, now, hasTask, taskId, circleId, onNudge, onChanged,
             {row.today_note && <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-[#0E0F11]">“{row.today_note}”</p>}
             {row.today_status && taskId && <ReplyBox key={`${row.user_id}-${row.today_reply ?? ''}`} taskId={taskId} studentId={row.user_id} existing={row.today_reply ?? null} onSent={onChanged} flash={flash} />}
             {row.today_media_url && (row.today_media_type === 'video'
-              ? <video src={row.today_media_url} controls playsInline className="max-h-56 w-full rounded-xl bg-slate-950 object-contain" />
-              : <div className="relative h-48 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"><Image src={row.today_media_url} alt={`${displayName(row)}'s proof`} fill unoptimized className="object-contain" /></div>)}
+              ? <ProofMedia src={row.today_media_url} type="video" alt={`${displayName(row)}'s proof`} className="max-h-56 w-full rounded-xl bg-slate-950 object-contain" />
+              : <div className="relative h-48 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"><ProofMedia src={row.today_media_url} type="image" alt={`${displayName(row)}'s proof`} fill className="object-contain" /></div>)}
             <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
               <button type="button" onClick={() => void onNudge([row.user_id])} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 py-2.5 text-xs font-bold text-white dark:text-slate-900 disabled:opacity-50"><BellRing className="h-4 w-4" />Nudge</button>
               <a href={whatsappUrl(`Hi ${displayName(row).split(' ')[0]}, just checking in. How is your preparation going today?`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-2.5 text-xs font-bold text-white"><MessageCircle className="h-4 w-4" />WhatsApp</a>
