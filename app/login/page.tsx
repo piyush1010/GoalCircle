@@ -106,14 +106,14 @@ function AuthForm() {
             setErrorMsg(null)
             setSuccessMsg(null)
           }}
-          className={`flex min-w-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-left transition ${
+          className={`flex min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-2 py-2.5 text-left transition sm:justify-start ${
             mode === 'signin'
               ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 shadow-md'
               : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
           }`}
         >
           <LogIn className="h-4 w-4 shrink-0" />
-          <span><span className="block text-xs font-bold">Sign in</span><span className={`block text-[11px] font-semibold ${mode === 'signin' ? 'opacity-75' : 'text-slate-400'}`}>Existing member</span></span>
+          <span><span className="block text-sm font-bold sm:text-xs">Sign in</span><span className={`hidden text-[11px] font-semibold sm:block ${mode === 'signin' ? 'opacity-75' : 'text-slate-400'}`}>Existing member</span></span>
         </button>
         <button
           type="button"
@@ -123,14 +123,14 @@ function AuthForm() {
             setErrorMsg(null)
             setSuccessMsg(null)
           }}
-          className={`flex min-w-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-left transition ${
+          className={`flex min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-2 py-2.5 text-left transition sm:justify-start ${
             mode === 'signup'
               ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 shadow-md'
               : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
           }`}
         >
           <UserPlus className="h-4 w-4 shrink-0" />
-          <span><span className="block text-xs font-bold">Create account</span><span className={`block text-[11px] font-semibold ${mode === 'signup' ? 'opacity-75' : 'text-slate-400'}`}>New to GoalYaar</span></span>
+          <span><span className="block text-sm font-bold sm:text-xs">Create account</span><span className={`hidden text-[11px] font-semibold sm:block ${mode === 'signup' ? 'opacity-75' : 'text-slate-400'}`}>New to GoalYaar</span></span>
         </button>
       </div>
 
