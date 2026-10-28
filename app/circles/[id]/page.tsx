@@ -193,23 +193,9 @@ export default function CirclePage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4">
-      <header className="mb-4 flex items-start gap-3">
+      <header className="mb-5 flex flex-wrap items-center gap-2">
         <button type="button" onClick={() => router.push('/circles')} aria-label="Back to circles" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#16181B]"><ArrowLeft className="h-4 w-4" /></button>
-        {isAdmin
-          ? <label className="relative shrink-0 cursor-pointer" title="Change batch photo">
-              <CircleAvatar name={circle.name} url={avatarUrl} size={44} className={photoBusy ? 'opacity-50' : ''} />
-              <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-slate-900 text-white dark:border-[#0E0F11]"><Pencil className="h-2.5 w-2.5" /></span>
-              <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="Change batch photo" onChange={(event) => { void changePhoto(event.target.files?.[0]); event.target.value = '' }} />
-            </label>
-          : <CircleAvatar name={circle.name} url={avatarUrl} size={44} />}
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-bold tracking-tight">{circle.name}</h1>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">
-            {examLabel(circle.exam) && <span className="rounded-md bg-amber-500/10 px-1.5 py-0.5 font-bold text-amber-700 dark:text-amber-300">{examLabel(circle.exam)}</span>}
-            {circle.visibility === 'private' && <span className="inline-flex items-center gap-1"><LockKeyhole className="h-3 w-3" />Private</span>}
-            <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />{memberCount} {memberCount === 1 ? 'member' : 'members'}</span>
-          </p>
-        </div>
+        <span className="flex-1" />
         {isMember && <button type="button" onClick={() => setTourReplay((n) => n + 1)} aria-label="Show the guide" className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-500 hover:text-amber-500 dark:border-slate-700"><CircleHelp className="h-4 w-4" /></button>}
         {isMember && <div className="relative shrink-0">
           <button type="button" onClick={() => setMenuOpen((open) => !open)} aria-label="More options" aria-expanded={menuOpen} className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 text-slate-500 dark:border-slate-700"><MoreHorizontal className="h-4 w-4" /></button>
@@ -224,6 +210,23 @@ export default function CirclePage() {
           </div>}
         </div>}
         {isAdmin && <button type="button" data-tour="invite" onClick={() => void shareInvite()} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 px-3 py-2 text-xs font-bold text-white dark:text-slate-900"><Share2 className="h-4 w-4" />Invite</button>}
+        <div className="order-last mt-2 flex w-full min-w-0 items-center gap-3">
+        {isAdmin
+          ? <label className="relative shrink-0 cursor-pointer" title="Change batch photo">
+              <CircleAvatar name={circle.name} url={avatarUrl} size={44} className={photoBusy ? 'opacity-50' : ''} />
+              <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-slate-900 text-white dark:border-[#0E0F11]"><Pencil className="h-2.5 w-2.5" /></span>
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="Change batch photo" onChange={(event) => { void changePhoto(event.target.files?.[0]); event.target.value = '' }} />
+            </label>
+          : <CircleAvatar name={circle.name} url={avatarUrl} size={44} />}
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-bold leading-tight tracking-tight [overflow-wrap:anywhere]">{circle.name}</h1>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">
+            {examLabel(circle.exam) && <span className="rounded-md bg-amber-500/10 px-1.5 py-0.5 font-bold text-amber-700 dark:text-amber-300">{examLabel(circle.exam)}</span>}
+            {circle.visibility === 'private' && <span className="inline-flex items-center gap-1"><LockKeyhole className="h-3 w-3" />Private</span>}
+            <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />{memberCount} {memberCount === 1 ? 'member' : 'members'}</span>
+          </p>
+        </div>
+        </div>
       </header>
 
       {message && <p role="status" className="mb-3 rounded-xl bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-700 dark:text-emerald-300">{message}</p>}
