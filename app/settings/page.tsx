@@ -191,7 +191,7 @@ export default function SettingsPage() {
                 onClick={() => handleThemeChange(mode)}
                 className={`py-2 px-3 rounded-xl text-xs font-bold capitalize transition border active:scale-95 ${
                   theme === mode
-                    ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-sm'
+                    ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 border-slate-900 dark:border-slate-50 shadow-sm'
                     : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-amber-500'
                 }`}
               >

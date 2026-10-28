@@ -65,7 +65,7 @@ export default function JoinCirclePage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 pb-28">
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-700/70 dark:bg-[#16181B]">
         {loading && <div className="mx-auto h-24 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />}
         {!loading && signedOut && invalid && <>
           <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-slate-800"><Users className="h-7 w-7" /></span>
@@ -83,7 +83,7 @@ export default function JoinCirclePage() {
             <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />Check in with one tap when it&apos;s done</li>
             <li className="flex gap-2"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />Only your mentor sees your check-ins here</li>
           </ul>
-          <button type="button" onClick={() => void continueWithGoogle()} disabled={signingIn} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 py-4 text-base font-bold text-slate-950 disabled:opacity-60">{signingIn ? 'Opening Google…' : 'Continue with Google'}</button>
+          <button type="button" onClick={() => void continueWithGoogle()} disabled={signingIn} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-slate-50 py-4 text-base font-bold text-white dark:text-slate-900 disabled:opacity-60">{signingIn ? 'Opening Google…' : 'Continue with Google'}</button>
           <p className="mt-2 text-xs text-slate-500">New or returning, it&apos;s the same button. Free.</p>
           <Link href={`/login?next=${encodeURIComponent(`/circles/join/${code}?go=1`)}`} className="mt-4 inline-block text-sm font-bold text-amber-600 dark:text-amber-400">Use email instead</Link>
         </>}
@@ -100,7 +100,7 @@ export default function JoinCirclePage() {
             <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />Check in with one tap when it&apos;s done</li>
             <li className="flex gap-2"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />Only your mentor sees your check-ins here. Your personal goals stay private.</li>
           </ul>
-          <button type="button" onClick={() => void join()} disabled={joining} className="mt-6 w-full rounded-2xl bg-amber-500 py-4 text-base font-bold text-slate-950 transition hover:bg-amber-400 disabled:opacity-60">{joining ? 'Joining…' : 'Join batch'}</button>
+          <button type="button" onClick={() => void join()} disabled={joining} className="mt-6 w-full rounded-2xl bg-slate-900 dark:bg-slate-50 py-4 text-base font-bold text-white dark:text-slate-900 transition hover:bg-slate-800 dark:hover:bg-white disabled:opacity-60">{joining ? 'Joining…' : 'Join batch'}</button>
         </>}
         {!loading && error && <p role="alert" className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
         {!loading && !preview && !signedOut && <Link href="/circles" className="mt-4 inline-block text-sm font-bold text-amber-600 dark:text-amber-400">Go to circles</Link>}

@@ -288,7 +288,7 @@ export default function GoalPostModal({
                     onClick={() => setVisibility('public')}
                     className={`px-2.5 py-1 rounded-md transition ${
                       visibility === 'public'
-                        ? 'bg-white dark:bg-amber-500 text-slate-900 dark:text-slate-950 shadow-sm'
+                        ? 'bg-white dark:bg-slate-50 text-slate-900 dark:text-slate-900 shadow-sm'
                         : 'text-slate-500 dark:text-slate-400'
                     }`}
                   >
@@ -299,7 +299,7 @@ export default function GoalPostModal({
                     onClick={() => setVisibility('private')}
                     className={`px-2.5 py-1 rounded-md transition ${
                       visibility === 'private'
-                        ? 'bg-white dark:bg-amber-500 text-slate-900 dark:text-slate-950 shadow-sm'
+                        ? 'bg-white dark:bg-slate-50 text-slate-900 dark:text-slate-900 shadow-sm'
                         : 'text-slate-500 dark:text-slate-400'
                     }`}
                   >
@@ -482,7 +482,7 @@ export default function GoalPostModal({
                               <button
                                 type="button"
                                 onClick={(e) => toggleAudioPreview(track.previewUrl, e)}
-                                className="px-2 py-0.5 text-[11px] font-bold rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-slate-950 transition"
+                                className="px-2 py-0.5 text-[11px] font-bold rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-slate-900 dark:bg-slate-50 hover:text-white dark:text-slate-900 transition"
                               >
                                 {playingPreviewUrl === track.previewUrl ? <><Pause className="mr-1 inline h-3 w-3" />Pause</> : <><Play className="mr-1 inline h-3 w-3" />Play</>}
                               </button>
@@ -508,7 +508,7 @@ export default function GoalPostModal({
                     type="file"
                     accept="audio/*"
                     onChange={handleAudioFileChange}
-                    className="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400 cursor-pointer"
+                    className="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-900 dark:bg-slate-50 file:text-white dark:text-slate-900 hover:file:bg-amber-400 cursor-pointer"
                   />
                   {uploadedAudio && (
                     <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
@@ -531,7 +531,7 @@ export default function GoalPostModal({
                       onClick={() => setFitMode('cover')}
                       className={`text-[11px] font-extrabold px-2 py-0.5 rounded-md border transition ${
                         fitMode === 'cover'
-                          ? 'bg-amber-500 text-slate-950 border-amber-500'
+                          ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 border-slate-900 dark:border-slate-50'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
                       }`}
                     >
@@ -542,7 +542,7 @@ export default function GoalPostModal({
                       onClick={() => setFitMode('contain')}
                       className={`text-[11px] font-extrabold px-2 py-0.5 rounded-md border transition ${
                         fitMode === 'contain'
-                          ? 'bg-amber-500 text-slate-950 border-amber-500'
+                          ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 border-slate-900 dark:border-slate-50'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
                       }`}
                     >
@@ -701,7 +701,7 @@ export default function GoalPostModal({
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all mt-2"
+              className="w-full py-3 rounded-xl bg-slate-900 dark:bg-slate-50 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-wider transition-all mt-2"
             >
               ✓ Complete Check-In
             </button>

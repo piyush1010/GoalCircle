@@ -64,7 +64,7 @@ export default function PushPrompt() {
   }
 
   return (
-    <div role="dialog" aria-label="Turn on notifications" className="goalie-bubble fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-3xl border-[3px] border-slate-900 bg-white p-4 text-slate-900 shadow-[5px_5px_0_#0f172a]">
+    <div role="dialog" aria-label="Turn on notifications" className="goalie-bubble fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-3xl border-[3px] border-slate-900 bg-white p-4 text-slate-900 shadow-[5px_5px_0_#121212]">
       <div className="flex items-start gap-3">
         <GoalieBot size={52} mood="wave" />
         <div className="min-w-0 flex-1">
@@ -74,7 +74,7 @@ export default function PushPrompt() {
       </div>
       {!note && <div className="mt-3 flex justify-end gap-2">
         <button type="button" onClick={later} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Not now</button>
-        <button type="button" onClick={() => void allow()} disabled={busy} className="rounded-xl border-2 border-slate-900 bg-amber-400 px-5 py-2 text-sm font-bold shadow-[2px_2px_0_#0f172a] disabled:opacity-60">{busy ? 'One sec…' : 'Allow'}</button>
+        <button type="button" onClick={() => void allow()} disabled={busy} className="rounded-xl border-2 border-slate-900 bg-amber-400 px-5 py-2 text-sm font-bold shadow-[2px_2px_0_#121212] disabled:opacity-60">{busy ? 'One sec…' : 'Allow'}</button>
       </div>}
     </div>
   )

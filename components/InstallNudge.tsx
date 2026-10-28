@@ -43,7 +43,7 @@ export default function InstallNudge() {
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold">Keep GoalYaar on your home screen</p>
         <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">{canPrompt ? 'One tap, and it opens like an app.' : ios ? 'In Safari: tap Share, then “Add to Home Screen”. Needed for reminders on iPhone.' : 'In Chrome: tap ⋮ (top right), then “Add to Home screen”.'}</p>
-        {canPrompt && <button type="button" onClick={() => void install()} className="mt-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950">Install</button>}
+        {canPrompt && <button type="button" onClick={() => void install()} className="mt-2 rounded-xl bg-slate-900 dark:bg-slate-50 px-4 py-2 text-sm font-bold text-white dark:text-slate-900">Install</button>}
       </div>
       <button type="button" onClick={dismiss} aria-label="Hide" className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-slate-500"><X className="h-4 w-4" /></button>
     </div>

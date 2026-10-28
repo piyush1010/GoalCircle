@@ -27,7 +27,7 @@ export default function WelcomeBack() {
   if (daysAway === null) return null
 
   return (
-    <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-[#101b2d]">
+    <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-[#16181B]">
       <button type="button" onClick={() => setDaysAway(null)} aria-label="Close" className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:text-slate-600"><X className="h-4 w-4" /></button>
       <div className="pr-6">
         <GoalieSays lines="welcomeBack" mood="wave" size={60} />
@@ -35,7 +35,7 @@ export default function WelcomeBack() {
       </div>
       <div className="mt-4 flex justify-end gap-2">
         <button type="button" onClick={() => setDaysAway(null)} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Not now</button>
-        <Link href="/check-in" onClick={() => setDaysAway(null)} className="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-slate-950">Check in</Link>
+        <Link href="/check-in" onClick={() => setDaysAway(null)} className="rounded-xl bg-slate-900 dark:bg-slate-50 px-5 py-2.5 text-sm font-bold text-white dark:text-slate-900">Check in</Link>
       </div>
     </div>
   )

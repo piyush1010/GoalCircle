@@ -17,7 +17,7 @@ export default function BottomNav() {
   ]
 
   return (
-    <nav aria-label="Primary navigation" className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 bg-white/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl dark:border-slate-800 dark:bg-[#0b1220]/92">
+    <nav aria-label="Primary navigation" className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 bg-white/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl dark:border-slate-800 dark:bg-[#0E0F11]/92">
       <div className="mx-auto flex max-w-xl items-end justify-around px-3 py-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -30,7 +30,7 @@ export default function BottomNav() {
                 href={item.href}
                 data-tour={item.tour}
                 aria-label="Check in"
-                className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-amber-500 text-slate-950 transition hover:bg-amber-400 active:scale-95 dark:border-[#0b1220]"
+                className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 transition hover:bg-slate-800 dark:hover:bg-white active:scale-95 dark:border-[#0E0F11]"
               >
                 <Icon aria-hidden="true" className="h-6 w-6" strokeWidth={2.6} />
               </Link>

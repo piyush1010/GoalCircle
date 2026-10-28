@@ -62,7 +62,7 @@ export default function PostMusic({ postId, title, artist, artworkUrl, previewUr
       {artworkUrl ? <Image src={artworkUrl} alt="" width={36} height={36} unoptimized className="h-9 w-9 rounded-lg object-cover" /> : <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/10"><Music2 className="h-4 w-4" /></span>}
       <div className="min-w-0 flex-1"><p className="truncate text-[11px] font-bold">{title}</p><p className="truncate text-[11px] text-slate-400">{artist}</p></div>
       <button type="button" onClick={toggleMute} aria-label={muted ? 'Unmute music' : 'Mute music'} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/10">{muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}</button>
-      <button type="button" onClick={() => void togglePlay()} aria-label={playing ? 'Pause music' : 'Play music'} className="grid h-8 w-8 place-items-center rounded-full bg-amber-500 text-slate-950">{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
+      <button type="button" onClick={() => void togglePlay()} aria-label={playing ? 'Pause music' : 'Play music'} className="grid h-8 w-8 place-items-center rounded-full bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900">{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
       <audio ref={audioRef} src={clip.base} preload="none" onEnded={() => setPlaying(false)} onTimeUpdate={(event) => {
         const audio = event.currentTarget
         if (clipEnd !== null && audio.currentTime >= clipEnd) { audio.pause(); audio.currentTime = clip.start; setPlaying(false) }

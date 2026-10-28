@@ -36,7 +36,7 @@ export default function ReferralsPage() {
           />
           <button
             onClick={copyCode}
-            className="px-4 bg-amber-500 text-black font-semibold rounded-xl flex items-center gap-1.5 text-xs shrink-0"
+            className="px-4 bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 font-semibold rounded-xl flex items-center gap-1.5 text-xs shrink-0"
           >
             {copied ? <Check size={16} /> : <Copy size={16} />}
             {copied ? 'Copied' : 'Copy'}

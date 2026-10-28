@@ -37,8 +37,8 @@ const minutesOf = (row: DashboardRow) => row.today_minutes ?? (row.today_hours !
 type Sort = 'last' | 'name' | 'newest'
 const QUIET_MS = 2 * 24 * 60 * 60 * 1000
 
-const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]'
-const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#07101f]'
+const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#16181B]'
+const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#0E0F11]'
 
 const displayName = (row: DashboardRow) => row.full_name || row.username || 'Student'
 const isQuiet = (row: DashboardRow, now: number) => {
@@ -111,7 +111,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
             <Stat label="Quiet 2+ days" value={quiet.length} tone="text-rose-600 dark:text-rose-400" onClick={() => setView('students')} />
           </div>}
           {task && notDone.length > 0 && <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-            <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950"><BellRing className="h-4 w-4" />Nudge {notDone.length} who haven&apos;t checked in</button>
+            <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 py-3 text-sm font-bold text-white dark:text-slate-900"><BellRing className="h-4 w-4" />Nudge {notDone.length} who haven&apos;t checked in</button>
             <a href={whatsappUrl(`Reminder for ${circleName}: today's task is "${task.title}". Please check in on GoalYaar once it's done.`)} target="_blank" rel="noreferrer" aria-label="Send reminder on WhatsApp" className="grid w-12 place-items-center rounded-xl bg-emerald-500 text-white"><MessageCircle className="h-5 w-5" /></a>
           </div>}
           {!task && <p className="mt-4 text-center text-xs text-slate-500">Set today&apos;s task above to start tracking.</p>}
@@ -126,7 +126,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
 }
 
 function Stat({ label, value, tone, onClick }: { label: string; value: number; tone: string; onClick: () => void }) {
-  return <button type="button" onClick={onClick} className="rounded-2xl bg-slate-50 py-3 transition hover:bg-slate-100 dark:bg-[#07101f] dark:hover:bg-slate-800">
+  return <button type="button" onClick={onClick} className="rounded-2xl bg-slate-50 py-3 transition hover:bg-slate-100 dark:bg-[#0E0F11] dark:hover:bg-slate-800">
     <span className={`block text-2xl font-bold ${tone}`}>{value}</span>
     <span className="block text-[11px] font-semibold text-slate-500">{label}</span>
   </button>
@@ -193,7 +193,7 @@ function TaskCard({ circleId, today, task, onSaved, onDeleted, dayLabel = 'today
     {error && <p role="alert" className="mt-2 text-sm font-semibold text-rose-600">{error}</p>}
     <div className="mt-3 flex gap-2">
       {(task || !forToday) && <button type="button" onClick={() => { if (!task) { onDeleted(); return } setEditing(false); setTitle(task.title); setDetails(task.details ?? ''); setKept(task.attachments ?? []); setFiles([]) }} className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700">Cancel</button>}
-      <button type="button" onClick={() => void save()} disabled={saving} className="flex-[2] rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 disabled:opacity-60">{saving ? 'Saving…' : task ? 'Save changes' : forToday ? 'Post task' : 'Schedule task'}</button>
+      <button type="button" onClick={() => void save()} disabled={saving} className="flex-[2] rounded-xl bg-slate-900 dark:bg-slate-50 py-3 text-sm font-bold text-white dark:text-slate-900 disabled:opacity-60">{saving ? 'Saving…' : task ? 'Save changes' : forToday ? 'Post task' : 'Schedule task'}</button>
     </div>
     {task && <button type="button" onClick={() => void remove()} disabled={saving} className="mt-3 w-full text-center text-xs font-bold text-rose-600 disabled:opacity-60 dark:text-rose-400">Delete this task</button>}
   </section>
@@ -278,7 +278,7 @@ function StudentList({ rows, now, hasTask, taskId, circleId, onNudge, onChanged,
       <div className="flex flex-1 gap-1.5 overflow-x-auto pb-1">
         {filters.map(([value, label]) => <button type="button" key={value} onClick={() => setFilter(value)} aria-pressed={filter === value} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition ${filter === value ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 text-slate-500 dark:border-slate-700'}`}>{label}</button>)}
       </div>
-      <select value={sort} onChange={(event) => setSort(event.target.value as Sort)} aria-label="Sort students" className="shrink-0 rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold dark:border-slate-700 dark:bg-[#101b2d]">
+      <select value={sort} onChange={(event) => setSort(event.target.value as Sort)} aria-label="Sort students" className="shrink-0 rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold dark:border-slate-700 dark:bg-[#16181B]">
         <option value="last">Last check-in</option>
         <option value="name">Name</option>
         <option value="newest">Newest</option>
@@ -287,7 +287,7 @@ function StudentList({ rows, now, hasTask, taskId, circleId, onNudge, onChanged,
 
     {visible.length === 0 && <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700">No students match.</p>}
 
-    <ul className="divide-y divide-slate-100 overflow-hidden rounded-3xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-700/70 dark:bg-[#101b2d]">
+    <ul className="divide-y divide-slate-100 overflow-hidden rounded-3xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-700/70 dark:bg-[#16181B]">
       {visible.map((row) => {
         const quiet = isQuiet(row, now)
         const expanded = open === row.user_id
@@ -304,13 +304,13 @@ function StudentList({ rows, now, hasTask, taskId, circleId, onNudge, onChanged,
             <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition ${expanded ? 'rotate-180' : ''}`} />
           </button>
           {expanded && <div className="space-y-3 px-4 pb-4">
-            {row.today_note && <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-[#07101f]">“{row.today_note}”</p>}
+            {row.today_note && <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-[#0E0F11]">“{row.today_note}”</p>}
             {row.today_status && taskId && <ReplyBox key={`${row.user_id}-${row.today_reply ?? ''}`} taskId={taskId} studentId={row.user_id} existing={row.today_reply ?? null} onSent={onChanged} flash={flash} />}
             {row.today_media_url && (row.today_media_type === 'video'
               ? <video src={row.today_media_url} controls playsInline className="max-h-56 w-full rounded-xl bg-slate-950 object-contain" />
               : <div className="relative h-48 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"><Image src={row.today_media_url} alt={`${displayName(row)}'s proof`} fill unoptimized className="object-contain" /></div>)}
             <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
-              <button type="button" onClick={() => void onNudge([row.user_id])} disabled={!hasTask && !quiet} className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 py-2.5 text-xs font-bold text-slate-950 disabled:opacity-50"><BellRing className="h-4 w-4" />Nudge</button>
+              <button type="button" onClick={() => void onNudge([row.user_id])} disabled={!hasTask && !quiet} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 py-2.5 text-xs font-bold text-white dark:text-slate-900 disabled:opacity-50"><BellRing className="h-4 w-4" />Nudge</button>
               <a href={whatsappUrl(`Hi ${displayName(row).split(' ')[0]}, just checking in. How is your preparation going today?`)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-2.5 text-xs font-bold text-white"><MessageCircle className="h-4 w-4" />WhatsApp</a>
               <button type="button" onClick={() => void remove(row)} aria-label={`Remove ${displayName(row)}`} className="grid w-10 place-items-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-500 dark:border-slate-700"><UserMinus className="h-4 w-4" /></button>
             </div>
@@ -414,7 +414,7 @@ function WeeklyReport({ circleId, circleName, today, flash }: { circleId: string
         </li>
       })}
     </ul>}
-    {slipping.length > 0 && <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-[#07101f]"><span className="font-semibold">Needs a nudge:</span> {slipping.map(name).join(', ')}</p>}
+    {slipping.length > 0 && <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm dark:bg-[#0E0F11]"><span className="font-semibold">Needs a nudge:</span> {slipping.map(name).join(', ')}</p>}
     {rows.length > 0 && <div className="mt-4 grid grid-cols-2 gap-2">
       <a href={whatsappUrl(summary())} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white"><MessageCircle className="h-4 w-4" />Share summary</a>
       <button type="button" onClick={downloadCsv} className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-3 text-sm font-bold dark:border-slate-700"><Download className="h-4 w-4" />Download CSV</button>

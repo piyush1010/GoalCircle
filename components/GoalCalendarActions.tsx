@@ -35,7 +35,7 @@ export default function GoalCalendarActions({ goalId, title, targetDate }: GoalC
 
   return (
     <div className="mt-3 flex flex-wrap gap-2" aria-label="Calendar export options">
-      <button type="button" onClick={openGoogleCalendar} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-xs font-bold text-slate-950 shadow-sm transition hover:bg-amber-400">
+      <button type="button" onClick={openGoogleCalendar} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 px-3 py-2 text-xs font-bold text-white dark:text-slate-900 shadow-sm transition hover:bg-slate-800 dark:hover:bg-white">
         <ExternalLink className="h-3.5 w-3.5" />
         Google Calendar
       </button>

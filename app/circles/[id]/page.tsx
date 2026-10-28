@@ -38,9 +38,9 @@ const STUDENT_TOUR: TourStep[] = [
   { target: 'checkin', title: 'Check in', text: 'Pick Done, Partly done or Missed, then tap Check in. Your mentor sees it straight away.' },
 ]
 
-const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]'
-const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#07101f]'
-const primary = 'w-full rounded-2xl bg-amber-500 py-3.5 text-sm font-bold text-slate-950 transition hover:bg-amber-400 disabled:opacity-60'
+const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#16181B]'
+const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#0E0F11]'
+const primary = 'w-full rounded-2xl bg-slate-900 dark:bg-slate-50 py-3.5 text-sm font-bold text-white dark:text-slate-900 transition hover:bg-slate-800 dark:hover:bg-white disabled:opacity-60'
 
 export default function CirclePage() {
   const params = useParams()
@@ -189,16 +189,16 @@ export default function CirclePage() {
 
   if (loading) return <main className="mx-auto max-w-xl space-y-3 px-4 pt-6"><div className="h-24 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" /><div className="h-48 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" /></main>
 
-  if (notFound || !circle) return <main className="mx-auto max-w-xl px-4 pt-10 text-center"><LockKeyhole className="mx-auto h-10 w-10 text-slate-400" /><h1 className="mt-3 text-lg font-bold">Circle not available</h1><p className="mt-1 text-sm text-slate-500">It may be private. Ask your mentor for an invite link.</p><Link href="/circles" className="mt-5 inline-block rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950">Back to circles</Link></main>
+  if (notFound || !circle) return <main className="mx-auto max-w-xl px-4 pt-10 text-center"><LockKeyhole className="mx-auto h-10 w-10 text-slate-400" /><h1 className="mt-3 text-lg font-bold">Circle not available</h1><p className="mt-1 text-sm text-slate-500">It may be private. Ask your mentor for an invite link.</p><Link href="/circles" className="mt-5 inline-block rounded-xl bg-slate-900 dark:bg-slate-50 px-4 py-2 text-sm font-bold text-white dark:text-slate-900">Back to circles</Link></main>
 
   return (
     <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4">
       <header className="mb-4 flex items-start gap-3">
-        <button type="button" onClick={() => router.push('/circles')} aria-label="Back to circles" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101b2d]"><ArrowLeft className="h-4 w-4" /></button>
+        <button type="button" onClick={() => router.push('/circles')} aria-label="Back to circles" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#16181B]"><ArrowLeft className="h-4 w-4" /></button>
         {isAdmin
           ? <label className="relative shrink-0 cursor-pointer" title="Change batch photo">
               <CircleAvatar name={circle.name} url={avatarUrl} size={44} className={photoBusy ? 'opacity-50' : ''} />
-              <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-slate-900 text-white dark:border-[#07101f]"><Pencil className="h-2.5 w-2.5" /></span>
+              <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-slate-900 text-white dark:border-[#0E0F11]"><Pencil className="h-2.5 w-2.5" /></span>
               <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="Change batch photo" onChange={(event) => { void changePhoto(event.target.files?.[0]); event.target.value = '' }} />
             </label>
           : <CircleAvatar name={circle.name} url={avatarUrl} size={44} />}
@@ -214,7 +214,7 @@ export default function CirclePage() {
         {isMember && <div className="relative shrink-0">
           <button type="button" onClick={() => setMenuOpen((open) => !open)} aria-label="More options" aria-expanded={menuOpen} className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 text-slate-500 dark:border-slate-700"><MoreHorizontal className="h-4 w-4" /></button>
           {menuOpen && <button type="button" aria-hidden="true" tabIndex={-1} onClick={() => setMenuOpen(false)} className="fixed inset-0 z-10 cursor-default" />}
-          {menuOpen && <div className="absolute right-0 top-11 z-20 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-[#101b2d]">
+          {menuOpen && <div className="absolute right-0 top-11 z-20 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-[#16181B]">
             {isAdmin
               ? <>
                 <button type="button" onClick={() => { setMenuOpen(false); setEditing(true) }} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800"><Pencil className="h-4 w-4" />Edit batch details</button>
@@ -223,7 +223,7 @@ export default function CirclePage() {
               : <button type="button" onClick={() => void leave()} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><LogOut className="h-4 w-4" />Leave circle</button>}
           </div>}
         </div>}
-        {isAdmin && <button type="button" data-tour="invite" onClick={() => void shareInvite()} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-xs font-bold text-slate-950"><Share2 className="h-4 w-4" />Invite</button>}
+        {isAdmin && <button type="button" data-tour="invite" onClick={() => void shareInvite()} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 px-3 py-2 text-xs font-bold text-white dark:text-slate-900"><Share2 className="h-4 w-4" />Invite</button>}
       </header>
 
       {message && <p role="status" className="mb-3 rounded-xl bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-700 dark:text-emerald-300">{message}</p>}
@@ -369,7 +369,7 @@ function EditBatch({ circle, onClose, onSaved }: { circle: Circle; onClose: () =
     onSaved({ ...circle, ...next })
   }
   return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-labelledby="edit-batch-title">
-    <form onSubmit={save} className="w-full max-w-sm space-y-3 rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-[#101b2d]">
+    <form onSubmit={save} className="w-full max-w-sm space-y-3 rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-[#16181B]">
       <div className="flex items-center justify-between"><h2 id="edit-batch-title" className="text-base font-bold">Edit batch details</h2><button type="button" onClick={onClose} aria-label="Close"><X className="h-5 w-5" /></button></div>
       <label className="block text-sm font-semibold">Name<input value={name} onChange={(event) => setName(event.target.value)} maxLength={80} required className={`${field} mt-1`} /></label>
       <label className="block text-sm font-semibold">Exam<select value={exam} onChange={(event) => setExam(event.target.value)} className={`${field} mt-1`}><option value="">No exam</option>{EXAMS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
@@ -387,12 +387,12 @@ function BatchToday({ progress }: { progress: Progress }) {
   const photos = people.filter((person) => person.media_url && person.media_type === 'image').slice(0, 6)
   const names = others.slice(0, 2).map((person) => person.name.split(' ')[0])
   const rest = others.length - names.length
-  return <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 dark:bg-[#07101f]">
+  return <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 dark:bg-[#0E0F11]">
     <div className="flex items-center gap-3">
       {people.length > 0 && <div className="flex -space-x-2">
         {people.slice(0, 4).map((person, index) => person.avatar_url && !person.avatar_url.startsWith('preset:')
-          ? <Image key={index} src={person.avatar_url} alt="" width={28} height={28} unoptimized className="h-7 w-7 rounded-full border-2 border-white object-cover dark:border-[#07101f]" />
-          : <span key={index} className="grid h-7 w-7 place-items-center rounded-full border-2 border-white bg-slate-200 text-[11px] font-semibold text-slate-700 dark:border-[#07101f] dark:bg-slate-700 dark:text-slate-200">{person.name.charAt(0).toUpperCase()}</span>)}
+          ? <Image key={index} src={person.avatar_url} alt="" width={28} height={28} unoptimized className="h-7 w-7 rounded-full border-2 border-white object-cover dark:border-[#0E0F11]" />
+          : <span key={index} className="grid h-7 w-7 place-items-center rounded-full border-2 border-white bg-slate-200 text-[11px] font-semibold text-slate-700 dark:border-[#0E0F11] dark:bg-slate-700 dark:text-slate-200">{person.name.charAt(0).toUpperCase()}</span>)}
       </div>}
       <p className="min-w-0 flex-1 text-sm"><span className="font-semibold">{progress.checked_in} of {progress.members}</span> <span className="text-slate-500">checked in today</span></p>
     </div>
