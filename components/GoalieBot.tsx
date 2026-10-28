@@ -93,8 +93,8 @@ export function GoalieBot({ size = 56, mood = 'normal' }: { size?: number; mood?
           <stop offset="1" stopColor="#b45309" />
         </radialGradient>
         <radialGradient id={g('shadow')} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#0f172a" stopOpacity="0.35" />
-          <stop offset="1" stopColor="#0f172a" stopOpacity="0" />
+          <stop offset="0" stopColor="#121212" stopOpacity="0.35" />
+          <stop offset="1" stopColor="#121212" stopOpacity="0" />
         </radialGradient>
         <linearGradient id={g('shine')} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#ffffff" stopOpacity="0.85" />

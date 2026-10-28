@@ -35,7 +35,7 @@ export default function GuestPreviewBanner({ isAuthenticated }: { isAuthenticate
             Sign up now to join private groups, track your daily progress, earn badges, and boost your friends!
           </p>
           <div className="flex flex-col gap-3">
-            <Link href="/signup" className="w-full py-3 bg-amber-500 text-black font-semibold rounded-xl">
+            <Link href="/signup" className="w-full py-3 bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 font-semibold rounded-xl">
               Create Account
             </Link>
             <Link href="/login" className="w-full py-3 bg-slate-800 text-white rounded-xl font-medium">

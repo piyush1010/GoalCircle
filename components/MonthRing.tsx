@@ -22,10 +22,28 @@ function arc(index: number, total: number, gapDegrees = 3.2) {
   return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${RADIUS} ${RADIUS} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`
 }
 
-export default function MonthRing({ days, monthName }: { days: MonthDay[]; monthName: string }) {
+export default function MonthRing({ days, monthName, compact = false }: { days: MonthDay[]; monthName: string; compact?: boolean }) {
   const [picked, setPicked] = useState<MonthDay | null>(null)
   const shown = days.filter((day) => day.active).length
   const sofar = days.filter((day) => !day.future).length
+
+  // Compact: just the ring, for the summary card on Today.
+  if (compact) {
+    return (
+      <svg width={116} height={116} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={`${shown} of ${sofar} days shown up in ${monthName}`} className="shrink-0">
+        {days.map((day, index) => (
+          <path key={day.key} d={arc(index, days.length)} fill="none" strokeLinecap="round" strokeWidth={STROKE + 2}
+            stroke={day.active ? '#E8890C' : day.future ? 'var(--ring-future)' : 'var(--ring-missed)'} />
+        ))}
+        {days.map((day, index) => {
+          if (!day.today) return null
+          const angle = ((index + 0.5) * (360 / days.length) - 90) * (Math.PI / 180)
+          const r = RADIUS - STROKE - 6
+          return <circle key="today" cx={CENTER + r * Math.cos(angle)} cy={CENTER + r * Math.sin(angle)} r={5} className="fill-slate-900 dark:fill-white" />
+        })}
+      </svg>
+    )
+  }
 
   return (
     <div className="flex flex-col items-center">

@@ -1,5 +1,5 @@
-const CACHE_VERSION = 'goalcircle-shell-v1'
-const SHELL_ASSETS = ['/', '/login', '/goalcircle-icon-192.png', '/goalcircle-icon-512.png']
+const CACHE_VERSION = 'goalcircle-shell-v2'
+const SHELL_ASSETS = ['/', '/login', '/goalyaar-icon-192.png', '/goalyaar-icon-512.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_VERSION).then((cache) => cache.addAll(SHELL_ASSETS)))
@@ -35,8 +35,8 @@ self.addEventListener('push', (event) => {
   }
   event.waitUntil(self.registration.showNotification(data.title || 'GoalYaar', {
     body: data.body || 'You have a new GoalYaar update.',
-    icon: '/goalcircle-icon-192.png',
-    badge: '/goalcircle-icon-192.png',
+    icon: '/goalyaar-icon-192.png',
+    badge: '/goalyaar-icon-192.png',
     tag: data.tag || 'goalcircle-update',
     data: { url: data.url || '/notifications' },
   }))

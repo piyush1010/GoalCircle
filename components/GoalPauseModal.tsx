@@ -146,7 +146,7 @@ export default function GoalPauseModal({
               type="button"
               disabled={loading}
               onClick={handleApplyPause}
-              className="w-full py-3 bg-amber-500 hover:bg-amber-600 font-semibold text-black rounded-xl text-sm transition"
+              className="w-full py-3 bg-slate-900 dark:bg-slate-50 hover:bg-amber-600 font-semibold text-white dark:text-slate-900 rounded-xl text-sm transition"
             >
               {loading ? 'Applying...' : 'Confirm Pause'}
             </button>

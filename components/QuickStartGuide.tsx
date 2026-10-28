@@ -29,7 +29,7 @@ const guideSteps: GuideStep[] = [
     description:
       'Start by declaring one meaningful goal. You decide whether it is public or private, and you stay in control of what you share.',
     icon: Target,
-    accent: 'bg-amber-500 text-slate-950',
+    accent: 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900',
   },
   {
     eyebrow: 'Feed',
@@ -45,7 +45,7 @@ const guideSteps: GuideStep[] = [
     description:
       'Use the centre Create button to publish a new public goal with a photo or reel, or check in on a goal you are already pursuing.',
     icon: Plus,
-    accent: 'bg-amber-500 text-slate-950',
+    accent: 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900',
   },
   {
     eyebrow: 'Circles and Progress',
@@ -112,9 +112,9 @@ export default function QuickStartGuide({ open, onComplete }: QuickStartGuidePro
         aria-modal="true"
         aria-labelledby="quick-guide-title"
         aria-describedby="quick-guide-description"
-        className="w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-white shadow-2xl dark:border-slate-700 dark:bg-[#101b2d]"
+        className="w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-white shadow-2xl dark:border-slate-700 dark:bg-[#16181B]"
       >
-        <div className="relative overflow-hidden border-b border-slate-200 bg-slate-50 px-6 pb-7 pt-6 dark:border-slate-800 dark:bg-[#07101f]">
+        <div className="relative overflow-hidden border-b border-slate-200 bg-slate-50 px-6 pb-7 pt-6 dark:border-slate-800 dark:bg-[#0E0F11]">
           <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-amber-500/15 blur-2xl" />
           <button
             type="button"
@@ -128,7 +128,7 @@ export default function QuickStartGuide({ open, onComplete }: QuickStartGuidePro
           <div className={`relative mb-5 grid h-14 w-14 place-items-center rounded-2xl shadow-lg ${step.accent}`}>
             <Icon className="h-6 w-6" strokeWidth={2.4} />
             {SecondaryIcon && (
-              <span className="absolute -bottom-2 -right-2 grid h-7 w-7 place-items-center rounded-xl border-2 border-white bg-slate-700 text-white dark:border-[#07101f]">
+              <span className="absolute -bottom-2 -right-2 grid h-7 w-7 place-items-center rounded-xl border-2 border-white bg-slate-700 text-white dark:border-[#0E0F11]">
                 <SecondaryIcon className="h-3.5 w-3.5" />
               </span>
             )}
@@ -183,7 +183,7 @@ export default function QuickStartGuide({ open, onComplete }: QuickStartGuidePro
             <button
               type="button"
               onClick={() => (isLastStep ? closeGuide() : setStepIndex((current) => current + 1))}
-              className="ml-auto rounded-xl bg-amber-500 px-5 py-3 text-xs font-bold text-slate-950 transition hover:bg-amber-400 active:scale-[0.98]"
+              className="ml-auto rounded-xl bg-slate-900 dark:bg-slate-50 px-5 py-3 text-xs font-bold text-white dark:text-slate-900 transition hover:bg-slate-800 dark:hover:bg-white active:scale-[0.98]"
             >
               {isLastStep ? 'Start using GoalYaar' : 'Next'}
             </button>

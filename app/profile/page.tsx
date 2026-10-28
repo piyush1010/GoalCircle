@@ -151,7 +151,7 @@ export default function ProfilePage() {
   const avatarUrl = userMeta.avatar_url || null
 
   return (
-    <div className="min-h-screen p-4 pb-28 max-w-md mx-auto space-y-5 text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen p-4 pb-28 max-w-xl mx-auto space-y-5 text-slate-900 dark:text-slate-100">
       
       {/* HEADER WITH SETTINGS BUTTON */}
       <div className="flex justify-between items-center pt-2">
@@ -223,14 +223,14 @@ export default function ProfilePage() {
             <Film className="mx-auto h-6 w-6 text-amber-500" />
             <h3 className="text-xs font-extrabold">{currentMonthName} Recap</h3>
             <p className="text-[11px] text-emerald-400 font-bold bg-emerald-500/10 py-1 px-2 rounded-lg">
-              Generated Automatically
+              Ready on 1 {nextMonthName}
             </p>
           </div>
           <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-3.5 space-y-2 text-center opacity-70">
             <Sparkles className="mx-auto h-6 w-6 text-slate-400" />
             <h3 className="text-xs font-extrabold text-slate-300">{nextMonthName} Recap</h3>
             <p className="text-[11px] text-amber-400 font-bold bg-amber-500/10 py-1 px-2 rounded-lg">
-              Unlocks in {daysRemainingInMonth} days
+              Ready on 1 {new Date(new Date().getFullYear(), new Date().getMonth() + 2, 1).toLocaleDateString(undefined, { month: 'long' })}
             </p>
           </div>
         </div>

@@ -10,7 +10,7 @@ const localKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth()
 const intensity = (minutes: number) => {
   if (minutes === 0) return 'bg-slate-100 border-slate-200 text-slate-400 dark:bg-slate-800/80 dark:border-slate-800'
   if (minutes < 15) return 'bg-amber-200 border-amber-300 text-amber-900 dark:bg-amber-900/60 dark:border-amber-800 dark:text-amber-200'
-  if (minutes < 30) return 'bg-amber-500 border-amber-500 text-slate-950'
+  if (minutes < 30) return 'bg-slate-900 dark:bg-slate-50 border-slate-900 dark:border-slate-50 text-white dark:text-slate-900'
   return 'bg-amber-400 border-amber-300 text-slate-950 font-bold shadow-sm'
 }
 
@@ -37,7 +37,7 @@ export default function ConsistencyMatrix({ userId }: { userId: string }) {
   }, [userId])
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/70 dark:bg-[#101b2d]">
+    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/70 dark:bg-[#16181B]">
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Consistency · last 30 days</h2>
         <span className="text-xs font-bold text-slate-400">{days.filter((day) => day.minutes > 0).length}/30 days</span>

@@ -13,7 +13,7 @@ const PAGE_LINES: { match: (path: string) => boolean; line: string }[] = [
   { match: (path) => path === '/circles', line: 'Your people are here' },
   { match: (path) => path === '/dashboard', line: 'One day at a time' },
   { match: (path) => path === '/profile', line: 'Looking good!' },
-  { match: (path) => path === '/create', line: 'What are we starting today?' },
+  { match: (path) => path === '/create', line: 'What did you get done today?' },
   { match: (path) => path.startsWith('/goal/'), line: 'One step at a time' },
 ]
 // Pages where Goalie already appears, or where it would distract.

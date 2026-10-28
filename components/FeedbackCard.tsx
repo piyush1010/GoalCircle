@@ -27,7 +27,7 @@ export default function FeedbackCard() {
       <textarea id="feedback" value={message} onChange={(event) => { setMessage(event.target.value); setStatus('idle') }} rows={3} maxLength={2000} placeholder="What's working, what's confusing, what should we add?" className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-amber-500 dark:border-slate-800 dark:bg-slate-950" />
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-slate-500" role="status">{status === 'sent' ? 'Thank you! We read every message.' : status === 'error' ? 'Could not send. Please try again.' : 'Goes straight to the GoalYaar team.'}</p>
-        <button type="submit" disabled={sending || message.trim().length < 3} className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 disabled:opacity-50">{sending ? 'Sending…' : 'Send'}</button>
+        <button type="submit" disabled={sending || message.trim().length < 3} className="shrink-0 rounded-xl bg-slate-900 dark:bg-slate-50 px-4 py-2 text-xs font-bold text-white dark:text-slate-900 disabled:opacity-50">{sending ? 'Sending…' : 'Send'}</button>
       </div>
     </form>
   )

@@ -64,7 +64,7 @@ export default function GoalieSays({ lines, say, mood = 'normal', size = 56, lay
   }
 
   const face = reaction?.mood ?? mood
-  const bubble = line && <p key={line} aria-live="polite" className={`goalie-bubble relative rounded-2xl border-2 border-slate-900 px-3.5 py-2 text-sm font-bold shadow-[3px_3px_0_#0f172a] ${face === 'angry' ? 'bg-rose-50 text-rose-800' : 'bg-white text-slate-900'} ${layout === 'row' ? 'rounded-bl-md' : layout === 'left' ? 'max-w-[13rem] rounded-br-md' : 'mx-auto w-fit max-w-[16rem] rounded-b-md'}`}>{line}</p>
+  const bubble = line && <p key={line} aria-live="polite" className={`goalie-bubble relative rounded-2xl border-2 border-slate-900 px-3.5 py-2 text-sm font-bold shadow-[3px_3px_0_#121212] ${face === 'angry' ? 'bg-rose-50 text-rose-800' : 'bg-white text-slate-900'} ${layout === 'row' ? 'rounded-bl-md' : layout === 'left' ? 'max-w-[13rem] rounded-br-md' : 'mx-auto w-fit max-w-[16rem] rounded-b-md'}`}>{line}</p>
 
   return (
     <div className={`${layout === 'row' ? 'flex items-end gap-2' : layout === 'left' ? 'flex flex-row-reverse items-end gap-2' : 'flex flex-col-reverse items-center gap-2'} ${className}`}>

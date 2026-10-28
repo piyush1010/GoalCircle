@@ -168,7 +168,7 @@ export default function LeaderboardPage() {
             </span>
           </div>
         </div>
-        <span className="px-2.5 py-1 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold uppercase tracking-wider">
+        <span className="px-2.5 py-1 rounded-xl bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 text-xs font-bold uppercase tracking-wider">
           Live
         </span>
       </div>
@@ -179,7 +179,7 @@ export default function LeaderboardPage() {
           onClick={() => setTimeframe('weekly')}
           className={`py-1.5 text-xs font-extrabold rounded-xl transition ${
             timeframe === 'weekly'
-              ? 'bg-amber-500 text-slate-950 shadow-xs'
+              ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 shadow-xs'
               : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
@@ -189,7 +189,7 @@ export default function LeaderboardPage() {
           onClick={() => setTimeframe('monthly')}
           className={`py-1.5 text-xs font-extrabold rounded-xl transition ${
             timeframe === 'monthly'
-              ? 'bg-amber-500 text-slate-950 shadow-xs'
+              ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 shadow-xs'
               : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
@@ -199,7 +199,7 @@ export default function LeaderboardPage() {
           onClick={() => setTimeframe('allTime')}
           className={`py-1.5 text-xs font-extrabold rounded-xl transition ${
             timeframe === 'allTime'
-              ? 'bg-amber-500 text-slate-950 shadow-xs'
+              ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 shadow-xs'
               : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
@@ -250,7 +250,7 @@ export default function LeaderboardPage() {
           {/* #1 GOLD */}
           {topThree[0] && (
             <div className="bg-white dark:bg-slate-900 border-2 border-amber-500 rounded-2xl p-3 text-center shadow-md relative pt-6 -translate-y-2">
-              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center border-2 border-slate-50 dark:border-slate-950 shadow-sm">
+              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 font-bold text-xs flex items-center justify-center border-2 border-slate-50 dark:border-slate-950 shadow-sm">
                 1
               </span>
               <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-amber-500/15 text-xs font-bold text-amber-700 dark:text-amber-300">{topThree[0].avatar}</span>
@@ -303,7 +303,7 @@ export default function LeaderboardPage() {
                     {user.name}
                   </h4>
                   {user.isCurrentUser && (
-                    <span className="px-1.5 py-0.5 rounded-md bg-amber-500 text-slate-950 text-[11px] font-bold uppercase">
+                    <span className="px-1.5 py-0.5 rounded-md bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 text-[11px] font-bold uppercase">
                       You
                     </span>
                   )}
@@ -339,7 +339,7 @@ export default function LeaderboardPage() {
         <div className="fixed bottom-16 left-0 right-0 p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-amber-500/40 z-30">
           <div className="max-w-md mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-1 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold">
+              <span className="px-2 py-1 rounded-xl bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 text-xs font-bold">
                 #{currentUser.rank}
               </span>
               <div>

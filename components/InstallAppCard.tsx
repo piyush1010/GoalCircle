@@ -34,7 +34,7 @@ export default function InstallAppCard() {
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#101b2d]">
+    <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#16181B]">
       <div className="flex items-start gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><Smartphone className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1">
@@ -46,7 +46,7 @@ export default function InstallAppCard() {
       {isInstalled ? (
         <p className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" />Installed on this device</p>
       ) : installAvailable ? (
-        <button type="button" onClick={() => void install()} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-xs font-bold text-slate-950"><Download className="h-4 w-4" />Install app</button>
+        <button type="button" onClick={() => void install()} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-50 py-2.5 text-xs font-bold text-white dark:text-slate-900"><Download className="h-4 w-4" />Install app</button>
       ) : isIos ? (
         <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-xs leading-4 text-slate-600 dark:bg-slate-950 dark:text-slate-300">In Safari, tap Share and choose <strong>Add to Home Screen</strong>.</p>
       ) : (

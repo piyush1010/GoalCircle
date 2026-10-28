@@ -205,7 +205,7 @@ function Viewer({ file, url, canDownload, onClose }: { file: Attachment; url: st
       <div className="flex items-center gap-2 px-4 py-3 text-white">
         <p className="min-w-0 flex-1 truncate text-sm font-bold">{file.name}</p>
         {canDownload
-          ? <button type="button" onClick={() => void downloadFile(file)} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-amber-500 px-3 text-xs font-bold text-slate-950"><Download className="h-4 w-4" />Download</button>
+          ? <button type="button" onClick={() => void downloadFile(file)} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 px-3 text-xs font-bold text-white dark:text-slate-900"><Download className="h-4 w-4" />Download</button>
           : <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-400"><Eye className="h-3.5 w-3.5" />View only</span>}
         <button type="button" onClick={onClose} autoFocus aria-label="Close" className="grid h-9 w-9 place-items-center rounded-xl bg-white/10"><X className="h-5 w-5" /></button>
       </div>

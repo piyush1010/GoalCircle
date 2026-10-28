@@ -39,7 +39,7 @@ export default function FocusRoom({ roomName = 'Silent Pomodoro', initialMinutes
       <div className="flex gap-2">
         <button
           onClick={() => setIsRunning(!isRunning)}
-          className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl transition text-xs"
+          className="flex-1 py-2.5 bg-slate-900 dark:bg-slate-50 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-extrabold rounded-xl transition text-xs"
         >
           {isRunning ? 'Pause' : 'Start Focus Session'}
         </button>

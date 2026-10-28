@@ -1,5 +1,7 @@
 'use client'
 
+import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
+import { saveDailyReminder } from '@/lib/notifications/dailyReminder'
 import { useEffect, useState } from 'react'
 import { GoalieBot } from '@/components/GoalieBot'
 import { CHEER_EVENT } from '@/lib/goalie'
@@ -48,13 +50,21 @@ export default function PushPrompt() {
     setBusy(true)
     const result = await enablePush()
     setBusy(false)
-    if (result === 'on') { setNote('Done! I’ll let you know when it matters.'); window.setTimeout(() => setShow(false), 2200) }
+    if (result === 'on') {
+      // Saying yes here also turns on the one daily reminder (8 PM, only if you haven't checked in).
+      if (!readReminderPreferences().enabled) {
+        const prefs = readReminderPreferences()
+        saveReminderPreferences({ ...prefs, enabled: true, time: '20:00' })
+        void saveDailyReminder(true, '20:00')
+      }
+      setNote('Done! I’ll remind you at 8 PM if you haven’t checked in. Change it in Settings.'); window.setTimeout(() => setShow(false), 3200)
+    }
     else if (result === 'blocked') { setNote('Notifications are blocked. You can allow them in your browser’s site settings.'); window.setTimeout(() => setShow(false), 4000) }
     else setShow(false)
   }
 
   return (
-    <div role="dialog" aria-label="Turn on notifications" className="goalie-bubble fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-3xl border-[3px] border-slate-900 bg-white p-4 text-slate-900 shadow-[5px_5px_0_#0f172a]">
+    <div role="dialog" aria-label="Turn on notifications" className="goalie-bubble fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-3xl border-[3px] border-slate-900 bg-white p-4 text-slate-900 shadow-[5px_5px_0_#121212]">
       <div className="flex items-start gap-3">
         <GoalieBot size={52} mood="wave" />
         <div className="min-w-0 flex-1">
@@ -64,7 +74,7 @@ export default function PushPrompt() {
       </div>
       {!note && <div className="mt-3 flex justify-end gap-2">
         <button type="button" onClick={later} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Not now</button>
-        <button type="button" onClick={() => void allow()} disabled={busy} className="rounded-xl border-2 border-slate-900 bg-amber-400 px-5 py-2 text-sm font-bold shadow-[2px_2px_0_#0f172a] disabled:opacity-60">{busy ? 'One sec…' : 'Allow'}</button>
+        <button type="button" onClick={() => void allow()} disabled={busy} className="rounded-xl border-2 border-slate-900 bg-amber-400 px-5 py-2 text-sm font-bold shadow-[2px_2px_0_#121212] disabled:opacity-60">{busy ? 'One sec…' : 'Allow'}</button>
       </div>}
     </div>
   )

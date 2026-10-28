@@ -4,15 +4,35 @@
 
 @theme {
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+
+  /* A calm, neutral ink scale (warm greys, no blue tint) used everywhere "slate" is used. */
+  --color-slate-50: #FAFAF7;
+  --color-slate-100: #F2F1ED;
+  --color-slate-200: #E7E6E1;
+  --color-slate-300: #D3D2CC;
+  --color-slate-400: #A2A19B;
+  --color-slate-500: #6F6E68;
+  --color-slate-600: #575752;
+  --color-slate-700: #3C3C38;
+  --color-slate-800: #26272A;
+  --color-slate-900: #18191B;
+  --color-slate-950: #0E0F11;
+
+  /* One saffron accent, slightly deeper than stock amber. */
+  --color-amber-300: #F5C27A;
+  --color-amber-400: #F0A04B;
+  --color-amber-500: #E8890C;
+  --color-amber-600: #C2700A;
+  --color-amber-700: #A35C07;
 }
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #FAFAF7;
+  --foreground: #121212;
   --surface: #ffffff;
-  --surface-muted: #f1f5f9;
-  --border: #e2e8f0;
-  --accent: #f59e0b;
+  --surface-muted: #F2F1ED;
+  --border: #E7E6E1;
+  --accent: #E8890C;
 }
 
 html { font-size: 16px; }
@@ -20,11 +40,11 @@ html[data-font-size="small"] { font-size: 15px; }
 html[data-font-size="large"] { font-size: 18px; }
 
 .dark {
-  --background: #07101f;
-  --foreground: #f8fafc;
-  --surface: #101b2d;
-  --surface-muted: #172338;
-  --border: #26344b;
+  --background: #0E0F11;
+  --foreground: #F4F4F1;
+  --surface: #16181B;
+  --surface-muted: #202328;
+  --border: #2A2D32;
 }
 
 body {
@@ -164,5 +184,5 @@ input::placeholder, textarea::placeholder { color: var(--color-slate-500); opaci
 html.dark input::placeholder, html.dark textarea::placeholder { color: var(--color-slate-400); }
 
 /* Month ring colours */
-:root { --ring-missed: #e2e8f0; --ring-future: #f1f5f9; }
-.dark { --ring-missed: #26344b; --ring-future: #172338; }
+:root { --ring-missed: #E3E2DC; --ring-future: #F0EFEA; }
+.dark { --ring-missed: #3A3D43; --ring-future: #24262A; }

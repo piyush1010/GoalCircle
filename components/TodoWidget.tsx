@@ -150,7 +150,7 @@ export default function TodoWidget({ userId }: { userId: string }) {
             type="submit"
             disabled={!title.trim() || saving}
             aria-label="Add task"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500 text-slate-950 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Plus className="h-4 w-4" />
           </button>

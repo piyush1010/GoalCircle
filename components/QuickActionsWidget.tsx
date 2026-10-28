@@ -35,7 +35,7 @@ export default function QuickActionsWidget() {
             href={href}
             className="group rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-400 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-amber-500"
           >
-            <span className="mb-2 grid h-8 w-8 place-items-center rounded-xl bg-amber-500/10 text-amber-600 transition group-hover:bg-amber-500 group-hover:text-slate-950 dark:text-amber-400">
+            <span className="mb-2 grid h-8 w-8 place-items-center rounded-xl bg-amber-500/10 text-amber-600 transition group-hover:bg-slate-900 dark:bg-slate-50 group-hover:text-white dark:text-slate-900 dark:text-amber-400">
               <Icon className="h-4 w-4" />
             </span>
             <span className="block text-xs font-bold text-slate-900 dark:text-white">{label}</span>
