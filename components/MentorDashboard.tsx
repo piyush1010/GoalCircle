@@ -70,10 +70,11 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
   const missed = rows.filter((row) => row.today_status === 'missed')
   const notDone = rows.filter((row) => !row.today_status)
   const quiet = rows.filter((row) => isQuiet(row, now))
+  const unfinished = rows.filter((row) => row.today_status === 'missed' || row.today_status === 'partial')
 
-  const nudge = async (ids: string[]) => {
+  const nudge = async (ids: string[], message?: string) => {
     if (ids.length === 0) return
-    const { data, error } = await supabase.rpc('nudge_circle_members', { target_circle: circleId, member_ids: ids, note: task ? `Reminder: today's task is "${task.title}".` : 'Your mentor is checking on you. Keep going today!' })
+    const { data, error } = await supabase.rpc('nudge_circle_members', { target_circle: circleId, member_ids: ids, note: message ?? (task ? `Reminder: today's task is "${task.title}".` : 'Your mentor is checking on you. Keep going today!') })
     if (error) flash('Nudge could not be sent')
     else flash(data === 0 ? 'Already nudged in the last 3 hours' : `Nudge sent to ${data} ${data === 1 ? 'student' : 'students'}`)
   }
@@ -110,10 +111,7 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
             <Stat label="Not yet" value={notDone.length} tone="text-amber-600 dark:text-amber-400" onClick={() => setView('students')} />
             <Stat label="Quiet 2+ days" value={quiet.length} tone="text-rose-600 dark:text-rose-400" onClick={() => setView('students')} />
           </div>}
-          {task && notDone.length > 0 && <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-            <button type="button" onClick={() => void nudge(notDone.map((row) => row.user_id))} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-slate-50 py-3 text-sm font-bold text-white dark:text-slate-900"><BellRing className="h-4 w-4" />Nudge {notDone.length} <span className="hidden min-[360px]:inline">who haven&apos;t checked in</span><span className="min-[360px]:hidden">pending</span></button>
-            <a href={whatsappUrl(`Reminder for ${circleName}: today's task is "${task.title}". Please check in on GoalYaar once it's done.`)} target="_blank" rel="noreferrer" aria-label="Send reminder on WhatsApp" className="grid w-12 place-items-center rounded-xl bg-emerald-500 text-white"><MessageCircle className="h-5 w-5" /></a>
-          </div>}
+          <NudgePanel task={task} circleName={circleName} notDone={notDone} unfinished={unfinished} quiet={quiet} onNudge={nudge} />
           {!task && <p className="mt-4 text-center text-xs text-slate-500">Set today&apos;s task above to start tracking.</p>}
         </section>}
       </>}
@@ -123,6 +121,53 @@ export default function MentorDashboard({ circleId, circleName, today, task, row
       {view === 'week' && <WeeklyReport circleId={circleId} circleName={circleName} today={today} flash={flash} />}
     </div>
   )
+}
+
+type NudgeGroup = 'pending' | 'unfinished' | 'quiet'
+
+/** Pick who to nudge, then send it in the app or to the WhatsApp group. Each group gets its own message. */
+function NudgePanel({ task, circleName, notDone, unfinished, quiet, onNudge }: {
+  task: Task | null; circleName: string; notDone: DashboardRow[]; unfinished: DashboardRow[]; quiet: DashboardRow[]
+  onNudge: (ids: string[], message?: string) => Promise<void>
+}) {
+  // Drop a trailing full stop so the title sits cleanly inside quotes.
+  const title = task ? task.title.trim().replace(/[.!?\s]+$/, '') : ''
+  const groups = ([
+    task ? { key: 'pending', label: 'Not checked in', rows: notDone,
+      app: `Reminder: today's task is "${title}". Check in once it's done.`,
+      group: `Reminder (${circleName}): today's task is "${title}". Please check in on GoalYaar once it's done.` } : null,
+    task ? { key: 'unfinished', label: "Didn't finish", rows: unfinished,
+      app: "Couldn't finish today's task? That's okay. Do what you can and update your check-in.",
+      group: `(${circleName}) Couldn't finish today's task? That's okay. Do what you can and update your check-in on GoalYaar.` } : null,
+    { key: 'quiet', label: 'Quiet 2+ days', rows: quiet,
+      app: task ? `Haven't seen you in a couple of days. Today's task is "${title}". Start small.` : "Haven't seen you in a couple of days. Everything okay? Start small today.",
+      group: `(${circleName}) Haven't seen you in a couple of days. Start small today and check in on GoalYaar. Every day counts.` },
+  ].filter(Boolean) as { key: NudgeGroup; label: string; rows: DashboardRow[]; app: string; group: string }[])
+  const available = groups.filter((item) => item.rows.length > 0)
+  const [picked, setPicked] = useState<NudgeGroup | null>(null)
+  const [sending, setSending] = useState(false)
+  if (available.length === 0) return null
+  const current = available.find((item) => item.key === picked) ?? available[0]
+  const send = async () => { setSending(true); await onNudge(current.rows.map((row) => row.user_id), current.app); setSending(false) }
+
+  return <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
+    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Nudge</p>
+    <div className="mt-2 flex flex-wrap gap-1.5" role="radiogroup" aria-label="Who to nudge">
+      {groups.map((item) => {
+        const active = item.key === current.key
+        return <button key={item.key} type="button" role="radio" aria-checked={active} disabled={item.rows.length === 0} onClick={() => setPicked(item.key)}
+          className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold transition disabled:cursor-default disabled:border-dashed disabled:text-slate-400 ${active ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-50 dark:bg-slate-50 dark:text-slate-900' : 'border-slate-300 text-slate-700 dark:border-slate-600 dark:text-slate-200'}`}>
+          {item.label} <span className="tabular-nums opacity-70">{item.rows.length}</span>
+        </button>
+      })}
+    </div>
+    <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">Message</span><span className="line-clamp-3">{current.app}</span></p>
+    <div className="mt-3 grid grid-cols-2 gap-2">
+      <button type="button" onClick={() => void send()} disabled={sending} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white disabled:opacity-60 dark:bg-slate-50 dark:text-slate-900"><BellRing className="h-4 w-4 shrink-0" />{sending ? 'Sending…' : `Nudge ${current.rows.length}`}</button>
+      <a href={whatsappUrl(current.group)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-[#1FAF55] py-3 text-sm font-bold text-white"><MessageCircle className="h-4 w-4 shrink-0" />WhatsApp</a>
+    </div>
+    <p className="mt-2 text-xs text-slate-500">Nudge notifies just these students in the app. WhatsApp opens the message so you can send it to your group or to one student.</p>
+  </div>
 }
 
 function Stat({ label, value, tone, onClick }: { label: string; value: number; tone: string; onClick: () => void }) {
