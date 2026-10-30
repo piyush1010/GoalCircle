@@ -12,6 +12,17 @@ export const metadata: Metadata = {
   title: 'GoalYaar',
   description: 'Track habits, build daily consistency, and stay accountable.',
   applicationName: 'GoalYaar',
+  // Link previews on LinkedIn, WhatsApp and X.
+  openGraph: {
+    title: 'GoalYaar',
+    description: 'Track habits, build daily consistency, and stay accountable.',
+    url: 'https://goalyaar.in',
+    siteName: 'GoalYaar',
+    type: 'website',
+    locale: 'en_IN',
+    images: [{ url: '/og-goalyaar.jpg', width: 1200, height: 630, alt: 'GoalYaar: goals become real when you show up' }],
+  },
+  twitter: { card: 'summary_large_image', title: 'GoalYaar', description: 'Track habits, build daily consistency, and stay accountable.', images: ['/og-goalyaar.jpg'] },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
