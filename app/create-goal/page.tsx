@@ -66,6 +66,17 @@ export default function CreateGoalPage() {
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'once'>('daily')
   const [timesPerWeek, setTimesPerWeek] = useState(3)
   const [reminderTime, setReminderTime] = useState('08:00')
+  // Starter habits on Today link here with the goal already filled in.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const presetTitle = params.get('title')?.slice(0, 100)
+    const presetCategory = params.get('category')
+    const timer = window.setTimeout(() => {
+      if (presetTitle) setTitle(presetTitle)
+      if (presetCategory && /^[a-z]{3,20}$/.test(presetCategory)) setCategory(presetCategory)
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [])
   const [created, setCreated] = useState<{ goalId: string; title: string; targetDate: string | null; reminder: boolean; next: string } | null>(null)
 
   useEffect(() => () => {
@@ -223,6 +234,11 @@ export default function CreateGoalPage() {
 
   const isPublic = visibility === 'public'
   const today = new Date().toISOString().slice(0, 10)
+  const inviteFriend = async (goalTitle: string) => {
+    const text = `I've started a new goal on GoalYaar: "${goalTitle}". Keep me accountable? Join me and we can check in together: https://goalyaar.in`
+    if (navigator.share) { try { await navigator.share({ text }); return } catch { return } }
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer')
+  }
 
   if (created) {
     const targetEvent = targetEventFor(created)
@@ -244,7 +260,13 @@ export default function CreateGoalPage() {
             </div>
           </>}
 
-          <button type="button" onClick={continueToGoal} className="mt-6 w-full rounded-2xl bg-slate-900 dark:bg-slate-50 py-4 text-base font-bold text-white dark:text-slate-900 transition hover:bg-slate-800 dark:hover:bg-white">Continue</button>
+          {/* People who have someone watching are far more likely to keep going. */}
+          <div className="mt-6 rounded-2xl bg-amber-500/10 p-4 text-left">
+            <p className="text-sm font-bold">Ask a friend to keep you on track</p>
+            <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">Goals stick better when someone is watching. Send them your goal.</p>
+            <button type="button" onClick={() => void inviteFriend(created.title)} className="mt-3 w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 shadow-sm">Invite a friend</button>
+          </div>
+          <button type="button" onClick={continueToGoal} className="mt-3 w-full rounded-2xl bg-slate-900 dark:bg-slate-50 py-4 text-base font-bold text-white dark:text-slate-900 transition hover:bg-slate-800 dark:hover:bg-white">Continue</button>
         </section>
       </main>
     )

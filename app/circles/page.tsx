@@ -39,6 +39,13 @@ export default function CirclesPage() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
+  // Today's first-day screen links here with ?create=1 for coaches.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('create') !== '1') return
+    const timer = window.setTimeout(() => setShowCreate(true), 0)
+    window.history.replaceState(null, '', '/circles')
+    return () => window.clearTimeout(timer)
+  }, [])
   const [name, setName] = useState('')
   const [newCategory, setNewCategory] = useState<Exclude<Category, 'all'>>('habits')
   const [description, setDescription] = useState('')
