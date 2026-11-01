@@ -89,6 +89,11 @@ describe('deterministic scoring and bands', () => {
     expect(r.value).toBe(V1.readinessCap)
     expect(r.reasons).toContain(`Capped at ${V1.readinessCap}: no one is described as 100% ready.`)
   })
+  it('shows whole numbers only (no false precision)', () => {
+    const nodes = [node('a'), node('b'), node('c')]
+    const [touched] = coverageIndicators(nodes, [state('a')], TODAY)
+    expect(touched.value).toBe(33)
+  })
   it('weights topics by syllabus weight', () => {
     const nodes = [node('H', ['prelims'], 3), node('L', ['prelims'], 1)]
     const [touched] = coverageIndicators(nodes, [state('H')], TODAY)

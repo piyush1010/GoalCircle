@@ -21,6 +21,17 @@ Status: proposal, awaiting product-owner approval. Source brief: product owner's
 
 Activities are recorded; indicators are calculated. Coverage (did I touch it) is separate from readiness (would it hold up today). Missing evidence shows "Not enough evidence". Indices are bands, never "100%". Scoring is deterministic, versioned and explainable; AI only suggests and always needs confirmation. Everything is private by default; mentors see only what the student shares.
 
+## 2a. Adoption guardrails (every milestone must pass these)
+
+| Risk | Rule |
+|---|---|
+| **Excessive data entry** | Daily logging ≤ 2 minutes; a single log ≤ 10 seconds (≤ 3 taps: action, topic, optional count). Topic picker opens on recent and due topics, not the full tree. Defaults everywhere (today, last topic, quantity 1). Optional detail (traps, option notes, timing) is never required. Existing GoalYaar check-ins and focus minutes count as evidence, so nothing is entered twice. |
+| **Initial setup burden** | Setup is one screen: exam, exam date, daily time (optional subject optional). The official syllabus is preloaded; no topic configuration is ever required. Value on day one: the first log immediately shows a topic on the map and a revision date. Sources, NCERT path, mentor sharing and plans are introduced later, one at a time. |
+| **False precision** | Whole numbers only; indices are shown as a band first ("Developing"), number second. Every figure has a one-tap "Why?". Below the evidence threshold: "Not enough evidence", never 0 or a guess. No "% prepared" anywhere; nothing above 95. |
+| **Feature overload** | Today shows at most three prep items: the plan (top 3 tasks), revision due (top 3), and one snapshot line. Everything else lives one level down. One revision digest per day by default. A feature appears only after the student has data for it (e.g. CSAT safety after the first CSAT mock). Advanced logs (traps, option notebook, deep audits) are opt-in. |
+
+These are checked in each milestone's verification (tap counts and the Today item limit are part of the acceptance criteria).
+
 ## 3. Data model (new tables, prefix `prep_`)
 
 **Exam templates (shared, read-only to users)**

@@ -39,7 +39,8 @@ export function band(index: number): Band {
   return V1.bands.find(([upper]) => index < upper)![1]
 }
 
-const pct = (part: number, whole: number) => Math.round((part / whole) * 1000) / 10
+// Whole numbers only: no false precision such as 73.42%.
+const pct = (part: number, whole: number) => Math.round((part / whole) * 100)
 const leafTopics = (nodes: SyllabusNode[], stage?: Stage) => nodes.filter((n) => n.kind === 'topic' && (!stage || n.stages.includes(stage)))
 
 interface Coverage { touched: number; foundation: number; evidence: number; revisionCurrent: number; touchedCount: number; total: number }
