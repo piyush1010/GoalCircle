@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bell, Bug, Flame, RefreshCw, UsersRound } from 'lucide-react'
+import { ArrowLeft, Bell, Bug, Flame, RefreshCw, UserPlus, UsersRound } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 
 interface Day { day: string; active: number; checkins: number; signups: number }
@@ -54,6 +54,9 @@ export default function AdminPage() {
   const shown = hover === null ? data.daily[data.daily.length - 1] : data.daily[hover]
   const [a, b] = (['A', 'B'] as const).map((v) => data.experiment.find((x) => x.variant === v) ?? { variant: v, sent: 0, converted: 0, people: 0 })
   const totalSent = a.sent + b.sent
+  const signups14 = data.daily.reduce((sum, d) => sum + d.signups, 0)
+  const signupsToday = data.daily[data.daily.length - 1]?.signups ?? 0
+  const maxSignups = Math.max(1, ...data.daily.map((d) => d.signups))
   const rate = (v: Variant) => (v.sent ? v.converted / v.sent : 0)
 
   return (
@@ -88,6 +91,23 @@ export default function AdminPage() {
               <span className={`block w-full rounded-t-[4px] transition-colors ${hover === i ? 'bg-amber-600' : 'bg-amber-500'}`} style={{ height: `${Math.max(d.active ? 4 : 0, (d.active / max) * 100)}%` }} />
             </button>
           ))}
+        </div>
+        <div className="mt-1 flex justify-between text-[11px] text-slate-500"><span>{shortDay(data.daily[0].day)}</span><span>today</span></div>
+      </section>
+
+      {/* Sign-ups */}
+      <section className={`${card} mt-3`}>
+        <h2 className="flex items-center gap-2 text-base"><UserPlus className="h-4 w-4 text-amber-500" />Sign-ups</h2>
+        <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+          {[
+            ['Today', signupsToday],
+            ['7 days', data.users.new_7d],
+            ['14 days', signups14],
+            ['All time', data.users.total],
+          ].map(([label, value]) => <div key={label as string} className="rounded-xl bg-slate-50 px-2 py-2.5 dark:bg-slate-800/60"><p className="text-2xl font-extrabold tabular-nums">{value}</p><p className="text-xs font-semibold text-slate-500">{label}</p></div>)}
+        </div>
+        <div className="mt-4 flex h-16 items-end gap-[2px] border-b border-slate-200 dark:border-slate-700" role="img" aria-label={`Daily sign-ups over 14 days, ${signups14} in total`}>
+          {data.daily.map((d) => <span key={d.day} title={`${shortDay(d.day)}: ${d.signups} sign-up${d.signups === 1 ? '' : 's'}`} className="flex h-full flex-1 items-end"><span className="block w-full rounded-t-[4px] bg-sky-500" style={{ height: `${d.signups ? Math.max(8, (d.signups / maxSignups) * 100) : 0}%` }} /></span>)}
         </div>
         <div className="mt-1 flex justify-between text-[11px] text-slate-500"><span>{shortDay(data.daily[0].day)}</span><span>today</span></div>
       </section>
