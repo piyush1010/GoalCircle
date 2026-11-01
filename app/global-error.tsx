@@ -1,7 +1,11 @@
 'use client'
 
+import { useEffect } from 'react'
+import { reportError } from '@/lib/errorReporting'
+
 // Last-resort screen if something in the app's frame fails. Uses plain styles: the app's CSS may not be loaded here.
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
+  useEffect(() => { reportError(error, { digest: error.digest }) }, [error])
   const reload = () => {
     try { sessionStorage.setItem('goalyaar-recovered', String(Date.now())) } catch { /* ignore */ }
     window.location.reload()

@@ -2,9 +2,10 @@
 
 import { useEffect } from 'react'
 import { RotateCcw, TriangleAlert } from 'lucide-react'
+import { reportError } from '@/lib/errorReporting'
 
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  useEffect(() => { console.error(error) }, [error])
+  useEffect(() => { console.error(error); reportError(error, { digest: error.digest }) }, [error])
 
   return (
     <main className="grid min-h-[80vh] place-items-center px-6">
