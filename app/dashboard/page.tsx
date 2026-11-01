@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CalendarCheck2, CheckCircle2, ChevronDown, Flame, Plus, Timer, Trash2 } from 'lucide-react'
-import GoalieMessage from '@/components/GoalieMessage'
+import StarterGoals from '@/components/StarterGoals'
 import InstallNudge from '@/components/InstallNudge'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
 import MonthRing, { type MonthDay } from '@/components/MonthRing'
@@ -230,7 +230,7 @@ export default function TodayPage() {
       <section data-tour="today-checkin" className="mt-5">
         <div className="mb-2 flex items-baseline justify-between"><h2 className="text-lg font-extrabold">Today</h2><Link href="/create-goal" className="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white"><Plus className="h-4 w-4" />New goal</Link></div>
         {goals.length === 0 && batches.length === 0
-          ? <GoalieMessage title="Your next streak starts here" message="Choose one small thing you can do every day. I'll help you keep going." actionLabel="Create a goal" href="/create-goal" />
+          ? <StarterGoals />
           : <div className={`divide-y divide-slate-100 overflow-hidden dark:divide-slate-800 ${card}`}>
             {studentBatches.map((batch) => <Link key={batch.id} href={`/circles/${batch.id}`} className={`${row} transition hover:bg-slate-50 dark:hover:bg-slate-800/50`}>
               <CircleAvatar name={batch.name} url={batch.avatarUrl} size={40} />
