@@ -3,9 +3,10 @@
 | Milestone | State | Notes |
 |---|---|---|
 | 0. Audit & architecture | Done (1 Nov 2026) | `PREPARATION_TRACKER_SPEC.md` (audited against `main` on 1 Nov; still current). |
-| 1. Schema, RLS, templates, flag | Done (1 Nov 2026), awaiting SQL run + merge | Details below. |
-| 2. UPSC syllabus explorer and topic stages | Next, not started | Needs approval. |
-| 3–10 | Not started | Per brief. |
+| 1. Schema, RLS, templates, flag | Done, live (PR #44, SQL run 1 Nov) | Details below. |
+| 2. UPSC syllabus explorer and topic stages | Done (1 Nov 2026), PR #46, no SQL | Details below. |
+| 3. Today screen, quick logging, revision engine | Next, not started | Needs approval. |
+| 4–10 | Not started | Per brief. |
 
 ## Decisions (approved 1 Nov 2026)
 1. UPSC v1 at official-notification depth; nested subtopics supported; students create private custom subtopics.
@@ -36,7 +37,24 @@
 1. Supabase SQL editor: `202611070001_prep_foundation.sql`, then `202611070002_prep_upsc_template.sql`.
 2. Merge the Milestone 1 PR. Production stays unchanged for everyone not in `prep_beta`.
 
-## Open items before Milestone 2
+## Milestone 2 delivered
+- `app/prep/page.tsx` (beta only): Prelims / Mains / NCERT tabs; papers → subjects → topics with the seven stage chips, per-paper progress (touched, foundation, due), topic search, Due filter.
+- Topic sheet: **Studied** and **Revised** in one tap (3 taps from Today: card → topic → action); stage with **Why?** and the next step; optional foundation checklist (collapsed); private custom subtopics.
+- `components/PrepTodayCard.tsx`: now a link to `/prep` showing touched/total and revision-due counts.
+- `lib/prep/explorer.ts`: tree ordering, roll-ups (official topics only), stage explanations; `lib/prep/__tests__/explorer.test.ts` (4 tests).
+- Guardrails: no setup step; checklist and subtopics are optional and collapsed; whole numbers only.
+
+### Milestone 2 verification
+| Check | Result |
+|---|---|
+| Unit tests (`lib/prep/__tests__`) | 22/22 pass (node:test shim) |
+| Strict type-check of `lib/prep` | Pass |
+| DB checks: foundation untick, private subtopic insert, full `prep_rls.sql` | Pass |
+| Vercel production build (PR #46) | Pass |
+| Lint / full local build | Pending npm access |
+| Visual (light/dark, 320–430px) | To confirm on the owner's beta account after merge |
+
+## Open items before Milestone 3
 - `registry.npmjs.org` still returned 403 in this session: add `vitest` to devDependencies with its lockfile, add `"test": "vitest run"`, run lint/type-check/build locally.
 - Mentor read access (RPC) is deliberately absent until Milestone 8.
 
