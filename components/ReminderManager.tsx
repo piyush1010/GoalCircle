@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { reportError } from '@/lib/errorReporting'
 import { REMINDER_CHANGED_EVENT, readReminderPreferences, type ReminderPreferences } from '@/lib/notifications/reminderPreferences'
 
 const LAST_REMINDER_KEY = 'goalcircle-last-reminder-date'
@@ -39,6 +40,7 @@ export default function ReminderManager() {
         notification.onclick = () => { window.focus(); router.push('/check-in') }
       } catch (error) {
         console.warn('GoalYaar reminder skipped:', error)
+        reportError(error)
       }
     }
 

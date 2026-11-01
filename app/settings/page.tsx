@@ -9,7 +9,8 @@ import { resetTours } from '@/components/GuideTour'
 import GoalieToggle from '@/components/GoalieToggle'
 import PushToggle from '@/components/PushToggle'
 import { supabase } from '@/utils/supabase'
-import { Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, Type, UserRound } from 'lucide-react'
+import { BarChart3, Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, Type, UserRound } from 'lucide-react'
+import Link from 'next/link'
 import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
 import { readDailyReminder, saveDailyReminder } from '@/lib/notifications/dailyReminder'
 
@@ -34,6 +35,10 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
   const [passwordResetSent, setPasswordResetSent] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  // Only the GoalYaar team sees the Insights link (the page itself also checks).
+  useEffect(() => { void supabase.rpc('is_app_admin').then(({ data }) => setIsAdmin(data === true), () => undefined) }, [])
 
   // Load profile settings
   useEffect(() => {
@@ -171,6 +176,8 @@ export default function SettingsPage() {
           ← Back
         </button>
       </div>
+
+      {isAdmin && <Link href="/admin" className="flex items-center justify-between rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300"><span className="flex items-center gap-2"><BarChart3 className="h-4 w-4" />Insights: users, reminder test, errors</span><span aria-hidden="true">→</span></Link>}
 
       {/* Profile details live on the Profile page only */}
       <button type="button" onClick={() => router.push('/profile?edit=1')} className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-amber-500 dark:border-slate-800 dark:bg-slate-900">

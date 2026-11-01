@@ -9,6 +9,7 @@ import GoalieCheer from '@/components/GoalieCheer'
 import GoalieBuddy from '@/components/GoalieBuddy'
 import ConfirmHost from '@/components/ConfirmHost'
 import PushPrompt from '@/components/PushPrompt'
+import ErrorReporter from '@/components/ErrorReporter'
 
 const NAV_HIDDEN_ROUTES = ['/', '/login', '/signup', '/auth', '/privacy', '/circles/join']
 
@@ -20,6 +21,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <ErrorReporter />
       <PwaManager />
       <ReminderManager />
       {children}
