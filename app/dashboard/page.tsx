@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { CalendarCheck2, CheckCircle2, ChevronDown, Flame, Plus, Timer, Trash2 } from 'lucide-react'
 import StarterGoals from '@/components/StarterGoals'
 import InstallNudge from '@/components/InstallNudge'
+import PrepTodayCard from '@/components/PrepTodayCard'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
 import MonthRing, { type MonthDay } from '@/components/MonthRing'
 import TodoWidget from '@/components/TodoWidget'
@@ -223,6 +224,8 @@ export default function TodayPage() {
           <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><Timer className="h-4 w-4 text-sky-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{weekTime}</p><p className="mt-1 text-xs font-semibold text-slate-500">this week</p></div>
         </div>
       </section>
+
+      <PrepTodayCard />
 
       <InstallNudge />
 
