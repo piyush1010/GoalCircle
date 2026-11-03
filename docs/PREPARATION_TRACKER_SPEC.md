@@ -92,3 +92,14 @@ Later milestones only: revision vault (`prep_vault_entries`), State PCS overlay 
 4. `lib/prep/types.ts`, `lib/prep/scoring/v1.ts` (+ `v1.test.ts` once Vitest is added), `lib/prep/revision.ts`.
 5. `lib/prep/feature.ts` (`usePrepFeature()`), hidden `app/prep/page.tsx` placeholder behind the flag.
 6. Docs: update STATUS with migration order and test results.
+
+## 12. Subtopics, decay, state exams and the time-bound plan (v2, Nov 2026)
+**Evidence unit.** The official subtopic. Ticking a subtopic logs `studied` on it (and on its topic the first time, which starts the topic's revision schedule). Unticking logs `studied` with `{"undo": true}`. Subtopics have no revision schedule of their own; revision is per topic.
+
+**Scoring v2.** For each topic: `share` = ticked official subtopics / official subtopics (a topic without subtopics counts 1 once studied). `peak = 0.4·share + 0.3·practice + 0.3·revision`, `current = strength·peak`, where strength = 1 until the next revision is due, then falls linearly to 0.25 over max(14, 2 × interval) days. Index = weighted mean × 100, capped at 95, null under 5 started topics. Coverage indicators use `share` and never fade.
+
+**Templates.** `upsc_cse_v1`, `uppcs_v1`, `bpsc_v1`, `jkpsc_cce_v1`, all with the same stage codes (PRE, MAI, INT, NCERT). Topic state is per node, so ticks for each exam are kept separately. State templates leave PYQ frequency empty.
+
+**Pace plan v1 (`lib/prep/pace.ts`).** Units = official subtopics (or subtopic-less topics) of the target stage in syllabus order, optional papers excluded. `revisionDays = round(totalDays × buffer%)` (default 15). `perDay = ceil(units remaining at the start of today / study days left)`. Expected-by-today is linear over the study days; `behindBy` against it gives on track / slightly behind (≤ 2 days of target) / behind. Today's list = the next unticked units; ticks made today count towards today. A realism note appears when perDay × 40 min exceeds 80% of the stated daily hours.
+
+**Reminder.** `notify_prep_reminders()` runs at :30 UTC every hour. It sends one `prep_reminder` per beta user per day at their `reminder_hour` (India time), skipped if they have any `prep_events` that day. The text is built from the last target the app computed (`daily_target`, if from today or yesterday), the topic revisions due, and the days to the exam.
