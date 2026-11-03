@@ -1,10 +1,11 @@
 \set ON_ERROR_STOP 1
 begin;
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000ac09', 'reminder@test') on conflict do nothing;
 -- a beta user with a profile on UPPCS, reminder at the current IST hour
 do $$
 declare u uuid; t uuid; h int := extract(hour from now() at time zone 'Asia/Kolkata');
 begin
-  select id into u from auth.users limit 1;
+  u := '00000000-0000-0000-0000-00000000ac09';
   select id into t from prep_exam_templates where code = 'uppcs_v1';
   insert into prep_beta (user_id) values (u) on conflict do nothing;
   insert into prep_profiles (user_id, template_id, exam_date, reminder_hour, daily_target, target_computed_on)

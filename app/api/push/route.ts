@@ -32,6 +32,7 @@ function compose({ notification: n, actor, circle }: PushRequest) {
     streak: 'Keep your streak alive',
     weekly_recap: 'Your week on GoalYaar',
     prep_reminder: 'Your study plan for today',
+    prep_weekly: 'Your preparation this week',
   }
   const fallbackBody: Record<string, string> = {
     boost: 'Tap to see it.', comment: 'Tap to read and reply.', follow: 'Tap to see their profile.',
@@ -39,6 +40,7 @@ function compose({ notification: n, actor, circle }: PushRequest) {
   }
   const url = n.kind === 'goal_collaboration_invite' ? '/notifications'
     : n.kind === 'prep_reminder' ? '/prep/plan'
+    : n.kind === 'prep_weekly' ? '/prep/progress'
     : n.post_id ? `/feed?post=${n.post_id}`
     : n.goal_id ? `/goal/${n.goal_id}`
     : n.circle_id ? `/circles/${n.circle_id}`

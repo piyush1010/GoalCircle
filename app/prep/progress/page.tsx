@@ -14,6 +14,8 @@ import type { Indicator } from '@/lib/prep/types'
 import QuickLog from '@/components/prep/QuickLog'
 import { weakTopics, weekReview, mistakeSummary, type WeekStats } from '@/lib/prep/insights'
 import { studyStreak } from '@/lib/prep/streak'
+import { examInfo, mockTrend } from '@/lib/prep/exam'
+import MentorShare from '@/components/prep/MentorShare'
 
 const card = 'rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900'
 const COVERAGE_LABEL: Record<string, string> = { syllabus_touched: 'Subtopics studied', foundation_completed: 'Topics completed', evidence_backed: 'Evidence-backed', revision_current: 'Revision current' }
@@ -65,6 +67,8 @@ export default function PrepProgressPage() {
       weak: weakTopics(data.nodes, data.states, data.mistakes),
       mistakes: mistakeSummary(data.mistakes),
       streak: studyStreak(data.studyDays, today),
+      interview: preparation(official, states, today, 'interview'),
+      trend: mockTrend(data.mocks),
       answers: { total: data.answers.reduce((s, a) => s + a.count, 0), thisWeek: answersThisWeek, lastWeek: answersLastWeek, timed: data.answers.filter((a) => a.timed).reduce((s, a) => s + a.count, 0), reviewed: data.answers.filter((a) => a.mentorReviewed).reduce((s, a) => s + a.count, 0), byPaper: [...byPaper.entries()].sort((a, b) => b[1] - a[1]) },
     }
   }, [data.status, data.nodes, data.states, data.mocks, data.answers, data.events, data.mistakes, data.studyDays, data.profile.optionalSubjectId, today])
@@ -82,6 +86,7 @@ export default function PrepProgressPage() {
   if (data.status === 'error') return <main className="mx-auto grid min-h-[60vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">Couldn&apos;t load your progress</h1><button onClick={() => void data.reload()} className="mt-4 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Try again</button></div></main>
 
   const { overall } = view
+  const exam = examInfo(data.template?.code)
   const lost = overall.value !== null && overall.peak !== null ? overall.peak - overall.value : 0
   const flash = (m: string) => { setToast(m); window.setTimeout(() => setToast(null), 3000); void data.reload() }
   const maxHistory = Math.max(1, ...history.map((h) => h.metrics.overall ?? 0))
@@ -124,9 +129,10 @@ export default function PrepProgressPage() {
 
       {/* Stage readiness, each separate */}
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <Stage title="Prelims" r={view.prelims} />
-        <Stage title="Mains" r={view.mains} />
-        {view.optional && <Stage title="Optional" r={view.optional} />}
+        {exam.targetStages.length === 1
+          ? <><Stage title={exam.stageName.prelims} r={view.prelims} /><Stage title="WAT · GD · PI" r={view.interview} /></>
+          : <><Stage title={exam.stageName.prelims} r={view.prelims} /><Stage title={exam.stageName.mains} r={view.mains} /></>}
+        {view.optional && exam.targetStages.length > 1 && <Stage title="Optional" r={view.optional} />}
         {view.csat && <section className={card}>
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">CSAT safety</p>
           <p className="mt-1 text-lg font-extrabold">{view.csat.status === 'safe' ? 'Safe' : view.csat.status === 'borderline' ? 'Borderline' : view.csat.status === 'at_risk' ? 'At risk' : 'Not enough evidence'}</p>
@@ -166,11 +172,28 @@ export default function PrepProgressPage() {
         <h2 className="text-base">Mock tests</h2>
         {data.mocks.length === 0
           ? <p className="mt-1 text-sm text-slate-500">No mocks logged yet. Add one with Quick log → Mock test.</p>
-          : <ul className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">{data.mocks.slice(0, 6).map((m) => <li key={m.id} className="flex items-center gap-3 py-2 text-sm">
-              <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{m.name}</span><span className="text-xs text-slate-500">{STAGE_NAME[m.stage]} · {m.takenOn}{m.totalQuestions ? ` · ${m.correct} right, ${m.incorrect} wrong, ${m.unattempted} left` : ''}</span></span>
+          : <>
+            {view.trend.points.length >= 2 && <div className="mt-2">
+              <div className="flex items-end justify-between"><p className="text-xs font-semibold text-slate-500">Score % over your last {Math.min(12, view.trend.points.length)} mocks</p>{view.trend.change !== null && <p className={`text-xs font-bold ${view.trend.change > 0 ? 'text-emerald-600 dark:text-emerald-400' : view.trend.change < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}`}>{view.trend.change > 0 ? '+' : ''}{view.trend.change} pts vs your first mocks</p>}</div>
+              <div className="mt-1 flex h-16 items-end gap-1" role="img" aria-label="Mock score trend">{view.trend.points.slice(-12).map((p, i) => <span key={i} title={`${p.takenOn}: ${p.pct}%`} className="flex h-full flex-1 flex-col justify-end"><span className="block w-full rounded-t-[3px] bg-sky-500" style={{ height: `${Math.max(4, p.pct)}%` }} /></span>)}</div>
+            </div>}
+            {view.trend.sections.length > 0 && <div className="mt-3">
+              <p className="text-xs font-semibold text-slate-500">Section average (last 5 mocks), weakest first</p>
+              <ul className="mt-1 space-y-1.5">{view.trend.sections.map((x) => <li key={x.name} className="flex items-center gap-2 text-sm"><span className="w-12 shrink-0 font-bold">{x.name}</span><span className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><span className="block h-full rounded-full bg-sky-500" style={{ width: `${Math.max(2, Math.min(100, x.avgPct))}%` }} /></span><span className="w-10 shrink-0 text-right tabular-nums">{x.avgPct}%</span></li>)}</ul>
+            </div>}
+            <ul className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">{data.mocks.slice(0, 6).map((m) => <li key={m.id} className="flex items-center gap-3 py-2 text-sm">
+              <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{m.name}</span><span className="text-xs text-slate-500">{exam.mockStages.find(([id]) => id === m.stage)?.[1] ?? STAGE_NAME[m.stage]} · {m.takenOn}{m.sections.length ? ` · ${m.sections.map((x) => `${x.name} ${x.score}`).join(', ')}` : ''}{m.totalQuestions ? ` · ${m.correct} right, ${m.incorrect} wrong, ${m.unattempted} left` : ''}</span></span>
               <span className="shrink-0 font-bold tabular-nums">{m.score ?? '–'}{m.maxScore ? <span className="font-normal text-slate-500">/{m.maxScore}</span> : null}</span>
-            </li>)}</ul>}
+            </li>)}</ul>
+          </>}
       </section>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <Link href="/prep/pyq" className={`${card} block`}><p className="text-sm font-bold">Past papers</p><p className="text-xs text-slate-500">Track every year&apos;s PYQ paper</p></Link>
+        <Link href="/prep/mistakes" className={`${card} block`}><p className="text-sm font-bold">Mistake notebook</p><p className="text-xs text-slate-500">{view.mistakes.open.length} to revisit</p></Link>
+      </div>
+
+      <MentorShare userId={data.userId} />
 
       {/* Setup: optional, one small card */}
       <section className={`${card} mt-3`}>
@@ -191,7 +214,7 @@ export default function PrepProgressPage() {
       <p className="mt-4 px-1 text-xs text-slate-500">These measures come only from what you log, using fixed, published rules (scoring {SCORING_VERSION}). They are not a prediction of selection or rank.</p>
 
       <button type="button" onClick={() => setLogOpen(true)} aria-label="Quick log" className="fixed bottom-24 right-4 z-40 flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg"><Plus className="h-4 w-4" />Quick log</button>
-      {logOpen && <QuickLog nodes={data.nodes} states={data.states} onClose={() => setLogOpen(false)} onLogged={flash} logEvent={data.logEvent} />}
+      {logOpen && <QuickLog nodes={data.nodes} states={data.states} examCode={data.template?.code} onClose={() => setLogOpen(false)} onLogged={flash} logEvent={data.logEvent} />}
       {toast && <div role="status" className="fixed inset-x-4 bottom-40 z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
     </main>
   )

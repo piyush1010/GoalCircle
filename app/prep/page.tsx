@@ -10,9 +10,9 @@ import { childrenMap, rollups, stageExplanation, STAGE_LABEL, type Rollup } from
 import { studyShares, topicStage } from '@/lib/prep/scoring/v2'
 import { NODE_COLS, toNode, usePrepData } from '@/lib/prep/usePrepData'
 import type { Foundation, SyllabusNode, TopicStageName, TopicState } from '@/lib/prep/types'
+import { examInfo } from '@/lib/prep/exam'
 
-const TABS = [['PRE', 'Prelims'], ['MAI', 'Mains'], ['NCERT', 'NCERT']] as const
-type TabCode = (typeof TABS)[number][0]
+type TabCode = string
 
 const STAGE_TONE: Record<TopicStageName, string> = {
   not_started: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
@@ -66,7 +66,8 @@ export default function PrepExplorerPage() {
   const shareOf = (id: string) => shares.get(id) ?? (states.get(id)?.touchedOn ? 1 : 0)
   const stageOf = (id: string) => topicStage(states.get(id), shareOf(id), today)
   const officialSubs = (id: string) => (kids.get(id) ?? []).filter((c) => c.kind === 'subtopic' && !c.ownerId)
-  const root = byCode.get(tab)
+  const tabs = examInfo(data.template?.code).tabs.filter((t) => byCode.has(t.root))
+  const root = byCode.get(tab) ?? byCode.get(tabs[0]?.root ?? 'PRE')
   const rootRoll = root ? roll.get(root.id) : undefined
   const allTopics = nodes.filter((n) => n.kind === 'topic' && !n.ownerId)
   const dueTotal = allTopics.filter((n) => stageOf(n.id) === 'revision_due').length
@@ -103,8 +104,8 @@ export default function PrepExplorerPage() {
         <Link href="/prep/plan" className="shrink-0 rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold dark:border-slate-600">My plan</Link>
       </header>
 
-      <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800" role="tablist">
-        {TABS.map(([code, label]) => <button key={code} type="button" role="tab" aria-selected={tab === code} onClick={() => setTab(code)} className={`rounded-lg py-2 text-sm font-bold transition ${tab === code ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}>{label}</button>)}
+      <div className={`grid gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 ${tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`} role="tablist">
+        {tabs.map(({ root: code, label }) => <button key={code} type="button" role="tab" aria-selected={tab === code} onClick={() => setTab(code)} className={`rounded-lg py-2 text-sm font-bold transition ${tab === code ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}>{label}</button>)}
       </div>
 
       <div className="mt-3 flex items-center gap-2">
