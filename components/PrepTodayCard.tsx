@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { CalendarDays, ChevronRight, Flame, GraduationCap, Plus, RotateCcw, TrendingDown } from 'lucide-react'
+import { BookX, CalendarDays, Check, ChevronRight, Flame, GraduationCap, Newspaper, PenLine, Plus, RotateCcw, TrendingDown } from 'lucide-react'
+import { supabase } from '@/utils/supabase'
 import { usePrepFeature } from '@/lib/prep/feature'
 import { usePrepData } from '@/lib/prep/usePrepData'
 import { localDateString } from '@/lib/exams'
@@ -10,7 +11,8 @@ import { retention, daysBetween } from '@/lib/prep/revision'
 import { preparation } from '@/lib/prep/scoring/v2'
 import { planCandidates } from '@/lib/prep/candidates'
 import { draftPlan } from '@/lib/prep/plan/v1'
-import { planFor } from '@/lib/prep/pace'
+import { optionalSubjects, planFor } from '@/lib/prep/pace'
+import MistakeSheet from '@/components/prep/MistakeSheet'
 import { studyStreak } from '@/lib/prep/streak'
 import QuickLog from '@/components/prep/QuickLog'
 import PrepSetup, { EXAM_SHORT } from '@/components/prep/PrepSetup'
@@ -26,6 +28,7 @@ export default function PrepTodayCard() {
   const [toast, setToast] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [setupOpen, setSetupOpen] = useState(false)
+  const [mistakeOpen, setMistakeOpen] = useState(false)
   const today = localDateString()
 
   const view = useMemo(() => {
@@ -54,6 +57,21 @@ export default function PrepTodayCard() {
   const { overall, due, plan, pace, streak } = view
   const examName = data.template ? EXAM_SHORT[data.template.code] ?? data.template.name : 'UPSC'
   const paceToday = pace && pace.days[0]?.date === today ? pace.days[0].units : []
+  const todays = data.events.filter((e) => e.occurredOn === today)
+  const readPaper = todays.some((e) => e.kind === 'current_affairs' && e.habit === 'newspaper')
+  const answersToday = todays.filter((e) => e.kind === 'answers').reduce((n, e) => n + e.quantity, 0)
+  const openMistakes = data.mistakes.filter((m) => !m.resolvedOn)
+  const habit = async (key: 'paper' | 'answer') => {
+    setBusyId(key)
+    let ok: boolean
+    if (key === 'paper') ok = await data.logEvent(null, 'current_affairs', { details: { habit: 'newspaper' } })
+    else {
+      const { error } = await supabase.from('prep_answer_logs').insert({ node_id: null, count: 1, timed: false, written_on: today })
+      ok = !error && (await data.logEvent(null, 'answers', { details: { habit: 'answer' } }))
+    }
+    setBusyId(null)
+    flash(ok ? (key === 'paper' ? 'Newspaper logged.' : 'Answer logged.') : 'Could not save.')
+  }
   const paceActive = pace && (pace.status === 'on_track' || pace.status === 'slightly_behind' || pace.status === 'behind')
   const lost = overall.value !== null && overall.peak !== null ? overall.peak - overall.value : 0
   const daysToExam = data.profile.examDate ? daysBetween(today, data.profile.examDate) : null
@@ -89,6 +107,13 @@ export default function PrepTodayCard() {
         {pace.status !== 'on_track' && <p className="mt-1 text-xs text-slate-500">{pace.behindBy} behind schedule, so the target is a little higher.</p>}
       </div>}
 
+      <div className="flex gap-2 overflow-x-auto border-t border-slate-100 px-4 py-3 dark:border-slate-800">
+        <button type="button" disabled={readPaper || busyId !== null} onClick={() => void habit('paper')} className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${readPaper ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'border-slate-300 dark:border-slate-600'}`}>{readPaper ? <Check className="h-3.5 w-3.5" /> : <Newspaper className="h-3.5 w-3.5" />}Newspaper</button>
+        <button type="button" disabled={busyId !== null} onClick={() => void habit('answer')} className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${answersToday ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'border-slate-300 dark:border-slate-600'}`}><PenLine className="h-3.5 w-3.5" />{answersToday ? `${answersToday} answer${answersToday === 1 ? '' : 's'} · +1` : 'Answer written'}</button>
+        <button type="button" onClick={() => setMistakeOpen(true)} className="flex shrink-0 items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-bold dark:border-slate-600"><BookX className="h-3.5 w-3.5" />Mistake</button>
+        {openMistakes.length > 0 && <Link href="/prep/mistakes" className="flex shrink-0 items-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{openMistakes.length} to revisit →</Link>}
+      </div>
+
       {due.length > 0 && <div className="border-t border-slate-100 px-4 py-3 dark:border-slate-800">
         <p className="mb-2 text-xs font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400">Revise today{due.length > 3 ? ` · ${due.length} due` : ''}</p>
         <ul className="space-y-2">{due.slice(0, 3).map(({ n, r }) => <li key={n.id} className="flex items-center gap-3">
@@ -112,7 +137,8 @@ export default function PrepTodayCard() {
         <Link href={data.profile.examDate ? '/prep/plan' : '/prep'} className="flex items-center justify-center rounded-xl border border-slate-300 py-2.5 text-sm font-bold dark:border-slate-600">{data.profile.examDate ? 'My plan' : 'Syllabus'}</Link>
       </div>
 
-      {setupOpen && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} onSave={data.saveProfile} onClose={() => setSetupOpen(false)} />}
+      {mistakeOpen && <MistakeSheet nodes={data.nodes} onSave={async (m) => { const ok = await data.addMistake(m); if (ok) flash('Added to your mistake notebook.'); return ok }} onClose={() => setMistakeOpen(false)} />}
+      {setupOpen && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onClose={() => setSetupOpen(false)} />}
       {logOpen && <QuickLog nodes={data.nodes} states={data.states} initialAction={logOpen.action} initialTopic={logOpen.topic} onClose={() => setLogOpen(null)} onLogged={flash} logEvent={data.logEvent} />}
       {toast && <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
     </section>

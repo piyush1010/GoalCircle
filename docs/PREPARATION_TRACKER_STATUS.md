@@ -87,3 +87,16 @@ What changed from Milestone 2, following the owner's direction:
 1. `202611080001_prep_upsc_subtopics.sql`
 2. `202611080002_prep_state_templates.sql`
 3. `202611080003_prep_planner_reminders.sql`
+
+## Aspirant review and additions (3 Nov 2026, branch `prep-aspirant-features`)
+Looked at the tracker as a UPSC/state PCS aspirant would: what would make me open it daily, what would make me stop.
+Added:
+- **Daily habits on Today**: one tap for "Newspaper" and "Answer written" (no forms), plus "Mistake".
+- **Mistake notebook** (`/prep/mistakes`, `202611090001`): add in ~10 seconds (type, optional topic, the right fact); "Got it" when revisited; commonest mistake types, with a note when they are exam-technique rather than knowledge gaps.
+- **Weekly review** on Progress: study days, subtopics, revisions, PYQs, answers and newspaper days against last week; 7-day strip.
+- **Needs attention**: topics with PYQ accuracy under 50% (10+ attempted) or 2+ open mistakes, each linking to the topic.
+- **Optional subject**: chosen in setup; included in the Mains plan, other optionals hidden from the syllabus, Optional readiness uses only it.
+- **Start fresh from today** when behind: re-spreads what is left instead of showing a growing deficit.
+- **Rest day**: one missed day a week no longer breaks the streak.
+
+Tests: 46/46 unit tests, strict type-check of `lib/prep`, `supabase/tests/prep_mistakes.sql` passes. Run `202611090001_prep_aspirant_tools.sql` after the three earlier files.

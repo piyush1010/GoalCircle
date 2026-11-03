@@ -123,9 +123,10 @@ export default function PrepExplorerPage() {
               <div className="divide-y divide-slate-100 dark:divide-slate-800">{(root ? kids.get(root.id) ?? [] : []).filter((b) => !q || b.title.toLowerCase().includes(q)).map(topicRow)}</div>
             </section>
           : (root ? kids.get(root.id) ?? [] : []).map((paper) => {
-              const subjects = (kids.get(paper.id) ?? []).map((subject) => ({ subject, topics: (kids.get(subject.id) ?? []).filter((t) => t.kind === 'topic' && matches(t)) })).filter((x) => x.topics.length > 0)
+              const chosenOpt = (paper.code ?? '').endsWith('.OPT') ? data.profile.optionalSubjectId : null
+              const subjects = (kids.get(paper.id) ?? []).filter((subject) => !chosenOpt || subject.id === chosenOpt).map((subject) => ({ subject, topics: (kids.get(subject.id) ?? []).filter((t) => t.kind === 'topic' && matches(t)) })).filter((x) => x.topics.length > 0)
               if (subjects.length === 0) return null
-              const r = roll.get(paper.id)!
+              const r = roll.get(chosenOpt ?? paper.id) ?? roll.get(paper.id)!
               const pct = r.subtopics ? Math.round((r.ticked / r.subtopics) * 100) : r.topics ? Math.round((r.complete / r.topics) * 100) : 0
               return <section key={paper.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <button type="button" onClick={() => toggle(paper.id)} aria-expanded={isOpen(paper.id)} className="flex w-full items-center gap-3 px-3 py-3 text-left">

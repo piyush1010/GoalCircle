@@ -12,6 +12,8 @@ import { csatSafety } from '@/lib/prep/scoring/v1'
 import { addDays, daysBetween } from '@/lib/prep/revision'
 import type { Indicator } from '@/lib/prep/types'
 import QuickLog from '@/components/prep/QuickLog'
+import { weakTopics, weekReview, mistakeSummary, type WeekStats } from '@/lib/prep/insights'
+import { studyStreak } from '@/lib/prep/streak'
 
 const card = 'rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900'
 const COVERAGE_LABEL: Record<string, string> = { syllabus_touched: 'Subtopics studied', foundation_completed: 'Topics completed', evidence_backed: 'Evidence-backed', revision_current: 'Revision current' }
@@ -42,7 +44,10 @@ export default function PrepProgressPage() {
     if (data.status !== 'ready') return null
     const states = [...data.states.values()]
     const official = data.nodes.filter((n) => !n.ownerId)
-    const optionalNodes = official.filter((n) => n.papers.some((p) => p === 'OPT1' || p === 'OPT2'))
+    const chosen = data.profile.optionalSubjectId
+    const optionalNodes = official.filter((n) => n.papers.some((p) => p === 'OPT1' || p === 'OPT2')).filter((n) => !chosen || n.id === chosen || n.parentId === chosen)
+    const withSubs = new Set(official.filter((n) => n.kind === 'subtopic').map((n) => n.parentId))
+    const units = new Set(official.filter((n) => n.kind === 'subtopic' || n.kind === 'ncert_book' || (n.kind === 'topic' && !withSubs.has(n.id))).map((n) => n.id))
     const optionalTouched = optionalNodes.some((n) => data.states.get(n.id)?.touchedOn)
     const weekStart = addDays(today, -6), lastWeekStart = addDays(today, -13)
     const answersThisWeek = data.answers.filter((a) => a.writtenOn >= weekStart).reduce((s, a) => s + a.count, 0)
@@ -56,9 +61,13 @@ export default function PrepProgressPage() {
       optional: optionalTouched ? preparation(optionalNodes, states, today, 'mains') : null,
       coverage: coverage(official, states, today),
       csat: data.mocks.some((m) => m.stage === 'csat') ? csatSafety(data.mocks, today) : null,
+      week: weekReview(data.events, units, today),
+      weak: weakTopics(data.nodes, data.states, data.mistakes),
+      mistakes: mistakeSummary(data.mistakes),
+      streak: studyStreak(data.studyDays, today),
       answers: { total: data.answers.reduce((s, a) => s + a.count, 0), thisWeek: answersThisWeek, lastWeek: answersLastWeek, timed: data.answers.filter((a) => a.timed).reduce((s, a) => s + a.count, 0), reviewed: data.answers.filter((a) => a.mentorReviewed).reduce((s, a) => s + a.count, 0), byPaper: [...byPaper.entries()].sort((a, b) => b[1] - a[1]) },
     }
-  }, [data.status, data.nodes, data.states, data.mocks, data.answers, today])
+  }, [data.status, data.nodes, data.states, data.mocks, data.answers, data.events, data.mistakes, data.studyDays, data.profile.optionalSubjectId, today])
 
   // Keep one snapshot per day so the trend line builds up over time.
   useEffect(() => {
@@ -105,6 +114,14 @@ export default function PrepProgressPage() {
         </div>}
       </section>
 
+      {/* This week vs last week */}
+      <section className={`${card} mt-3`}>
+        <div className="flex items-center justify-between"><h2 className="text-base">This week</h2><span className="text-xs font-semibold text-slate-500">{view.streak.current > 0 ? `${view.streak.current}-day streak` : 'No streak yet'}</span></div>
+        <div className="mt-2 flex gap-1" aria-label="Study days this week">{view.streak.week.map((d) => <span key={d.date} title={d.date} className={`h-2 flex-1 rounded-full ${d.studied ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'}`} />)}</div>
+        <div className="mt-3 grid grid-cols-3 gap-2">{WEEK_ROWS.map(([key, label]) => <WeekCell key={key} label={label} now={view.week.thisWeek[key]} before={view.week.lastWeek[key]} />)}</div>
+        <p className="mt-2 text-[11px] text-slate-500">Compared with the 7 days before. One rest day a week does not break your streak.</p>
+      </section>
+
       {/* Stage readiness, each separate */}
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Stage title="Prelims" r={view.prelims} />
@@ -123,6 +140,13 @@ export default function PrepProgressPage() {
         <p className="text-xs text-slate-500">From the subtopics you tick. Coverage never goes down; only preparation fades when revision is overdue.</p>
         <div className="mt-3 grid grid-cols-2 gap-2">{view.coverage.map((c) => <Metric key={c.key} label={COVERAGE_LABEL[c.key]} ind={c} />)}</div>
       </section>
+
+      {/* What needs attention */}
+      {(view.weak.length > 0 || view.mistakes.topTypes.length > 0) && <section className={`${card} mt-3`}>
+        <h2 className="text-base">Needs attention</h2>
+        {view.weak.length > 0 && <ul className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">{view.weak.map((w) => <li key={w.nodeId}><Link href={`/prep?topic=${w.nodeId}`} className="block py-2"><span className="block text-sm font-semibold">{w.title}</span><span className="block text-xs text-slate-500">{w.reasons.join(' ')}</span></Link></li>)}</ul>}
+        {view.mistakes.topTypes.length > 0 && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Commonest mistake: <b>{view.mistakes.topTypes[0].label}</b> ({view.mistakes.topTypes[0].count}). <Link href="/prep/mistakes" className="font-bold underline">{view.mistakes.open.length} to revisit</Link></p>}
+      </section>}
 
       {/* Answer writing */}
       <section className={`${card} mt-3`}>
@@ -192,5 +216,16 @@ function Metric({ label, ind }: { label: string; ind: Indicator }) {
     <p className="text-xs font-semibold text-slate-500">{label}</p>
     <p className="text-xl font-extrabold tabular-nums">{ind.value === null ? '—' : `${ind.value}%`}</p>
     <Why reasons={ind.reasons} />
+  </div>
+}
+
+const WEEK_ROWS: [keyof WeekStats, string][] = [['studyDays', 'study days'], ['ticks', 'subtopics'], ['revisions', 'revisions'], ['pyqs', 'PYQs'], ['answers', 'answers'], ['newspaperDays', 'newspaper days']]
+
+function WeekCell({ label, now, before }: { label: string; now: number; before: number }) {
+  const diff = now - before
+  return <div className="rounded-xl bg-slate-50 px-2 py-2 text-center dark:bg-slate-800/60">
+    <p className="text-lg font-extrabold tabular-nums">{now}</p>
+    <p className="text-[11px] font-semibold text-slate-500">{label}</p>
+    {(now > 0 || before > 0) && <p className={`text-[11px] font-bold ${diff > 0 ? 'text-emerald-600 dark:text-emerald-400' : diff < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>{diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : 'same'}</p>}
   </div>
 }

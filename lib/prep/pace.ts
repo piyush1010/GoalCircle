@@ -77,10 +77,26 @@ export function pacePlan(units: Unit[], states: Map<string, TopicState>, today: 
   return { total, done, remaining, daysLeft, studyDaysLeft, revisionDays, perDay, topicsToday, doneToday, expectedByToday, behindBy, status, days, reasons, version: PACE_VERSION }
 }
 
-/** The student's plan from their saved settings; null until an exam date is set. Optional papers are left out. */
-export function planFor(nodes: SyllabusNode[], states: Map<string, TopicState>, settings: { examDate: string | null; planStartOn: string | null; targetStage: 'prelims' | 'mains'; revisionBufferPct: number }, today: string): (PacePlan & { units: Unit[] }) | null {
+/**
+ * The student's plan from their saved settings; null until an exam date is set.
+ * Optional papers count only for the optional subject the student picked (Mains).
+ */
+export function planFor(nodes: SyllabusNode[], states: Map<string, TopicState>, settings: { examDate: string | null; planStartOn: string | null; targetStage: 'prelims' | 'mains'; revisionBufferPct: number; optionalSubjectId?: string | null }, today: string): (PacePlan & { units: Unit[] }) | null {
   if (!settings.examDate) return null
-  const units = studyUnits(nodes, settings.targetStage, { skipPapers: (p) => (p.code ?? '').endsWith('.OPT') })
+  const parent = new Map(nodes.map((n) => [n.id, n.parentId]))
+  const isOpt = (p: SyllabusNode) => (p.code ?? '').endsWith('.OPT')
+  const optional = settings.optionalSubjectId ?? null
+  const units = studyUnits(nodes, settings.targetStage).filter((u) => {
+    const subject = parent.get(u.topicId) ?? null
+    const paper = subject ? nodes.find((n) => n.id === parent.get(subject)) : undefined
+    return !paper || !isOpt(paper) || (optional !== null && subject === optional)
+  })
   const start = settings.planStartOn && settings.planStartOn <= today ? settings.planStartOn : today
   return { ...pacePlan(units, states, today, start, settings.examDate, settings.revisionBufferPct), units }
+}
+
+/** Optional subjects of an exam (subjects under a paper coded *.OPT), in syllabus order. */
+export function optionalSubjects(nodes: SyllabusNode[]): SyllabusNode[] {
+  const optPapers = new Set(nodes.filter((n) => n.kind === 'paper' && (n.code ?? '').endsWith('.OPT')).map((n) => n.id))
+  return nodes.filter((n) => n.kind === 'subject' && n.parentId !== null && optPapers.has(n.parentId)).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0))
 }
