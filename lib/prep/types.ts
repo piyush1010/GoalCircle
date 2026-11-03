@@ -13,6 +13,8 @@ export interface SyllabusNode {
   papers: string[]
   weight: number
   pyqFrequency: number | null
+  sort?: number
+  ownerId?: string | null
 }
 
 export interface Foundation { read?: boolean; highlighted?: boolean; notes?: boolean; open_notes?: boolean; limited_sources?: boolean }
