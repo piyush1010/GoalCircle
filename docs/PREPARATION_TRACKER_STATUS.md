@@ -100,3 +100,23 @@ Added:
 - **Rest day**: one missed day a week no longer breaks the streak.
 
 Tests: 46/46 unit tests, strict type-check of `lib/prep`, `supabase/tests/prep_mistakes.sql` passes. Run `202611090001_prep_aspirant_tools.sql` after the three earlier files.
+
+## Round 4 (3–4 Nov 2026, branch `prep-round4`)
+- **CAT (MBA)** template (`202611090003`, `supabase/seed/cat_v1.py`): VARC, DILR, QA (29 topics, 105 subtopics) plus a WAT · GD · PI stage. Tabs, stages, mock sections (VARC/DILR/QA), habits (daily reading, no answer writing) come from `lib/prep/exam.ts`.
+- **Mentor view with consent** (`prep_mentor_view` RPC, `/prep/batch?circle=…`, `components/prep/MentorShare.tsx`): per batch the student picks Private (default) / Summary / Full. Only the batch owner or moderators can call it; unshared students appear by name only.
+- **Past papers by year** (`/prep/pyq`): per paper and year, attempted and correct → accuracy and approximate net marks under that paper's scheme.
+- **Mock trend and section accuracy** on Progress; section scores in Quick log for exams with sections (`prep_mock_tests.sections`).
+- **Sunday weekly summary** push (`notify_prep_weekly`, 8 PM IST), kind `prep_weekly`.
+- **Offline logging** (`lib/prep/offline.ts`): failed saves for lack of network are queued on the device, shown immediately, and sent when back online.
+- **Hindi** for Today, plan and setup (`lib/prep/i18n.ts`), switch in setup. Syllabus titles stay as published.
+
+### Verification
+| Check | Result |
+|---|---|
+| Unit tests | 52/52 (9 files) |
+| Strict type-check `lib/prep` | Pass |
+| Fresh database from every migration + all 5 prep SQL tests | Pass (pg_cron/pg_net migrations need Supabase; stubbed locally) |
+| Existing database, new migrations applied twice | Pass |
+| Vercel production build | See PR |
+
+Run order: … `202611090001`, then `202611090002_prep_mentor_weekly_mocks.sql`, then `202611090003_prep_cat_template.sql`.

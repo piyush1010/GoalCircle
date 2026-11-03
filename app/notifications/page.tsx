@@ -10,7 +10,7 @@ interface NotificationItem {
   id: string
   recipient_id: string
   actor_id: string | null
-  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap' | 'goal_collaboration_invite' | 'goal_collaboration_accepted' | 'circle_task' | 'circle_post' | 'circle_leave' | 'circle_reply' | 'prep_reminder'
+  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap' | 'goal_collaboration_invite' | 'goal_collaboration_accepted' | 'circle_task' | 'circle_post' | 'circle_leave' | 'circle_reply' | 'prep_reminder' | 'prep_weekly'
   post_id: string | null
   circle_id: string | null
   goal_id: string | null
@@ -38,6 +38,7 @@ const details = {
   circle_post: { icon: UsersRound, title: 'New notice in your circle', copy: 'posted a new notice in your circle.' },
   circle_leave: { icon: UsersRound, title: 'A student left your circle', copy: 'left your circle.' },
   circle_reply: { icon: MessageCircle, title: 'Your mentor replied', copy: 'replied to your check-in.' },
+  prep_weekly: { icon: CheckCheck, title: 'Your preparation this week', copy: 'Your weekly summary is ready.' },
   prep_reminder: { icon: CheckCheck, title: 'Your study plan for today', copy: 'Open your plan to see today\'s target.' },
 }
 
@@ -135,7 +136,7 @@ export default function NotificationsPage() {
         {notifications.filter((item) => item.kind !== 'goal_collaboration_invite' || !collaborationRequests.some((request) => request.goal_id === item.goal_id)).map((item) => (
           <Link
             key={item.id}
-            href={item.kind === 'goal_collaboration_invite' ? '/notifications' : item.kind === 'prep_reminder' ? '/prep/plan' : item.post_id ? `/feed?post=${item.post_id}` : item.goal_id ? `/goal/${item.goal_id}` : item.circle_id ? `/circles/${item.circle_id}` : '/profile'}
+            href={item.kind === 'goal_collaboration_invite' ? '/notifications' : item.kind === 'prep_reminder' ? '/prep/plan' : item.kind === 'prep_weekly' ? '/prep/progress' : item.post_id ? `/feed?post=${item.post_id}` : item.goal_id ? `/goal/${item.goal_id}` : item.circle_id ? `/circles/${item.circle_id}` : '/profile'}
             className={`border rounded-2xl p-4 shadow-sm flex items-start gap-3 transition ${
               item.is_read
                 ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-80'

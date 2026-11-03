@@ -189,7 +189,7 @@ JKPSC = ('jkpsc_cce_v1', 'JKPSC Combined Competitive Examination', [
 ])
 
 
-def emit(code, name, tree, optionals):
+def emit(code, name, tree, optionals, ncert_path=True, exam='state_psc'):
     def q(s): return "'" + s.replace("'", "''") + "'"
     def arr(xs): return "'{" + ",".join(xs) + "}'"
     rows, subs = [], []
@@ -213,8 +213,8 @@ def emit(code, name, tree, optionals):
             rows.append((ocode, 'MAI.OPT', 'subject', oname, M, ['OPT1', 'OPT2'], oi))
             rows.append((ocode + '.P1', ocode, 'topic', f'{oname}: Paper I', M, ['OPT1'], 0))
             rows.append((ocode + '.P2', ocode, 'topic', f'{oname}: Paper II', M, ['OPT2'], 1))
-    rows.append(('NCERT', None, 'stage', 'NCERT foundation path', P + M, [], 9))
-    for gi, (cls, books) in enumerate(ncert()):
+    if ncert_path: rows.append(('NCERT', None, 'stage', 'NCERT foundation path', P + M, [], 9))
+    for gi, (cls, books) in enumerate(ncert() if ncert_path else []):
         for bi, book in enumerate(books):
             rows.append((f'NCERT.C{cls}.{bi + 1:02d}', 'NCERT', 'ncert_book', f'Class {cls}: {book}', P + M, [], gi * 20 + bi))
     for c in [r[0] for r in rows] + [s[0] for s in subs]:
@@ -222,7 +222,7 @@ def emit(code, name, tree, optionals):
 
     topics = sum(1 for r in rows if r[2] == 'topic')
     out = [f'-- {name}: {topics} topics, {len(subs)} subtopics.',
-           f"insert into public.prep_exam_templates (code, name, exam, version) values ({q(code)}, {q(name)}, 'state_psc', 1) on conflict (code) do update set name = excluded.name;",
+           f"insert into public.prep_exam_templates (code, name, exam, version) values ({q(code)}, {q(name)}, {q(exam)}, 1) on conflict (code) do update set name = excluded.name;",
            f'with t as (select id from public.prep_exam_templates where code = {q(code)})',
            'insert into public.prep_syllabus_nodes (template_id, code, kind, title, stages, papers, sort) select t.id, v.code, v.kind, v.title, v.stages::text[], v.papers::text[], v.sort from t, (values',
            ',\n'.join(f'  ({q(c)}, {q(k)}, {q(ti)}, {arr(s)}, {arr(p)}, {so})' for c, _, k, ti, s, p, so in rows),

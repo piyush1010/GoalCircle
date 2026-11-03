@@ -7,8 +7,10 @@ import { addDays } from '@/lib/prep/revision'
 import { enablePush, pushIsOn, pushSupported } from '@/lib/push'
 import type { ExamTemplate, PrepProfile } from '@/lib/prep/usePrepData'
 import type { SyllabusNode } from '@/lib/prep/types'
+import { examInfo } from '@/lib/prep/exam'
+import { usePrepLang } from '@/lib/prep/i18n'
 
-export const EXAM_SHORT: Record<string, string> = { upsc_cse_v1: 'UPSC CSE', uppcs_v1: 'UPPCS', bpsc_v1: 'BPSC', jkpsc_cce_v1: 'JKPSC CCE' }
+export const EXAM_SHORT: Record<string, string> = { upsc_cse_v1: 'UPSC CSE', uppcs_v1: 'UPPCS', bpsc_v1: 'BPSC', jkpsc_cce_v1: 'JKPSC CCE', cat_v1: 'CAT (MBA)' }
 const HOURS = [2, 4, 6, 8, 10]
 const QUICK = [['3 months', 91], ['5 months', 152], ['1 year', 365]] as const
 const hourLabel = (h: number) => `${((h + 11) % 12) + 1}:00 ${h < 12 ? 'AM' : 'PM'}`
@@ -29,15 +31,18 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
   const [hour, setHour] = useState(profile.reminderHour)
   const [optional, setOptional] = useState(profile.optionalSubjectId ?? '')
   const [busy, setBusy] = useState(false)
+  const [lang, setLang, t] = usePrepLang()
   const [error, setError] = useState<string | null>(null)
 
+  const stagesFor = examInfo(templates.find((t) => t.id === exam)?.code).targetStages
   const save = async () => {
     if (!date || date <= today) { setError('Pick a target date in the future.'); return }
     setBusy(true); setError(null)
     // A new goal (exam, stage or date) starts a fresh plan from today; ticks are always kept.
+    const finalStage = stagesFor.includes(stage) ? stage : stagesFor[0]
     const restart = exam !== templateId || stage !== profile.targetStage || date !== profile.examDate || !profile.planStartOn
     if (reminder && pushSupported() && !(await pushIsOn())) await enablePush()
-    const ok = await onSave({ templateId: exam, targetStage: stage, examDate: date, dailyMinutes: Math.min(960, Math.max(15, hours * 60)), planStartOn: restart ? today : profile.planStartOn, reminderEnabled: reminder, reminderHour: hour, optionalSubjectId: exam === templateId ? optional || null : null })
+    const ok = await onSave({ templateId: exam, targetStage: finalStage, examDate: date, dailyMinutes: Math.min(960, Math.max(15, hours * 60)), planStartOn: restart ? today : profile.planStartOn, reminderEnabled: reminder, reminderHour: hour, optionalSubjectId: exam === templateId ? optional || null : null })
     setBusy(false)
     if (ok) onClose(); else setError('Could not save. Please try again.')
   }
@@ -47,15 +52,17 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center" onClick={onClose}>
     <div role="dialog" aria-modal="true" aria-label="Plan your preparation" onClick={(e) => e.stopPropagation()} className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 pb-8 shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
       <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1"><h2 className="text-lg">Plan your preparation</h2><p className="text-sm text-slate-500">Takes 30 seconds. You can change it any time.</p></div>
+        <div className="min-w-0 flex-1"><h2 className="text-lg">{t('Plan your preparation')}</h2><p className="text-sm text-slate-500">Takes 30 seconds. You can change it any time.</p></div>
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-4 w-4" /></button>
       </div>
 
-      <p className="mt-5 text-sm font-bold">Exam</p>
+      <p className="mt-5 text-sm font-bold">{t('Exam')}</p>
       <div className="mt-2 grid grid-cols-2 gap-2">{templates.map((t) => <button key={t.id} type="button" onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={chip(exam === t.id)}>{EXAM_SHORT[t.code] ?? t.name}</button>)}</div>
 
-      <p className="mt-5 text-sm font-bold">Preparing for</p>
-      <div className="mt-2 grid grid-cols-2 gap-2">{(['prelims', 'mains'] as const).map((s) => <button key={s} type="button" onClick={() => setStage(s)} aria-pressed={stage === s} className={chip(stage === s)}>{s === 'prelims' ? 'Prelims' : 'Mains'}</button>)}</div>
+      {stagesFor.length > 1 && <>
+        <p className="mt-5 text-sm font-bold">{t('Preparing for')}</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">{stagesFor.map((s) => <button key={s} type="button" onClick={() => setStage(s)} aria-pressed={stage === s} className={chip(stage === s)}>{s === 'prelims' ? 'Prelims' : 'Mains'}</button>)}</div>
+      </>}
 
       {exam === templateId && optionals.length > 0 && <>
         <label className="mt-5 block text-sm font-bold" htmlFor="prep-optional">Optional subject</label>
@@ -66,21 +73,25 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
         <p className="mt-1 text-xs text-slate-500">Included in your Mains plan; the other optionals are hidden from your syllabus.</p>
       </>}
 
-      <label className="mt-5 block text-sm font-bold" htmlFor="prep-date">Finish by (exam date)</label>
+      <label className="mt-5 block text-sm font-bold" htmlFor="prep-date">{t('Finish by (exam date)')}</label>
       <input id="prep-date" type="date" min={addDays(today, 7)} value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900" />
       <div className="mt-2 flex flex-wrap gap-2">{QUICK.map(([label, days]) => <button key={label} type="button" onClick={() => setDate(addDays(today, days))} className="rounded-full border border-slate-200 px-3 py-1 text-xs font-bold dark:border-slate-700">In {label}</button>)}</div>
 
-      <p className="mt-5 text-sm font-bold">Study hours a day</p>
+      <p className="mt-5 text-sm font-bold">{t('Study hours a day')}</p>
       <div className="mt-2 grid grid-cols-5 gap-2">{HOURS.map((h) => <button key={h} type="button" onClick={() => setHours(h)} aria-pressed={hours === h} className={chip(hours === h)}>{h}h</button>)}</div>
 
       <div className="mt-5 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
-        <label className="flex items-center gap-3"><Bell className="h-5 w-5 shrink-0 text-amber-600" /><span className="min-w-0 flex-1 text-sm"><b>Daily study reminder</b><span className="block text-xs text-slate-500">Today&apos;s target and revisions due. Skipped on days you have already logged.</span></span>
+        <label className="flex items-center gap-3"><Bell className="h-5 w-5 shrink-0 text-amber-600" /><span className="min-w-0 flex-1 text-sm"><b>{t('Daily study reminder')}</b><span className="block text-xs text-slate-500">Today&apos;s target and revisions due. Skipped on days you have already logged.</span></span>
           <input type="checkbox" checked={reminder} onChange={(e) => setReminder(e.target.checked)} className="h-5 w-5 accent-amber-500" /></label>
         {reminder && <label className="mt-3 flex items-center justify-between gap-3 text-sm">At<select value={hour} onChange={(e) => setHour(Number(e.target.value))} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900">{Array.from({ length: 19 }, (_, i) => i + 5).map((h) => <option key={h} value={h}>{hourLabel(h)}</option>)}</select></label>}
       </div>
 
+      <div className="mt-5 flex items-center justify-between gap-3"><span className="text-sm font-bold">{t('Language')}</span>
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">{([['en', 'English'], ['hi', 'हिंदी']] as const).map(([id, l]) => <button key={id} type="button" onClick={() => setLang(id)} aria-pressed={lang === id} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${lang === id ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>{l}</button>)}</div>
+      </div>
+
       {error && <p role="alert" className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
-      <button type="button" disabled={busy || !exam} onClick={() => void save()} className="mt-5 w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 shadow-sm disabled:opacity-60">{busy ? 'Saving…' : 'Make my plan'}</button>
+      <button type="button" disabled={busy || !exam} onClick={() => void save()} className="mt-5 w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 shadow-sm disabled:opacity-60">{busy ? '…' : t('Make my plan')}</button>
       <p className="mt-2 text-center text-xs text-slate-500">Ticks are saved per exam, so switching back later loses nothing.</p>
     </div>
   </div>

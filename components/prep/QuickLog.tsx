@@ -7,6 +7,7 @@ import { localDateString } from '@/lib/exams'
 import { retention } from '@/lib/prep/revision'
 import type { SyllabusNode, TopicState } from '@/lib/prep/types'
 import type { LogKind } from '@/lib/prep/usePrepData'
+import { examInfo } from '@/lib/prep/exam'
 
 type Action = 'studied' | 'revised' | 'pyq' | 'answers' | 'mock' | 'current_affairs'
 const ACTIONS: { id: Action; label: string; icon: typeof BookOpen; needsTopic: boolean }[] = [
@@ -17,7 +18,6 @@ const ACTIONS: { id: Action; label: string; icon: typeof BookOpen; needsTopic: b
   { id: 'mock', label: 'Mock test', icon: FileText, needsTopic: false },
   { id: 'current_affairs', label: 'Current affairs', icon: Newspaper, needsTopic: false },
 ]
-const MOCK_STAGES = [['prelims_gs', 'Prelims GS', 200], ['csat', 'CSAT', 200], ['mains', 'Mains', 250], ['optional', 'Optional', 250]] as const
 const CA_KINDS = [['scheme', 'Scheme'], ['judgment', 'Judgment'], ['report', 'Report'], ['committee', 'Committee'], ['budget', 'Budget data'], ['economic_survey', 'Economic Survey'], ['state_example', 'State example'], ['other', 'Other']] as const
 
 const input = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900'
@@ -27,8 +27,9 @@ const label = 'block text-xs font-bold uppercase tracking-wide text-slate-500'
  * Quick log: action -> topic -> (count) -> save. Defaults everywhere so a log takes a few seconds.
  * Topic list opens on revision-due and recent topics, with search for the rest.
  */
-export default function QuickLog({ nodes, states, initialAction, initialTopic, onClose, onLogged, logEvent }: {
+export default function QuickLog({ nodes, states, examCode, initialAction, initialTopic, onClose, onLogged, logEvent }: {
   nodes: SyllabusNode[]; states: Map<string, TopicState>
+  examCode?: string | null
   initialAction?: Action; initialTopic?: string
   onClose: () => void
   onLogged: (message: string) => void
@@ -42,7 +43,12 @@ export default function QuickLog({ nodes, states, initialAction, initialTopic, o
   const [timed, setTimed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [mock, setMock] = useState({ stage: 'prelims_gs' as (typeof MOCK_STAGES)[number][0], name: '', score: '', max: '200', correct: '', incorrect: '', unattempted: '' })
+  const exam = examInfo(examCode)
+  const MOCK_STAGES = exam.mockStages
+  const actions = ACTIONS.filter((a) => exam.answerWriting || a.id !== 'answers')
+  const [mock, setMock] = useState({ stage: MOCK_STAGES[0][0], name: '', score: '', max: String(MOCK_STAGES[0][2]), correct: '', incorrect: '', unattempted: '' })
+  const [sections, setSections] = useState<Record<string, string>>({})
+  const sectionsOn = exam.mockSections.length > 0 && mock.stage === MOCK_STAGES[0][0]
   const [ca, setCa] = useState({ title: '', kind: 'scheme' as (typeof CA_KINDS)[number][0] })
   const today = localDateString()
 
@@ -75,11 +81,15 @@ export default function QuickLog({ nodes, states, initialAction, initialTopic, o
         message = `${count} answer${count === 1 ? '' : 's'} logged.`
       } else if (action === 'mock') {
         const num = (v: string) => (v.trim() === '' ? null : Number(v))
-        const row = { stage: mock.stage, name: mock.name.trim() || 'Mock test', taken_on: today, score: num(mock.score), max_score: num(mock.max), correct: num(mock.correct), incorrect: num(mock.incorrect), unattempted: num(mock.unattempted), total_questions: null as number | null }
+        const secRows = sectionsOn ? exam.mockSections.map((x) => ({ name: x.name, score: num(sections[x.name] ?? ''), max: x.max })).filter((x) => x.score !== null) : []
+        if (secRows.some((x) => x.score! > x.max)) { setError('A section score is more than its maximum.'); return }
+        const sectionTotal = secRows.length === exam.mockSections.length && secRows.length > 0 ? secRows.reduce((t, x) => t + (x.score ?? 0), 0) : null
+        const row = { stage: mock.stage, name: mock.name.trim() || 'Mock test', taken_on: today, score: num(mock.score) ?? sectionTotal, max_score: num(mock.max), correct: num(mock.correct), incorrect: num(mock.incorrect), unattempted: num(mock.unattempted), total_questions: null as number | null, ...(secRows.length ? { sections: secRows } : {}) }
         if (row.score !== null && row.max_score !== null && row.score > row.max_score) { setError('Score cannot be more than the maximum.'); return }
         if (row.correct !== null && row.incorrect !== null && row.unattempted !== null) row.total_questions = row.correct + row.incorrect + row.unattempted
         const { error: e } = await supabase.from('prep_mock_tests').insert(row)
         ok = !e; message = 'Mock test saved.'
+        if (ok) await logEvent(null, 'mock', { details: { stage: row.stage } })
       } else if (action === 'current_affairs') {
         if (ca.title.trim().length < 3) { setError('Add a short title.'); return }
         const { data, error: e } = await supabase.from('prep_current_affairs').insert({ title: ca.title.trim(), kind: ca.kind, occurred_on: today }).select('id').single()
@@ -114,7 +124,7 @@ export default function QuickLog({ nodes, states, initialAction, initialTopic, o
 
       <div className="flex-1 overflow-y-auto px-5 pb-4 pt-3">
         {!action && <div className="grid grid-cols-2 gap-2">
-          {ACTIONS.map(({ id, label: l, icon: Icon }) => <button key={id} type="button" onClick={() => setAction(id)} className="flex items-center gap-2.5 rounded-xl border border-slate-200 px-3 py-3 text-left text-sm font-bold transition hover:border-amber-500 dark:border-slate-700"><span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><Icon className="h-4 w-4" /></span>{l}</button>)}
+          {actions.map(({ id, label: l, icon: Icon }) => <button key={id} type="button" onClick={() => setAction(id)} className="flex items-center gap-2.5 rounded-xl border border-slate-200 px-3 py-3 text-left text-sm font-bold transition hover:border-amber-500 dark:border-slate-700"><span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><Icon className="h-4 w-4" /></span>{l}</button>)}
         </div>}
 
         {action && action !== 'mock' && <div className="space-y-2">
@@ -142,12 +152,16 @@ export default function QuickLog({ nodes, states, initialAction, initialTopic, o
         </div>}
 
         {action === 'mock' && <div className="space-y-3">
-          <div className="grid grid-cols-4 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">{MOCK_STAGES.map(([id, l, max]) => <button key={id} type="button" onClick={() => setMock({ ...mock, stage: id, max: String(max) })} className={`rounded-lg py-2 text-xs font-bold ${mock.stage === id ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>{l}</button>)}</div>
+          <div className={`grid gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 ${MOCK_STAGES.length === 2 ? 'grid-cols-2' : MOCK_STAGES.length === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>{MOCK_STAGES.map(([id, l, max]) => <button key={id} type="button" onClick={() => setMock({ ...mock, stage: id, max: String(max) })} className={`rounded-lg py-2 text-xs font-bold ${mock.stage === id ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>{l}</button>)}</div>
           <label className={label}>Test name (optional)<input value={mock.name} onChange={(e) => setMock({ ...mock, name: e.target.value })} maxLength={160} placeholder="e.g. Vision Test 12" className={`${input} mt-1 normal-case tracking-normal`} /></label>
           <div className="grid grid-cols-2 gap-2">
             <label className={label}>Score<input inputMode="decimal" value={mock.score} onChange={(e) => setMock({ ...mock, score: e.target.value.replace(/[^\d.-]/g, '') })} className={`${input} mt-1`} /></label>
             <label className={label}>Out of<input inputMode="decimal" value={mock.max} onChange={(e) => setMock({ ...mock, max: e.target.value.replace(/[^\d.]/g, '') })} className={`${input} mt-1`} /></label>
           </div>
+          {sectionsOn && <div>
+            <p className={label}>Section scores (optional; total fills itself)</p>
+            <div className="mt-1 grid grid-cols-3 gap-2">{exam.mockSections.map((x) => <label key={x.name} className={label}>{x.name} <span className="normal-case tracking-normal">/ {x.max}</span><input inputMode="decimal" value={sections[x.name] ?? ''} onChange={(e) => setSections({ ...sections, [x.name]: e.target.value.replace(/[^\d.-]/g, '') })} className={`${input} mt-1`} /></label>)}</div>
+          </div>}
           <details><summary className="cursor-pointer text-sm font-bold text-slate-600 dark:text-slate-300">Add question counts (optional)</summary>
             <div className="mt-2 grid grid-cols-3 gap-2">{(['correct', 'incorrect', 'unattempted'] as const).map((k) => <label key={k} className={label}>{k}<input inputMode="numeric" value={mock[k]} onChange={(e) => setMock({ ...mock, [k]: e.target.value.replace(/\D/g, '') })} className={`${input} mt-1`} /></label>)}</div>
           </details>
