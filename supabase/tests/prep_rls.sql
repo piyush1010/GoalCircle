@@ -12,8 +12,8 @@ insert into public.circles (id, owner_id, name) values ('00000000-0000-0000-0000
 insert into public.circle_memberships (circle_id, user_id, role) values ('00000000-0000-0000-0000-0000000c0001', '00000000-0000-0000-0000-00000000aa01', 'member') on conflict do nothing;
 
 create temp table ids as select
-  (select id from public.prep_syllabus_nodes where code = 'MAI.GS2.CON') as topic,
-  (select id from public.prep_syllabus_nodes where code = 'MAI.GS2.POL') as subject;
+  (select id from public.prep_syllabus_nodes where code = 'MAI.GS2.CON' and template_id = (select id from public.prep_exam_templates where code = 'upsc_cse_v1')) as topic,
+  (select id from public.prep_syllabus_nodes where code = 'MAI.GS2.POL' and template_id = (select id from public.prep_exam_templates where code = 'upsc_cse_v1')) as subject;
 grant select on ids to authenticated;
 
 -- Student 1 -----------------------------------------------------------------------------------

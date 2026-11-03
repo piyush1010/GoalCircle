@@ -18,7 +18,7 @@ function reason(c: Candidate): string {
     case 'mentor_task': return 'Assigned by your mentor.'
     case 'revision_overdue': return `Revision is ${c.daysOverdue} day${c.daysOverdue === 1 ? '' : 's'} overdue.`
     case 'revision_due': return 'Revision is due today.'
-    case 'carried_forward': return 'Carried forward from an earlier day.'
+    case 'carried_forward': return 'Started; some subtopics are not ticked yet.'
     case 'mock_weakness': return 'Came up as a weak area in a recent mock.'
     case 'uncovered': return `Not started yet${c.pyqFrequency ? `; appears often in PYQs (${c.pyqFrequency}/5)` : ''}.`
   }
