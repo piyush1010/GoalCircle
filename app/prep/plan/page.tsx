@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Bell, CalendarDays, ChevronDown, HelpCircle, RotateCcw, Settings2 } from 'lucide-react'
 import { localDateString } from '@/lib/exams'
-import { planFor, type PacePlan, type Unit } from '@/lib/prep/pace'
+import { optionalSubjects, planFor, type PacePlan, type Unit } from '@/lib/prep/pace'
 import { retention } from '@/lib/prep/revision'
 import { usePrepData } from '@/lib/prep/usePrepData'
 import PrepSetup, { EXAM_SHORT } from '@/components/prep/PrepSetup'
@@ -92,7 +92,11 @@ export default function PrepPlanPage() {
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-amber-500" style={{ width: `${plan.total ? Math.round((plan.done / plan.total) * 100) : 0}%` }} /></div>
           <p className="mt-1.5 text-xs text-slate-500"><b className="tabular-nums text-slate-700 dark:text-slate-200">{plan.done}</b> of {plan.total} {stageName} subtopics ticked{plan.behindBy > 0 && plan.status !== 'complete' ? ` · ${plan.behindBy} behind schedule` : ''}</p>
           <button type="button" onClick={() => setWhy(!why)} aria-expanded={why} className="mt-2 flex items-center gap-1 text-xs font-bold text-slate-600 dark:text-slate-300"><HelpCircle className="h-4 w-4" />How is this worked out?</button>
-          {why && <ul className="mt-2 space-y-1 rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">{plan.reasons.map((r) => <li key={r}>{r}</li>)}<li>The target is recalculated every day: miss a day and it rises a little, get ahead and it falls.</li><li>Optional papers are not included; add them to your day separately.</li></ul>}
+          {why && <ul className="mt-2 space-y-1 rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">{plan.reasons.map((r) => <li key={r}>{r}</li>)}<li>The target is recalculated every day: miss a day and it rises a little, get ahead and it falls.</li><li>{data.profile.optionalSubjectId ? 'Your optional subject is included in the Mains plan.' : 'Optional papers are left out until you pick your optional in settings.'}</li></ul>}
+          {(plan.status === 'behind' || plan.status === 'slightly_behind') && <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60">
+            <p className="text-sm">Fell behind? It happens to everyone. Start fresh and spread what is left evenly over the days remaining.</p>
+            <button type="button" disabled={busy !== null} onClick={async () => { setBusy('fresh'); await data.saveProfile({ planStartOn: today }); setBusy(null) }} className="mt-2 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50 dark:bg-slate-50 dark:text-slate-900">Start fresh from today</button>
+          </div>}
           {plan.perDay > 0 && hoursAvailable > 0 && hoursNeeded > hoursAvailable * 0.8 && plan.status !== 'complete' && <p className="mt-3 rounded-xl bg-rose-500/10 px-3 py-2 text-xs text-rose-800 dark:text-rose-300">At about {MIN_PER_SUBTOPIC} minutes a subtopic, this needs roughly {hoursNeeded.toFixed(1)} hours of new study a day plus revision, against your {hoursAvailable} hours. A later date or a few more hours would make it realistic.</p>}
         </section>
 
@@ -123,11 +127,12 @@ export default function PrepPlanPage() {
       <span className="text-xs font-bold text-slate-500">Change</span>
     </button>
 
-    <div className="mt-3 grid grid-cols-2 gap-2">
-      <Link href="/prep" className="rounded-xl border border-slate-300 py-2.5 text-center text-sm font-bold dark:border-slate-600">Full syllabus</Link>
+    <div className="mt-3 grid grid-cols-3 gap-2">
+      <Link href="/prep" className="rounded-xl border border-slate-300 py-2.5 text-center text-sm font-bold dark:border-slate-600">Syllabus</Link>
+      <Link href="/prep/mistakes" className="rounded-xl border border-slate-300 py-2.5 text-center text-sm font-bold dark:border-slate-600">Mistakes</Link>
       <Link href="/prep/progress" className="rounded-xl border border-slate-300 py-2.5 text-center text-sm font-bold dark:border-slate-600">Progress</Link>
     </div>
 
-    {setup && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} onSave={data.saveProfile} onClose={() => setSetup(false)} />}
+    {setup && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onClose={() => setSetup(false)} />}
   </main>
 }

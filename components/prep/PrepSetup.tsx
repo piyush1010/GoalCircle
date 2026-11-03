@@ -6,6 +6,7 @@ import { localDateString } from '@/lib/exams'
 import { addDays } from '@/lib/prep/revision'
 import { enablePush, pushIsOn, pushSupported } from '@/lib/push'
 import type { ExamTemplate, PrepProfile } from '@/lib/prep/usePrepData'
+import type { SyllabusNode } from '@/lib/prep/types'
 
 export const EXAM_SHORT: Record<string, string> = { upsc_cse_v1: 'UPSC CSE', uppcs_v1: 'UPPCS', bpsc_v1: 'BPSC', jkpsc_cce_v1: 'JKPSC CCE' }
 const HOURS = [2, 4, 6, 8, 10]
@@ -13,8 +14,9 @@ const QUICK = [['3 months', 91], ['5 months', 152], ['1 year', 365]] as const
 const hourLabel = (h: number) => `${((h + 11) % 12) + 1}:00 ${h < 12 ? 'AM' : 'PM'}`
 
 /** One screen of setup: which exam, which stage, by when, how many hours, and a reminder. Everything can be changed later. */
-export default function PrepSetup({ templates, templateId, profile, onSave, onClose }: {
+export default function PrepSetup({ templates, templateId, profile, optionals = [], onSave, onClose }: {
   templates: ExamTemplate[]; templateId: string | null; profile: PrepProfile
+  optionals?: SyllabusNode[] // optional subjects of the current exam, if it has any
   onSave: (next: Partial<PrepProfile> & { templateId?: string }) => Promise<boolean>
   onClose: () => void
 }) {
@@ -25,6 +27,7 @@ export default function PrepSetup({ templates, templateId, profile, onSave, onCl
   const [hours, setHours] = useState(profile.dailyMinutes ? Math.round(profile.dailyMinutes / 60) : 6)
   const [reminder, setReminder] = useState(profile.reminderEnabled)
   const [hour, setHour] = useState(profile.reminderHour)
+  const [optional, setOptional] = useState(profile.optionalSubjectId ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -34,7 +37,7 @@ export default function PrepSetup({ templates, templateId, profile, onSave, onCl
     // A new goal (exam, stage or date) starts a fresh plan from today; ticks are always kept.
     const restart = exam !== templateId || stage !== profile.targetStage || date !== profile.examDate || !profile.planStartOn
     if (reminder && pushSupported() && !(await pushIsOn())) await enablePush()
-    const ok = await onSave({ templateId: exam, targetStage: stage, examDate: date, dailyMinutes: Math.min(960, Math.max(15, hours * 60)), planStartOn: restart ? today : profile.planStartOn, reminderEnabled: reminder, reminderHour: hour })
+    const ok = await onSave({ templateId: exam, targetStage: stage, examDate: date, dailyMinutes: Math.min(960, Math.max(15, hours * 60)), planStartOn: restart ? today : profile.planStartOn, reminderEnabled: reminder, reminderHour: hour, optionalSubjectId: exam === templateId ? optional || null : null })
     setBusy(false)
     if (ok) onClose(); else setError('Could not save. Please try again.')
   }
@@ -53,6 +56,15 @@ export default function PrepSetup({ templates, templateId, profile, onSave, onCl
 
       <p className="mt-5 text-sm font-bold">Preparing for</p>
       <div className="mt-2 grid grid-cols-2 gap-2">{(['prelims', 'mains'] as const).map((s) => <button key={s} type="button" onClick={() => setStage(s)} aria-pressed={stage === s} className={chip(stage === s)}>{s === 'prelims' ? 'Prelims' : 'Mains'}</button>)}</div>
+
+      {exam === templateId && optionals.length > 0 && <>
+        <label className="mt-5 block text-sm font-bold" htmlFor="prep-optional">Optional subject</label>
+        <select id="prep-optional" value={optional} onChange={(e) => setOptional(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900">
+          <option value="">Not decided yet</option>
+          {optionals.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
+        </select>
+        <p className="mt-1 text-xs text-slate-500">Included in your Mains plan; the other optionals are hidden from your syllabus.</p>
+      </>}
 
       <label className="mt-5 block text-sm font-bold" htmlFor="prep-date">Finish by (exam date)</label>
       <input id="prep-date" type="date" min={addDays(today, 7)} value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900" />

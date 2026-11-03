@@ -58,5 +58,7 @@ describe('plan from settings', () => {
     expect(planFor(nodes, new Map(), settings, '2026-11-04')).toBeNull()
     const p = planFor(nodes, new Map(), { ...settings, examDate: '2026-11-14' }, '2026-11-04')!
     expect(p.units.map((u) => u.id)).toEqual(['G1'])
+    const withOpt = planFor(nodes, new Map(), { ...settings, examDate: '2026-11-14', optionalSubjectId: 'MJ' }, '2026-11-04')!
+    expect(withOpt.units.map((u) => u.id)).toEqual(['G1', 'OP1'])
   })
 })
