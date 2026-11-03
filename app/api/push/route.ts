@@ -31,12 +31,14 @@ function compose({ notification: n, actor, circle }: PushRequest) {
     goal_collaboration_accepted: `${who} joined your shared goal`,
     streak: 'Keep your streak alive',
     weekly_recap: 'Your week on GoalYaar',
+    prep_reminder: 'Your study plan for today',
   }
   const fallbackBody: Record<string, string> = {
     boost: 'Tap to see it.', comment: 'Tap to read and reply.', follow: 'Tap to see their profile.',
     nudge: 'One small step today?',
   }
   const url = n.kind === 'goal_collaboration_invite' ? '/notifications'
+    : n.kind === 'prep_reminder' ? '/prep/plan'
     : n.post_id ? `/feed?post=${n.post_id}`
     : n.goal_id ? `/goal/${n.goal_id}`
     : n.circle_id ? `/circles/${n.circle_id}`

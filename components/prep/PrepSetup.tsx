@@ -1,0 +1,75 @@
+'use client'
+
+import { useState } from 'react'
+import { Bell, X } from 'lucide-react'
+import { localDateString } from '@/lib/exams'
+import { addDays } from '@/lib/prep/revision'
+import { enablePush, pushIsOn, pushSupported } from '@/lib/push'
+import type { ExamTemplate, PrepProfile } from '@/lib/prep/usePrepData'
+
+export const EXAM_SHORT: Record<string, string> = { upsc_cse_v1: 'UPSC CSE', uppcs_v1: 'UPPCS', bpsc_v1: 'BPSC', jkpsc_cce_v1: 'JKPSC CCE' }
+const HOURS = [2, 4, 6, 8, 10]
+const QUICK = [['3 months', 91], ['5 months', 152], ['1 year', 365]] as const
+const hourLabel = (h: number) => `${((h + 11) % 12) + 1}:00 ${h < 12 ? 'AM' : 'PM'}`
+
+/** One screen of setup: which exam, which stage, by when, how many hours, and a reminder. Everything can be changed later. */
+export default function PrepSetup({ templates, templateId, profile, onSave, onClose }: {
+  templates: ExamTemplate[]; templateId: string | null; profile: PrepProfile
+  onSave: (next: Partial<PrepProfile> & { templateId?: string }) => Promise<boolean>
+  onClose: () => void
+}) {
+  const today = localDateString()
+  const [exam, setExam] = useState(templateId ?? templates[0]?.id ?? '')
+  const [stage, setStage] = useState<PrepProfile['targetStage']>(profile.targetStage)
+  const [date, setDate] = useState(profile.examDate ?? '')
+  const [hours, setHours] = useState(profile.dailyMinutes ? Math.round(profile.dailyMinutes / 60) : 6)
+  const [reminder, setReminder] = useState(profile.reminderEnabled)
+  const [hour, setHour] = useState(profile.reminderHour)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const save = async () => {
+    if (!date || date <= today) { setError('Pick a target date in the future.'); return }
+    setBusy(true); setError(null)
+    // A new goal (exam, stage or date) starts a fresh plan from today; ticks are always kept.
+    const restart = exam !== templateId || stage !== profile.targetStage || date !== profile.examDate || !profile.planStartOn
+    if (reminder && pushSupported() && !(await pushIsOn())) await enablePush()
+    const ok = await onSave({ templateId: exam, targetStage: stage, examDate: date, dailyMinutes: Math.min(960, Math.max(15, hours * 60)), planStartOn: restart ? today : profile.planStartOn, reminderEnabled: reminder, reminderHour: hour })
+    setBusy(false)
+    if (ok) onClose(); else setError('Could not save. Please try again.')
+  }
+
+  const chip = (active: boolean) => `rounded-xl border px-3 py-2.5 text-sm font-bold transition ${active ? 'border-amber-500 bg-amber-500/10 text-amber-800 dark:text-amber-300' : 'border-slate-200 dark:border-slate-700'}`
+
+  return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center" onClick={onClose}>
+    <div role="dialog" aria-modal="true" aria-label="Plan your preparation" onClick={(e) => e.stopPropagation()} className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 pb-8 shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1"><h2 className="text-lg">Plan your preparation</h2><p className="text-sm text-slate-500">Takes 30 seconds. You can change it any time.</p></div>
+        <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-4 w-4" /></button>
+      </div>
+
+      <p className="mt-5 text-sm font-bold">Exam</p>
+      <div className="mt-2 grid grid-cols-2 gap-2">{templates.map((t) => <button key={t.id} type="button" onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={chip(exam === t.id)}>{EXAM_SHORT[t.code] ?? t.name}</button>)}</div>
+
+      <p className="mt-5 text-sm font-bold">Preparing for</p>
+      <div className="mt-2 grid grid-cols-2 gap-2">{(['prelims', 'mains'] as const).map((s) => <button key={s} type="button" onClick={() => setStage(s)} aria-pressed={stage === s} className={chip(stage === s)}>{s === 'prelims' ? 'Prelims' : 'Mains'}</button>)}</div>
+
+      <label className="mt-5 block text-sm font-bold" htmlFor="prep-date">Finish by (exam date)</label>
+      <input id="prep-date" type="date" min={addDays(today, 7)} value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900" />
+      <div className="mt-2 flex flex-wrap gap-2">{QUICK.map(([label, days]) => <button key={label} type="button" onClick={() => setDate(addDays(today, days))} className="rounded-full border border-slate-200 px-3 py-1 text-xs font-bold dark:border-slate-700">In {label}</button>)}</div>
+
+      <p className="mt-5 text-sm font-bold">Study hours a day</p>
+      <div className="mt-2 grid grid-cols-5 gap-2">{HOURS.map((h) => <button key={h} type="button" onClick={() => setHours(h)} aria-pressed={hours === h} className={chip(hours === h)}>{h}h</button>)}</div>
+
+      <div className="mt-5 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+        <label className="flex items-center gap-3"><Bell className="h-5 w-5 shrink-0 text-amber-600" /><span className="min-w-0 flex-1 text-sm"><b>Daily study reminder</b><span className="block text-xs text-slate-500">Today&apos;s target and revisions due. Skipped on days you have already logged.</span></span>
+          <input type="checkbox" checked={reminder} onChange={(e) => setReminder(e.target.checked)} className="h-5 w-5 accent-amber-500" /></label>
+        {reminder && <label className="mt-3 flex items-center justify-between gap-3 text-sm">At<select value={hour} onChange={(e) => setHour(Number(e.target.value))} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900">{Array.from({ length: 19 }, (_, i) => i + 5).map((h) => <option key={h} value={h}>{hourLabel(h)}</option>)}</select></label>}
+      </div>
+
+      {error && <p role="alert" className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
+      <button type="button" disabled={busy || !exam} onClick={() => void save()} className="mt-5 w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 shadow-sm disabled:opacity-60">{busy ? 'Saving…' : 'Make my plan'}</button>
+      <p className="mt-2 text-center text-xs text-slate-500">Ticks are saved per exam, so switching back later loses nothing.</p>
+    </div>
+  </div>
+}
