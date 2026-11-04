@@ -120,3 +120,25 @@ Tests: 46/46 unit tests, strict type-check of `lib/prep`, `supabase/tests/prep_m
 | Vercel production build | See PR |
 
 Run order: … `202611090001`, then `202611090002_prep_mentor_weekly_mocks.sql`, then `202611090003_prep_cat_template.sql`.
+
+## Round 5 (4 Nov 2026, branch `prep-round5`): why people stop, and the recommendations
+Simple fixes for the reasons an aspirant would stop:
+| Reason | Fix |
+|---|---|
+| Logging takes longer than studying | "Already done? Tick all" per subject (with a confirmation), one-tap ticks on Today, timer that ticks on Done. |
+| Falling score feels like guilt | Today leads with ticked counts, not the index; overdue revisions show "+N points" each and "win back N points" (exact, `quickWins`). |
+| Missing a day breaks the streak | Today shows "5/7 days" with week dots; streak is secondary; one rest day a week. |
+| Optional buried among 26 | Mains tab asks once to pick the optional; the rest are hidden. |
+| Numbers feel made up | `/prep/how` explains every number in plain words; linked from Plan and Progress. |
+| Too many screens | Three screens with one nav (Plan · Syllabus · Progress); everything else opens from Progress; one setup sheet replaces the duplicate exam form. |
+
+Recommendations built:
+- **Answer review** (`prep_answer_reviews`, `prep_review_answer`): photo to the private `batch-proof` bucket, mentor marks and comments from the batch page, student is notified. Mentors see it even if not in the beta.
+- **Recall check on revision**: Remembered / Partly / Forgot sets the next gap (longer / same / 3 days). Trigger and offline logic updated.
+- **Current affairs by month** (`/prep/notes`): linked to topics, "Copy month".
+- **Study timer** on Plan, tied to a subtopic; "Done · tick" saves minutes and ticks; minutes appear in the weekly review.
+- **Consistency ranking** in the mentor view (study days, sharing students only).
+- **Official date presets**: UPSC Prelims 23 May 2027 and Mains from 20 Aug 2027 (UPSC calendar), CAT 29 Nov 2026, UPPCS Prelims 6 Dec 2026 (as reported; confirm). BPSC 72nd and JKPSC: not announced, no preset.
+- Not done: Hindi syllabus titles (needs a careful translation pass by a Hindi-medium aspirant).
+
+SQL: `202611100001_prep_reviews_recall.sql`. Tests: 53/53 unit; `prep_reviews_recall.sql` passes on the fresh and the existing database.

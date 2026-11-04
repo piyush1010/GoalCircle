@@ -26,7 +26,10 @@ export function applyLocally(cur: TopicState | undefined, nodeId: string, e: { k
   if (e.kind === 'studied' || e.kind === 'foundation' || e.kind === 'notes') {
     if (!s.nextRevisionOn && !isSubtopic) { s.intervalDays = nextIntervalDays(0); s.nextRevisionOn = addDays(day, s.intervalDays) }
   } else if (e.kind === 'revised' && (!s.lastRevisedOn || day > s.lastRevisedOn)) {
-    s.revisionCount += 1; s.lastRevisedOn = day; s.intervalDays = nextIntervalDays(s.revisionCount); s.nextRevisionOn = addDays(day, s.intervalDays)
+    const recall = e.details.recall
+    s.revisionCount += 1; s.lastRevisedOn = day
+    s.intervalDays = recall === 'little' ? nextIntervalDays(0) : recall === 'some' ? nextIntervalDays(Math.max(0, s.revisionCount - 1)) : nextIntervalDays(s.revisionCount)
+    s.nextRevisionOn = addDays(day, s.intervalDays)
   }
   return s
 }

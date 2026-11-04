@@ -16,6 +16,10 @@ import { weakTopics, weekReview, mistakeSummary, type WeekStats } from '@/lib/pr
 import { studyStreak } from '@/lib/prep/streak'
 import { examInfo, mockTrend } from '@/lib/prep/exam'
 import MentorShare from '@/components/prep/MentorShare'
+import AnswerReviews from '@/components/prep/AnswerReviews'
+import PrepNav from '@/components/prep/PrepNav'
+import PrepSetup from '@/components/prep/PrepSetup'
+import { optionalSubjects } from '@/lib/prep/pace'
 
 const card = 'rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900'
 const COVERAGE_LABEL: Record<string, string> = { syllabus_touched: 'Subtopics studied', foundation_completed: 'Topics completed', evidence_backed: 'Evidence-backed', revision_current: 'Revision current' }
@@ -30,17 +34,10 @@ export default function PrepProgressPage() {
   const [history, setHistory] = useState<Snapshot[]>([])
   const [logOpen, setLogOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
-  const [examDate, setExamDate] = useState('')
-  const [dailyHours, setDailyHours] = useState('')
-  const [savedProfile, setSavedProfile] = useState(false)
+  const [setupOpen, setSetupOpen] = useState(false)
   const today = localDateString()
 
   useEffect(() => { if (data.status === 'denied') router.replace('/dashboard') }, [data.status, router])
-  useEffect(() => {
-    if (data.status !== 'ready') return
-    const t = window.setTimeout(() => { setExamDate(data.profile.examDate ?? ''); setDailyHours(data.profile.dailyMinutes ? String(data.profile.dailyMinutes / 60) : '') }, 0)
-    return () => window.clearTimeout(t)
-  }, [data.status, data.profile])
 
   const view = useMemo(() => {
     if (data.status !== 'ready') return null
@@ -97,8 +94,8 @@ export default function PrepProgressPage() {
       <header className="mb-4 flex items-center gap-3">
         <Link href="/dashboard" aria-label="Back to Today" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
         <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Preparation</h1><p className="text-sm text-slate-500">{data.template?.name ?? 'Your exam'}{daysToExam !== null && daysToExam >= 0 ? ` · ${daysToExam} days to exam` : ''}</p></div>
-        <Link href="/prep" className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold dark:border-slate-600">Syllabus</Link>
       </header>
+      <PrepNav active="/prep/progress" />
 
       {/* Headline: band first, number second, with what overdue revision is costing */}
       <section className={card}>
@@ -111,6 +108,7 @@ export default function PrepProgressPage() {
             {lost > 0 && <div className="mt-3 flex items-start gap-2 rounded-xl bg-rose-500/10 px-3 py-2.5 text-sm text-rose-800 dark:text-rose-300"><TrendingDown className="mt-0.5 h-4 w-4 shrink-0" /><span>{overall.overdueTopics} overdue revision{overall.overdueTopics === 1 ? ' is' : 's are'} costing you <b>{lost} point{lost === 1 ? '' : 's'}</b>. Revise to get back to {overall.peak}. <Link href="/prep?filter=due" className="font-bold underline">See them</Link></span></div>}
           </>}
         <Why reasons={overall.reasons} />
+        <Link href="/prep/how" className="mt-1 inline-block text-xs font-bold text-slate-600 underline dark:text-slate-300">How every number is worked out</Link>
         {history.length > 1 && <div className="mt-3">
           <p className="text-xs font-semibold text-slate-500">Last {history.length} days</p>
           <div className="mt-1 flex h-14 items-end gap-[2px]" role="img" aria-label={`Preparation index over ${history.length} days`}>
@@ -188,28 +186,21 @@ export default function PrepProgressPage() {
           </>}
       </section>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <Link href="/prep/pyq" className={`${card} block`}><p className="text-sm font-bold">Past papers</p><p className="text-xs text-slate-500">Track every year&apos;s PYQ paper</p></Link>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <Link href="/prep/notes" className={`${card} block`}><p className="text-sm font-bold">Current affairs</p><p className="text-xs text-slate-500">Monthly notes</p></Link>
+        <Link href="/prep/pyq" className={`${card} block`}><p className="text-sm font-bold">Past papers</p><p className="text-xs text-slate-500">Year by year</p></Link>
         <Link href="/prep/mistakes" className={`${card} block`}><p className="text-sm font-bold">Mistake notebook</p><p className="text-xs text-slate-500">{view.mistakes.open.length} to revisit</p></Link>
       </div>
 
+      <AnswerReviews userId={data.userId} />
       <MentorShare userId={data.userId} />
 
-      {/* Setup: optional, one small card */}
-      <section className={`${card} mt-3`}>
-        <h2 className="text-base">Your exam</h2>
-        <p className="text-xs text-slate-500">Optional. Used for the countdown and to size your daily suggestions.</p>
-        <form className="mt-3 grid grid-cols-2 gap-2" onSubmit={async (e) => {
-          e.preventDefault()
-          const hours = Number(dailyHours)
-          const ok = await data.saveProfile({ examDate: examDate || null, dailyMinutes: Number.isFinite(hours) && hours > 0 ? Math.min(16, Math.max(0.25, hours)) * 60 : null })
-          setSavedProfile(ok); window.setTimeout(() => setSavedProfile(false), 2500)
-        }}>
-          <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Exam date<input type="date" value={examDate} min={today} onChange={(e) => setExamDate(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm normal-case dark:border-slate-700 dark:bg-slate-900" /></label>
-          <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Study hours a day<input inputMode="decimal" value={dailyHours} onChange={(e) => setDailyHours(e.target.value.replace(/[^\d.]/g, ''))} placeholder="e.g. 6" className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900" /></label>
-          <button type="submit" className="col-span-2 rounded-xl border border-slate-300 py-2.5 text-sm font-bold dark:border-slate-600">{savedProfile ? 'Saved' : 'Save'}</button>
-        </form>
-      </section>
+      {/* Exam, date, hours, reminder and language all live in one setup sheet */}
+      <button type="button" onClick={() => setSetupOpen(true)} className={`${card} mt-3 block w-full text-left`}>
+        <p className="text-sm font-bold">Exam, date and reminders</p>
+        <p className="text-xs text-slate-500">{data.template?.name ?? 'Your exam'}{data.profile.examDate ? ` · ${data.profile.examDate}` : ' · no date set'} · tap to change</p>
+      </button>
+      {setupOpen && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onClose={() => setSetupOpen(false)} />}
 
       <p className="mt-4 px-1 text-xs text-slate-500">These measures come only from what you log, using fixed, published rules (scoring {SCORING_VERSION}). They are not a prediction of selection or rank.</p>
 
@@ -242,7 +233,7 @@ function Metric({ label, ind }: { label: string; ind: Indicator }) {
   </div>
 }
 
-const WEEK_ROWS: [keyof WeekStats, string][] = [['studyDays', 'study days'], ['ticks', 'subtopics'], ['revisions', 'revisions'], ['pyqs', 'PYQs'], ['answers', 'answers'], ['newspaperDays', 'newspaper days']]
+const WEEK_ROWS: [keyof WeekStats, string][] = [['studyDays', 'study days'], ['minutes', 'min timed'], ['ticks', 'subtopics'], ['revisions', 'revisions'], ['pyqs', 'PYQs'], ['answers', 'answers'], ['newspaperDays', 'newspaper days']]
 
 function WeekCell({ label, now, before }: { label: string; now: number; before: number }) {
   const diff = now - before

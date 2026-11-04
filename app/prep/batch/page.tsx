@@ -6,6 +6,7 @@ import { ArrowLeft, Lock, ShieldCheck } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import { daysBetween } from '@/lib/prep/revision'
+import MentorReviews from '@/components/prep/MentorReviews'
 
 interface Row {
   name: string; shared: boolean; scope: 'nothing' | 'summary' | 'full'
@@ -38,6 +39,7 @@ export default function BatchPrepPage() {
 
   const shared = rows?.filter((r) => r.shared) ?? []
   const notShared = rows?.filter((r) => !r.shared) ?? []
+  const consistent = [...shared].filter((r) => (r.week?.days ?? 0) > 0).sort((a, b) => (b.week?.days ?? 0) - (a.week?.days ?? 0) || (b.week?.ticks ?? 0) - (a.week?.ticks ?? 0)).slice(0, 5)
 
   return <main className="mx-auto max-w-xl px-4 pb-28 pt-5">
     <header className="mb-4 flex items-center gap-3">
@@ -49,6 +51,14 @@ export default function BatchPrepPage() {
     {!rows && !error && <div className="space-y-3" aria-busy="true">{[1, 2, 3].map((k) => <div key={k} className="h-24 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}</div>}
 
     {rows && <p className="mb-3 flex items-start gap-2 rounded-xl bg-emerald-500/10 px-3 py-2.5 text-xs text-emerald-900 dark:text-emerald-200"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />Students choose what to share from their Progress screen. Numbers come only from what they log; they are not marks or predictions.</p>}
+
+    {circleId && rows && <MentorReviews circleId={circleId} />}
+
+    {consistent.length > 0 && <section className="my-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <h2 className="text-base">Most consistent this week</h2>
+      <p className="text-xs text-slate-500">Ranked by study days, not marks. Only students who share are included.</p>
+      <ol className="mt-2 space-y-1.5">{consistent.map((r, i) => <li key={`${r.name}-${i}`} className="flex items-center gap-3 text-sm"><span className="w-5 shrink-0 font-bold tabular-nums text-slate-400">{i + 1}</span><span className="min-w-0 flex-1 font-semibold">{r.name}</span><span className="flex gap-0.5" aria-label={`${r.week?.days ?? 0} of 7 days`}>{Array.from({ length: 7 }, (_, d) => <span key={d} className={`h-2 w-2 rounded-full ${d < (r.week?.days ?? 0) ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'}`} />)}</span></li>)}</ol>
+    </section>}
 
     <div className="space-y-3">{shared.map((r, i) => {
       const inactive = r.last_active ? daysBetween(r.last_active, today) : null

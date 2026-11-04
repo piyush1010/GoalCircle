@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { BookX, CalendarDays, Check, ChevronRight, Flame, GraduationCap, Newspaper, PenLine, Plus, RotateCcw, TrendingDown } from 'lucide-react'
+import { BookX, CalendarDays, Check, ChevronRight, GraduationCap, Newspaper, PenLine, Plus } from 'lucide-react'
+import RecallButton from '@/components/prep/RecallButton'
+import { quickWins } from '@/lib/prep/insights'
 import { supabase } from '@/utils/supabase'
 import { usePrepFeature } from '@/lib/prep/feature'
 import { usePrepData } from '@/lib/prep/usePrepData'
@@ -46,7 +48,11 @@ export default function PrepTodayCard() {
     const plan = draftPlan(planCandidates(data.nodes, states, today), data.profile.dailyMinutes ?? 120)
       .filter((p) => p.type !== 'revision_overdue' && p.type !== 'revision_due' && p.bucket !== 'can_defer')
     const pace = planFor(data.nodes, data.states, data.profile, today)
-    return { overall, due, plan, pace, streak: studyStreak(data.studyDays, today), touched: overall.touchedTopics, total: topics.length }
+    const wins = new Map(quickWins(data.nodes, data.states, today, 50).map((w) => [w.nodeId, w.points]))
+    due.sort((a, b) => (wins.get(b.n.id) ?? 0) - (wins.get(a.n.id) ?? 0) || b.r.daysOverdue - a.r.daysOverdue)
+    const subs = data.nodes.filter((n) => n.kind === 'subtopic' && !n.ownerId)
+    const ticked = subs.filter((n) => data.states.get(n.id)?.touchedOn).length
+    return { overall, due, plan, pace, wins, ticked, subtopics: subs.length, streak: studyStreak(data.studyDays, today), touched: overall.touchedTopics, total: topics.length }
   }, [data.status, data.nodes, data.states, data.profile, data.studyDays, today])
 
   // Remember today's target so the daily reminder can quote it.
@@ -57,7 +63,9 @@ export default function PrepTodayCard() {
   if (!enabled || data.status === 'denied') return null
   if (!view) return <div className="mt-3 h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" aria-busy="true" />
 
-  const { overall, due, plan, pace, streak } = view
+  const { overall, due, plan, pace, streak, wins } = view
+  const winBack = due.slice(0, 3).reduce((t, d) => t + (wins.get(d.n.id) ?? 0), 0)
+  const weekDays = streak.week.filter((d) => d.studied).length
   const examName = data.template ? EXAM_SHORT[data.template.code] ?? data.template.name : 'UPSC'
   const paceToday = pace && pace.days[0]?.date === today ? pace.days[0].units : []
   const exam = examInfo(data.template?.code)
@@ -77,7 +85,6 @@ export default function PrepTodayCard() {
     flash(ok ? (key === 'paper' ? `${exam.readingHabit} logged.` : 'Answer logged.') : 'Could not save.')
   }
   const paceActive = pace && (pace.status === 'on_track' || pace.status === 'slightly_behind' || pace.status === 'behind')
-  const lost = overall.value !== null && overall.peak !== null ? overall.peak - overall.value : 0
   const daysToExam = data.profile.examDate ? daysBetween(today, data.profile.examDate) : null
   const flash = (m: string) => { setToast(m); window.setTimeout(() => setToast(null), 3000) }
 
@@ -89,9 +96,8 @@ export default function PrepTodayCard() {
           <span className="flex items-center gap-2 text-base font-bold">{t('Preparation')} <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-800">Beta</span>{daysToExam !== null && daysToExam >= 0 && <span className="ml-auto text-xs font-semibold text-slate-500">{daysToExam} {t('days to exam')}</span>}</span>
           {overall.value === null
             ? <span className="block text-sm text-slate-500">{view.touched === 0 ? `${examName} syllabus ready: ${view.total} topics. Tick what you have studied.` : `Start ${5 - view.touched} more topic${5 - view.touched === 1 ? '' : 's'} to see your preparation level.`}</span>
-            : <span className="block text-sm"><b>{overall.band}</b> <span className="text-slate-500">· index {overall.value} · {view.touched} of {view.total} topics</span></span>}
-          {lost > 0 && <span className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400"><TrendingDown className="h-3.5 w-3.5" />{lost} point{lost === 1 ? '' : 's'} lost to {overall.overdueTopics} overdue revision{overall.overdueTopics === 1 ? '' : 's'}</span>}
-          {streak.current > 0 && <span className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400"><Flame className="h-3.5 w-3.5" />{streak.current} {t('day study streak')}{streak.studiedToday ? '' : ` · ${t('log today to keep it')}`}</span>}
+            : <span className="block text-sm"><b className="tabular-nums">{view.ticked}</b> <span className="text-slate-500">of {view.subtopics} {t('subtopics')} · {overall.band}</span></span>}
+          <span className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-slate-500" aria-label={`Studied ${weekDays} of the last 7 days`}>{streak.week.map((d) => <span key={d.date} className={`h-1.5 w-3 rounded-full ${d.studied ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'}`} />)}<span className="ml-1">{weekDays}/7 days{streak.current > 1 ? ` · ${streak.current} ${t('day study streak')}` : ''}</span></span>
         </span>
         <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
       </Link>
@@ -119,10 +125,10 @@ export default function PrepTodayCard() {
       </div>
 
       {due.length > 0 && <div className="border-t border-slate-100 px-4 py-3 dark:border-slate-800">
-        <p className="mb-2 text-xs font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400">{t('Revise today')}{due.length > 3 ? ` · ${due.length} due` : ''}</p>
+        <p className="mb-2 text-xs font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400">{t('Revise today')}{winBack > 0 ? ` · win back ${winBack} point${winBack === 1 ? '' : 's'}` : ''}{due.length > 3 ? ` · ${due.length} due` : ''}</p>
         <ul className="space-y-2">{due.slice(0, 3).map(({ n, r }) => <li key={n.id} className="flex items-center gap-3">
-          <span className="min-w-0 flex-1"><span className="line-clamp-1 text-sm font-semibold">{n.title}</span><span className="block text-xs text-slate-500">{r.status === 'due_today' ? t('Due today') : `${r.daysOverdue} ${t('days overdue')}`}</span></span>
-          <button type="button" disabled={busyId === n.id} onClick={async () => { setBusyId(n.id); const ok = await data.logEvent(n.id, 'revised'); setBusyId(null); flash(ok ? `Revised: ${n.title}` : 'Could not save.') }} className="flex shrink-0 items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-bold disabled:opacity-50 dark:border-slate-600"><RotateCcw className="h-3.5 w-3.5" />{t('Revised')}</button>
+          <span className="min-w-0 flex-1"><span className="line-clamp-1 text-sm font-semibold">{n.title}</span><span className="block text-xs text-slate-500">{r.status === 'due_today' ? t('Due today') : `${r.daysOverdue} ${t('days overdue')}`}{wins.get(n.id) ? <b className="text-emerald-700 dark:text-emerald-400"> · +{wins.get(n.id)}</b> : null}</span></span>
+          <RecallButton disabled={busyId === n.id} label={t('Revised')} onPick={async (recall) => { setBusyId(n.id); const ok = await data.logEvent(n.id, 'revised', { details: { recall } }); setBusyId(null); flash(ok ? (recall === 'little' ? `Saved. ${n.title} comes back in 3 days.` : `Revised: ${n.title}`) : 'Could not save.') }} />
         </li>)}</ul>
         {due.length > 3 && <Link href="/prep?filter=due" className="mt-2 block text-xs font-bold text-slate-600 dark:text-slate-300">See all {due.length} →</Link>}
       </div>}

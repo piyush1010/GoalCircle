@@ -30,6 +30,10 @@ describe('local apply mirrors the ledger trigger', () => {
     expect([sub.touchedOn, sub.nextRevisionOn]).toEqual(['2026-11-04', null])
     const rev = applyLocally(topic, 't', { kind: 'revised', details: {}, occurred_on: '2026-11-07' }, false)!
     expect([rev.revisionCount, rev.nextRevisionOn]).toEqual([1, '2026-11-14'])
+    const some = applyLocally(rev, 't', { kind: 'revised', details: { recall: 'some' }, occurred_on: '2026-11-14' }, false)!
+    expect([some.revisionCount, some.intervalDays]).toEqual([2, 7])
+    const little = applyLocally(some, 't', { kind: 'revised', details: { recall: 'little' }, occurred_on: '2026-11-21' }, false)!
+    expect([little.intervalDays, little.nextRevisionOn]).toEqual([3, '2026-11-24'])
     const undone = applyLocally(sub, 's', { kind: 'studied', details: { undo: true }, occurred_on: '2026-11-04' }, true)!
     expect(undone.touchedOn).toBeNull()
   })

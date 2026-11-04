@@ -70,8 +70,17 @@ export default function CirclePage() {
   const [progress, setProgress] = useState<Progress | null>(null)
 
   const prepOn = usePrepFeature()
+  const [answersWaiting, setAnswersWaiting] = useState(0)
   const isAdmin = !!circle && (circle.owner_id === userId || role === 'owner' || role === 'moderator')
   const isMember = isAdmin || !!role
+  // Answers students sent for review reach the mentor even if the mentor is not in the tracker beta.
+  useEffect(() => {
+    if (!isAdmin || !circleId) return
+    let alive = true
+    void supabase.from('prep_answer_reviews').select('id', { count: 'exact', head: true }).eq('circle_id', circleId).is('reviewed_at', null)
+      .then(({ count }) => { if (alive) setAnswersWaiting(count ?? 0) }, () => undefined)
+    return () => { alive = false }
+  }, [isAdmin, circleId])
 
   const loadDashboard = useCallback(async () => {
     const { data, error: rpcError } = await supabase.rpc('circle_dashboard', { target_circle: circleId, on_date: today })
@@ -239,7 +248,7 @@ export default function CirclePage() {
       {isAdmin && <MentorDashboard circleId={circleId} circleName={circle.name} today={today} task={task} rows={dashboard} inviteLink={inviteLink}
         onTaskSaved={(saved) => { setTask(saved); void loadDashboard() }} onTaskDeleted={() => { setTask(null); void loadDashboard() }} onChanged={() => void loadDashboard()} onCopyInvite={async () => { await navigator.clipboard.writeText(inviteLink); flash('Invite link copied') }} flash={flash} />}
 
-      {isAdmin && prepOn && <Link href={`/prep/batch?circle=${circleId}`} className="mt-3 flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold shadow-sm dark:border-slate-800 dark:bg-slate-900">Students&apos; preparation (beta)<span className="text-xs font-semibold text-slate-500">Shared with consent →</span></Link>}
+      {isAdmin && (prepOn || answersWaiting > 0) && <Link href={`/prep/batch?circle=${circleId}`} className="mt-3 flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold shadow-sm dark:border-slate-800 dark:bg-slate-900">Students&apos; preparation<span className="text-xs font-semibold text-slate-500">{answersWaiting > 0 ? `${answersWaiting} answer${answersWaiting === 1 ? '' : 's'} to review →` : 'Shared with consent →'}</span></Link>}
 
       {!isAdmin && isMember && userId && <StudentToday circleId={circleId} userId={userId} task={task} checkin={checkin} progress={progress} onSaved={(saved) => { setCheckin(saved); void loadProgress(); flash(saved.status === 'missed' ? 'Thanks for being honest. Tomorrow is a fresh start.' : 'Checked in. Your mentor can see it.') }} />}
 
