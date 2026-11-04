@@ -9,6 +9,12 @@ describe('exam info', () => {
   })
 })
 
+describe('HCS', () => {
+  it('uses the 2026 marking scheme', () => {
+    expect(netMarks(EXAMS.hpsc_hcs_v1.pyqPapers[0], 80, 60)).toEqual({ marks: 115, max: 200, accuracy: 75 })
+  })
+})
+
 describe('PYQ net marks', () => {
   it('applies negative marking', () => {
     expect(netMarks(EXAMS.upsc_cse_v1.pyqPapers[0], 80, 55)).toEqual({ marks: 93.5, max: 200, accuracy: 69 })
