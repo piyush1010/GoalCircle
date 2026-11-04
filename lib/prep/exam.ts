@@ -29,12 +29,43 @@ const CIVIL: Omit<ExamInfo, 'short' | 'pyqPapers' | 'presets'> = {
   readingHabit: 'Newspaper',
 }
 
+/** Teacher eligibility tests: Paper 1 (classes 1-5) or Paper 2 (classes 6-8), no negative marking. */
+const TET = (short: string, years: [number, number]): ExamInfo => ({
+  short, presets: [],
+  tabs: [{ root: 'PRE', label: 'Paper 1' }, { root: 'MAI', label: 'Paper 2' }],
+  targetStages: ['prelims', 'mains'], stageName: { prelims: 'Paper 1', mains: 'Paper 2' },
+  mockStages: [['prelims_gs', 'Paper 1', 150], ['mains', 'Paper 2', 150]],
+  mockSections: [{ name: 'CDP', max: 30 }, { name: 'Lang I', max: 30 }, { name: 'Lang II', max: 30 }, { name: 'Maths', max: 30 }, { name: 'EVS', max: 30 }],
+  pyqPapers: [{ code: 'PAPER1', label: 'Paper 1', questions: 150, plus: 1, minus: 0 }, { code: 'PAPER2', label: 'Paper 2', questions: 150, plus: 1, minus: 0 }], pyqYears: years,
+  answerWriting: false, readingHabit: 'Daily reading',
+})
+
 export const EXAMS: Record<string, ExamInfo> = {
   upsc_cse_v1: { ...CIVIL, short: 'UPSC CSE', presets: [{ label: 'Prelims 2027 · 23 May', date: '2027-05-23', stage: 'prelims', source: 'UPSC calendar 2027' }, { label: 'Mains 2027 · from 20 Aug', date: '2027-08-20', stage: 'mains', source: 'UPSC calendar 2027' }], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS I', questions: 100, plus: 2, minus: 0.66 }, { code: 'CSAT', label: 'CSAT', questions: 80, plus: 2.5, minus: 0.83 }] },
   uppcs_v1: { ...CIVIL, short: 'UPPCS', presets: [{ label: 'Prelims 2026 · 6 Dec', date: '2026-12-06', stage: 'prelims', source: 'UPPSC schedule as reported; confirm on uppsc.up.nic.in' }], pyqYears: [2013, 2025], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS I', questions: 150, plus: 1.33, minus: 0.44 }, { code: 'CSAT', label: 'CSAT', questions: 100, plus: 2, minus: 0.66 }] },
   bpsc_v1: { ...CIVIL, short: 'BPSC', presets: [], pyqYears: [2013, 2025], mockStages: [['prelims_gs', 'Prelims GS', 150], ['mains', 'Mains', 300], ['other', 'Other', 100]], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS', questions: 150, plus: 1, minus: 0.33 }] },
   jkpsc_cce_v1: { ...CIVIL, short: 'JKPSC CCE', presets: [], pyqYears: [2018, 2025], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS I', questions: 100, plus: 2, minus: 0.66 }, { code: 'CSAT', label: 'CSAT', questions: 80, plus: 2.5, minus: 0.83 }] },
   hpsc_hcs_v1: { ...CIVIL, short: 'HCS (Haryana)', presets: [], pyqYears: [2014, 2025], mockStages: [['prelims_gs', 'Prelims GS', 200], ['csat', 'CSAT', 200], ['mains', 'Mains', 100]], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS', questions: 100, plus: 2, minus: 0.25 }, { code: 'CSAT', label: 'CSAT', questions: 100, plus: 2, minus: 0.25 }] },
+  ssc_cgl_v1: {
+    short: 'SSC CGL', presets: [],
+    tabs: [{ root: 'PRE', label: 'Tier 1' }, { root: 'MAI', label: 'Tier 2' }],
+    targetStages: ['prelims', 'mains'], stageName: { prelims: 'Tier 1', mains: 'Tier 2' },
+    mockStages: [['prelims_gs', 'Tier 1', 200], ['mains', 'Tier 2', 390]],
+    mockSections: [{ name: 'Reasoning', max: 50 }, { name: 'GA', max: 50 }, { name: 'Quant', max: 50 }, { name: 'English', max: 50 }],
+    pyqPapers: [{ code: 'TIER1', label: 'Tier 1', questions: 100, plus: 2, minus: 0.5 }], pyqYears: [2017, 2025],
+    answerWriting: false, readingHabit: 'Newspaper',
+  },
+  bank_po_v1: {
+    short: 'Bank PO', presets: [],
+    tabs: [{ root: 'PRE', label: 'Prelims' }, { root: 'MAI', label: 'Mains' }],
+    targetStages: ['prelims', 'mains'], stageName: { prelims: 'Prelims', mains: 'Mains' },
+    mockStages: [['prelims_gs', 'Prelims', 100], ['mains', 'Mains', 200]],
+    mockSections: [{ name: 'English', max: 30 }, { name: 'Quant', max: 30 }, { name: 'Reasoning', max: 40 }],
+    pyqPapers: [{ code: 'PRELIMS', label: 'Prelims', questions: 100, plus: 1, minus: 0.25 }], pyqYears: [2017, 2025],
+    answerWriting: false, readingHabit: 'Newspaper',
+  },
+  ctet_v1: TET('CTET', [2016, 2025]),
+  uptet_v1: TET('UPTET', [2017, 2026]),
   cat_v1: {
     short: 'CAT',
     presets: [{ label: 'CAT 2026 · 29 Nov', date: '2026-11-29', stage: 'prelims', source: 'IIM CAT 2026 notice' }],
@@ -51,7 +82,7 @@ export const EXAMS: Record<string, ExamInfo> = {
 }
 
 /** Most common exam first: used wherever exams are listed. */
-export const EXAM_ORDER = ['upsc_cse_v1', 'uppcs_v1', 'bpsc_v1', 'hpsc_hcs_v1', 'jkpsc_cce_v1', 'cat_v1']
+export const EXAM_ORDER = ['upsc_cse_v1', 'uppcs_v1', 'bpsc_v1', 'hpsc_hcs_v1', 'jkpsc_cce_v1', 'ssc_cgl_v1', 'bank_po_v1', 'ctet_v1', 'uptet_v1', 'cat_v1']
 export const byExamOrder = <T extends { code: string }>(a: T, b: T) => (EXAM_ORDER.indexOf(a.code) + 1 || 99) - (EXAM_ORDER.indexOf(b.code) + 1 || 99)
 
 export const examInfo = (code: string | null | undefined): ExamInfo => EXAMS[code ?? ''] ?? EXAMS.upsc_cse_v1
