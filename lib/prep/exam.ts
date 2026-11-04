@@ -34,6 +34,7 @@ export const EXAMS: Record<string, ExamInfo> = {
   uppcs_v1: { ...CIVIL, short: 'UPPCS', presets: [{ label: 'Prelims 2026 · 6 Dec', date: '2026-12-06', stage: 'prelims', source: 'UPPSC schedule as reported; confirm on uppsc.up.nic.in' }], pyqYears: [2013, 2025], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS I', questions: 150, plus: 1.33, minus: 0.44 }, { code: 'CSAT', label: 'CSAT', questions: 100, plus: 2, minus: 0.66 }] },
   bpsc_v1: { ...CIVIL, short: 'BPSC', presets: [], pyqYears: [2013, 2025], mockStages: [['prelims_gs', 'Prelims GS', 150], ['mains', 'Mains', 300], ['other', 'Other', 100]], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS', questions: 150, plus: 1, minus: 0.33 }] },
   jkpsc_cce_v1: { ...CIVIL, short: 'JKPSC CCE', presets: [], pyqYears: [2018, 2025], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS I', questions: 100, plus: 2, minus: 0.66 }, { code: 'CSAT', label: 'CSAT', questions: 80, plus: 2.5, minus: 0.83 }] },
+  hpsc_hcs_v1: { ...CIVIL, short: 'HCS (Haryana)', presets: [], pyqYears: [2014, 2025], mockStages: [['prelims_gs', 'Prelims GS', 200], ['csat', 'CSAT', 200], ['mains', 'Mains', 100]], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS', questions: 100, plus: 2, minus: 0.25 }, { code: 'CSAT', label: 'CSAT', questions: 100, plus: 2, minus: 0.25 }] },
   cat_v1: {
     short: 'CAT',
     presets: [{ label: 'CAT 2026 · 29 Nov', date: '2026-11-29', stage: 'prelims', source: 'IIM CAT 2026 notice' }],
