@@ -102,7 +102,7 @@ export default function PrepProgressPage() {
       <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} />
 
       {/* One summary: where you stand, and this week */}
-      <section className={card}>
+      <section data-guide="progress-summary" className={card}>
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm text-slate-500">Preparation</p>
@@ -118,7 +118,7 @@ export default function PrepProgressPage() {
       </section>
 
       {/* Everything else: one line each, open for detail */}
-      <div className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
+      <div data-guide="progress-rows" className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
         <Row title="By stage" value={view.prelims.band ?? 'Not enough data'}>
           <div className="grid grid-cols-2 gap-2">
             {exam.targetStages.length === 1

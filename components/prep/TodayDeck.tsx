@@ -58,7 +58,7 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
   }
   const onScroll = () => { const el = rail.current; if (el) setIndex(Math.round(el.scrollLeft / (el.clientWidth * 0.88))) }
 
-  return <section aria-label="Today" className="mb-6">
+  return <section aria-label="Today" data-guide="deck" className="mb-6">
     <div className="mb-3 flex items-end justify-between px-1">
       <div><p className="text-sm text-slate-500">Today</p><p className="text-2xl font-semibold tracking-tight tabular-nums">{tasks.length ? `${done} of ${tasks.length}` : 'All clear'}</p></div>
       {tasks.length > 0 && <p className="pb-1 text-sm tabular-nums text-slate-500">{Math.min(index + 1, tasks.length)}/{tasks.length}</p>}
@@ -88,7 +88,7 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
           </article>)}
         </div>}
 
-    <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
+    <div data-guide="deck-actions" className="mt-4 grid grid-cols-3 gap-2 text-sm">
       <button type="button" onClick={() => setLogOpen(true)} className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 font-medium dark:border-slate-800"><Plus className="h-4 w-4" />Log</button>
       <Link href="/prep/plan" className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 font-medium dark:border-slate-800"><ListChecks className="h-4 w-4" />Plan</Link>
       <button type="button" disabled={done === 0} onClick={() => setShareOpen(true)} className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 font-medium disabled:opacity-40 dark:border-slate-800"><Share2 className="h-4 w-4" />Share</button>

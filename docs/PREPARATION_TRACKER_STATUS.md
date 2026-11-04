@@ -166,3 +166,6 @@ SQL: `202611100001_prep_reviews_recall.sql`. Tests: 53/53 unit; `prep_reviews_re
 - **New exams** (`202611100006`, `supabase/seed/more_exams_v1.py`): SSC CGL, Bank PO (IBPS/SBI), CTET, UPTET. **Exam requests** (`202611100007`): "My exam is not listed" in setup; grouped on the admin page.
 - **Simpler pages**: Progress is one summary card plus one-line rows that open for detail; Plan drops duplicate links; Syllabus drops the stat boxes.
 - Separate experiences: people preparing get the slides Today and Plan in the bar; everyone else keeps the goals Today. One account, switch any time in Settings.
+
+## Page help (4 Nov 2026, branch `page-guide`)
+`components/PageGuide.tsx` + `lib/guides.ts`: a small help button (bottom-left, above the bar) on Today, Plan, Syllabus, Progress, Mistakes, Past papers, Current affairs, Circles, a batch, Feed, Check-in and New goal. It opens "How this page works": 2–4 steps, each with a concrete example; steps that point at a section scroll there and highlight it. A first-visit hint can be dismissed; the button can be minimised to a slim edge tab, or turned off (Settings → Page help). Today picks the exam-prep or goals guide depending on what is on screen. No SQL.

@@ -99,7 +99,7 @@ export default function PrepPlanPage() {
           <button type="button" onClick={() => setSetup(true)} className="mt-4 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-slate-950">Set my target</button>
         </section>
       : <>
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <section data-guide="plan-target" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
               {plan.status === 'complete' ? <p className="text-2xl font-extrabold">All {plan.total} covered</p>
@@ -121,7 +121,7 @@ export default function PrepPlanPage() {
           {plan.perDay > 0 && hoursAvailable > 0 && hoursNeeded > hoursAvailable * 0.8 && plan.status !== 'complete' && <p className="mt-3 rounded-xl bg-rose-500/10 px-3 py-2 text-xs text-rose-800 dark:text-rose-300">At about {MIN_PER_SUBTOPIC} minutes a subtopic, this needs roughly {hoursNeeded.toFixed(1)} hours of new study a day plus revision, against your {hoursAvailable} hours. A later date or a few more hours would make it realistic.</p>}
         </section>
 
-        {plan.status !== 'complete' && plan.status !== 'past' && plan.status !== 'revision_window' && <section className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        {plan.status !== 'complete' && plan.status !== 'past' && plan.status !== 'revision_window' && <section data-guide="plan-today" className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between px-4 pt-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('Today')}</p><p className="text-xs font-bold tabular-nums text-slate-600 dark:text-slate-300">{Math.min(plan.doneToday, plan.perDay)} / {plan.perDay} {t('done')}</p></div>
           {targetMet && <p className="mx-4 mt-2 rounded-xl bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300">Today&apos;s target is done. Anything extra lowers tomorrow&apos;s.</p>}
           <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{doneTodayUnits.map(unitRow)}{todayUnits.map(unitRow)}</ul>

@@ -31,7 +31,7 @@ export default function StudyTimer({ units, onFinish }: { units: Unit[]; onFinis
     setBusy(false); update(null)
   }
 
-  return <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+  return <section data-guide="plan-timer" className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
     {!saved
       ? <div className="flex items-center gap-2">
           <Timer className="h-5 w-5 shrink-0 text-amber-600" />
