@@ -340,7 +340,7 @@ function LeaderboardPreview() {
 
       {/* PINNED CURRENT USER STANDING BAR */}
       {currentUser && (
-        <div className="fixed bottom-16 left-0 right-0 p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-amber-500/40 z-30">
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-amber-500/40 z-30">
           <div className="max-w-md mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="px-2 py-1 rounded-xl bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 text-xs font-bold">

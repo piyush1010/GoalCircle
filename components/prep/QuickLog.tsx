@@ -122,7 +122,7 @@ export default function QuickLog({ nodes, states, examCode, initialAction, initi
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-4 w-4" /></button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-4 pt-3">
+      <div className="flex-1 overflow-y-auto px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">
         {!action && <div className="grid grid-cols-2 gap-2">
           {actions.map(({ id, label: l, icon: Icon }) => <button key={id} type="button" onClick={() => setAction(id)} className="flex items-center gap-2.5 rounded-xl border border-slate-200 px-3 py-3 text-left text-sm font-bold transition hover:border-amber-500 dark:border-slate-700"><span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><Icon className="h-4 w-4" /></span>{l}</button>)}
         </div>}
@@ -153,7 +153,7 @@ export default function QuickLog({ nodes, states, examCode, initialAction, initi
 
         {action === 'mock' && <div className="space-y-3">
           <div className={`grid gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 ${MOCK_STAGES.length === 2 ? 'grid-cols-2' : MOCK_STAGES.length === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>{MOCK_STAGES.map(([id, l, max]) => <button key={id} type="button" onClick={() => setMock({ ...mock, stage: id, max: String(max) })} className={`rounded-lg py-2 text-xs font-bold ${mock.stage === id ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>{l}</button>)}</div>
-          <label className={label}>Test name (optional)<input value={mock.name} onChange={(e) => setMock({ ...mock, name: e.target.value })} maxLength={160} placeholder="e.g. Vision Test 12" className={`${input} mt-1 normal-case tracking-normal`} /></label>
+          <label className={label}>Test name (optional)<input value={mock.name} onChange={(e) => setMock({ ...mock, name: e.target.value })} maxLength={160} placeholder="e.g. Mock 12" className={`${input} mt-1 normal-case tracking-normal`} /></label>
           <div className="grid grid-cols-2 gap-2">
             <label className={label}>Score<input inputMode="decimal" value={mock.score} onChange={(e) => setMock({ ...mock, score: e.target.value.replace(/[^\d.-]/g, '') })} className={`${input} mt-1`} /></label>
             <label className={label}>Out of<input inputMode="decimal" value={mock.max} onChange={(e) => setMock({ ...mock, max: e.target.value.replace(/[^\d.]/g, '') })} className={`${input} mt-1`} /></label>
@@ -170,7 +170,7 @@ export default function QuickLog({ nodes, states, examCode, initialAction, initi
         {error && <p role="alert" className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
       </div>
 
-      {action && <div className="border-t border-slate-100 px-5 py-3 dark:border-slate-800">
+      {action && <div className="border-t border-slate-100 px-5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 dark:border-slate-800">
         <button type="button" disabled={!canSave || busy} onClick={() => void save()} className="w-full rounded-xl bg-amber-500 py-3 text-base font-bold text-slate-950 shadow-sm disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800">{busy ? 'Saving…' : 'Save'}</button>
       </div>}
     </div>

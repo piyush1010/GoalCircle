@@ -120,7 +120,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
   const totalStreaks = goals.reduce((acc, g) => acc + (g.streak_count || 0), 0);
 
   return (
-    <div className="min-h-screen text-slate-900 dark:text-slate-100 p-4 pb-24 max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen text-slate-900 dark:text-slate-100 p-4 pb-28 max-w-2xl mx-auto space-y-6">
       {/* Top Bar */}
       <div className="flex items-center justify-between">
         <Link

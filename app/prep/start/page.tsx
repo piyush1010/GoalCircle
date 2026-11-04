@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, BookOpenCheck, CalendarDays, Check, Gauge, GraduationCap, ListChecks } from 'lucide-react'
 import { localDateString } from '@/lib/exams'
 import { addDays } from '@/lib/prep/revision'
-import { examInfo } from '@/lib/prep/exam'
+import { byExamOrder, examInfo } from '@/lib/prep/exam'
 import { childrenMap } from '@/lib/prep/explorer'
 import { enablePush, pushIsOn, pushSupported } from '@/lib/push'
 import { usePrepData, type PrepProfile } from '@/lib/prep/usePrepData'
@@ -21,7 +21,6 @@ const EXAM_LABEL: Record<string, [string, string]> = {
   hpsc_hcs_v1: ['HCS', 'Haryana'],
   cat_v1: ['CAT', 'MBA entrance'],
 }
-const EXAM_ORDER = ['upsc_cse_v1', 'uppcs_v1', 'bpsc_v1', 'hpsc_hcs_v1', 'jkpsc_cce_v1', 'cat_v1']
 const LEVELS: [Level, string, string][] = [
   ['beginner', 'Just starting', 'Starting fresh with the syllabus'],
   ['intermediate', 'Some done', 'I have covered some subjects already'],
@@ -133,7 +132,7 @@ export default function PrepStartPage() {
     </div>
 
     <div className="mt-5 flex-1 space-y-2 pb-28">
-      {step === 1 && [...data.templates].sort((a, b) => (EXAM_ORDER.indexOf(a.code) + 1 || 99) - (EXAM_ORDER.indexOf(b.code) + 1 || 99)).map((t) => { const [name, sub] = EXAM_LABEL[t.code] ?? [t.name, '']; return <button key={t.id} type="button" onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={option(exam === t.id)}>
+      {step === 1 && [...data.templates].sort(byExamOrder).map((t) => { const [name, sub] = EXAM_LABEL[t.code] ?? [t.name, '']; return <button key={t.id} type="button" onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={option(exam === t.id)}>
         <span className="min-w-0 flex-1"><span className="block text-[15px] font-bold">{name}</span>{sub && <span className="block text-[13px] text-slate-500">{sub}</span>}</span>
         {exam === t.id && <Check className="h-5 w-5 shrink-0 text-amber-600" />}
       </button> })}
@@ -169,7 +168,7 @@ export default function PrepStartPage() {
           </button> })}</div>)}
     </div>
 
-    {error && <p role="alert" className="fixed inset-x-0 bottom-24 z-30 text-center text-sm font-semibold text-rose-600">{error}</p>}
+    {error && <p role="alert" className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 text-center text-sm font-semibold text-rose-600">{error}</p>}
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-5 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 backdrop-blur dark:border-slate-800 dark:bg-[#07101F]/95"><div className="mx-auto max-w-md">
     <button type="button" disabled={busy || (step === 1 && !exam) || (step === 2 && !date) || (step === 3 && !level)} onClick={() => void (step === 4 ? finish() : next())} className="w-full rounded-xl bg-amber-500 py-3.5 text-base font-bold text-slate-950 transition active:scale-[0.99] disabled:opacity-40">
       {busy ? 'Saving…' : step === 4 ? (done.size ? `Tick ${subjects.filter((s) => done.has(s.subject.id)).reduce((n, s) => n + s.units.length, 0)} subtopics and see my plan` : 'Skip, show my plan') : step === 3 && level === 'beginner' ? 'See my plan' : 'Continue'}

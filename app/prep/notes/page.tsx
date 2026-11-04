@@ -84,6 +84,6 @@ export default function NotesPage() {
       <div className="flex items-center justify-between"><h2 className="text-base">{monthName(ym)}</h2><button type="button" onClick={() => void copyMonth(ym, groups)} className="flex items-center gap-1 text-xs font-bold text-slate-600 dark:text-slate-300"><Copy className="h-3.5 w-3.5" />Copy month</button></div>
       {[...groups].map(([topic, list]) => <div key={topic} className="mt-2"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">{topic}</p><ul className="mt-1 space-y-1 text-sm">{list.map((n) => <li key={n.id}>· {n.title} <span className="text-xs text-slate-500">({KIND[n.kind] ?? n.kind})</span></li>)}</ul></div>)}
     </section>)}
-    {toast && <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
+    {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
   </main>
 }

@@ -66,7 +66,7 @@ export default function PyqPage() {
       setToast(`${open.paper.label} ${open.year} saved.`)
       return true
     }} />}
-    {toast && <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
+    {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
   </main>
 }
 
@@ -80,7 +80,7 @@ function PyqSheet({ paper, year, previous, onClose, onSave }: { paper: PyqPaper;
   const preview = valid ? netMarks(paper, a, c) : null
   const input = 'mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900'
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center" onClick={onClose}>
-    <div role="dialog" aria-modal="true" aria-label={`${paper.label} ${year}`} onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl bg-white p-5 pb-8 shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
+    <div role="dialog" aria-modal="true" aria-label={`${paper.label} ${year}`} onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl bg-white p-5 pb-[calc(2rem+env(safe-area-inset-bottom))] shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
       <div className="flex items-start gap-3"><div className="min-w-0 flex-1"><h2 className="text-lg">{paper.label} {year}</h2><p className="text-sm text-slate-500">{paper.questions} questions{previous ? ` · last done ${previous.attempted_on}` : ''}</p></div>
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-4 w-4" /></button></div>
       <div className="mt-4 grid grid-cols-2 gap-2">

@@ -50,7 +50,7 @@ export default function ResetPasswordPage() {
   const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm outline-none focus:border-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:focus:border-slate-300'
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4 pb-24">
+    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4 pb-28">
       <section className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
         <LogoMark size={44} className="mb-4" />
         <h1 className="text-xl font-bold tracking-tight">Set a new password</h1>

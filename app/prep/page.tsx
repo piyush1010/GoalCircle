@@ -183,7 +183,7 @@ export default function PrepExplorerPage() {
       />}
 
       {confirmBulk && <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center" onClick={() => setConfirmBulk(null)}>
-        <div role="dialog" aria-modal="true" aria-label="Tick all" onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl bg-white p-5 pb-8 shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
+        <div role="dialog" aria-modal="true" aria-label="Tick all" onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl bg-white p-5 pb-[calc(2rem+env(safe-area-inset-bottom))] shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
           <h2 className="text-lg">Tick all of {confirmBulk.title}?</h2>
           <p className="mt-1 text-sm text-slate-500">{confirmBulk.ids.length} subtopics will be marked as studied today, and revision dates will start. Only do this for what you have genuinely covered; you can untick any of them later.</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
@@ -193,7 +193,7 @@ export default function PrepExplorerPage() {
         </div>
       </div>}
 
-      {toast && <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
+      {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
     </main>
   )
 }
@@ -247,7 +247,7 @@ function TopicSheet({ node, path, state, states, today, share, subtopics, custom
   }, [onClose])
 
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center" onClick={onClose}>
-    <div role="dialog" aria-modal="true" aria-label={node.title} onClick={(e) => e.stopPropagation()} className="max-h-[88vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 pb-8 shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
+    <div role="dialog" aria-modal="true" aria-label={node.title} onClick={(e) => e.stopPropagation()} className="max-h-[88vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 pb-[calc(2rem+env(safe-area-inset-bottom))] shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">{path && <p className="text-xs font-semibold text-slate-500">{path}</p>}<h2 className="mt-0.5 text-lg leading-snug">{node.title}</h2></div>
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-4 w-4" /></button>

@@ -50,6 +50,10 @@ export const EXAMS: Record<string, ExamInfo> = {
   },
 }
 
+/** Most common exam first: used wherever exams are listed. */
+export const EXAM_ORDER = ['upsc_cse_v1', 'uppcs_v1', 'bpsc_v1', 'hpsc_hcs_v1', 'jkpsc_cce_v1', 'cat_v1']
+export const byExamOrder = <T extends { code: string }>(a: T, b: T) => (EXAM_ORDER.indexOf(a.code) + 1 || 99) - (EXAM_ORDER.indexOf(b.code) + 1 || 99)
+
 export const examInfo = (code: string | null | undefined): ExamInfo => EXAMS[code ?? ''] ?? EXAMS.upsc_cse_v1
 
 /** Net marks for a past paper under the paper's marking scheme (approximate: ignores questions without negative marking). */

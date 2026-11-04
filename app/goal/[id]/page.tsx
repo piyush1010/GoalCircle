@@ -200,7 +200,7 @@ export default function GoalDetailPage() {
   const consistencyRate = trackedCount ? Math.round(((doneCount + partialCount * 0.5) / trackedCount) * 100) : 0
 
   return (
-    <div className="min-h-screen text-slate-900 dark:text-slate-100 pb-24 pt-4 px-4 max-w-md mx-auto">
+    <div className="min-h-screen text-slate-900 dark:text-slate-100 pb-28 pt-4 px-4 max-w-md mx-auto">
       {actionError && <button type="button" role="alert" onClick={() => setActionError(null)} className="mb-3 w-full rounded-xl border border-rose-200 bg-rose-50 p-3 text-left text-xs font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{actionError} <span className="opacity-60">(tap to close)</span></button>}
       {/* Top Header */}
       <div className="flex items-center justify-between mb-4">

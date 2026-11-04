@@ -166,7 +166,7 @@ export default function PrepTodayCard() {
       {mistakeOpen && <MistakeSheet nodes={data.nodes} onSave={async (m) => { const ok = await data.addMistake(m); if (ok) flash('Added to your mistake notebook.'); return ok }} onClose={() => setMistakeOpen(false)} />}
       {setupOpen && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onClose={() => setSetupOpen(false)} />}
       {logOpen && <QuickLog nodes={data.nodes} states={data.states} examCode={data.template?.code} initialAction={logOpen.action} initialTopic={logOpen.topic} onClose={() => setLogOpen(null)} onLogged={flash} logEvent={data.logEvent} />}
-      {toast && <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
+      {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
     </section>
   )
 }
