@@ -28,7 +28,7 @@ export default function WelcomeBack() {
   if (daysAway === null) return null
 
   return (
-    <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-[#101B2D]">
+    <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-[#101B2D]">
       <button type="button" onClick={() => setDaysAway(null)} aria-label="Close" className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:text-slate-600"><X className="h-4 w-4" /></button>
       <div className="pr-6">
         <GoalieSays lines="welcomeBack" mood="wave" size={60} />

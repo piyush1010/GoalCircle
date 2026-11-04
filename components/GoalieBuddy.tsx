@@ -17,7 +17,7 @@ const PAGE_LINES: { match: (path: string) => boolean; line: string }[] = [
   { match: (path) => path.startsWith('/goal/'), line: 'One step at a time' },
 ]
 // Pages where Goalie already appears, or where it would distract.
-const HIDDEN_ON = ['/check-in', '/focus', '/create-goal', '/settings', '/login', '/signup', '/circles/']
+const HIDDEN_ON = ['/check-in', '/focus', '/create-goal', '/settings', '/login', '/signup', '/circles/', '/prep']
 
 /** Goalie floats in the corner on every page, says hi briefly, and can be poked. */
 export default function GoalieBuddy() {

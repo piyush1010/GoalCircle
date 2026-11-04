@@ -32,7 +32,7 @@ export default function MistakeSheet({ nodes, onSave, onClose }: {
   }
 
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center" onClick={onClose}>
-    <div role="dialog" aria-modal="true" aria-label="Add a mistake" onClick={(e) => e.stopPropagation()} className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 pb-8 shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
+    <div role="dialog" aria-modal="true" aria-label="Add a mistake" onClick={(e) => e.stopPropagation()} className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 pb-[calc(2rem+env(safe-area-inset-bottom))] shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1"><h2 className="text-lg">Add to mistake notebook</h2><p className="text-sm text-slate-500">From a mock, PYQ or answer. You will be reminded to revisit it.</p></div>
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-4 w-4" /></button>

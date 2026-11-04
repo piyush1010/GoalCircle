@@ -65,7 +65,7 @@ export default function PushPrompt() {
   }
 
   return (
-    <div role="dialog" aria-label="Turn on notifications" className="goalie-bubble fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-3xl border-[3px] border-slate-900 bg-white p-4 text-slate-900 shadow-[5px_5px_0_#101B2D]">
+    <div role="dialog" aria-label="Turn on notifications" className="goalie-bubble fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-3xl border-[3px] border-slate-900 bg-white p-4 text-slate-900 shadow-[5px_5px_0_#101B2D]">
       <div className="flex items-start gap-3">
         <GoalieBot size={52} mood="wave" />
         <div className="min-w-0 flex-1">

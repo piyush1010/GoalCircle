@@ -7,7 +7,7 @@ import { addDays } from '@/lib/prep/revision'
 import { enablePush, pushIsOn, pushSupported } from '@/lib/push'
 import type { ExamTemplate, PrepProfile } from '@/lib/prep/usePrepData'
 import type { SyllabusNode } from '@/lib/prep/types'
-import { examInfo } from '@/lib/prep/exam'
+import { byExamOrder, examInfo } from '@/lib/prep/exam'
 import { usePrepLang } from '@/lib/prep/i18n'
 
 export const EXAM_SHORT: Record<string, string> = { upsc_cse_v1: 'UPSC CSE', uppcs_v1: 'UPPCS', bpsc_v1: 'BPSC', jkpsc_cce_v1: 'JKPSC CCE', hpsc_hcs_v1: 'HCS (Haryana)', cat_v1: 'CAT (MBA)' }
@@ -51,7 +51,7 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
   const chip = (active: boolean) => `rounded-xl border px-3 py-2.5 text-sm font-bold transition ${active ? 'border-amber-500 bg-amber-500/10 text-amber-800 dark:text-amber-300' : 'border-slate-200 dark:border-slate-700'}`
 
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center" onClick={onClose}>
-    <div role="dialog" aria-modal="true" aria-label="Plan your preparation" onClick={(e) => e.stopPropagation()} className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 pb-8 shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
+    <div role="dialog" aria-modal="true" aria-label="Plan your preparation" onClick={(e) => e.stopPropagation()} className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 pb-[calc(2rem+env(safe-area-inset-bottom))] shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1"><h2 className="text-lg">{t('Plan your preparation')}</h2><p className="text-sm text-slate-500">Takes 30 seconds. You can change it any time.</p></div>
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-4 w-4" /></button>
@@ -64,7 +64,7 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
       </ol>}
 
       <p className="mt-5 text-sm font-bold">{t('Exam')}</p>
-      <div className="mt-2 grid grid-cols-2 gap-2">{templates.map((t) => <button key={t.id} type="button" onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={chip(exam === t.id)}>{EXAM_SHORT[t.code] ?? t.name}</button>)}</div>
+      <div className="mt-2 grid grid-cols-2 gap-2">{[...templates].sort(byExamOrder).map((t) => <button key={t.id} type="button" onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={chip(exam === t.id)}>{EXAM_SHORT[t.code] ?? t.name}</button>)}</div>
 
       {stagesFor.length > 1 && <>
         <p className="mt-5 text-sm font-bold">{t('Preparing for')}</p>

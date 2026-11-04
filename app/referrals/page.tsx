@@ -18,7 +18,7 @@ function ReferralsPreview() {
   }
 
   return (
-    <div className="max-w-xl mx-auto p-4 pb-24 text-slate-900 dark:text-slate-100">
+    <div className="max-w-xl mx-auto p-4 pb-28 text-slate-900 dark:text-slate-100">
       <div className="text-center py-8">
         <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
           <Share2 size={32} />

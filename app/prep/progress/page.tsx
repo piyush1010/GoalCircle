@@ -206,9 +206,9 @@ export default function PrepProgressPage() {
 
       <p className="mt-4 px-1 text-xs text-slate-500">These measures come only from what you log, using fixed, published rules (scoring {SCORING_VERSION}). They are not a prediction of selection or rank.</p>
 
-      <button type="button" onClick={() => setLogOpen(true)} aria-label="Quick log" className="fixed bottom-24 right-4 z-40 flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg"><Plus className="h-4 w-4" />Quick log</button>
+      <button type="button" onClick={() => setLogOpen(true)} aria-label="Quick log" className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-4 z-40 flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg"><Plus className="h-4 w-4" />Quick log</button>
       {logOpen && <QuickLog nodes={data.nodes} states={data.states} examCode={data.template?.code} onClose={() => setLogOpen(false)} onLogged={flash} logEvent={data.logEvent} />}
-      {toast && <div role="status" className="fixed inset-x-4 bottom-40 z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
+      {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(10rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
     </main>
   )
 }
