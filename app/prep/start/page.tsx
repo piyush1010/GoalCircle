@@ -21,6 +21,7 @@ const EXAM_LABEL: Record<string, [string, string]> = {
   hpsc_hcs_v1: ['HCS', 'Haryana'],
   cat_v1: ['CAT', 'MBA entrance'],
 }
+const EXAM_ORDER = ['upsc_cse_v1', 'uppcs_v1', 'bpsc_v1', 'hpsc_hcs_v1', 'jkpsc_cce_v1', 'cat_v1']
 const LEVELS: [Level, string, string][] = [
   ['beginner', 'Just starting', 'Starting fresh with the syllabus'],
   ['intermediate', 'Some done', 'I have covered some subjects already'],
@@ -111,12 +112,12 @@ export default function PrepStartPage() {
     setError(null); setStep(step + 1)
   }
 
-  const option = (active: boolean) => `flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition ${active ? 'border-amber-500 bg-amber-500/10' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'}`
+  const option = (active: boolean) => `flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${active ? 'border-amber-500 bg-amber-500/[0.06] ring-1 ring-amber-500' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'}`
   const Icon = [GraduationCap, CalendarDays, Gauge, ListChecks][step - 1]
   const title = ['What are you preparing for?', 'When is your exam?', 'Where are you right now?', 'What have you already finished?'][step - 1]
-  const subtitle = ['You can switch exams later; your progress for each is kept.', 'We work out how much to do each day to finish in time.', 'This sets how hard your daily plan pushes.', 'Tick whole subjects you have genuinely covered. You can change any of it later.'][step - 1]
+  const subtitle = ['You can change this later. Progress is saved for each exam.', 'We work out how much to do each day to finish in time.', 'This sets how hard your daily plan pushes.', 'Tick whole subjects you have genuinely covered. You can change any of it later.'][step - 1]
 
-  return <main className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-8 pt-5">
+  return <main className="mx-auto flex min-h-screen max-w-md flex-col px-5 pt-5">
     <div className="flex items-center gap-3">
       {step > 1 ? <button type="button" onClick={() => { setError(null); setStep(step - 1) }} aria-label="Back" className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></button>
         : <Link href="/dashboard" aria-label="Close" className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>}
@@ -125,15 +126,15 @@ export default function PrepStartPage() {
       <span className="w-10" />
     </div>
 
-    <div className="mt-8 text-center">
-      <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400"><Icon className="h-7 w-7" /></span>
-      <h1 className="mt-4 text-2xl font-extrabold leading-tight">{title}</h1>
+    <div className="mt-6">
+      <Icon className="h-6 w-6 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+      <h1 className="mt-3 text-[22px] font-extrabold leading-tight tracking-tight">{title}</h1>
       <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
     </div>
 
-    <div className="mt-6 flex-1 space-y-2.5">
-      {step === 1 && data.templates.map((t) => { const [name, sub] = EXAM_LABEL[t.code] ?? [t.name, '']; return <button key={t.id} type="button" onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={option(exam === t.id)}>
-        <span className="min-w-0 flex-1"><span className="block text-base font-bold">{name}</span>{sub && <span className="block text-sm text-slate-500">{sub}</span>}</span>
+    <div className="mt-5 flex-1 space-y-2 pb-28">
+      {step === 1 && [...data.templates].sort((a, b) => (EXAM_ORDER.indexOf(a.code) + 1 || 99) - (EXAM_ORDER.indexOf(b.code) + 1 || 99)).map((t) => { const [name, sub] = EXAM_LABEL[t.code] ?? [t.name, '']; return <button key={t.id} type="button" onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={option(exam === t.id)}>
+        <span className="min-w-0 flex-1"><span className="block text-[15px] font-bold">{name}</span>{sub && <span className="block text-[13px] text-slate-500">{sub}</span>}</span>
         {exam === t.id && <Check className="h-5 w-5 shrink-0 text-amber-600" />}
       </button> })}
 
@@ -168,9 +169,11 @@ export default function PrepStartPage() {
           </button> })}</div>)}
     </div>
 
-    {error && <p role="alert" className="mt-3 text-center text-sm font-semibold text-rose-600">{error}</p>}
-    <button type="button" disabled={busy || (step === 1 && !exam) || (step === 2 && !date) || (step === 3 && !level)} onClick={() => void (step === 4 ? finish() : next())} className="sticky bottom-4 mt-4 w-full rounded-2xl bg-amber-500 py-4 text-base font-extrabold text-slate-950 shadow-lg disabled:opacity-50">
+    {error && <p role="alert" className="fixed inset-x-0 bottom-24 z-30 text-center text-sm font-semibold text-rose-600">{error}</p>}
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-5 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 backdrop-blur dark:border-slate-800 dark:bg-[#07101F]/95"><div className="mx-auto max-w-md">
+    <button type="button" disabled={busy || (step === 1 && !exam) || (step === 2 && !date) || (step === 3 && !level)} onClick={() => void (step === 4 ? finish() : next())} className="w-full rounded-xl bg-amber-500 py-3.5 text-base font-bold text-slate-950 transition active:scale-[0.99] disabled:opacity-40">
       {busy ? 'Saving…' : step === 4 ? (done.size ? `Tick ${subjects.filter((s) => done.has(s.subject.id)).reduce((n, s) => n + s.units.length, 0)} subtopics and see my plan` : 'Skip, show my plan') : step === 3 && level === 'beginner' ? 'See my plan' : 'Continue'}
     </button>
+    </div></div>
   </main>
 }
