@@ -5,6 +5,7 @@ import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import type { Foundation, MockResult, SyllabusNode, TopicState } from './types'
 import type { Mistake, PrepEvent } from './insights'
+import { announcePrepActive } from './active'
 import { applyLocally, looksOffline, readQueue, writeQueue, type QueuedEvent } from './offline'
 
 const storage = () => { try { return typeof window === 'undefined' ? null : window.localStorage } catch { return null } }
@@ -196,6 +197,7 @@ export function usePrepData(enabled = true) {
       reminder_enabled: merged.reminderEnabled, reminder_hour: merged.reminderHour, optional_subject_node_id: next.templateId && next.templateId !== templateId ? null : merged.optionalSubjectId, active: next.active ?? (merged.saved ? merged.active : true), level: merged.level, updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' })
     if (error) return false
+    announcePrepActive(next.active ?? (merged.saved ? merged.active : true))
     setProfile({ ...merged, active: next.active ?? (merged.saved ? merged.active : true), optionalSubjectId: next.templateId && next.templateId !== templateId ? null : merged.optionalSubjectId, saved: true })
     if (target !== templateId) { setStatus('loading'); await load() }
     return true

@@ -3,6 +3,7 @@
 import { confirmAction } from '@/lib/confirm'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { usePrepActive } from '@/lib/prep/active'
 import { useRouter } from 'next/navigation'
 import { BookOpen, BriefcaseBusiness, ChevronRight, Dumbbell, Globe2, LockKeyhole, LogOut, MoreHorizontal, Plus, Repeat2, Target, Trash2, Users, X, type LucideIcon } from 'lucide-react'
 import { EXAMS, examLabel } from '@/lib/exams'
@@ -29,6 +30,7 @@ function CategoryIcon({ category, className = 'h-3.5 w-3.5' }: { category: Categ
 }
 
 export default function CirclesPage() {
+  const preparing = usePrepActive()
   const router = useRouter()
   const [circles, setCircles] = useState<CircleView[]>([])
   const [userId, setUserId] = useState<string | null>(null)
@@ -149,7 +151,7 @@ export default function CirclesPage() {
   }
 
   return <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-5">
-    <header className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800"><div><h1 className="text-xl font-bold">Circles</h1><p className="text-[11px] text-slate-500">Small groups for shared accountability</p></div><button onClick={() => setShowCreate(true)} className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-slate-50 px-3 py-2 text-xs font-bold text-white dark:text-slate-900"><Plus className="h-4 w-4" />Create</button></header>
+    <header className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800"><div><h1 className="text-xl font-bold">Circles</h1><p className="text-[11px] text-slate-500">Small groups for shared accountability</p></div><div className="flex items-center gap-2">{preparing && <Link href="/feed" className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold dark:border-slate-600">Feed</Link>}<button onClick={() => setShowCreate(true)} className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-slate-50 px-3 py-2 text-xs font-bold text-white dark:text-slate-900"><Plus className="h-4 w-4" />Create</button></div></header>
     {publicCircles.length > 0 && <div className="mb-3 grid grid-cols-2 rounded-xl bg-slate-200/70 p-1 dark:bg-slate-800"><button onClick={() => setTab('my')} className={`rounded-lg py-2 text-xs font-bold ${tab === 'my' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>My circles ({circles.filter((c) => c.joined).length})</button><button onClick={() => setTab('discover')} className={`rounded-lg py-2 text-xs font-bold ${tab === 'discover' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>Discover</button></div>}
     {tab === 'discover' && <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1">{categories.map((item) => <button key={item.id} onClick={() => setCategory(item.id)} className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[11px] font-extrabold ${category === item.id ? 'border-amber-500 bg-amber-500/10 text-amber-600' : 'border-slate-200 bg-white text-slate-500 dark:border-slate-800 dark:bg-[#101B2D]'}`}><CategoryIcon category={item.id} />{item.label}</button>)}</div>}
     {!loading && tab === 'my' && userId && circles.some((circle) => circle.joined && circle.visibility !== 'private') && <CircleChallenges userId={userId} circles={circles.filter((circle) => circle.joined).map((circle) => ({ id: circle.id, name: circle.name }))} />}
