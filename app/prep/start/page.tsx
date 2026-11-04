@@ -45,11 +45,15 @@ export default function PrepStartPage() {
   const [done, setDone] = useState<Set<string>>(new Set())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false) // "Add another exam": start blank and skip exams already added
 
   // Start from what is saved, so this also works for changing exam later.
   useEffect(() => {
     if (data.status !== 'ready') return
     const t = window.setTimeout(() => {
+      const add = new URLSearchParams(window.location.search).get('add') === '1'
+      setAdding(add)
+      if (add) return
       setExam((cur) => cur ?? (data.profile.saved ? data.templateId : null))
       setStage(data.profile.targetStage)
       setDate((cur) => cur || (data.profile.examDate && data.profile.examDate > today ? data.profile.examDate : ''))
@@ -113,8 +117,8 @@ export default function PrepStartPage() {
 
   const option = (active: boolean) => `flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${active ? 'border-amber-500 bg-amber-500/[0.06] ring-1 ring-amber-500' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'}`
   const Icon = [GraduationCap, CalendarDays, Gauge, ListChecks][step - 1]
-  const title = ['What are you preparing for?', 'When is your exam?', 'Where are you right now?', 'What have you already finished?'][step - 1]
-  const subtitle = ['You can change this later. Progress is saved for each exam.', 'We work out how much to do each day to finish in time.', 'This sets how hard your daily plan pushes.', 'Tick whole subjects you have genuinely covered. You can change any of it later.'][step - 1]
+  const title = [adding ? 'Add another exam' : 'What are you preparing for?', 'When is your exam?', 'Where are you right now?', 'What have you already finished?'][step - 1]
+  const subtitle = [adding ? 'Today will show all your exams together. Shared subtopics count for both.' : 'You can change this later. Progress is saved for each exam.', 'We work out how much to do each day to finish in time.', 'This sets how hard your daily plan pushes.', 'Tick whole subjects you have genuinely covered. You can change any of it later.'][step - 1]
 
   return <main className="mx-auto flex min-h-screen max-w-md flex-col px-5 pt-5">
     <div className="flex items-center gap-3">
@@ -132,8 +136,8 @@ export default function PrepStartPage() {
     </div>
 
     <div className="mt-5 flex-1 space-y-2 pb-28">
-      {step === 1 && [...data.templates].sort(byExamOrder).map((t) => { const [name, sub] = EXAM_LABEL[t.code] ?? [t.name, '']; return <button key={t.id} type="button" onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={option(exam === t.id)}>
-        <span className="min-w-0 flex-1"><span className="block text-[15px] font-bold">{name}</span>{sub && <span className="block text-[13px] text-slate-500">{sub}</span>}</span>
+      {step === 1 && [...data.templates].sort(byExamOrder).map((t) => { const [name, sub] = EXAM_LABEL[t.code] ?? [t.name, '']; const added = adding && data.plans.some((p) => p.templateId === t.id); return <button key={t.id} type="button" disabled={added} onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={`${option(exam === t.id)} ${added ? 'opacity-50' : ''}`}>
+        <span className="min-w-0 flex-1"><span className="block text-[15px] font-bold">{name}</span>{(sub || added) && <span className="block text-[13px] text-slate-500">{added ? 'Already in your plan' : sub}</span>}</span>
         {exam === t.id && <Check className="h-5 w-5 shrink-0 text-amber-600" />}
       </button> })}
 

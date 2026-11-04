@@ -18,6 +18,7 @@ import { examInfo, mockTrend } from '@/lib/prep/exam'
 import MentorShare from '@/components/prep/MentorShare'
 import AnswerReviews from '@/components/prep/AnswerReviews'
 import PrepNav from '@/components/prep/PrepNav'
+import ExamSwitcher from '@/components/prep/ExamSwitcher'
 import PrepSetup from '@/components/prep/PrepSetup'
 import { optionalSubjects } from '@/lib/prep/pace'
 
@@ -98,6 +99,7 @@ export default function PrepProgressPage() {
         <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Preparation</h1><p className="text-sm text-slate-500">{data.template?.name ?? 'Your exam'}{daysToExam !== null && daysToExam >= 0 ? ` · ${daysToExam} days to exam` : ''}</p></div>
       </header>
       <PrepNav active="/prep/progress" />
+      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} />
 
       {/* Headline: band first, number second, with what overdue revision is costing */}
       <section className={card}>
@@ -202,7 +204,7 @@ export default function PrepProgressPage() {
         <p className="text-sm font-bold">Exam, date and reminders</p>
         <p className="text-xs text-slate-500">{data.template?.name ?? 'Your exam'}{data.profile.examDate ? ` · ${data.profile.examDate}` : ' · no date set'} · tap to change</p>
       </button>
-      {setupOpen && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onClose={() => setSetupOpen(false)} />}
+      {setupOpen && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onRemove={data.plans.length > 1 && data.templateId ? () => data.removePlan(data.templateId!) : undefined} onClose={() => setSetupOpen(false)} />}
 
       <p className="mt-4 px-1 text-xs text-slate-500">These measures come only from what you log, using fixed, published rules (scoring {SCORING_VERSION}). They are not a prediction of selection or rank.</p>
 

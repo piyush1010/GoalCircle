@@ -16,14 +16,15 @@ const QUICK = [['3 months', 91], ['5 months', 152], ['1 year', 365]] as const
 const hourLabel = (h: number) => `${((h + 11) % 12) + 1}:00 ${h < 12 ? 'AM' : 'PM'}`
 
 /** One screen of setup: which exam, which stage, by when, how many hours, and a reminder. Everything can be changed later. */
-export default function PrepSetup({ templates, templateId, profile, optionals = [], onSave, onClose }: {
+export default function PrepSetup({ templates, templateId, profile, optionals = [], onSave, onClose, onRemove }: {
   templates: ExamTemplate[]; templateId: string | null; profile: PrepProfile
   optionals?: SyllabusNode[] // optional subjects of the current exam, if it has any
   onSave: (next: Partial<PrepProfile> & { templateId?: string }) => Promise<boolean>
   onClose: () => void
+  onRemove?: () => Promise<boolean> // stop preparing for this exam (only when there is more than one)
 }) {
   const today = localDateString()
-  const [exam, setExam] = useState(templateId ?? templates[0]?.id ?? '')
+  const [exam] = useState(templateId ?? templates[0]?.id ?? '')
   const [stage, setStage] = useState<PrepProfile['targetStage']>(profile.targetStage)
   const [date, setDate] = useState(profile.examDate ?? '')
   const [hours, setHours] = useState(profile.dailyMinutes ? Math.round(profile.dailyMinutes / 60) : 6)
@@ -64,7 +65,7 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
       </ol>}
 
       <p className="mt-5 text-sm font-bold">{t('Exam')}</p>
-      <div className="mt-2 grid grid-cols-2 gap-2">{[...templates].sort(byExamOrder).map((t) => <button key={t.id} type="button" onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={chip(exam === t.id)}>{EXAM_SHORT[t.code] ?? t.name}</button>)}</div>
+      <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-sm dark:border-slate-700"><span className="font-semibold">{EXAM_SHORT[templates.find((x) => x.id === exam)?.code ?? ''] ?? templates.find((x) => x.id === exam)?.name ?? 'Your exam'}</span><a href="/prep/start?add=1" className="text-xs font-bold text-amber-700 dark:text-amber-400">Add another exam</a></div>
 
       {stagesFor.length > 1 && <>
         <p className="mt-5 text-sm font-bold">{t('Preparing for')}</p>
@@ -101,6 +102,7 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
 
       {error && <p role="alert" className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
       <button type="button" disabled={busy || !exam} onClick={() => void save()} className="mt-5 w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 shadow-sm disabled:opacity-60">{busy ? '…' : t('Make my plan')}</button>
+      {onRemove && <button type="button" disabled={busy} onClick={async () => { setBusy(true); const ok = await onRemove(); setBusy(false); if (ok) onClose() }} className="mt-3 w-full py-2 text-center text-sm font-semibold text-rose-600">Stop preparing for this exam</button>}
       <p className="mt-2 text-center text-xs text-slate-500">Ticks are saved per exam, so switching back later loses nothing.</p>
     </div>
   </div>
