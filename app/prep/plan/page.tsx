@@ -8,6 +8,8 @@ import { optionalSubjects, planFor, type PacePlan, type Unit } from '@/lib/prep/
 import { retention } from '@/lib/prep/revision'
 import { usePrepData } from '@/lib/prep/usePrepData'
 import PrepSetup, { EXAM_SHORT } from '@/components/prep/PrepSetup'
+import PrepNav from '@/components/prep/PrepNav'
+import StudyTimer from '@/components/prep/StudyTimer'
 import { examInfo } from '@/lib/prep/exam'
 import { usePrepLang } from '@/lib/prep/i18n'
 
@@ -33,6 +35,7 @@ export default function PrepPlanPage() {
   const [why, setWhy] = useState(false)
   const [ahead, setAhead] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
   const [, , t] = usePrepLang()
   const today = localDateString()
 
@@ -73,6 +76,7 @@ export default function PrepPlanPage() {
       <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">{t('My plan')}</h1><p className="text-sm text-slate-500">{examName} {stageName}{data.profile.examDate ? ` · by ${new Date(`${data.profile.examDate}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}</p></div>
       <button type="button" onClick={() => setSetup(true)} aria-label="Change plan" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><Settings2 className="h-4 w-4" /></button>
     </header>
+    <PrepNav active="/prep/plan" />
 
     {!plan
       ? <section className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -95,7 +99,7 @@ export default function PrepPlanPage() {
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-amber-500" style={{ width: `${plan.total ? Math.round((plan.done / plan.total) * 100) : 0}%` }} /></div>
           <p className="mt-1.5 text-xs text-slate-500"><b className="tabular-nums text-slate-700 dark:text-slate-200">{plan.done}</b> of {plan.total} {stageName} subtopics ticked{plan.behindBy > 0 && plan.status !== 'complete' ? ` · ${plan.behindBy} behind schedule` : ''}</p>
           <button type="button" onClick={() => setWhy(!why)} aria-expanded={why} className="mt-2 flex items-center gap-1 text-xs font-bold text-slate-600 dark:text-slate-300"><HelpCircle className="h-4 w-4" />{t('How is this worked out?')}</button>
-          {why && <ul className="mt-2 space-y-1 rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">{plan.reasons.map((r) => <li key={r}>{r}</li>)}<li>The target is recalculated every day: miss a day and it rises a little, get ahead and it falls.</li><li>{data.profile.optionalSubjectId ? 'Your optional subject is included in the Mains plan.' : 'Optional papers are left out until you pick your optional in settings.'}</li></ul>}
+          {why && <ul className="mt-2 space-y-1 rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">{plan.reasons.map((r) => <li key={r}>{r}</li>)}<li><Link href="/prep/how" className="font-bold underline">How every number is worked out</Link></li><li>The target is recalculated every day: miss a day and it rises a little, get ahead and it falls.</li><li>{data.profile.optionalSubjectId ? 'Your optional subject is included in the Mains plan.' : 'Optional papers are left out until you pick your optional in settings.'}</li></ul>}
           {(plan.status === 'behind' || plan.status === 'slightly_behind') && <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60">
             <p className="text-sm">{t('Fell behind? It happens to everyone. Start fresh and spread what is left evenly over the days remaining.')}</p>
             <button type="button" disabled={busy !== null} onClick={async () => { setBusy('fresh'); await data.saveProfile({ planStartOn: today }); setBusy(null) }} className="mt-2 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50 dark:bg-slate-50 dark:text-slate-900">{t('Start fresh from today')}</button>
@@ -111,6 +115,11 @@ export default function PrepPlanPage() {
           {ahead && plan.days[1] && <ul className="divide-y divide-slate-100 border-t border-slate-100 dark:divide-slate-800 dark:border-slate-800">{plan.days[1].units.map(unitRow)}</ul>}
           {dueCount > 0 && <Link href="/prep?filter=due" className="flex items-center gap-2 border-t border-slate-100 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-slate-800 dark:text-rose-400"><RotateCcw className="h-4 w-4" />Plus {dueCount} revision{dueCount === 1 ? '' : 's'} due →</Link>}
         </section>}
+
+        {plan.status !== 'complete' && <StudyTimer units={[...todayUnits, ...(plan.days[1]?.units ?? [])].slice(0, 8)} onFinish={async (u, minutes, tickIt) => {
+          const ok = tickIt ? await data.tick(u.id, true, minutes) : await data.logEvent(null, 'studied', { minutes, details: { timer: true, unit: u.id } })
+          setToastMsg(ok ? `${minutes} min saved${tickIt ? ' and ticked' : ''}.` : 'Could not save.')
+        }} />}
 
         {plan.status === 'revision_window' && <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900">You are in your revision window. Focus on revising what you have covered and on mocks; {plan.remaining} subtopics are still unticked. <Link href="/prep?filter=due" className="font-bold text-amber-700 dark:text-amber-400">Revisions due →</Link></section>}
 
@@ -136,6 +145,7 @@ export default function PrepPlanPage() {
       <Link href="/prep/progress" className="rounded-xl border border-slate-300 py-2.5 text-center text-sm font-bold dark:border-slate-600">Progress</Link>
     </div>
 
+    {toastMsg && <button type="button" onClick={() => setToastMsg(null)} role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toastMsg}</button>}
     {setup && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onClose={() => setSetup(false)} />}
   </main>
 }

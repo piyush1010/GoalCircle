@@ -17,8 +17,8 @@ describe('weekly review', () => {
       ev('2026-10-20', 'studied', 's5'), // older than two weeks
     ]
     const { thisWeek, lastWeek } = weekReview(events, new Set(['s1', 's2', 's3', 's4', 's5']), '2026-11-04')
-    expect(thisWeek).toEqual({ studyDays: 4, ticks: 2, revisions: 1, pyqs: 25, answers: 2, mocks: 0, newspaperDays: 2 })
-    expect(lastWeek).toEqual({ studyDays: 1, ticks: 1, revisions: 0, pyqs: 0, answers: 0, mocks: 1, newspaperDays: 0 })
+    expect(thisWeek).toEqual({ minutes: 0, studyDays: 4, ticks: 2, revisions: 1, pyqs: 25, answers: 2, mocks: 0, newspaperDays: 2 })
+    expect(lastWeek).toEqual({ minutes: 0, studyDays: 1, ticks: 1, revisions: 0, pyqs: 0, answers: 0, mocks: 1, newspaperDays: 0 })
   })
 })
 
@@ -39,5 +39,17 @@ describe('mistake notebook', () => {
     const s = mistakeSummary([mistake('1', null, 'careless', null, '2026-11-03'), mistake('2', null, 'careless', '2026-11-04'), mistake('3', null, 'extreme_word', null, '2026-11-01')])
     expect(s.open.map((m) => m.id)).toEqual(['3', '1'])
     expect(s.topTypes[0]).toEqual({ category: 'careless', label: 'Careless slip', count: 2 })
+  })
+})
+
+describe('quick wins', () => {
+  it('lists overdue topics by points recovered and ignores ones on schedule', async () => {
+    const { quickWins } = await import('../insights')
+    const nodes = [node('A', 'topic'), node('B', 'topic'), node('C', 'topic')]
+    const overdue = (id: string, nextRevisionOn: string): TopicState => ({ ...state(id, 0, 0), touchedOn: '2026-09-01', revisionCount: 1, lastRevisedOn: '2026-09-10', intervalDays: 7, nextRevisionOn })
+    const states = new Map([['A', overdue('A', '2026-10-01')], ['B', overdue('B', '2026-10-25')], ['C', overdue('C', '2026-12-01')]])
+    const w = quickWins(nodes, states, '2026-11-04')
+    expect(w.map((x) => x.nodeId)).toEqual(['A', 'B'])
+    expect(w[0].points).toBeGreaterThan(w[1].points)
   })
 })

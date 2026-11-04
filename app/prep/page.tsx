@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Check, ChevronDown, HelpCircle, Plus, RotateCcw, Search, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, HelpCircle, Plus, Search, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import { childrenMap, rollups, stageExplanation, STAGE_LABEL, type Rollup } from '@/lib/prep/explorer'
@@ -11,6 +11,9 @@ import { studyShares, topicStage } from '@/lib/prep/scoring/v2'
 import { NODE_COLS, toNode, usePrepData } from '@/lib/prep/usePrepData'
 import type { Foundation, SyllabusNode, TopicStageName, TopicState } from '@/lib/prep/types'
 import { examInfo } from '@/lib/prep/exam'
+import { optionalSubjects } from '@/lib/prep/pace'
+import RecallButton from '@/components/prep/RecallButton'
+import PrepNav from '@/components/prep/PrepNav'
 
 type TabCode = string
 
@@ -37,6 +40,8 @@ export default function PrepExplorerPage() {
   const [open, setOpen] = useState<Set<string>>(new Set())
   const [selected, setSelected] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [bulk, setBulk] = useState<string | null>(null)
+  const [confirmBulk, setConfirmBulk] = useState<{ title: string; ids: string[] } | null>(null)
   const today = localDateString()
 
   // Deep links from Today and Progress: /prep?filter=due, /prep?topic=<id>
@@ -101,8 +106,8 @@ export default function PrepExplorerPage() {
       <header className="mb-4 flex items-center gap-3">
         <Link href="/dashboard" aria-label="Back to Today" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
         <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Syllabus</h1><p className="text-sm text-slate-500">{data.template?.name ?? 'Your exam'} · {tickedTotal} of {allSubs.length} subtopics ticked{dueTotal ? ` · ${dueTotal} revision due` : ''}</p></div>
-        <Link href="/prep/plan" className="shrink-0 rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold dark:border-slate-600">My plan</Link>
       </header>
+      <PrepNav active="/prep" />
 
       <div className={`grid gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 ${tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`} role="tablist">
         {tabs.map(({ root: code, label }) => <button key={code} type="button" role="tab" aria-selected={tab === code} onClick={() => setTab(code)} className={`rounded-lg py-2 text-sm font-bold transition ${tab === code ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}>{label}</button>)}
@@ -116,6 +121,13 @@ export default function PrepExplorerPage() {
 
       {tab !== 'NCERT' && rootRoll && <Progress roll={rootRoll} />}
       {tab !== 'NCERT' && tickedTotal === 0 && <p className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2.5 text-sm text-amber-900 dark:text-amber-200">Open any topic and tick the subtopics you have already studied. Your progress, revision dates and plan are built from these ticks.</p>}
+
+      {tab === 'MAI' && !data.profile.optionalSubjectId && optionalSubjects(nodes).length > 0 && <label className="mt-3 block rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm">
+        <span className="font-bold">Pick your optional</span> <span className="text-slate-600 dark:text-slate-300">to hide the other {optionalSubjects(nodes).length - 1} and add it to your plan.</span>
+        <select defaultValue="" onChange={async (e) => { if (!e.target.value) return; const ok = await data.saveProfile({ optionalSubjectId: e.target.value }); setToast(ok ? 'Optional saved.' : 'Set your exam date in My plan first.') }} className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900">
+          <option value="">Choose…</option>{optionalSubjects(nodes).map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
+        </select>
+      </label>}
 
       <div className="mt-3 space-y-3">
         {tab === 'NCERT'
@@ -137,7 +149,13 @@ export default function PrepExplorerPage() {
                 </button>
                 {isOpen(paper.id) && <div className="border-t border-slate-100 dark:border-slate-800">
                   {subjects.map(({ subject, topics }) => <div key={subject.id}>
-                    {subject.title !== paper.title && <p className="bg-slate-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-slate-500 dark:bg-slate-800/60">{subject.title}</p>}
+                    {(() => {
+                      const left = topics.flatMap((t) => { const subs = officialSubs(t.id); return subs.length ? subs : [t] }).filter((u) => !states.get(u.id)?.touchedOn)
+                      return <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 dark:bg-slate-800/60">
+                        <p className="min-w-0 flex-1 text-xs font-bold uppercase tracking-wide text-slate-500">{subject.title !== paper.title ? subject.title : 'Topics'}</p>
+                        {left.length > 0 && filter === 'all' && !q && <button type="button" disabled={bulk !== null} onClick={() => setConfirmBulk({ title: subject.title, ids: left.map((u) => u.id) })} className="shrink-0 text-[11px] font-bold text-amber-700 disabled:opacity-50 dark:text-amber-400">{bulk === subject.title ? 'Ticking…' : 'Already done? Tick all'}</button>}
+                      </div>
+                    })()}
                     <div className="divide-y divide-slate-100 dark:divide-slate-800">{topics.map(topicRow)}</div>
                   </div>)}
                 </div>}
@@ -161,6 +179,17 @@ export default function PrepExplorerPage() {
           setNodes((cur) => [...cur, toNode(row as unknown as Parameters<typeof toNode>[0])])
         }}
       />}
+
+      {confirmBulk && <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center" onClick={() => setConfirmBulk(null)}>
+        <div role="dialog" aria-modal="true" aria-label="Tick all" onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl bg-white p-5 pb-8 shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
+          <h2 className="text-lg">Tick all of {confirmBulk.title}?</h2>
+          <p className="mt-1 text-sm text-slate-500">{confirmBulk.ids.length} subtopics will be marked as studied today, and revision dates will start. Only do this for what you have genuinely covered; you can untick any of them later.</p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => setConfirmBulk(null)} className="rounded-xl border border-slate-300 py-3 text-sm font-bold dark:border-slate-600">Cancel</button>
+            <button type="button" onClick={async () => { const job = confirmBulk; setConfirmBulk(null); setBulk(job.title); let ok = true; for (const id of job.ids) ok = (await data.tick(id, true)) && ok; setBulk(null); setToast(ok ? `${job.ids.length} ticked in ${job.title}.` : 'Some could not be saved. Please try again.') }} className="rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950">Tick {confirmBulk.ids.length}</button>
+          </div>
+        </div>
+      </div>}
 
       {toast && <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
     </main>
@@ -239,7 +268,7 @@ function TopicSheet({ node, path, state, states, today, share, subtopics, custom
         : <button type="button" disabled={busy !== null} onClick={() => void run('self', () => onTick(node.id, !touched))} className={`mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-bold shadow-sm disabled:opacity-60 ${touched ? 'border border-slate-300 dark:border-slate-600' : 'bg-amber-500 text-slate-950'}`}><Check className="h-4 w-4" />{touched ? (node.kind === 'ncert_book' ? 'Read · tap to undo' : 'Studied · tap to undo') : (node.kind === 'ncert_book' ? 'Mark as read' : 'Mark as studied')}</button>}
 
       {node.kind !== 'ncert_book' && <>
-        <button type="button" disabled={busy !== null || !touched || revisedToday} onClick={() => void run('rev', () => onLog('revised', {}, 'Revision logged. Next one is scheduled.'))} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-300 py-3 text-sm font-bold disabled:opacity-40 dark:border-slate-600"><RotateCcw className="h-4 w-4" />{revisedToday ? 'Revised today' : 'I revised this topic'}</button>
+        <div className="mt-3"><RecallButton block disabled={busy !== null || !touched || revisedToday} label={revisedToday ? 'Revised today' : 'I revised this topic'} onPick={(recall) => run('rev', () => onLog('revised', { recall }, recall === 'little' ? 'Saved. It comes back in 3 days.' : recall === 'some' ? 'Saved. Same gap as last time.' : 'Revision logged. The next gap is longer.'))} /></div>
         {!touched && <p className="mt-2 text-xs text-slate-500">Revision unlocks after you tick at least one subtopic.</p>}
       </>}
 

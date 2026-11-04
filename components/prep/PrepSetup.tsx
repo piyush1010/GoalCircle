@@ -35,6 +35,7 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
   const [error, setError] = useState<string | null>(null)
 
   const stagesFor = examInfo(templates.find((t) => t.id === exam)?.code).targetStages
+  const presets = examInfo(templates.find((t) => t.id === exam)?.code).presets.filter((p) => p.date > today)
   const save = async () => {
     if (!date || date <= today) { setError('Pick a target date in the future.'); return }
     setBusy(true); setError(null)
@@ -56,6 +57,12 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-4 w-4" /></button>
       </div>
 
+      {!profile.saved && <ol className="mt-4 space-y-2 rounded-2xl bg-amber-500/10 p-3 text-sm">
+        <li><b>1. Tell us your exam and date.</b> We work out how many subtopics a day you need.</li>
+        <li><b>2. Tick what you study.</b> One tap per subtopic; tick whole subjects you have already finished.</li>
+        <li><b>3. Revise when reminded.</b> Your progress stays honest: it dips when revision is overdue and comes straight back when you revise.</li>
+      </ol>}
+
       <p className="mt-5 text-sm font-bold">{t('Exam')}</p>
       <div className="mt-2 grid grid-cols-2 gap-2">{templates.map((t) => <button key={t.id} type="button" onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={chip(exam === t.id)}>{EXAM_SHORT[t.code] ?? t.name}</button>)}</div>
 
@@ -75,6 +82,8 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
 
       <label className="mt-5 block text-sm font-bold" htmlFor="prep-date">{t('Finish by (exam date)')}</label>
       <input id="prep-date" type="date" min={addDays(today, 7)} value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900" />
+      {presets.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{presets.map((p) => <button key={p.date} type="button" onClick={() => { setDate(p.date); setStage(p.stage) }} title={p.source} className={`rounded-full border px-3 py-1 text-xs font-bold ${date === p.date ? 'border-amber-500 bg-amber-500/10 text-amber-800 dark:text-amber-300' : 'border-amber-500/40 text-amber-800 dark:text-amber-300'}`}>{p.label}</button>)}</div>}
+      {presets.length > 0 && <p className="mt-1 text-[11px] text-slate-500">Official dates as announced. Check the commission’s site before relying on them.</p>}
       <div className="mt-2 flex flex-wrap gap-2">{QUICK.map(([label, days]) => <button key={label} type="button" onClick={() => setDate(addDays(today, days))} className="rounded-full border border-slate-200 px-3 py-1 text-xs font-bold dark:border-slate-700">In {label}</button>)}</div>
 
       <p className="mt-5 text-sm font-bold">{t('Study hours a day')}</p>

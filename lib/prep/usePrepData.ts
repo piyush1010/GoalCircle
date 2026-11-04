@@ -70,14 +70,14 @@ export function usePrepData(enabled = true) {
       supabase.from('prep_topic_state').select(STATE_COLS),
       supabase.from('prep_mock_tests').select('*').order('taken_on', { ascending: false }).limit(60),
       supabase.from('prep_answer_logs').select('paper,count,timed,mentor_reviewed,written_on,node_id').order('written_on', { ascending: false }).limit(500),
-      supabase.from('prep_events').select('occurred_on,kind,node_id,quantity,details').gte('occurred_on', since).order('occurred_on', { ascending: false }).limit(3000),
+      supabase.from('prep_events').select('occurred_on,kind,node_id,quantity,details,minutes').gte('occurred_on', since).order('occurred_on', { ascending: false }).limit(3000),
       supabase.from('prep_mistakes').select('id,node_id,category,note,created_at,resolved_on').order('created_at', { ascending: false }).limit(500),
     ])
     if (n.error || s.error) { setStatus('error'); return }
     setTemplateId(template.id)
     setTemplates(list)
-    const evs = ((e.data ?? []) as { occurred_on: string; kind: string; node_id: string | null; quantity: number; details: Record<string, unknown> | null }[])
-      .map((r) => ({ occurredOn: r.occurred_on, kind: r.kind, nodeId: r.node_id, quantity: r.quantity, undo: r.details?.undo === true, habit: typeof r.details?.habit === 'string' ? r.details.habit : null }))
+    const evs = ((e.data ?? []) as { occurred_on: string; kind: string; node_id: string | null; quantity: number; details: Record<string, unknown> | null; minutes: number | null }[])
+      .map((r) => ({ occurredOn: r.occurred_on, kind: r.kind, nodeId: r.node_id, quantity: r.quantity, undo: r.details?.undo === true, habit: typeof r.details?.habit === 'string' ? r.details.habit : null, minutes: r.minutes }))
     setEvents(evs)
     setStudyDays([...new Set(evs.map((r) => r.occurredOn))])
     // Older databases may not have resolved_on yet; the notebook then simply starts empty.
@@ -116,7 +116,7 @@ export function usePrepData(enabled = true) {
     const offline = Boolean(error) && looksOffline(error?.message, typeof navigator === 'undefined' ? true : navigator.onLine)
     if (error && !offline) return false
     setStudyDays((cur) => (cur.includes(day) ? cur : [day, ...cur]))
-    setEvents((cur) => [{ occurredOn: day, kind, nodeId, quantity: row.quantity, undo: row.details.undo === true, habit: typeof row.details.habit === 'string' ? row.details.habit : null }, ...cur])
+    setEvents((cur) => [{ occurredOn: day, kind, nodeId, quantity: row.quantity, undo: row.details.undo === true, habit: typeof row.details.habit === 'string' ? row.details.habit : null, minutes: row.minutes }, ...cur])
     if (offline) {
       const q = readQueue(storage())
       q.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, ...row })
@@ -153,11 +153,11 @@ export function usePrepData(enabled = true) {
    * Tick or untick one study unit (an official subtopic, or a topic without subtopics).
    * Ticking a subtopic also marks its topic as started, which starts that topic's revision schedule.
    */
-  const tick = useCallback(async (nodeId: string, on: boolean) => {
+  const tick = useCallback(async (nodeId: string, on: boolean, minutes?: number) => {
     const node = nodes.find((n) => n.id === nodeId)
     if (!node) return false
     if (!on) return logEvent(nodeId, 'studied', { details: { undo: true } })
-    const ok = await logEvent(nodeId, 'studied')
+    const ok = await logEvent(nodeId, 'studied', minutes ? { minutes: Math.min(960, Math.round(minutes)) } : {})
     const parent = node.kind === 'subtopic' && node.parentId ? node.parentId : null
     if (ok && parent && !touchedRef.current.has(parent)) { touchedRef.current.add(parent); await logEvent(parent, 'studied') }
     return ok
