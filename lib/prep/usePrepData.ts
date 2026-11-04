@@ -191,7 +191,7 @@ export function usePrepData(enabled = true) {
     const q = readQueue(storage())
     setPending(q.length)
     if (!q.length) return
-    const { error } = await supabase.from('prep_events').insert(q.map(({ id: _id, ...e }: QueuedEvent) => e))
+    const { error } = await supabase.from('prep_events').insert(q.map((e: QueuedEvent) => ({ node_id: e.node_id, kind: e.kind, quantity: e.quantity, details: e.details, minutes: e.minutes, occurred_on: e.occurred_on })))
     if (error) return
     writeQueue(storage(), [])
     setPending(0)

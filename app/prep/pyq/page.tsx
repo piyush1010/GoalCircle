@@ -7,6 +7,7 @@ import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import { examInfo, netMarks, type PyqPaper } from '@/lib/prep/exam'
 import { usePrepData } from '@/lib/prep/usePrepData'
+import HelpButton from '@/components/HelpButton'
 
 interface Attempt { id: string; paper: string | null; year: number | null; attempted: number; correct: number; attempted_on: string }
 
@@ -38,6 +39,7 @@ export default function PyqPage() {
     <header className="mb-4 flex items-center gap-3">
       <Link href="/prep/progress" aria-label="Back to progress" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
       <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Past papers</h1><p className="text-sm text-slate-500">{exam.short} · solve a full year&apos;s paper in exam time, then log it</p></div>
+      <HelpButton />
     </header>
 
     {exam.pyqPapers.map((p) => {

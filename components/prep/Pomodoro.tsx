@@ -10,6 +10,8 @@ interface Saved { title: string; mode: Mode; phase: 'focus' | 'rest'; endsAt: nu
 
 const read = (): Saved | null => { try { const v = JSON.parse(window.localStorage.getItem(KEY) ?? 'null'); return v && typeof v.left === 'number' ? v : null } catch { return null } }
 const write = (v: Saved | null) => { try { if (v) window.localStorage.setItem(KEY, JSON.stringify(v)); else window.localStorage.removeItem(KEY) } catch { /* lives in memory only */ } }
+/** The current time, read in event handlers and timers, never during render. */
+const nowMs = () => Date.now()
 const clock = (ms: number) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` }
 
 function chime() {
@@ -35,7 +37,7 @@ export default function Pomodoro({ title, subtitle, onClose, onFinish }: { title
       const saved = read()
       const fresh: Saved = { title, mode: 'classic', phase: 'focus', endsAt: null, left: MODES.classic.focus * 60000, focusMs: 0, round: 1 }
       setS(saved && saved.title === title ? saved : fresh)
-      setNow(Date.now())
+      setNow(nowMs())
     }, 0)
     return () => window.clearTimeout(t)
   }, [title])
@@ -44,7 +46,7 @@ export default function Pomodoro({ title, subtitle, onClose, onFinish }: { title
   useEffect(() => {
     if (!s?.endsAt) return
     const id = window.setInterval(() => {
-      const t = Date.now()
+      const t = nowMs()
       setNow(t)
       if (s.endsAt && t >= s.endsAt) {
         chime()
@@ -60,12 +62,12 @@ export default function Pomodoro({ title, subtitle, onClose, onFinish }: { title
 
   if (!s) return null
   const m = MODES[s.mode]
-  const left = s.endsAt ? s.endsAt - (now || Date.now()) : s.left
+  const left = s.endsAt ? s.endsAt - now : s.left
   const total = (s.phase === 'focus' ? m.focus : m.rest) * 60000
   const progress = Math.min(1, Math.max(0, 1 - left / total))
   const running = Boolean(s.endsAt)
-  const save = (v: Saved) => { write(v); setS(v); setNow(Date.now()) }
-  const toggle = () => save(running ? { ...s, left: Math.max(0, left), endsAt: null } : { ...s, endsAt: Date.now() + s.left })
+  const save = (v: Saved) => { write(v); setS(v); setNow(nowMs()) }
+  const toggle = () => save(running ? { ...s, left: Math.max(0, left), endsAt: null } : { ...s, endsAt: nowMs() + s.left })
   const focusedMs = s.focusMs + (s.phase === 'focus' ? total - Math.max(0, left) : 0)
   const minutes = Math.max(1, Math.round(focusedMs / 60000))
   const finish = async (markDone: boolean) => { setBusy(true); await onFinish(minutes, markDone); write(null); setBusy(false); onClose() }
@@ -100,7 +102,7 @@ export default function Pomodoro({ title, subtitle, onClose, onFinish }: { title
       : <div className="mx-auto flex w-full max-w-sm items-center gap-3">
           <button type="button" onClick={() => setEnding(true)} className="flex-1 rounded-xl border border-slate-200 py-3.5 text-base font-semibold dark:border-slate-700">Finish</button>
           <button type="button" onClick={toggle} aria-label={running ? 'Pause' : 'Start'} className="grid h-16 w-16 place-items-center rounded-full bg-amber-500 text-slate-950">{running ? <Pause className="h-6 w-6" /> : <Play className="ml-0.5 h-6 w-6" />}</button>
-          <button type="button" onClick={() => save(s.phase === 'focus' ? { ...s, phase: 'rest', focusMs: focusedMs, left: m.rest * 60000, endsAt: Date.now() + m.rest * 60000 } : { ...s, phase: 'focus', round: s.round + 1, left: m.focus * 60000, endsAt: null })} className="flex-1 rounded-xl border border-slate-200 py-3.5 text-base font-semibold dark:border-slate-700">{s.phase === 'focus' ? 'Break' : 'Skip'}</button>
+          <button type="button" onClick={() => save(s.phase === 'focus' ? { ...s, phase: 'rest', focusMs: focusedMs, left: m.rest * 60000, endsAt: nowMs() + m.rest * 60000 } : { ...s, phase: 'focus', round: s.round + 1, left: m.focus * 60000, endsAt: null })} className="flex-1 rounded-xl border border-slate-200 py-3.5 text-base font-semibold dark:border-slate-700">{s.phase === 'focus' ? 'Break' : 'Skip'}</button>
         </div>}
   </div>
 }

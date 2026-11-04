@@ -50,7 +50,8 @@ export function todayTasks(input: {
 
   const mentor: Task[] = (input.mentor ?? []).map((m) => ({ key: `m:${m.circleId}`, kind: 'mentor', title: m.task, subtitle: `From your mentor · ${m.name}`, exam: null, circleId: m.circleId, done: m.done }))
   const goals: Task[] = (input.goals ?? []).map((g) => ({ key: `g:${g.id}`, kind: 'goal', title: g.title, subtitle: g.detail, exam: null, goalId: g.id, done: g.done }))
-  const all = [...mentor, ...openRevise.map(({ overdue: _o, ...t }) => t), ...doneRevise.map(({ overdue: _o, ...t }) => t), ...study, ...goals]
+  const strip = (t: Task & { overdue: number }): Task => ({ key: t.key, kind: t.kind, title: t.title, subtitle: t.subtitle, exam: t.exam, nodeId: t.nodeId, done: t.done })
+  const all = [...mentor, ...openRevise.map(strip), ...doneRevise.map(strip), ...study, ...goals]
   // Open tasks first, finished ones after, keeping the order within each group.
   return [...all.filter((t) => !t.done), ...all.filter((t) => t.done)]
 }

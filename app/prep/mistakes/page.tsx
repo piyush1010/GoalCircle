@@ -7,6 +7,7 @@ import { localDateString } from '@/lib/exams'
 import { MISTAKE_LABEL, mistakeSummary } from '@/lib/prep/insights'
 import { daysBetween } from '@/lib/prep/revision'
 import { usePrepData } from '@/lib/prep/usePrepData'
+import HelpButton from '@/components/HelpButton'
 import MistakeSheet from '@/components/prep/MistakeSheet'
 
 /** Mistake notebook: every wrong answer worth remembering, revisited until it sticks. */
@@ -31,6 +32,7 @@ export default function MistakesPage() {
       <Link href="/dashboard" aria-label="Back to Today" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
       <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Mistake notebook</h1><p className="text-sm text-slate-500">{summary.open.length} to revisit · {done.length} fixed</p></div>
       <button type="button" onClick={() => setAdding(true)} className="flex shrink-0 items-center gap-1 rounded-xl bg-amber-500 px-3 py-2 text-sm font-bold text-slate-950"><Plus className="h-4 w-4" />Add</button>
+      <HelpButton />
     </header>
 
     {summary.topTypes.length > 0 && <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">

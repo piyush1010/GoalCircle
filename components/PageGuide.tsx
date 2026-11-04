@@ -7,6 +7,7 @@ import { guideFor, type Guide } from '@/lib/guides'
 
 export const GUIDE_HIDDEN_KEY = 'goalyaar-guide-hidden'
 export const GUIDE_EVENT = 'goalyaar-guide-changed'
+export const GUIDE_OPEN_EVENT = 'goalyaar-guide-open'
 const TUCK_KEY = 'goalyaar-guide-tucked'
 const SEEN_KEY = 'goalyaar-guide-seen'
 
@@ -22,6 +23,8 @@ export default function PageGuide() {
   const [tucked, setTucked] = useState(false)
   const [open, setOpen] = useState(false)
   const [fresh, setFresh] = useState(false) // first visit to this page: a quiet hint next to the button
+  const [inline, setInline] = useState(false) // the page has its own help button in the header
+  useEffect(() => { const open = () => setOpen(true); window.addEventListener(GUIDE_OPEN_EVENT, open); return () => window.removeEventListener(GUIDE_OPEN_EVENT, open) }, [])
 
   useEffect(() => {
     const read = () => { try { setHidden(window.localStorage.getItem(GUIDE_HIDDEN_KEY) === '1'); setTucked(window.localStorage.getItem(TUCK_KEY) === '1') } catch { setHidden(false) } }
@@ -32,12 +35,15 @@ export default function PageGuide() {
 
   // Pick the guide once the page has rendered (some pages have two versions, e.g. Today with or without exam prep).
   useEffect(() => {
-    setOpen(false)
     const t = window.setTimeout(() => {
+      setOpen(false)
       const g = guideFor(pathname)
       setGuide(g)
+      setInline(Boolean(document.querySelector('[data-guide-inline]')))
       if (!g) return
       try { const seen: string[] = JSON.parse(window.localStorage.getItem(SEEN_KEY) || '[]'); setFresh(!seen.includes(pathname)) } catch { setFresh(false) }
+      // The first-visit hint steps aside after a few seconds so it never covers the page for long.
+      window.setTimeout(() => setFresh(false), 5000)
     }, 600)
     return () => window.clearTimeout(t)
   }, [pathname])
@@ -58,10 +64,10 @@ export default function PageGuide() {
   }
 
   return <>
-    {!open && (tucked
+    {!open && !inline && (tucked
       ? <button type="button" onClick={() => tuck(false)} aria-label="Show page help" className="fixed bottom-[calc(7rem+env(safe-area-inset-bottom))] left-0 z-30 h-12 w-2.5 rounded-r-full bg-slate-300/80 dark:bg-slate-600/80" />
       : <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-3 z-30 flex items-center gap-1.5">
-          <button type="button" onClick={() => { setOpen(true); markSeen() }} aria-label={`How ${guide.title} works`} className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white/95 text-slate-600 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-300"><HelpCircle className="h-5 w-5" /></button>
+          <button type="button" onClick={() => { setOpen(true); markSeen() }} aria-label={`How ${guide.title} works`} className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white/90 text-slate-500 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-400"><HelpCircle className="h-[18px] w-[18px]" /></button>
           {fresh && <span className="flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 py-1 pl-3 pr-1 text-xs text-slate-600 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-300"><button type="button" onClick={() => { setOpen(true); markSeen() }}>How this page works</button><button type="button" onClick={markSeen} aria-label="Dismiss" className="grid h-6 w-6 place-items-center rounded-full"><X className="h-3.5 w-3.5" /></button></span>}
           {!fresh && <button type="button" onClick={() => tuck(true)} aria-label="Tuck help to the edge" className="grid h-7 w-7 place-items-center rounded-full text-slate-400"><Minus className="h-4 w-4" /></button>}
         </div>)}
