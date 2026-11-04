@@ -196,3 +196,14 @@ html.dark input::placeholder, html.dark textarea::placeholder { color: var(--col
 html:not(.dark) :is(.rounded-2xl, .rounded-3xl).border.bg-white { box-shadow: 0 1px 2px rgb(16 27 45 / .05), 0 2px 6px rgb(16 27 45 / .04); }
 h1 { font-weight: 800; letter-spacing: -0.02em; }
 h2 { font-weight: 700; }
+
+/* Page help: the section a guide step points at, briefly */
+.guide-highlight {
+  outline: 2px solid rgb(245 158 11);
+  outline-offset: 4px;
+  border-radius: 1rem;
+  transition: outline-color 0.3s ease;
+  animation: guide-pulse 1.1s ease-in-out 2;
+}
+@keyframes guide-pulse { 50% { outline-color: rgb(245 158 11 / 0.25); } }
+@media (prefers-reduced-motion: reduce) { .guide-highlight { animation: none; } }

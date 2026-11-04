@@ -112,11 +112,11 @@ export default function PrepExplorerPage() {
       <PrepNav active="/prep" />
       <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} />
 
-      <div className={`grid gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 ${tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`} role="tablist">
+      <div className={`grid gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 ${tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`} role="tablist" data-guide="syllabus-tabs">
         {tabs.map(({ root: code, label }) => <button key={code} type="button" role="tab" aria-selected={tab === code} onClick={() => setTab(code)} className={`rounded-lg py-2 text-sm font-bold transition ${tab === code ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}>{label}</button>)}
       </div>
 
-      <div className="mt-3 flex items-center gap-2">
+      <div data-guide="syllabus-search" className="mt-3 flex items-center gap-2">
         <label className="relative flex-1"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><span className="sr-only">Find a topic</span>
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Find a topic or subtopic" className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm dark:border-slate-700 dark:bg-slate-900" /></label>
         {tab !== 'NCERT' && <button type="button" onClick={() => setFilter(filter === 'due' ? 'all' : 'due')} aria-pressed={filter === 'due'} className={`shrink-0 rounded-xl border px-3 py-2.5 text-sm font-bold ${filter === 'due' ? 'border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400' : 'border-slate-200 dark:border-slate-700'}`}>Due{dueTotal ? ` (${dueTotal})` : ''}</button>}
@@ -131,7 +131,7 @@ export default function PrepExplorerPage() {
         </select>
       </label>}
 
-      <div className="mt-3 space-y-3">
+      <div data-guide="syllabus-list" className="mt-3 space-y-3">
         {tab === 'NCERT'
           ? <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <p className="border-b border-slate-100 px-3 py-2.5 text-sm text-slate-500 dark:border-slate-800">Start at Class 12 and work back to Class 5. Mark a book as read when you finish it.</p>

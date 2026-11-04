@@ -9,6 +9,7 @@ import { resetTours } from '@/components/GuideTour'
 import GoalieToggle from '@/components/GoalieToggle'
 import PushToggle from '@/components/PushToggle'
 import PrepSettingsCard from '@/components/prep/PrepSettingsCard'
+import PageGuideToggle from '@/components/PageGuideToggle'
 import { supabase } from '@/utils/supabase'
 import { BarChart3, Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, Type, UserRound } from 'lucide-react'
 import Link from 'next/link'
@@ -349,6 +350,7 @@ export default function SettingsPage() {
       </button>
 
 
+      <PageGuideToggle />
       <GoalieToggle />
 
       <FeedbackCard />
