@@ -108,7 +108,7 @@ export function usePrepData(enabled = true) {
     if (!rows.length && prof) rows = [{ template_id: prof.template_id, exam_date: prof.exam_date, target_stage: prof.target_stage, plan_start_on: prof.plan_start_on, revision_buffer_pct: prof.revision_buffer_pct, level: prof.level ?? null, optional_subject_node_id: prof.optional_subject_node_id, active: true }]
     const planList: PrepPlan[] = rows.filter((r) => byId.has(r.template_id)).map((r) => ({
       templateId: r.template_id, code: byId.get(r.template_id)!.code, name: byId.get(r.template_id)!.name,
-      examDate: r.exam_date, targetStage: r.target_stage === 'mains' ? 'mains' : 'prelims', planStartOn: r.plan_start_on, revisionBufferPct: r.revision_buffer_pct ?? 15,
+      examDate: r.exam_date, targetStage: (r.target_stage === 'mains' ? 'mains' : 'prelims') as PrepPlan['targetStage'], planStartOn: r.plan_start_on, revisionBufferPct: r.revision_buffer_pct ?? 15,
       level: r.level ?? null, optionalSubjectId: r.optional_subject_node_id, active: r.active !== false,
     })).sort((a, b) => (a.examDate ?? '9999').localeCompare(b.examDate ?? '9999'))
     const activePlans = planList.filter((p) => p.active)
