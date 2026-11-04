@@ -8,6 +8,7 @@ import FeedbackCard from '@/components/FeedbackCard'
 import { resetTours } from '@/components/GuideTour'
 import GoalieToggle from '@/components/GoalieToggle'
 import PushToggle from '@/components/PushToggle'
+import PrepSettingsCard from '@/components/prep/PrepSettingsCard'
 import { supabase } from '@/utils/supabase'
 import { BarChart3, Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, Type, UserRound } from 'lucide-react'
 import Link from 'next/link'
@@ -237,6 +238,8 @@ export default function SettingsPage() {
         </div>
 
       </div>
+
+      <PrepSettingsCard />
 
       {/* SECTION 3: NOTIFICATIONS & REMINDERS */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">

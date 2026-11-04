@@ -34,6 +34,8 @@ export default function PrepTodayCard() {
   const [setupOpen, setSetupOpen] = useState(false)
   const [mistakeOpen, setMistakeOpen] = useState(false)
   const [, , t] = usePrepLang()
+  const [dismissed, setDismissed] = useState(true) // "Not now" on the exam invite, remembered on this device
+  useEffect(() => { const id = window.setTimeout(() => { try { setDismissed(window.localStorage.getItem('goalyaar-prep-invite') === 'dismissed') } catch { setDismissed(false) } }, 0); return () => window.clearTimeout(id) }, [])
   const today = localDateString()
 
   const view = useMemo(() => {
@@ -60,8 +62,21 @@ export default function PrepTodayCard() {
   const { saveTarget } = data
   useEffect(() => { if (perDay !== undefined) void saveTarget(perDay) }, [perDay, saveTarget])
 
-  if (!enabled || data.status === 'denied') return null
-  if (!view) return <div className="mt-3 h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" aria-busy="true" />
+  if (!enabled || data.status === 'denied' || data.status === 'error') return null
+  if (!view) return null
+  // Not preparing (yet): one small invitation, which "Not now" hides. Settings can turn it on any time.
+  if (!data.profile.saved) {
+    if (dismissed) return null
+    return <section aria-label="Exam preparation" className="mb-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
+      <p className="flex items-center gap-2 text-base font-bold"><GraduationCap className="h-5 w-5 text-amber-600" />Preparing for an exam?</p>
+      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Get a daily study plan and honest progress for UPSC, UPPCS, BPSC, JKPSC, HCS or CAT. Takes a minute.</p>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <button type="button" onClick={() => { try { window.localStorage.setItem('goalyaar-prep-invite', 'dismissed') } catch { /* shown again next time */ } setDismissed(true) }} className="rounded-xl border border-slate-300 py-2.5 text-sm font-bold dark:border-slate-600">Not now</button>
+        <Link href="/prep/start" className="rounded-xl bg-amber-500 py-2.5 text-center text-sm font-bold text-slate-950">Start</Link>
+      </div>
+    </section>
+  }
+  if (!data.profile.active) return null
 
   const { overall, due, plan, pace, streak, wins } = view
   const winBack = due.slice(0, 3).reduce((t, d) => t + (wins.get(d.n.id) ?? 0), 0)
@@ -89,7 +104,7 @@ export default function PrepTodayCard() {
   const flash = (m: string) => { setToast(m); window.setTimeout(() => setToast(null), 3000) }
 
   return (
-    <section aria-label="Preparation" className="mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <section aria-label="Preparation" className="mb-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <Link href="/prep/progress" className="flex items-center gap-3 p-4">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><GraduationCap className="h-5 w-5" /></span>
         <span className="min-w-0 flex-1">

@@ -204,6 +204,9 @@ export default function TodayPage() {
 
       {error && <div role="alert" className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"><span>{error}</span><button onClick={() => void load()} className="shrink-0 font-bold underline">Retry</button></div>}
 
+      {/* Exam preparation first for people preparing; a one-time invitation for everyone else */}
+      <PrepTodayCard />
+
       {/* Today's progress and consistency, at a glance */}
       <section data-tour="today-ring" className={`${card} p-4`}>
         <div className="flex items-center gap-4">
@@ -224,8 +227,6 @@ export default function TodayPage() {
           <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><Timer className="h-4 w-4 text-sky-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{weekTime}</p><p className="mt-1 text-xs font-semibold text-slate-500">this week</p></div>
         </div>
       </section>
-
-      <PrepTodayCard />
 
       <InstallNudge />
 

@@ -54,10 +54,10 @@ do $$ begin
   begin insert into public.prep_mentor_shares (circle_id, scope) values (gen_random_uuid(), 'full'); raise exception 'FAIL: share to a batch I am not in'; exception when others then null; end;
 end $$;
 
--- Student 2 (not in beta, not in the batch) ---------------------------------------------------
+-- Student 2 (not in the batch) ---------------------------------------------------
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000aa02';
 do $$ begin
-  if public.has_feature('prep') then raise exception 'FAIL: non-beta user has flag'; end if;
+  if not public.has_feature('prep') then raise exception 'FAIL: tracker should be open to every signed-in user'; end if;
   if exists (select 1 from public.prep_events) or exists (select 1 from public.prep_topic_state) or exists (select 1 from public.prep_mock_tests) or exists (select 1 from public.prep_mentor_shares) then raise exception 'FAIL: cross-user read'; end if;
   if exists (select 1 from public.prep_syllabus_nodes where owner_id is not null) then raise exception 'FAIL: another student''s custom subtopic visible'; end if;
   update public.prep_mock_tests set score = 0; delete from public.prep_mock_tests;
