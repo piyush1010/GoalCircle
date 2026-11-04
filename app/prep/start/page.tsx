@@ -73,11 +73,12 @@ export default function PrepStartPage() {
   const info = examInfo(code)
   const presets = info.presets.filter((p) => p.date > today && (info.targetStages.length === 1 || p.stage === stage))
 
+  const singleStage = info.targetStages.length === 1
   // Subjects of the chosen stage, for "what have you finished?" (shown once the exam's syllabus is loaded).
   const subjects = useMemo(() => {
     if (data.templateId !== exam) return []
     const kids = childrenMap(data.nodes)
-    const root = (kids.get('') ?? []).find((r) => r.kind === 'stage' && r.stages.length === 1 && r.stages[0] === (info.targetStages.length === 1 ? 'prelims' : stage))
+    const root = (kids.get('') ?? []).find((r) => r.kind === 'stage' && r.stages.length === 1 && r.stages[0] === (singleStage ? 'prelims' : stage))
     if (!root) return []
     const out: { subject: SyllabusNode; paper: string; units: string[] }[] = []
     for (const paper of kids.get(root.id) ?? []) {
@@ -88,7 +89,7 @@ export default function PrepStartPage() {
       }
     }
     return out
-  }, [data.nodes, data.templateId, exam, info.targetStages.length, stage])
+  }, [data.nodes, data.templateId, exam, singleStage, stage])
 
   if (data.status === 'loading') return <main className="mx-auto max-w-md px-5 pt-10" aria-busy="true"><div className="h-64 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" /></main>
   if (data.status !== 'ready') return <main className="mx-auto grid min-h-[70vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">Couldn&apos;t load</h1><p className="mt-2 text-sm text-slate-500">Check your connection and try again.</p><button type="button" onClick={() => void data.reload()} className="mt-5 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Try again</button></div></main>

@@ -18,6 +18,7 @@ import { examInfo, mockTrend } from '@/lib/prep/exam'
 import MentorShare from '@/components/prep/MentorShare'
 import AnswerReviews from '@/components/prep/AnswerReviews'
 import PrepNav from '@/components/prep/PrepNav'
+import HelpButton from '@/components/HelpButton'
 import ExamSwitcher from '@/components/prep/ExamSwitcher'
 import PrepSetup from '@/components/prep/PrepSetup'
 import { optionalSubjects } from '@/lib/prep/pace'
@@ -97,6 +98,7 @@ export default function PrepProgressPage() {
       <header className="mb-4 flex items-center gap-3">
         <Link href="/dashboard" aria-label="Back to Today" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
         <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Preparation</h1><p className="text-sm text-slate-500">{data.template?.name ?? 'Your exam'}{daysToExam !== null && daysToExam >= 0 ? ` · ${daysToExam} days to exam` : ''}</p></div>
+        <HelpButton />
       </header>
       <PrepNav active="/prep/progress" />
       <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} />

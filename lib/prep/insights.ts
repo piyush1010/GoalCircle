@@ -51,7 +51,7 @@ export function weakTopics(nodes: SyllabusNode[], states: Map<string, TopicState
     if (m >= 2) { reasons.push(`${m} open mistakes in your notebook.`); score += m * 10 }
     if (reasons.length) out.push({ nodeId: n.id, title: n.title, reasons, score })
   }
-  return out.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title)).slice(0, limit).map(({ score: _score, ...w }) => w)
+  return out.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title)).slice(0, limit).map((w) => ({ nodeId: w.nodeId, title: w.title, reasons: w.reasons }))
 }
 
 /** Open mistakes, oldest first, and the most common mistake types (all time). */

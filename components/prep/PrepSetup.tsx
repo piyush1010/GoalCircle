@@ -7,7 +7,7 @@ import { addDays } from '@/lib/prep/revision'
 import { enablePush, pushIsOn, pushSupported } from '@/lib/push'
 import type { ExamTemplate, PrepProfile } from '@/lib/prep/usePrepData'
 import type { SyllabusNode } from '@/lib/prep/types'
-import { byExamOrder, examInfo } from '@/lib/prep/exam'
+import { examInfo } from '@/lib/prep/exam'
 import { usePrepLang } from '@/lib/prep/i18n'
 
 export const EXAM_SHORT: Record<string, string> = { upsc_cse_v1: 'UPSC CSE', uppcs_v1: 'UPPCS', bpsc_v1: 'BPSC', jkpsc_cce_v1: 'JKPSC CCE', hpsc_hcs_v1: 'HCS (Haryana)', ssc_cgl_v1: 'SSC CGL', bank_po_v1: 'Bank PO', ctet_v1: 'CTET', uptet_v1: 'UPTET', cat_v1: 'CAT (MBA)' }

@@ -6,6 +6,7 @@ import { ArrowLeft, Copy, Plus } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import { usePrepData } from '@/lib/prep/usePrepData'
+import HelpButton from '@/components/HelpButton'
 
 interface Note { id: string; title: string; kind: string; occurred_on: string | null; note: string | null; created_at: string }
 const KIND: Record<string, string> = { scheme: 'Scheme', judgment: 'Judgment', report: 'Report', committee: 'Committee', budget: 'Budget data', economic_survey: 'Economic Survey', state_example: 'State example', other: 'Other' }
@@ -68,6 +69,7 @@ export default function NotesPage() {
     <header className="mb-4 flex items-center gap-3">
       <Link href="/prep/progress" aria-label="Back" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
       <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Current affairs</h1><p className="text-sm text-slate-500">Linked to your syllabus, compiled by month</p></div>
+      <HelpButton />
     </header>
 
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">

@@ -10,6 +10,7 @@ import { retention } from '@/lib/prep/revision'
 import { usePrepData } from '@/lib/prep/usePrepData'
 import PrepSetup, { EXAM_SHORT } from '@/components/prep/PrepSetup'
 import PrepNav from '@/components/prep/PrepNav'
+import HelpButton from '@/components/HelpButton'
 import ExamSwitcher from '@/components/prep/ExamSwitcher'
 import StudyTimer from '@/components/prep/StudyTimer'
 import { examInfo } from '@/lib/prep/exam'
@@ -80,7 +81,8 @@ export default function PrepPlanPage() {
   return <main className="mx-auto max-w-xl px-4 pb-28 pt-5">
     <header className="mb-4 flex items-center gap-3">
       <Link href="/dashboard" aria-label="Back to Today" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
-      <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">{t('My plan')}</h1><p className="text-sm text-slate-500">{examName} {stageName}{data.profile.examDate ? ` · by ${new Date(`${data.profile.examDate}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}</p></div>
+      <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">{t('My plan')}</h1><p className="text-sm text-slate-500">{examName} {stageName}{data.profile.examDate ? ` · by ${new Date(`${data.profile.examDate}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}</p></div>
+      <HelpButton />
       <button type="button" onClick={() => setSetup(true)} aria-label="Change plan" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><Settings2 className="h-4 w-4" /></button>
     </header>
     <PrepNav active="/prep/plan" />
@@ -105,15 +107,14 @@ export default function PrepPlanPage() {
               {plan.status === 'complete' ? <p className="text-2xl font-extrabold">All {plan.total} covered</p>
                 : plan.status === 'revision_window' || plan.status === 'past' ? <p className="text-2xl font-extrabold">{plan.remaining} left</p>
                 : <p className="text-3xl font-extrabold tabular-nums">{plan.perDay} <span className="text-base font-bold text-slate-500">{t('subtopics a day')}</span></p>}
-              <p className="mt-1 text-sm text-slate-500">{plan.daysLeft >= 0 ? `${plan.daysLeft} ${t('days left')}` : 'Exam date has passed'}{plan.revisionDays ? ` · last ${plan.revisionDays} days kept for revision` : ''}</p>
-              {plan.remaining > 0 && <p className="mt-0.5 text-xs text-slate-500">About {Math.round((plan.remaining * MIN_PER_SUBTOPIC) / 60)} hours of new study left (rough estimate, ~{MIN_PER_SUBTOPIC} min a subtopic)</p>}
+              <p className="mt-1 text-sm text-slate-500">{plan.daysLeft >= 0 ? `${plan.daysLeft} ${t('days left')}` : 'Exam date has passed'}{plan.remaining > 0 ? ` · about ${Math.round((plan.remaining * MIN_PER_SUBTOPIC) / 60)} h of study` : ''}</p>
             </div>
             <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${STATUS[plan.status][1]}`}>{t(STATUS[plan.status][0])}</span>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-amber-500" style={{ width: `${plan.total ? Math.round((plan.done / plan.total) * 100) : 0}%` }} /></div>
           <p className="mt-1.5 text-xs text-slate-500"><b className="tabular-nums text-slate-700 dark:text-slate-200">{plan.done}</b> of {plan.total} {stageName} subtopics ticked{plan.behindBy > 0 && plan.status !== 'complete' ? ` · ${plan.behindBy} behind schedule` : ''}</p>
           <button type="button" onClick={() => setWhy(!why)} aria-expanded={why} className="mt-2 flex items-center gap-1 text-xs font-bold text-slate-600 dark:text-slate-300"><HelpCircle className="h-4 w-4" />{t('How is this worked out?')}</button>
-          {why && <ul className="mt-2 space-y-1 rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">{plan.reasons.map((r) => <li key={r}>{r}</li>)}<li><Link href="/prep/how" className="font-bold underline">How every number is worked out</Link></li><li>The target is recalculated every day: miss a day and it rises a little, get ahead and it falls.</li><li>{data.profile.optionalSubjectId ? 'Your optional subject is included in the Mains plan.' : 'Optional papers are left out until you pick your optional in settings.'}</li></ul>}
+          {why && <ul className="mt-2 space-y-1 rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">{plan.reasons.map((r) => <li key={r}>{r}</li>)}<li><Link href="/prep/how" className="font-bold underline">How every number is worked out</Link></li><li>The target is recalculated every day: miss a day and it rises a little, get ahead and it falls.</li>{plan.revisionDays > 0 && <li>The last {plan.revisionDays} days before the exam are kept for revision.</li>}<li>Hours assume about {MIN_PER_SUBTOPIC} minutes a subtopic; treat them as a rough guide.</li><li>{data.profile.optionalSubjectId ? 'Your optional subject is included in the Mains plan.' : 'Optional papers are left out until you pick your optional in settings.'}</li></ul>}
           {(plan.status === 'behind' || plan.status === 'slightly_behind') && <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60">
             <p className="text-sm">{t('Fell behind? It happens to everyone. Start fresh and spread what is left evenly over the days remaining.')}</p>
             <button type="button" disabled={busy !== null} onClick={async () => { setBusy('fresh'); await data.saveProfile({ planStartOn: today }); setBusy(null) }} className="mt-2 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50 dark:bg-slate-50 dark:text-slate-900">{t('Start fresh from today')}</button>

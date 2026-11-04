@@ -9,6 +9,7 @@ import StarterGoals from '@/components/StarterGoals'
 import InstallNudge from '@/components/InstallNudge'
 import PrepTodayCard from '@/components/PrepTodayCard'
 import TodayDeck from '@/components/prep/TodayDeck'
+import HelpButton from '@/components/HelpButton'
 import { usePrepActive } from '@/lib/prep/active'
 import MonthRing, { type MonthDay } from '@/components/MonthRing'
 import TodoWidget from '@/components/TodoWidget'
@@ -205,10 +206,10 @@ export default function TodayPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-6">
-      <header className="mb-4">
+      <header className="mb-4 flex items-start justify-between gap-3"><div>
         <p className="text-sm font-semibold text-slate-500">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         <h1 className="mt-0.5 text-[26px] font-extrabold leading-tight tracking-tight">{greeting()}{firstName ? `, ${firstName}` : ''}</h1>
-      </header>
+      </div><HelpButton className="mt-1" /></header>
 
       {error && <div role="alert" className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"><span>{error}</span><button onClick={() => void load()} className="shrink-0 font-bold underline">Retry</button></div>}
 
