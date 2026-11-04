@@ -159,3 +159,10 @@ SQL: `202611100001_prep_reviews_recall.sql`. Tests: 53/53 unit; `prep_reviews_re
 - Old welcome tour removed from Today (the setup replaces it; the Profile help tour remains).
 - Today for people preparing: preparation card first, goals summary as one line, "Small steps" moved to Profile.
 - Lighter shadows on Profile; "Sent! ✓" → "Sent".
+
+## Owner feedback round (4 Nov 2026): multi-exam, Today slides, more exams, simpler pages
+- **Several exams at once** (`202611100004`, `prep_plans`): one plan per exam; Today combines them, nearest exam first; a subtopic shared by two exams (same official code) is ticked in both; exam switcher on Plan, Syllabus and Progress; "Add another exam" and "Stop preparing for this exam".
+- **Today for aspirants** (`components/prep/TodayDeck.tsx`, `lib/prep/today.ts`): one task per slide (mentor task, revisions, study, goals), one action each; Pomodoro (25/5, 50/10) from any study slide; one-tap private goal check-ins; "Share today" is private unless the student picks followers, everyone, or another app (`202611100005`, `prep_share_day`).
+- **New exams** (`202611100006`, `supabase/seed/more_exams_v1.py`): SSC CGL, Bank PO (IBPS/SBI), CTET, UPTET. **Exam requests** (`202611100007`): "My exam is not listed" in setup; grouped on the admin page.
+- **Simpler pages**: Progress is one summary card plus one-line rows that open for detail; Plan drops duplicate links; Syllabus drops the stat boxes.
+- Separate experiences: people preparing get the slides Today and Plan in the bar; everyone else keeps the goals Today. One account, switch any time in Settings.

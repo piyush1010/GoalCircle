@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Bell, CalendarDays, ChevronDown, HelpCircle, RotateCcw, Settings2 } from 'lucide-react'
+import { ArrowLeft, CalendarDays, ChevronDown, HelpCircle, RotateCcw, Settings2 } from 'lucide-react'
 import { localDateString } from '@/lib/exams'
 import { optionalSubjects, planFor, type PacePlan, type Unit } from '@/lib/prep/pace'
 import { retention } from '@/lib/prep/revision'
@@ -147,17 +147,7 @@ export default function PrepPlanPage() {
         </details>}
       </>}
 
-    <button type="button" onClick={() => setSetup(true)} className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <Bell className="h-5 w-5 shrink-0 text-amber-600" />
-      <span className="min-w-0 flex-1 text-sm"><b>{t('Daily reminder')}</b><span className="block text-xs text-slate-500">{data.profile.reminderEnabled ? `On, at ${((data.profile.reminderHour + 11) % 12) + 1}:00 ${data.profile.reminderHour < 12 ? 'AM' : 'PM'}. Skipped once you have logged for the day.` : 'Off'}</span></span>
-      <span className="text-xs font-bold text-slate-500">Change</span>
-    </button>
-
-    <div className="mt-3 grid grid-cols-3 gap-2">
-      <Link href="/prep" className="rounded-xl border border-slate-300 py-2.5 text-center text-sm font-bold dark:border-slate-600">Syllabus</Link>
-      <Link href="/prep/mistakes" className="rounded-xl border border-slate-300 py-2.5 text-center text-sm font-bold dark:border-slate-600">Mistakes</Link>
-      <Link href="/prep/progress" className="rounded-xl border border-slate-300 py-2.5 text-center text-sm font-bold dark:border-slate-600">Progress</Link>
-    </div>
+    <button type="button" onClick={() => setSetup(true)} className="mt-4 w-full text-center text-sm text-slate-500">{data.profile.reminderEnabled ? `Reminder at ${((data.profile.reminderHour + 11) % 12) + 1}:00 ${data.profile.reminderHour < 12 ? 'AM' : 'PM'}` : 'Reminder off'} · Change</button>
 
     {toastMsg && <button type="button" onClick={() => setToastMsg(null)} role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toastMsg}</button>}
     {setup && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onRemove={data.plans.length > 1 && data.templateId ? () => data.removePlan(data.templateId!) : undefined} onClose={() => setSetup(false)} />}

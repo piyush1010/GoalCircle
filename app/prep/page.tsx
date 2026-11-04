@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Check, ChevronDown, HelpCircle, Plus, Search, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
-import { childrenMap, rollups, stageExplanation, STAGE_LABEL, type Rollup } from '@/lib/prep/explorer'
+import { childrenMap, rollups, stageExplanation, STAGE_LABEL } from '@/lib/prep/explorer'
 import { studyShares, topicStage } from '@/lib/prep/scoring/v2'
 import { NODE_COLS, toNode, usePrepData } from '@/lib/prep/usePrepData'
 import type { Foundation, SyllabusNode, TopicStageName, TopicState } from '@/lib/prep/types'
@@ -76,7 +76,6 @@ export default function PrepExplorerPage() {
   const officialSubs = (id: string) => (kids.get(id) ?? []).filter((c) => c.kind === 'subtopic' && !c.ownerId)
   const tabs = examInfo(data.template?.code).tabs.filter((t) => byCode.has(t.root))
   const root = byCode.get(tab) ?? byCode.get(tabs[0]?.root ?? 'PRE')
-  const rootRoll = root ? roll.get(root.id) : undefined
   const allTopics = nodes.filter((n) => n.kind === 'topic' && !n.ownerId)
   const dueTotal = allTopics.filter((n) => stageOf(n.id) === 'revision_due').length
   const allSubs = nodes.filter((n) => n.kind === 'subtopic' && !n.ownerId)
@@ -123,7 +122,6 @@ export default function PrepExplorerPage() {
         {tab !== 'NCERT' && <button type="button" onClick={() => setFilter(filter === 'due' ? 'all' : 'due')} aria-pressed={filter === 'due'} className={`shrink-0 rounded-xl border px-3 py-2.5 text-sm font-bold ${filter === 'due' ? 'border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400' : 'border-slate-200 dark:border-slate-700'}`}>Due{dueTotal ? ` (${dueTotal})` : ''}</button>}
       </div>
 
-      {tab !== 'NCERT' && rootRoll && <Progress roll={rootRoll} />}
       {tab !== 'NCERT' && tickedTotal === 0 && <p className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2.5 text-sm text-amber-900 dark:text-amber-200">Open any topic and tick the subtopics you have already studied. Your progress, revision dates and plan are built from these ticks.</p>}
 
       {tab === 'MAI' && !data.profile.optionalSubjectId && optionalSubjects(nodes).length > 0 && <label className="mt-3 block rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm">
@@ -207,11 +205,6 @@ function pathOf(id: string, byId: Map<string, SyllabusNode>): string {
   return [...new Set(parts)].join(' · ')
 }
 
-function Progress({ roll }: { roll: Rollup }) {
-  return <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-    {[[`${roll.ticked}`, `of ${roll.subtopics} subtopics`], [`${roll.complete}`, `of ${roll.topics} topics done`], [`${roll.due}`, 'revision due']].map(([value, sub], i) => <div key={i} className="rounded-xl bg-white px-2 py-2.5 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800"><p className="text-xl font-extrabold tabular-nums">{value}</p><p className="text-[11px] font-semibold text-slate-500">{sub}</p></div>)}
-  </div>
-}
 
 function Center({ title, body, action }: { title: string; body: string; action?: () => void }) {
   return <main className="mx-auto grid min-h-[70vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">{title}</h1><p className="mt-2 text-sm text-slate-500">{body}</p>
