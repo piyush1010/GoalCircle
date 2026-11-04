@@ -8,6 +8,7 @@ import { CalendarCheck2, CheckCircle2, ChevronDown, Flame, Plus, Timer, Trash2 }
 import StarterGoals from '@/components/StarterGoals'
 import InstallNudge from '@/components/InstallNudge'
 import PrepTodayCard from '@/components/PrepTodayCard'
+import TodayDeck from '@/components/prep/TodayDeck'
 import { usePrepActive } from '@/lib/prep/active'
 import MonthRing, { type MonthDay } from '@/components/MonthRing'
 import TodoWidget from '@/components/TodoWidget'
@@ -24,6 +25,7 @@ interface Goal {
   frequency?: 'daily' | 'weekly' | 'once' | null
   times_per_week?: number | null
   is_completed?: boolean | null
+  category?: string | null
   shared?: boolean
 }
 interface BatchCard { id: string; name: string; admin: boolean; task: string | null; done: boolean; status: 'done' | 'partial' | 'missed' | null; avatarUrl?: string | null }
@@ -63,7 +65,7 @@ export default function TodayPage() {
     // Weekly goals need this week's check-ins even when the week started last month.
     const weekStart = new Date(); weekStart.setHours(0, 0, 0, 0); weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7))
     const since = weekStart < monthStart ? weekStart : monthStart
-    const fields = 'id,user_id,title,current_streak,status,pause_until,frequency,times_per_week,is_completed'
+    const fields = 'id,user_id,title,current_streak,status,pause_until,frequency,times_per_week,is_completed,category'
     const todayKey = localKey(new Date())
     const [goalsResult, postsResult, logsResult, collabResult, membershipResult] = await Promise.all([
       supabase.from('goals').select(fields).eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -167,6 +169,20 @@ export default function TodayPage() {
     setGoals((current) => current.filter((item) => item.id !== goal.id))
   }
 
+  // One tap from the Today slides: a private "done" check-in. Notes, photos and sharing stay on the check-in page.
+  const quickDone = async (goalId: string) => {
+    if (!userId) return false
+    const { error: postError } = await supabase.from('posts').insert({ user_id: userId, goal_id: goalId, caption: 'Completed today’s check-in.', proof_type: 'text', checkin_status: 'done', visibility: 'private' })
+    if (postError) return false
+    setActivity((cur) => [...cur, { goal_id: goalId, at: new Date().toISOString(), minutes: 0, checkin: true, logged: true }])
+    return true
+  }
+  const deckGoals = activeGoals.filter((goal) => goal.category !== 'exam_prep' && !isPaused(goal)).map((goal) => ({
+    id: goal.id, title: goal.title, done: doneToday.has(goal.id) || (goal.frequency === 'weekly' && weekMet(goal)),
+    detail: goal.frequency === 'weekly' ? `${goal.times_per_week} times a week` : goal.frequency === 'once' ? 'One-time goal' : `Every day · ${goal.current_streak || 0}-day streak`,
+  }))
+  const deckMentor = batches.filter((batch) => !batch.admin && batch.task).map((batch) => ({ circleId: batch.id, name: batch.name, task: batch.task!, done: batch.done }))
+
   if (loading) {
     return <main className="mx-auto min-h-screen max-w-xl space-y-4 px-4 pb-28 pt-5" aria-busy="true">
       <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
@@ -196,6 +212,9 @@ export default function TodayPage() {
 
       {error && <div role="alert" className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"><span>{error}</span><button onClick={() => void load()} className="shrink-0 font-bold underline">Retry</button></div>}
 
+      {preparing
+        ? <TodayDeck goals={deckGoals} mentor={deckMentor} onGoalDone={quickDone} />
+        : <>
       {/* Exam preparation first for people preparing; a one-time invitation for everyone else */}
       <PrepTodayCard />
 
@@ -272,6 +291,8 @@ export default function TodayPage() {
           </div>}
         {finishedOnce > 0 && <p className="mt-2 px-1 text-sm text-slate-500">{finishedOnce} one-time goal{finishedOnce > 1 ? 's' : ''} completed</p>}
       </section>
+
+        </>}
 
       {mentorBatches.length > 0 && <section className="mt-5">
         <h2 className="mb-2 text-lg font-extrabold">{mentorBatches.length === 1 ? 'Your batch' : 'Your batches'}</h2>
