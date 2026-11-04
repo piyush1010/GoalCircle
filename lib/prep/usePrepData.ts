@@ -21,10 +21,12 @@ export interface PrepProfile {
   targetStage: 'prelims' | 'mains'; planStartOn: string | null; revisionBufferPct: number
   reminderEnabled: boolean; reminderHour: number
   optionalSubjectId: string | null
+  active: boolean // false = paused; Today shows goals only
+  level: 'beginner' | 'intermediate' | 'advanced' | null
   saved: boolean // false until the student has finished setup once
 }
-const EMPTY_PROFILE: PrepProfile = { examDate: null, dailyMinutes: null, targetStage: 'prelims', planStartOn: null, revisionBufferPct: 15, reminderEnabled: true, reminderHour: 7, optionalSubjectId: null, saved: false }
-const PROFILE_COLS = 'template_id,exam_date,daily_minutes,target_stage,plan_start_on,revision_buffer_pct,reminder_enabled,reminder_hour,optional_subject_node_id'
+const EMPTY_PROFILE: PrepProfile = { examDate: null, dailyMinutes: null, targetStage: 'prelims', planStartOn: null, revisionBufferPct: 15, reminderEnabled: true, reminderHour: 7, optionalSubjectId: null, active: false, level: null, saved: false }
+const PROFILE_COLS = 'template_id,exam_date,daily_minutes,target_stage,plan_start_on,revision_buffer_pct,reminder_enabled,reminder_hour,optional_subject_node_id,active,level'
 
 export const NODE_COLS = 'id,parent_id,kind,code,title,stages,papers,weight,pyq_frequency,sort,owner_id'
 export const STATE_COLS = 'node_id,touched_on,foundation,revision_count,last_revised_on,interval_days,next_revision_on,pyq_attempted,pyq_correct,answers_written'
@@ -89,7 +91,7 @@ export function usePrepData(enabled = true) {
       .map((r) => ({ id: r.id, stage: r.stage, name: r.name, takenOn: r.taken_on, score: r.score === null ? null : Number(r.score), maxScore: r.max_score === null ? null : Number(r.max_score), correct: r.correct, incorrect: r.incorrect, unattempted: r.unattempted, totalQuestions: r.total_questions, sections: Array.isArray(r.sections) ? r.sections : [] })))
     setAnswers(((a.data ?? []) as { paper: string | null; count: number; timed: boolean; mentor_reviewed: boolean; written_on: string; node_id: string | null }[])
       .map((r) => ({ paper: r.paper, count: r.count, timed: r.timed, mentorReviewed: r.mentor_reviewed, writtenOn: r.written_on, nodeId: r.node_id })))
-    setProfile(prof ? { examDate: prof.exam_date, dailyMinutes: prof.daily_minutes, targetStage: prof.target_stage === 'mains' ? 'mains' : 'prelims', planStartOn: prof.plan_start_on, revisionBufferPct: prof.revision_buffer_pct ?? 15, reminderEnabled: prof.reminder_enabled ?? true, reminderHour: prof.reminder_hour ?? 7, optionalSubjectId: prof.optional_subject_node_id ?? null, saved: true } : EMPTY_PROFILE)
+    setProfile(prof ? { examDate: prof.exam_date, dailyMinutes: prof.daily_minutes, targetStage: prof.target_stage === 'mains' ? 'mains' : 'prelims', planStartOn: prof.plan_start_on, revisionBufferPct: prof.revision_buffer_pct ?? 15, reminderEnabled: prof.reminder_enabled ?? true, reminderHour: prof.reminder_hour ?? 7, optionalSubjectId: prof.optional_subject_node_id ?? null, active: prof.active !== false, level: prof.level ?? null, saved: true } : EMPTY_PROFILE)
     setStatus('ready')
   }, [])
 
@@ -163,6 +165,26 @@ export function usePrepData(enabled = true) {
     return ok
   }, [nodes, logEvent])
 
+  /**
+   * Tick many study units at once ("I have already finished these subjects"). One insert for all the
+   * subtopics plus their topics that were not started yet, then one reload, so it stays fast.
+   */
+  const tickMany = useCallback(async (ids: string[]) => {
+    const parentOf = new Map(nodes.map((n) => [n.id, n.kind === 'subtopic' ? n.parentId : null]))
+    const day = localDateString()
+    const parents = [...new Set(ids.map((id) => parentOf.get(id)).filter((p): p is string => Boolean(p) && !touchedRef.current.has(p as string)))]
+    const rows = [...ids, ...parents].map((id) => ({ node_id: id, kind: 'studied', quantity: 1, details: { bulk: true }, minutes: null, occurred_on: day }))
+    for (let i = 0; i < rows.length; i += 400) {
+      const { error } = await supabase.from('prep_events').insert(rows.slice(i, i + 400))
+      if (error) return false
+    }
+    parents.forEach((p) => touchedRef.current.add(p))
+    const { data } = await supabase.from('prep_topic_state').select(STATE_COLS)
+    if (data) setStates(new Map((data as StateRow[]).map((r) => [r.node_id, toState(r)])))
+    setStudyDays((cur) => (cur.includes(day) ? cur : [day, ...cur]))
+    return true
+  }, [nodes])
+
   /** Saves plan settings. Switching exam reloads the syllabus; ticks on the old exam are kept. */
   const saveProfile = useCallback(async (next: Partial<PrepProfile> & { templateId?: string }) => {
     if (!templateId || !userId) return false
@@ -171,10 +193,10 @@ export function usePrepData(enabled = true) {
     const { error } = await supabase.from('prep_profiles').upsert({
       user_id: userId, template_id: target, exam_date: merged.examDate, daily_minutes: merged.dailyMinutes,
       target_stage: merged.targetStage, plan_start_on: merged.planStartOn, revision_buffer_pct: merged.revisionBufferPct,
-      reminder_enabled: merged.reminderEnabled, reminder_hour: merged.reminderHour, optional_subject_node_id: next.templateId && next.templateId !== templateId ? null : merged.optionalSubjectId, updated_at: new Date().toISOString(),
+      reminder_enabled: merged.reminderEnabled, reminder_hour: merged.reminderHour, optional_subject_node_id: next.templateId && next.templateId !== templateId ? null : merged.optionalSubjectId, active: next.active ?? (merged.saved ? merged.active : true), level: merged.level, updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' })
     if (error) return false
-    setProfile({ ...merged, optionalSubjectId: next.templateId && next.templateId !== templateId ? null : merged.optionalSubjectId, saved: true })
+    setProfile({ ...merged, active: next.active ?? (merged.saved ? merged.active : true), optionalSubjectId: next.templateId && next.templateId !== templateId ? null : merged.optionalSubjectId, saved: true })
     if (target !== templateId) { setStatus('loading'); await load() }
     return true
   }, [templateId, userId, profile, load])
@@ -199,5 +221,5 @@ export function usePrepData(enabled = true) {
     await supabase.from('prep_profiles').update({ daily_target: Math.min(500, Math.max(0, dailyTarget)), target_computed_on: localDateString() }).eq('user_id', userId)
   }, [userId, profile.saved])
 
-  return { status, pending, templateId, templates, template: templates.find((t) => t.id === templateId) ?? null, studyDays, events, mistakes, addMistake, resolveMistake, saveTarget, tick, nodes, setNodes, states, mocks, answers, profile, userId, reload: load, refreshTopic, logEvent, saveProfile }
+  return { status, pending, templateId, templates, template: templates.find((t) => t.id === templateId) ?? null, studyDays, events, mistakes, addMistake, resolveMistake, saveTarget, tick, tickMany, nodes, setNodes, states, mocks, answers, profile, userId, reload: load, refreshTopic, logEvent, saveProfile }
 }

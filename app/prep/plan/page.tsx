@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Bell, CalendarDays, ChevronDown, HelpCircle, RotateCcw, Settings2 } from 'lucide-react'
 import { localDateString } from '@/lib/exams'
@@ -31,6 +32,7 @@ const dayLabel = (iso: string, today: string) => {
 /** The time-bound plan: how many subtopics a day to finish by the exam date, and exactly which ones. */
 export default function PrepPlanPage() {
   const data = usePrepData(true)
+  const router = useRouter()
   const [setup, setSetup] = useState(false)
   const [why, setWhy] = useState(false)
   const [ahead, setAhead] = useState(false)
@@ -48,7 +50,11 @@ export default function PrepPlanPage() {
   useEffect(() => { if (perDay !== undefined) void saveTarget(perDay) }, [perDay, saveTarget])
   // First visit: open setup straight away.
   const needsSetup = data.status === 'ready' && !data.profile.saved
-  useEffect(() => { if (!needsSetup) return; const t = window.setTimeout(() => setSetup(true), 0); return () => window.clearTimeout(t) }, [needsSetup])
+  // First visit: the step-by-step setup instead of a sheet.
+  useEffect(() => { if (needsSetup) router.replace('/prep/start') }, [needsSetup, router])
+  // Arriving from setup: a one-line welcome that explains the screen.
+  const [welcome, setWelcome] = useState(false)
+  useEffect(() => { const t = window.setTimeout(() => setWelcome(new URLSearchParams(window.location.search).get('welcome') === '1'), 0); return () => window.clearTimeout(t) }, [])
 
   if (data.status === 'loading') return <main className="mx-auto max-w-xl space-y-3 px-4 pb-28 pt-6" aria-busy="true">{[1, 2, 3].map((k) => <div key={k} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}</main>
   if (data.status !== 'ready') return <main className="mx-auto grid min-h-[70vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">{data.status === 'denied' ? 'Not available yet' : "Couldn't load your plan"}</h1><Link href="/dashboard" className="mt-5 inline-block rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Back to Today</Link></div></main>
@@ -77,6 +83,11 @@ export default function PrepPlanPage() {
       <button type="button" onClick={() => setSetup(true)} aria-label="Change plan" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><Settings2 className="h-4 w-4" /></button>
     </header>
     <PrepNav active="/prep/plan" />
+    {welcome && plan && <section className="mb-3 rounded-2xl bg-emerald-500/10 p-4 text-sm text-emerald-900 dark:text-emerald-200">
+      <p className="font-bold">Your plan is ready.</p>
+      <p className="mt-1">Each day, tick the subtopics below as you study them. Revise when reminded. That is all you need to do; everything else updates itself.</p>
+      <button type="button" onClick={() => setWelcome(false)} className="mt-2 text-xs font-bold underline">Got it</button>
+    </section>}
 
     {!plan
       ? <section className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -93,6 +104,7 @@ export default function PrepPlanPage() {
                 : plan.status === 'revision_window' || plan.status === 'past' ? <p className="text-2xl font-extrabold">{plan.remaining} left</p>
                 : <p className="text-3xl font-extrabold tabular-nums">{plan.perDay} <span className="text-base font-bold text-slate-500">{t('subtopics a day')}</span></p>}
               <p className="mt-1 text-sm text-slate-500">{plan.daysLeft >= 0 ? `${plan.daysLeft} ${t('days left')}` : 'Exam date has passed'}{plan.revisionDays ? ` · last ${plan.revisionDays} days kept for revision` : ''}</p>
+              {plan.remaining > 0 && <p className="mt-0.5 text-xs text-slate-500">About {Math.round((plan.remaining * MIN_PER_SUBTOPIC) / 60)} hours of new study left (rough estimate, ~{MIN_PER_SUBTOPIC} min a subtopic)</p>}
             </div>
             <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${STATUS[plan.status][1]}`}>{t(STATUS[plan.status][0])}</span>
           </div>

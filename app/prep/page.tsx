@@ -55,6 +55,8 @@ export default function PrepExplorerPage() {
     return () => window.clearTimeout(t)
   }, [])
   useEffect(() => { if (data.status === 'denied') { void supabase.auth.getSession().then(({ data: { session } }) => { if (!session) router.replace('/login?next=/prep') }) } }, [data.status, router])
+  // Not set up yet: start with the step-by-step setup.
+  useEffect(() => { if (data.status === 'ready' && !data.profile.saved) router.replace('/prep/start') }, [data.status, data.profile.saved, router])
   useEffect(() => { if (!toast) return; const t = window.setTimeout(() => setToast(null), 3200); return () => window.clearTimeout(t) }, [toast])
 
   const kids = useMemo(() => childrenMap(nodes), [nodes])
@@ -186,7 +188,7 @@ export default function PrepExplorerPage() {
           <p className="mt-1 text-sm text-slate-500">{confirmBulk.ids.length} subtopics will be marked as studied today, and revision dates will start. Only do this for what you have genuinely covered; you can untick any of them later.</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button type="button" onClick={() => setConfirmBulk(null)} className="rounded-xl border border-slate-300 py-3 text-sm font-bold dark:border-slate-600">Cancel</button>
-            <button type="button" onClick={async () => { const job = confirmBulk; setConfirmBulk(null); setBulk(job.title); let ok = true; for (const id of job.ids) ok = (await data.tick(id, true)) && ok; setBulk(null); setToast(ok ? `${job.ids.length} ticked in ${job.title}.` : 'Some could not be saved. Please try again.') }} className="rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950">Tick {confirmBulk.ids.length}</button>
+            <button type="button" onClick={async () => { const job = confirmBulk; setConfirmBulk(null); setBulk(job.title); const ok = await data.tickMany(job.ids); setBulk(null); setToast(ok ? `${job.ids.length} ticked in ${job.title}.` : 'Some could not be saved. Please try again.') }} className="rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950">Tick {confirmBulk.ids.length}</button>
           </div>
         </div>
       </div>}

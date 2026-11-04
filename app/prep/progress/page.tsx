@@ -37,6 +37,8 @@ export default function PrepProgressPage() {
   const [setupOpen, setSetupOpen] = useState(false)
   const today = localDateString()
 
+  // Not set up yet: start with the step-by-step setup.
+  useEffect(() => { if (data.status === 'ready' && !data.profile.saved) router.replace('/prep/start') }, [data.status, data.profile.saved, router])
   useEffect(() => { if (data.status === 'denied') router.replace('/dashboard') }, [data.status, router])
 
   const view = useMemo(() => {
