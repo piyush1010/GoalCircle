@@ -10,7 +10,7 @@ import type { SyllabusNode } from '@/lib/prep/types'
 import { byExamOrder, examInfo } from '@/lib/prep/exam'
 import { usePrepLang } from '@/lib/prep/i18n'
 
-export const EXAM_SHORT: Record<string, string> = { upsc_cse_v1: 'UPSC CSE', uppcs_v1: 'UPPCS', bpsc_v1: 'BPSC', jkpsc_cce_v1: 'JKPSC CCE', hpsc_hcs_v1: 'HCS (Haryana)', cat_v1: 'CAT (MBA)' }
+export const EXAM_SHORT: Record<string, string> = { upsc_cse_v1: 'UPSC CSE', uppcs_v1: 'UPPCS', bpsc_v1: 'BPSC', jkpsc_cce_v1: 'JKPSC CCE', hpsc_hcs_v1: 'HCS (Haryana)', ssc_cgl_v1: 'SSC CGL', bank_po_v1: 'Bank PO', ctet_v1: 'CTET', uptet_v1: 'UPTET', cat_v1: 'CAT (MBA)' }
 const HOURS = [2, 4, 6, 8, 10]
 const QUICK = [['3 months', 91], ['5 months', 152], ['1 year', 365]] as const
 const hourLabel = (h: number) => `${((h + 11) % 12) + 1}:00 ${h < 12 ? 'AM' : 'PM'}`

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, BookOpenCheck, CalendarDays, Check, Gauge, GraduationCap, ListChecks } from 'lucide-react'
 import { localDateString } from '@/lib/exams'
+import { supabase } from '@/utils/supabase'
 import { addDays } from '@/lib/prep/revision'
 import { byExamOrder, examInfo } from '@/lib/prep/exam'
 import { childrenMap } from '@/lib/prep/explorer'
@@ -19,6 +20,10 @@ const EXAM_LABEL: Record<string, [string, string]> = {
   bpsc_v1: ['BPSC', 'Bihar'],
   jkpsc_cce_v1: ['JKPSC CCE', 'Jammu and Kashmir'],
   hpsc_hcs_v1: ['HCS', 'Haryana'],
+  ssc_cgl_v1: ['SSC CGL', 'Staff Selection Commission'],
+  bank_po_v1: ['Bank PO', 'IBPS PO and SBI PO'],
+  ctet_v1: ['CTET', 'Central teacher eligibility'],
+  uptet_v1: ['UPTET', 'UP teacher eligibility'],
   cat_v1: ['CAT', 'MBA entrance'],
 }
 const LEVELS: [Level, string, string][] = [
@@ -45,6 +50,7 @@ export default function PrepStartPage() {
   const [done, setDone] = useState<Set<string>>(new Set())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [request, setRequest] = useState<{ open: boolean; name: string; note: string; sent: boolean; busy: boolean }>({ open: false, name: '', note: '', sent: false, busy: false })
   const [adding, setAdding] = useState(false) // "Add another exam": start blank and skip exams already added
 
   // Start from what is saved, so this also works for changing exam later.
@@ -140,6 +146,19 @@ export default function PrepStartPage() {
         <span className="min-w-0 flex-1"><span className="block text-[15px] font-bold">{name}</span>{(sub || added) && <span className="block text-[13px] text-slate-500">{added ? 'Already in your plan' : sub}</span>}</span>
         {exam === t.id && <Check className="h-5 w-5 shrink-0 text-amber-600" />}
       </button> })}
+
+      {step === 1 && <div className="pt-2">
+        {request.sent
+          ? <p className="rounded-xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300">Thanks. We have noted <b>{request.name}</b> and will let you know when its planner is ready.</p>
+          : !request.open
+            ? <button type="button" onClick={() => setRequest({ ...request, open: true })} className="w-full py-2 text-sm font-medium text-slate-500 underline-offset-4 hover:underline">My exam is not listed</button>
+            : <div className="space-y-2 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                <p className="text-sm font-semibold">Request a planner</p>
+                <input value={request.name} onChange={(e) => setRequest({ ...request, name: e.target.value })} maxLength={120} placeholder="Exam name, e.g. RAS, MPPSC, NDA" className="w-full rounded-lg border border-slate-200 bg-transparent px-3 py-2.5 text-sm dark:border-slate-700" />
+                <input value={request.note} onChange={(e) => setRequest({ ...request, note: e.target.value })} maxLength={500} placeholder="Anything to add? (optional)" className="w-full rounded-lg border border-slate-200 bg-transparent px-3 py-2.5 text-sm dark:border-slate-700" />
+                <button type="button" disabled={request.busy || request.name.trim().length < 2} onClick={async () => { setRequest({ ...request, busy: true }); const { error: e } = await supabase.from('prep_exam_requests').insert({ exam_name: request.name.trim(), details: request.note.trim() || null }); setRequest({ ...request, busy: false, sent: !e }); if (e) setError('Could not send. Try again.') }} className="w-full rounded-lg bg-slate-900 py-2.5 text-sm font-semibold text-white disabled:opacity-40 dark:bg-white dark:text-slate-900">Send request</button>
+              </div>}
+      </div>}
 
       {step === 2 && <>
         {info.targetStages.length > 1 && <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">{info.targetStages.map((s) => <button key={s} type="button" onClick={() => setStage(s)} aria-pressed={stage === s} className={`rounded-lg py-2.5 text-sm font-bold ${stage === s ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>{info.stageName[s]}</button>)}</div>}
