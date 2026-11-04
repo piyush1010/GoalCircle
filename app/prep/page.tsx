@@ -14,6 +14,7 @@ import { examInfo } from '@/lib/prep/exam'
 import { optionalSubjects } from '@/lib/prep/pace'
 import RecallButton from '@/components/prep/RecallButton'
 import PrepNav from '@/components/prep/PrepNav'
+import ExamSwitcher from '@/components/prep/ExamSwitcher'
 
 type TabCode = string
 
@@ -110,6 +111,7 @@ export default function PrepExplorerPage() {
         <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Syllabus</h1><p className="text-sm text-slate-500">{data.template?.name ?? 'Your exam'} · {tickedTotal} of {allSubs.length} subtopics ticked{dueTotal ? ` · ${dueTotal} revision due` : ''}</p></div>
       </header>
       <PrepNav active="/prep" />
+      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} />
 
       <div className={`grid gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 ${tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`} role="tablist">
         {tabs.map(({ root: code, label }) => <button key={code} type="button" role="tab" aria-selected={tab === code} onClick={() => setTab(code)} className={`rounded-lg py-2 text-sm font-bold transition ${tab === code ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}>{label}</button>)}

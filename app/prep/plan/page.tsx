@@ -10,6 +10,7 @@ import { retention } from '@/lib/prep/revision'
 import { usePrepData } from '@/lib/prep/usePrepData'
 import PrepSetup, { EXAM_SHORT } from '@/components/prep/PrepSetup'
 import PrepNav from '@/components/prep/PrepNav'
+import ExamSwitcher from '@/components/prep/ExamSwitcher'
 import StudyTimer from '@/components/prep/StudyTimer'
 import { examInfo } from '@/lib/prep/exam'
 import { usePrepLang } from '@/lib/prep/i18n'
@@ -83,6 +84,7 @@ export default function PrepPlanPage() {
       <button type="button" onClick={() => setSetup(true)} aria-label="Change plan" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><Settings2 className="h-4 w-4" /></button>
     </header>
     <PrepNav active="/prep/plan" />
+      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} />
     {welcome && plan && <section className="mb-3 rounded-2xl bg-emerald-500/10 p-4 text-sm text-emerald-900 dark:text-emerald-200">
       <p className="font-bold">Your plan is ready.</p>
       <p className="mt-1">Each day, tick the subtopics below as you study them. Revise when reminded. That is all you need to do; everything else updates itself.</p>
@@ -158,6 +160,6 @@ export default function PrepPlanPage() {
     </div>
 
     {toastMsg && <button type="button" onClick={() => setToastMsg(null)} role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toastMsg}</button>}
-    {setup && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onClose={() => setSetup(false)} />}
+    {setup && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onRemove={data.plans.length > 1 && data.templateId ? () => data.removePlan(data.templateId!) : undefined} onClose={() => setSetup(false)} />}
   </main>
 }
