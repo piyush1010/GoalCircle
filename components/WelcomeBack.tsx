@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { claimNudge } from '@/lib/nudges'
 import { X } from 'lucide-react'
 import GoalieSays from '@/components/GoalieSays'
 
@@ -19,7 +20,7 @@ export default function WelcomeBack() {
       window.localStorage.setItem(LAST_VISIT_KEY, String(now))
       if (last > 0) {
         const days = Math.floor((now - last) / 86_400_000)
-        if (days >= AWAY_DAYS) setDaysAway(days)
+        if (days >= AWAY_DAYS && claimNudge('welcome-back')) setDaysAway(days)
       }
     } catch { /* storage unavailable: skip the note */ }
   }, [])

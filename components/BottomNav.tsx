@@ -3,16 +3,19 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CircleUserRound, Flame, Plus, Sun, UsersRound } from 'lucide-react'
+import { CircleUserRound, Flame, GraduationCap, Plus, Sun, UsersRound } from 'lucide-react'
+import { usePrepActive } from '@/lib/prep/active'
 
 export default function BottomNav() {
   const pathname = usePathname()
+  const preparing = usePrepActive()
 
   const navItems = [
     { label: 'Today', href: '/dashboard', icon: Sun, tour: 'nav-progress' },
     { label: 'Circles', href: '/circles', icon: UsersRound, tour: 'nav-circles' },
     { label: 'Create', href: '/create', icon: Plus, primary: true, tour: 'nav-create' },
-    { label: 'Feed', href: '/feed', icon: Flame, tour: 'nav-feed' },
+    // People preparing for an exam get their plan here; the feed stays one tap away from Circles and Profile.
+    preparing ? { label: 'Plan', href: '/prep/plan', icon: GraduationCap, tour: 'nav-plan' } : { label: 'Feed', href: '/feed', icon: Flame, tour: 'nav-feed' },
     { label: 'Profile', href: '/profile', icon: CircleUserRound, tour: 'nav-profile' },
   ]
 
@@ -20,7 +23,7 @@ export default function BottomNav() {
     <nav aria-label="Primary navigation" className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 bg-white/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl dark:border-slate-800 dark:bg-[#07101F]/92">
       <div className="mx-auto flex max-w-xl items-end justify-around px-3 py-2">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`) || (item.href === '/prep/plan' && pathname.startsWith('/prep'))
           const Icon = item.icon
 
           if (item.primary) {

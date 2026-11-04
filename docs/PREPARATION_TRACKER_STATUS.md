@@ -151,3 +151,11 @@ SQL: `202611100001_prep_reviews_recall.sql`. Tests: 53/53 unit; `prep_reviews_re
 - `/prep/start`: one question per screen (exam → date with official presets → level and hours → subjects already finished, bulk-ticked in one insert via `tickMany`). Ends on the plan with a one-time "Your plan is ready" note and an hours-left estimate.
 - Today: people who have not set up see one "Preparing for an exam?" card (Start / Not now) at the top; set-up users see the preparation card first; paused users see goals only.
 - Settings → Exam preparation: start, pause/resume, or change exam/date/level.
+
+## Declutter (4 Nov 2026, branch `declutter`), confirmed by the owner
+- Floating Goalie is opt-in (Settings → "Goalie on every page", off by default). Goalie stays on empty screens, check-in help and welcome-back.
+- One nudge at a time (`lib/nudges.ts`): install, notifications and welcome-back never stack, and none on someone's first day (the post-check-in notification ask is allowed once).
+- Bottom bar for people preparing: Today · Circles · Create · Plan · Profile. Feed opens from Circles and Profile. `lib/prep/active.ts` keeps it in sync when prep is started or paused.
+- Old welcome tour removed from Today (the setup replaces it; the Profile help tour remains).
+- Today for people preparing: preparation card first, goals summary as one line, "Small steps" moved to Profile.
+- Lighter shadows on Profile; "Sent! ✓" → "Sent".

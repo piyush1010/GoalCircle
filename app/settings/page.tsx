@@ -365,7 +365,7 @@ export default function SettingsPage() {
           className="w-full py-2.5 px-3 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between transition mb-2"
         >
           <span className="inline-flex items-center gap-2"><KeyRound className="h-4 w-4" />Reset Password via Email</span>
-          <span>{passwordResetSent ? 'Sent! ✓' : '→'}</span>
+          <span>{passwordResetSent ? 'Sent' : '→'}</span>
         </button>
 
         <button

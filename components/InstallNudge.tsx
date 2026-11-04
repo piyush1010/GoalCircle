@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { claimNudge } from '@/lib/nudges'
 import { Smartphone, X } from 'lucide-react'
 import { getInstallPrompt, setInstallPrompt, subscribeToInstallPrompt } from '@/lib/pwa'
 
@@ -20,7 +21,7 @@ export default function InstallNudge() {
     const timer = window.setTimeout(() => {
       setIos((/iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)))
       setCanPrompt(Boolean(getInstallPrompt()))
-      setShow(mobile && !standalone && Date.now() - dismissedAt > 7 * 86_400_000)
+      setShow(mobile && !standalone && Date.now() - dismissedAt > 7 * 86_400_000 && claimNudge('install'))
     }, 0)
     const unsubscribe = subscribeToInstallPrompt(() => setCanPrompt(Boolean(getInstallPrompt())))
     return () => { window.clearTimeout(timer); unsubscribe() }

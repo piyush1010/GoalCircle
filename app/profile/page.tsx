@@ -17,9 +17,13 @@ const WELCOME_TOUR: TourStep[] = [
   { target: 'nav-profile', title: 'Profile', text: 'Your goals and settings. Tap the ? on this page any time to see this tour again.' },
 ]
 import { CircleHelp, Film, Flame, Settings as SettingsIcon, Sparkles } from 'lucide-react'
+import Link from 'next/link'
+import TodoWidget from '@/components/TodoWidget'
+import { usePrepActive } from '@/lib/prep/active'
 
 export default function ProfilePage() {
   const router = useRouter()
+  const preparing = usePrepActive()
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
 
@@ -160,7 +164,7 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={() => setShowQuickGuide(true)}
-            className="grid h-9 w-9 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-md transition hover:border-amber-500 hover:text-amber-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-amber-400"
+            className="grid h-9 w-9 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:border-amber-500 hover:text-amber-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-amber-400"
             aria-label="Open quick guide"
             title="Quick guide"
           >
@@ -168,7 +172,7 @@ export default function ProfilePage() {
           </button>
           <button
             onClick={() => router.push('/settings')}
-            className="p-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-2xl text-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-800 dark:text-slate-300 transition shadow-md flex items-center gap-1.5 text-xs font-bold"
+            className="p-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-2xl text-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-800 dark:text-slate-300 transition flex items-center gap-1.5 text-xs font-bold"
             title="Settings"
           >
             <SettingsIcon className="h-4 w-4 text-amber-500" />
@@ -180,9 +184,9 @@ export default function ProfilePage() {
       <GuideTour name="welcome" steps={WELCOME_TOUR} open={showQuickGuide} onDone={() => void handleQuickGuideComplete()} />
 
       {/* USER CARD & STATS */}
-      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-5 shadow-xl">
+      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl p-5 space-y-5 shadow-sm">
         <div className="flex items-center gap-4">
-          <ProfileAvatar value={avatarUrl} name={displayName} size={56} className="rounded-2xl border-2 border-amber-500/50 shadow-md" />
+          <ProfileAvatar value={avatarUrl} name={displayName} size={56} className="rounded-2xl border-2 border-amber-500/50" />
           <div>
             <h2 className="text-base font-bold">{displayName}</h2>
             <p className="text-xs font-semibold text-amber-500">{displayHandle}</p>
@@ -213,8 +217,17 @@ export default function ProfilePage() {
         </button>
       </div>
 
+      {/* For people preparing for an exam, the feed and small to-dos live here instead of the main bar and Today */}
+      {preparing && user?.id && <div className="space-y-2">
+        <Link href="/feed" className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold shadow-sm dark:border-slate-800 dark:bg-slate-900">Feed<span className="text-xs font-semibold text-slate-500">Check-ins from people you follow →</span></Link>
+        <details className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-bold [&::-webkit-details-marker]:hidden">Small steps for today</summary>
+          <div className="px-2 pb-2"><TodoWidget userId={user.id} /></div>
+        </details>
+      </div>}
+
       {/* MEMORY REELS (DYNAMIC MONTH CALCULATIONS) */}
-      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
+      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm">
         <h2 className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 tracking-wider">
           Memory Reels
         </h2>

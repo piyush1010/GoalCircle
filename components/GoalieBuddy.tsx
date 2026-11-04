@@ -45,7 +45,8 @@ export default function GoalieBuddy() {
   }, [pathname])
 
   useEffect(() => {
-    const read = () => { try { setOff(window.localStorage.getItem(BUDDY_OFF_KEY) === '1') } catch { setOff(false) } }
+    // Off unless the person turned it on in Settings ('0' = on), so new users see a calm screen.
+    const read = () => { try { setOff(window.localStorage.getItem(BUDDY_OFF_KEY) !== '0') } catch { setOff(true) } }
     read()
     window.addEventListener(BUDDY_EVENT, read)
     return () => window.removeEventListener(BUDDY_EVENT, read)

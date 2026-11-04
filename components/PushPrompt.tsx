@@ -3,6 +3,7 @@
 import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
 import { saveDailyReminder } from '@/lib/notifications/dailyReminder'
 import { useEffect, useState } from 'react'
+import { claimNudge } from '@/lib/nudges'
 import { GoalieBot } from '@/components/GoalieBot'
 import { CHEER_EVENT } from '@/lib/goalie'
 import { enablePush, PUSH_ASKED_KEY, pushSupported, syncPush } from '@/lib/push'
@@ -32,7 +33,7 @@ export default function PushPrompt() {
       let askedAt = 0
       try { askedAt = Number(window.localStorage.getItem(PUSH_ASKED_KEY) || 0) } catch { /* storage unavailable */ }
       if (Date.now() - askedAt < ASK_AGAIN_DAYS * 86_400_000) return
-      timer = window.setTimeout(() => { setTitle(heading); setShow(true) }, delay)
+      timer = window.setTimeout(() => { if (!claimNudge('push', { allowFirstDay: true })) return; setTitle(heading); setShow(true) }, delay)
     }
     const afterCheckin = () => ask('Nice work! Want a reminder tomorrow?', 4200) // after Goalie's cheer
     const atMoment = (event: Event) => ask(String((event as CustomEvent<string>).detail || 'Want a buzz when it matters?'), 1500)

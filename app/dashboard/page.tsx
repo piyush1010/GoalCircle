@@ -8,7 +8,7 @@ import { CalendarCheck2, CheckCircle2, ChevronDown, Flame, Plus, Timer, Trash2 }
 import StarterGoals from '@/components/StarterGoals'
 import InstallNudge from '@/components/InstallNudge'
 import PrepTodayCard from '@/components/PrepTodayCard'
-import GuideTour, { type TourStep } from '@/components/GuideTour'
+import { usePrepActive } from '@/lib/prep/active'
 import MonthRing, { type MonthDay } from '@/components/MonthRing'
 import TodoWidget from '@/components/TodoWidget'
 import { confirmAction } from '@/lib/confirm'
@@ -30,13 +30,6 @@ interface BatchCard { id: string; name: string; admin: boolean; task: string | n
 // checkin: counts as showing up. logged: any check-in today, including an honest "Missed".
 interface Activity { goal_id: string | null; at: string; minutes: number; checkin: boolean; logged?: boolean }
 
-// One short tour. Everything else is explained the first time it's used.
-const WELCOME_TOUR: TourStep[] = [
-  { target: 'today-checkin', title: "Hi, I'm Goalie! Check in here", text: 'Done today\'s work? Tap Check in. It takes ten seconds.' },
-  { target: 'today-ring', title: 'Your month', text: 'Every day you show up fills a piece of the ring.' },
-  { target: 'nav-create', title: 'Check in from anywhere', text: 'The + button opens the same check-in, from any page.' },
-]
-
 const localKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
 function greeting() {
@@ -54,6 +47,7 @@ export default function TodayPage() {
   const [error, setError] = useState<string | null>(null)
   const [busyGoalId, setBusyGoalId] = useState<string | null>(null)
   const [stepsOpen, setStepsOpen] = useState(false)
+  const preparing = usePrepActive() // exam users: plan first, a one-line goals summary, to-dos in Profile
   const [batches, setBatches] = useState<BatchCard[]>([])
 
   const load = useCallback(async () => {
@@ -195,8 +189,6 @@ export default function TodayPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-6">
-      <GuideTour name="welcome" steps={WELCOME_TOUR} />
-
       <header className="mb-4">
         <p className="text-sm font-semibold text-slate-500">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         <h1 className="mt-0.5 text-[26px] font-extrabold leading-tight tracking-tight">{greeting()}{firstName ? `, ${firstName}` : ''}</h1>
@@ -207,7 +199,11 @@ export default function TodayPage() {
       {/* Exam preparation first for people preparing; a one-time invitation for everyone else */}
       <PrepTodayCard />
 
-      {/* Today's progress and consistency, at a glance */}
+      {/* Today's progress and consistency: one line for people preparing for an exam, the full card for everyone else */}
+      {preparing ? (totalDue > 0 || dailyStreak > 0) && <p className="mb-1 flex items-center gap-2 px-1 text-sm text-slate-500">
+        <CalendarCheck2 className="h-4 w-4 shrink-0 text-emerald-500" />
+        <span>{totalDue === 0 ? 'No goals due today' : totalDone === totalDue ? 'All goals done today' : `${totalDone} of ${totalDue} goals done today`}{dailyStreak > 0 ? ` · ${dailyStreak}-day streak` : ''}{weekMinutes > 0 ? ` · ${weekTime} this week` : ''}</span>
+      </p> : <>
       <section data-tour="today-ring" className={`${card} p-4`}>
         <div className="flex items-center gap-4">
           <MonthRing days={month} monthName={monthName} compact />
@@ -227,6 +223,8 @@ export default function TodayPage() {
           <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><Timer className="h-4 w-4 text-sky-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{weekTime}</p><p className="mt-1 text-xs font-semibold text-slate-500">this week</p></div>
         </div>
       </section>
+
+      </>}
 
       <InstallNudge />
 
@@ -289,7 +287,7 @@ export default function TodayPage() {
         </div>
       </section>}
 
-      {userId && <section className="mt-5">
+      {userId && !preparing && <section className="mt-5">
         <button type="button" onClick={() => setStepsOpen((open) => !open)} aria-expanded={stepsOpen} className={`flex w-full items-center justify-between px-4 py-3 text-left text-base font-bold ${card}`}>
           Small steps for today <ChevronDown className={`h-5 w-5 text-slate-400 transition ${stepsOpen ? 'rotate-180' : ''}`} />
         </button>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { GraduationCap } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
+import { announcePrepActive } from '@/lib/prep/active'
 
 /** Settings: start exam preparation any time, pause it after the exam, or change exam/date. Nothing is deleted. */
 export default function PrepSettingsCard() {
@@ -30,7 +31,7 @@ export default function PrepSettingsCard() {
     setBusy(true)
     const { error } = await supabase.from('prep_profiles').update({ active: !state.active, updated_at: new Date().toISOString() }).eq('user_id', state.userId)
     setBusy(false)
-    if (!error) setState({ ...state, active: !state.active })
+    if (!error) { setState({ ...state, active: !state.active }); announcePrepActive(!state.active) }
   }
 
   return <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
