@@ -6,11 +6,11 @@ export interface Guide { title: string; intro: string; steps: GuideStep[] }
 
 const PREP_TODAY: Guide = {
   title: 'Today',
-  intro: 'Everything due today, one slide at a time. Swipe through and act on each.',
+  intro: 'Your plan for today, one card at a time: what to study, what to revise, and your goals. Swipe through and act on each.',
   steps: [
     { title: 'One task per slide', target: '[data-guide="deck"]', text: 'Your mentor’s task, revisions due, today’s subtopics and personal goals, across all your exams.', example: 'Slide 1: “Revise · Fundamental Rights”. Slide 2: “Study · Directive Principles”.' },
-    { title: 'Tap the one big button', target: '[data-guide="deck"]', text: 'Done ticks a subtopic. For a revision, say how much you remembered; that sets when it comes back.', example: 'You revise Fundamental Rights and remember most of it: tap Remembered, and it returns in a week instead of 3 days.' },
-    { title: 'Focus with the timer', target: '[data-guide="deck"]', text: 'The timer button on a study slide starts a 25-minute Pomodoro. Finish to save the minutes and tick the subtopic.', example: 'Two rounds on “Directive Principles” saves 50 minutes to your week.' },
+    { title: 'Tap the one big button', target: '[data-guide="deck"]', text: 'Done ticks a subtopic. For a revision, say how much you remembered; that sets when it comes back. Tapped by mistake? Undo, on the card or in the message that pops up.', example: 'You revise Fundamental Rights and remember most of it: tap Got it, and it returns in a week instead of 3 days.' },
+    { title: 'Focus with the timer', target: '[data-guide="deck"]', text: 'Focus on a study card starts a 25-minute Pomodoro. Finish to save the minutes and tick the subtopic.', example: 'Two rounds on “Directive Principles” saves 50 minutes to your week.' },
     { title: 'Log, plan, share', target: '[data-guide="deck-actions"]', text: 'Log adds anything else (PYQs, a mock, an answer). Plan shows the days ahead. Share is off unless you choose followers, everyone or WhatsApp.' },
   ],
 }

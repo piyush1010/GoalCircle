@@ -302,7 +302,7 @@ export default function TodayPage() {
             <CircleAvatar name={batch.name} url={batch.avatarUrl} size={40} />
             <span className="min-w-0 flex-1">
               <span className="line-clamp-2 break-words text-base font-bold leading-snug">{batch.name}</span>
-              <span className="mt-0.5 line-clamp-2 text-sm text-slate-500">{batch.task ? `Today: ${batch.task}` : 'No task posted today'}</span>
+              <span className="mt-0.5 line-clamp-2 text-sm text-slate-500">{batch.task ? `Today: ${batch.task}` : 'You run this batch. Post today’s task for your students.'}</span>
             </span>
             <span className={batch.task ? ghostButton : inkButton}>{batch.task ? 'Students' : 'Post task'}</span>
           </Link>)}

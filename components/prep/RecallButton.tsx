@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { RotateCcw } from 'lucide-react'
 
 export type Recall = 'all' | 'some' | 'little'
-const OPTIONS: [Recall, string][] = [['all', 'Remembered'], ['some', 'Partly'], ['little', 'Forgot']]
+const OPTIONS: [Recall, string][] = [['all', 'Got it'], ['some', 'Partly'], ['little', 'Forgot']]
 
 /** "Revised" asks one honest question, which sets the next gap: remembered → longer, partly → same, forgot → 3 days. */
 export default function RecallButton({ disabled, label = 'Revised', block = false, onPick }: { disabled?: boolean; label?: string; block?: boolean; onPick: (recall: Recall) => void | Promise<void> }) {

@@ -25,7 +25,7 @@ export function weekReview(events: PrepEvent[], units: Set<string>, today: strin
       minutes: inRange.reduce((t, e) => t + (e.minutes ?? 0), 0),
       studyDays: new Set(inRange.map((e) => e.occurredOn)).size,
       ticks: ticked.size,
-      revisions: inRange.filter((e) => e.kind === 'revised').length,
+      revisions: Math.max(0, inRange.filter((e) => e.kind === 'revised' && !e.undo).length - inRange.filter((e) => e.kind === 'revised' && e.undo).length),
       pyqs: sum('pyq'), answers: sum('answers'), mocks: inRange.filter((e) => e.kind === 'mock').length,
       newspaperDays: new Set(inRange.filter((e) => e.kind === 'current_affairs' && e.habit === 'newspaper').map((e) => e.occurredOn)).size,
     }

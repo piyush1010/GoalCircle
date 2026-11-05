@@ -22,6 +22,11 @@ export function applyLocally(cur: TopicState | undefined, nodeId: string, e: { k
   if (e.kind === 'studied' && e.details.undo === true) {
     return { ...s, touchedOn: null, foundation: {}, ...(s.revisionCount === 0 ? { nextRevisionOn: null, intervalDays: null } : {}) }
   }
+  if (e.kind === 'revised' && e.details.undo === true) {
+    const prev = e.details.prev as { revision_count?: number; last_revised_on?: string | null; interval_days?: number | null; next_revision_on?: string | null } | null | undefined
+    if (!prev || s.lastRevisedOn !== day) return s
+    return { ...s, revisionCount: prev.revision_count ?? Math.max(0, s.revisionCount - 1), lastRevisedOn: prev.last_revised_on ?? null, intervalDays: prev.interval_days ?? null, nextRevisionOn: prev.next_revision_on ?? null }
+  }
   s.touchedOn = s.touchedOn && s.touchedOn < day ? s.touchedOn : day
   if (e.kind === 'studied' || e.kind === 'foundation' || e.kind === 'notes') {
     if (!s.nextRevisionOn && !isSubtopic) { s.intervalDays = nextIntervalDays(0); s.nextRevisionOn = addDays(day, s.intervalDays) }

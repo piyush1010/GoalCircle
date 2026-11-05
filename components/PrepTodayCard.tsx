@@ -143,7 +143,7 @@ export default function PrepTodayCard() {
         <p className="mb-2 text-xs font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400">{t('Revise today')}{winBack > 0 ? ` · win back ${winBack} point${winBack === 1 ? '' : 's'}` : ''}{due.length > 3 ? ` · ${due.length} due` : ''}</p>
         <ul className="space-y-2">{due.slice(0, 3).map(({ n, r }) => <li key={n.id} className="flex items-center gap-3">
           <span className="min-w-0 flex-1"><span className="line-clamp-1 text-sm font-semibold">{n.title}</span><span className="block text-xs text-slate-500">{r.status === 'due_today' ? t('Due today') : `${r.daysOverdue} ${t('days overdue')}`}{wins.get(n.id) ? <b className="text-emerald-700 dark:text-emerald-400"> · +{wins.get(n.id)}</b> : null}</span></span>
-          <RecallButton disabled={busyId === n.id} label={t('Revised')} onPick={async (recall) => { setBusyId(n.id); const ok = await data.logEvent(n.id, 'revised', { details: { recall } }); setBusyId(null); flash(ok ? (recall === 'little' ? `Saved. ${n.title} comes back in 3 days.` : `Revised: ${n.title}`) : 'Could not save.') }} />
+          <RecallButton disabled={busyId === n.id} label={t('Revised')} onPick={async (recall) => { setBusyId(n.id); const ok = await data.revise(n.id, recall); setBusyId(null); flash(ok ? (recall === 'little' ? `Saved. ${n.title} comes back in 3 days.` : `Revised: ${n.title}`) : 'Could not save.') }} />
         </li>)}</ul>
         {due.length > 3 && <Link href="/prep?filter=due" className="mt-2 block text-xs font-bold text-slate-600 dark:text-slate-300">See all {due.length} →</Link>}
       </div>}

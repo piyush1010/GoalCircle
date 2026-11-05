@@ -79,6 +79,7 @@ export function usePrepData(enabled = true) {
   const [events, setEvents] = useState<PrepEvent[]>([])
   const [mistakes, setMistakes] = useState<Mistake[]>([])
   const [userId, setUserId] = useState<string | null>(null)
+  const revisedFrom = useRef<Map<string, Record<string, unknown>>>(new Map()) // schedule before today's revision, per topic
   const touchedRef = useRef<Set<string>>(new Set()) // topics already started, kept current between rapid ticks
   useEffect(() => { for (const s of states.values()) if (s.touchedOn) touchedRef.current.add(s.nodeId) }, [states])
 
@@ -221,6 +222,16 @@ export function usePrepData(enabled = true) {
   }, [allNodeList])
   const nodeById = useMemo(() => new Map(allNodeList.map((n) => [n.id, n])), [allNodeList])
 
+  /** The topic above a subtopic, when no other official subtopic of it stays ticked and it was never revised. */
+  const orphanedParent = useCallback((id: string, leaving: Set<string>) => {
+    const n = nodeById.get(id)
+    if (n?.kind !== 'subtopic' || !n.parentId) return null
+    const parent = states.get(n.parentId)
+    if (!parent?.touchedOn || parent.revisionCount > 0) return null
+    const stillTicked = allNodeList.some((x) => x.parentId === n.parentId && x.kind === 'subtopic' && !x.ownerId && !leaving.has(x.id) && states.get(x.id)?.touchedOn)
+    return stillTicked ? null : n.parentId
+  }, [nodeById, states, allNodeList])
+
   const tick = useCallback(async (nodeId: string, on: boolean, minutes?: number) => {
     const node = nodeById.get(nodeId)
     if (!node) return false
@@ -228,6 +239,11 @@ export function usePrepData(enabled = true) {
     if (!on) {
       const ok = await logEvent(nodeId, 'studied', { details: { undo: true } })
       for (const id of twins) await logEvent(id, 'studied', { details: { undo: true, twin: true } })
+      // The last subtopic of a never-revised topic unticked: the topic goes back to not started.
+      for (const id of ok ? [nodeId, ...twins] : []) {
+        const parent = orphanedParent(id, new Set([nodeId, ...twins]))
+        if (parent) { touchedRef.current.delete(parent); await logEvent(parent, 'studied', { details: { undo: true } }) }
+      }
       return ok
     }
     const ok = await logEvent(nodeId, 'studied', minutes ? { minutes: Math.min(960, Math.round(minutes)) } : {})
@@ -238,7 +254,7 @@ export function usePrepData(enabled = true) {
       if (ok && parent && !touchedRef.current.has(parent)) { touchedRef.current.add(parent); await logEvent(parent, 'studied') }
     }
     return ok
-  }, [nodeById, twinsOf, states, logEvent])
+  }, [nodeById, twinsOf, states, logEvent, orphanedParent])
 
   /**
    * Tick many study units at once ("I have already finished these subjects"). One insert for all the
@@ -260,6 +276,35 @@ export function usePrepData(enabled = true) {
     setStudyDays((cur) => (cur.includes(day) ? cur : [day, ...cur]))
     return true
   }, [allNodeList, twinsOf, states])
+
+  /** Undo a bulk tick: unticks these units, their twins, and topics left with nothing ticked. */
+  const untickMany = useCallback(async (picked: string[]) => {
+    const ids = [...new Set([...picked, ...picked.flatMap((id) => twinsOf.get(id) ?? [])])].filter((id) => states.get(id)?.touchedOn)
+    const leaving = new Set(ids)
+    const parents = [...new Set(ids.map((id) => orphanedParent(id, leaving)).filter((p): p is string => Boolean(p)))]
+    const day = localDateString()
+    const rows = [...ids, ...parents].map((id) => ({ node_id: id, kind: 'studied', quantity: 1, details: { undo: true, bulk: true }, minutes: null, occurred_on: day }))
+    for (let i = 0; i < rows.length; i += 400) {
+      const { error } = await supabase.from('prep_events').insert(rows.slice(i, i + 400))
+      if (error) return false
+    }
+    parents.forEach((p) => touchedRef.current.delete(p))
+    const { data } = await supabase.from('prep_topic_state').select(STATE_COLS)
+    if (data) setStates(new Map((data as StateRow[]).map((r) => [r.node_id, toState(r)])))
+    return true
+  }, [twinsOf, states, orphanedParent])
+
+  /** Log a revision. The schedule before it is saved with the event, so it can be undone today. */
+  const revise = useCallback((nodeId: string, recall: 'all' | 'some' | 'little' = 'all') => {
+    const s = states.get(nodeId)
+    const prev = { revision_count: s?.revisionCount ?? 0, last_revised_on: s?.lastRevisedOn ?? null, interval_days: s?.intervalDays ?? null, next_revision_on: s?.nextRevisionOn ?? null }
+    if (s?.lastRevisedOn !== localDateString()) revisedFrom.current.set(nodeId, prev)
+    return logEvent(nodeId, 'revised', { details: { recall, prev } })
+  }, [states, logEvent])
+
+  /** Undo today's revision of a topic (only today's; earlier revisions stay). */
+  // The server finds the earlier schedule itself; the copy kept here only updates the screen while offline.
+  const unrevise = useCallback((nodeId: string) => logEvent(nodeId, 'revised', { details: { undo: true, prev: revisedFrom.current.get(nodeId) ?? null } }), [logEvent])
 
   /**
    * Saves settings. Exam fields (date, stage, level, optional) go to that exam's plan; hours, reminders and
@@ -350,5 +395,5 @@ export function usePrepData(enabled = true) {
     await supabase.from('prep_profiles').update({ daily_target: Math.min(500, Math.max(0, dailyTarget)), target_computed_on: localDateString() }).eq('user_id', userId)
   }, [userId, profile.saved])
 
-  return { status, pending, templateId, templates, plans: plans.filter((p) => p.active), nodesByTemplate, setView, removePlan, template: templates.find((t) => t.id === templateId) ?? null, studyDays, events, mistakes, addMistake, resolveMistake, saveTarget, tick, tickMany, nodes, setNodes, states, mocks, answers, profile, userId, reload: load, refreshTopic, logEvent, saveProfile }
+  return { status, pending, templateId, templates, plans: plans.filter((p) => p.active), nodesByTemplate, setView, removePlan, template: templates.find((t) => t.id === templateId) ?? null, studyDays, events, mistakes, addMistake, resolveMistake, saveTarget, tick, tickMany, untickMany, revise, unrevise, nodes, setNodes, states, mocks, answers, profile, userId, reload: load, refreshTopic, logEvent, saveProfile }
 }
