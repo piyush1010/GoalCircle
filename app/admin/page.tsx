@@ -2,6 +2,7 @@
 
 import AdminExamRequests from '@/components/prep/AdminExamRequests'
 import AdminPrepPilot from '@/components/prep/AdminPrepPilot'
+import AdminFeedback from '@/components/AdminFeedback'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -98,6 +99,7 @@ export default function AdminPage() {
       </section>
 
       <AdminPrepPilot />
+      <AdminFeedback />
       <AdminExamRequests />
 
       {/* Sign-ups */}

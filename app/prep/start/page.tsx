@@ -24,7 +24,16 @@ const EXAM_LABEL: Record<string, [string, string]> = {
   bank_po_v1: ['Bank PO', 'IBPS PO and SBI PO'],
   ctet_v1: ['CTET', 'Central teacher eligibility'],
   uptet_v1: ['UPTET', 'UP teacher eligibility'],
+  up_pcsj_v1: ['UP PCS-J', 'Civil Judge, Uttar Pradesh'],
+  mp_civil_judge_v1: ['MP Civil Judge', 'Judiciary, Madhya Pradesh'],
+  mpsc_rajyaseva_v1: ['MPSC Rajyaseva', 'Maharashtra'],
   cat_v1: ['CAT', 'MBA entrance'],
+}
+/** Other words people type when looking for an exam. */
+const EXAM_WORDS: Record<string, string> = {
+  upsc_cse_v1: 'ias ips civil services', uppcs_v1: 'uppsc ro aro uttar pradesh', bpsc_v1: 'bihar', jkpsc_cce_v1: 'kashmir jammu kas', hpsc_hcs_v1: 'haryana hpsc',
+  ssc_cgl_v1: 'ssc staff selection cgl', bank_po_v1: 'ibps sbi bank banking', ctet_v1: 'teacher tet', uptet_v1: 'teacher tet uttar pradesh',
+  up_pcsj_v1: 'judiciary judge law pcsj pcs j uttar pradesh', mp_civil_judge_v1: 'judiciary judge law mpcj madhya pradesh mp', mpsc_rajyaseva_v1: 'maharashtra rajyaseva state services mpsc', cat_v1: 'mba iim',
 }
 const LEVELS: [Level, string, string][] = [
   ['beginner', 'Just starting', 'Starting fresh with the syllabus'],
@@ -43,6 +52,7 @@ export default function PrepStartPage() {
   const today = localDateString()
   const [step, setStep] = useState(1)
   const [exam, setExam] = useState<string | null>(null)
+  const [find, setFind] = useState('')
   const [stage, setStage] = useState<'prelims' | 'mains'>('prelims')
   const [date, setDate] = useState('')
   const [level, setLevel] = useState<Level | null>(null)
@@ -143,7 +153,8 @@ export default function PrepStartPage() {
     </div>
 
     <div className="mt-5 flex-1 space-y-2 pb-28">
-      {step === 1 && [...data.templates].sort(byExamOrder).map((t) => { const [name, sub] = EXAM_LABEL[t.code] ?? [t.name, '']; const added = adding && data.plans.some((p) => p.templateId === t.id); return <button key={t.id} type="button" disabled={added} onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={`${option(exam === t.id)} ${added ? 'opacity-50' : ''}`}>
+      {step === 1 && data.templates.length > 6 && <input type="search" value={find} onChange={(e) => setFind(e.target.value)} placeholder="Search exams" aria-label="Search exams" className="mb-1 w-full rounded-xl border border-slate-200 bg-transparent px-4 py-3 text-[15px] dark:border-slate-700" />}
+      {step === 1 && [...data.templates].sort(byExamOrder).filter((t) => { const q = find.trim().toLowerCase(); if (!q) return true; const [n, s] = EXAM_LABEL[t.code] ?? [t.name, '']; return `${n} ${s} ${t.name} ${EXAM_WORDS[t.code] ?? ''}`.toLowerCase().includes(q) }).map((t) => { const [name, sub] = EXAM_LABEL[t.code] ?? [t.name, '']; const added = adding && data.plans.some((p) => p.templateId === t.id); return <button key={t.id} type="button" disabled={added} onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={`${option(exam === t.id)} ${added ? 'opacity-50' : ''}`}>
         <span className="min-w-0 flex-1"><span className="block text-[15px] font-bold">{name}</span>{(sub || added) && <span className="block text-[13px] text-slate-500">{added ? 'Already in your plan' : sub}</span>}</span>
         {exam === t.id && <Check className="h-5 w-5 shrink-0 text-amber-600" />}
       </button> })}

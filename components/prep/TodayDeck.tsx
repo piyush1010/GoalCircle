@@ -11,7 +11,8 @@ import { usePrepData } from '@/lib/prep/usePrepData'
 import Pomodoro from '@/components/prep/Pomodoro'
 import QuickLog from '@/components/prep/QuickLog'
 
-const KIND_LABEL: Record<Task['kind'], string> = { mentor: 'Mentor task', revise: 'Revise', study: 'Study', goal: 'Goal' }
+const KIND_LABEL: Record<Task['kind'], string> = { mentor: 'Mentor task', revise: 'Revise', study: 'Study', goal: 'Goal', room: 'Topic of the day' }
+interface Room { template_id: string; node_id: string; title: string; subject: string; done: boolean; done_count: number; people: number }
 const INTRO_KEY = 'goalyaar-today-intro-seen'
 
 /**
@@ -37,10 +38,27 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
   const closeIntro = () => { try { window.localStorage.setItem(INTRO_KEY, '1') } catch { /* fine */ } setIntro(false) }
   const rail = useRef<HTMLDivElement>(null)
 
-  const tasks = useMemo(() => data.status !== 'ready' ? [] : todayTasks({
+  const planned = useMemo(() => data.status !== 'ready' ? [] : todayTasks({
     plans: data.plans.map((p) => ({ templateId: p.templateId, short: examInfo(p.code).short, nodes: data.nodesByTemplate.get(p.templateId) ?? [], settings: p })),
     states: data.states, today, goals, mentor,
   }), [data.status, data.plans, data.nodesByTemplate, data.states, today, goals, mentor])
+
+  // Topic of the day: the same topic for everyone preparing for an exam, posted automatically.
+  const [rooms, setRooms] = useState<Room[]>([])
+  const loadRooms = async () => { const { data: rows, error } = await supabase.rpc('prep_room_today'); if (!error && Array.isArray(rows)) setRooms(rows as Room[]); return !error }
+  useEffect(() => { const t = window.setTimeout(() => { void loadRooms() }, 0); return () => window.clearTimeout(t) }, [today])
+  const roomCheck = async (templateId: string, undo = false) => { const { error } = await supabase.rpc('prep_room_checkin', { target_template: templateId, undo }); if (!error) await loadRooms(); return !error }
+  const tasks = useMemo(() => {
+    const multi = data.plans.length > 1
+    const roomTasks: Task[] = rooms.map((r) => {
+      const others = r.done_count - (r.done ? 1 : 0)
+      const short = examInfo(data.plans.find((p) => p.templateId === r.template_id)?.code).short
+      return { key: `room:${r.template_id}`, kind: 'room', title: r.title, subtitle: `${r.subject} · ${others > 0 ? `${others} other${others === 1 ? '' : 's'} done today` : `Same topic for everyone preparing for ${short}`}`, exam: multi ? short : null, templateId: r.template_id, done: r.done }
+    })
+    // Open tasks first; the shared topic sits after your own study and before personal goals.
+    const order = (t: Task) => (t.done ? 10 : 0) + (t.kind === 'goal' ? 2 : t.kind === 'room' ? 1 : 0)
+    return [...planned, ...roomTasks].map((t, i) => ({ t, i })).sort((a, b) => order(a.t) - order(b.t) || a.i - b.i).map((x) => x.t)
+  }, [planned, rooms, data.plans])
   const done = tasks.filter((t) => t.done).length
   const studied = tasks.filter((t) => t.kind === 'study' && t.done).length
   const revised = tasks.filter((t) => t.kind === 'revise' && t.done).length
@@ -76,7 +94,7 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
             <p className="text-xs font-medium uppercase tracking-[0.14em] opacity-60">How this works</p>
             <h3 className="mt-3 text-[22px] font-semibold leading-snug tracking-tight">Your day, one card at a time.</h3>
             <ul className="mb-5 mt-3 space-y-1.5 text-sm opacity-80">
-              <li>Each card is one thing from your plan: a subtopic to study, a topic to revise, or a goal.</li>
+              <li>Each card is one thing from your plan: a subtopic to study, a topic to revise, or a goal. The topic of the day is shared with everyone preparing for your exam.</li>
               <li>Tap <b>Done</b> when you finish it. Tapped by mistake? <b>Undo</b>.</li>
               <li><b>Focus</b> starts a 25-minute timer.</li>
             </ul>
@@ -89,13 +107,14 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
             <div className="mt-auto pt-5">
               {t.done
                 ? <div className="flex items-center justify-between"><span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" />Done</span>
+                    {t.kind === 'room' && t.templateId && <button type="button" disabled={busy !== null} onClick={() => void act(t, () => roomCheck(t.templateId!, true), 'Undone.')} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300"><RotateCcw className="h-3.5 w-3.5" />Undo</button>}
                     {(t.kind === 'study' || t.kind === 'revise') && t.nodeId && <button type="button" disabled={busy !== null} onClick={() => void act(t, t.kind === 'study' ? () => data.tick(t.nodeId!, false) : () => data.unrevise(t.nodeId!), t.kind === 'study' ? 'Unticked.' : 'Revision undone.')} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300"><RotateCcw className="h-3.5 w-3.5" />Undo</button>}</div>
                 : t.kind === 'revise'
                   ? <div className="grid grid-cols-3 gap-2">{([['all', 'Got it'], ['some', 'Partly'], ['little', 'Forgot']] as const).map(([recall, label]) => <button key={recall} type="button" disabled={busy !== null} onClick={() => void act(t, () => data.revise(t.nodeId!, recall), recall === 'little' ? 'Revised. Back in 3 days.' : 'Revised.', () => data.unrevise(t.nodeId!))} className={`rounded-xl py-3 text-sm font-semibold disabled:opacity-50 ${recall === 'all' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'border border-slate-200 dark:border-slate-700'}`}>{label}</button>)}</div>
                   : t.kind === 'mentor'
                     ? <Link href={`/circles/${t.circleId}`} className="block w-full rounded-xl bg-slate-900 py-3.5 text-center text-base font-semibold text-white dark:bg-white dark:text-slate-900">Check in</Link>
                     : <div className="flex gap-2">
-                        <button type="button" disabled={busy !== null} onClick={() => void act(t, t.kind === 'study' ? () => data.tick(t.nodeId!, true) : () => onGoalDone(t.goalId!), t.kind === 'study' ? 'Ticked.' : 'Done.', t.kind === 'study' ? () => data.tick(t.nodeId!, false) : undefined)} className="flex-1 rounded-xl bg-slate-900 py-3.5 text-base font-semibold text-white disabled:opacity-50 dark:bg-white dark:text-slate-900">{busy === t.key ? 'Saving…' : 'Done'}</button>
+                        <button type="button" disabled={busy !== null} onClick={() => void act(t, t.kind === 'study' ? () => data.tick(t.nodeId!, true) : t.kind === 'room' ? () => roomCheck(t.templateId!) : () => onGoalDone(t.goalId!), t.kind === 'study' ? 'Ticked.' : 'Done.', t.kind === 'study' ? () => data.tick(t.nodeId!, false) : t.kind === 'room' ? () => roomCheck(t.templateId!, true) : undefined)} className="flex-1 rounded-xl bg-slate-900 py-3.5 text-base font-semibold text-white disabled:opacity-50 dark:bg-white dark:text-slate-900">{busy === t.key ? 'Saving…' : 'Done'}</button>
                         {t.kind === 'study' && <button type="button" onClick={() => setFocus(t)} aria-label="Focus timer, 25 minutes" className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 text-sm font-semibold dark:border-slate-700"><Timer className="h-4 w-4" />Focus</button>}
                       </div>}
             </div>

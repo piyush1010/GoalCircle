@@ -98,6 +98,7 @@ export default function PrepProgressPage() {
       <header className="mb-4 flex items-center gap-3">
         <Link href="/dashboard" aria-label="Back to Today" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
         <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Preparation</h1><p className="text-sm text-slate-500">{data.template?.name ?? 'Your exam'}{daysToExam !== null && daysToExam >= 0 ? ` · ${daysToExam} days to exam` : ''}</p></div>
+        <button type="button" onClick={() => setLogOpen(true)} aria-label="Quick log" className="flex h-10 shrink-0 items-center gap-1 rounded-full bg-amber-500 px-3.5 text-sm font-bold text-slate-950"><Plus className="h-4 w-4" />Log</button>
         <HelpButton />
       </header>
       <PrepNav active="/prep/progress" />
@@ -154,7 +155,7 @@ export default function PrepProgressPage() {
 
         <Row title="Mock tests" value={data.mocks.length ? `${data.mocks.length} logged${view.trend.change !== null ? ` · ${view.trend.change > 0 ? '+' : ''}${view.trend.change} pts` : ''}` : 'None yet'}>
           {data.mocks.length === 0
-            ? <p className="text-sm text-slate-500">Add one with Quick log → Mock test.</p>
+            ? <p className="text-sm text-slate-500">Add one with Log → Mock test.</p>
             : <>
               {view.trend.points.length >= 2 && <div>
                 <p className="text-xs text-slate-500">Score % over your last {Math.min(12, view.trend.points.length)} mocks</p>
@@ -178,7 +179,7 @@ export default function PrepProgressPage() {
         </Row>}
 
         <LinkRow href="/prep/mistakes" title="Mistake notebook" value={view.mistakes.open.length ? `${view.mistakes.open.length} to revisit` : ''} />
-        <LinkRow href="/prep/pyq" title="Past papers" value="Year by year" />
+        {exam.pyqPapers.length > 0 && <LinkRow href="/prep/pyq" title="Past papers" value="Year by year" />}
         <LinkRow href="/prep/notes" title="Current affairs notes" value="" />
         <button type="button" onClick={() => setSetupOpen(true)} className="flex w-full items-center justify-between px-4 py-3.5 text-left"><span className="font-medium">Exam, date and reminders</span><span className="text-sm text-slate-500">{data.profile.examDate ?? 'Set date'} →</span></button>
       </div>
@@ -190,7 +191,6 @@ export default function PrepProgressPage() {
 
       <p className="mt-4 px-1 text-xs text-slate-500">Based only on what you log (scoring {SCORING_VERSION}). Not a prediction of rank or selection.</p>
 
-      <button type="button" onClick={() => setLogOpen(true)} aria-label="Quick log" className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-4 z-40 flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg"><Plus className="h-4 w-4" />Quick log</button>
       {logOpen && <QuickLog nodes={data.nodes} states={data.states} examCode={data.template?.code} onClose={() => setLogOpen(false)} onLogged={flash} logEvent={data.logEvent} />}
       {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(10rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
     </main>
