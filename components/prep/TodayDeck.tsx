@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Check, ListChecks, Plus, RotateCcw, Share2, Timer, X } from 'lucide-react'
+import { Check, ChevronRight, ListChecks, Plus, RotateCcw, Share2, Timer, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import { examInfo } from '@/lib/prep/exam'
@@ -12,6 +12,8 @@ import Pomodoro from '@/components/prep/Pomodoro'
 import QuickLog from '@/components/prep/QuickLog'
 
 const KIND_LABEL: Record<Task['kind'], string> = { mentor: 'Mentor task', revise: 'Revise', study: 'Study', goal: 'Goal', room: 'Topic of the day' }
+/** Where a card's title leads: the topic in the syllabus, with its subtopics and revision history. */
+const topicHref = (t: Task) => (t.nodeId ? `/prep?topic=${t.nodeId}` : null)
 interface Room { template_id: string; node_id: string; title: string; subject: string; done: boolean; done_count: number; people: number }
 const INTRO_KEY = 'goalyaar-today-intro-seen'
 
@@ -53,7 +55,7 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
     const roomTasks: Task[] = rooms.map((r) => {
       const others = r.done_count - (r.done ? 1 : 0)
       const short = examInfo(data.plans.find((p) => p.templateId === r.template_id)?.code).short
-      return { key: `room:${r.template_id}`, kind: 'room', title: r.title, subtitle: `${r.subject} · ${others > 0 ? `${others} other${others === 1 ? '' : 's'} done today` : `Same topic for everyone preparing for ${short}`}`, exam: multi ? short : null, templateId: r.template_id, done: r.done }
+      return { key: `room:${r.template_id}`, kind: 'room', nodeId: r.node_id, title: r.title, subtitle: `${r.subject} · ${others > 0 ? `${others} other${others === 1 ? '' : 's'} done today` : `Same topic for everyone preparing for ${short}`}`, exam: multi ? short : null, templateId: r.template_id, done: r.done }
     })
     // Open tasks first; the shared topic sits after your own study and before personal goals.
     const order = (t: Task) => (t.done ? 10 : 0) + (t.kind === 'goal' ? 2 : t.kind === 'room' ? 1 : 0)
@@ -102,8 +104,15 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
           </article>}
           {tasks.map((t) => <article key={t.key} className={`flex min-h-[15rem] w-[88%] shrink-0 snap-center flex-col rounded-3xl border p-5 ${t.done ? 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'}`}>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">{KIND_LABEL[t.kind]}{t.exam ? ` · ${t.exam}` : ''}</p>
-            <h3 className={`mt-3 line-clamp-3 text-[22px] font-semibold leading-snug tracking-tight ${t.done ? 'text-slate-400' : ''}`}>{t.title}</h3>
-            <p className="mt-1 line-clamp-2 text-sm text-slate-500">{t.subtitle}</p>
+            {topicHref(t)
+              ? <Link href={topicHref(t)!} className="group mt-3 block" aria-label={`Open ${t.title}`}>
+                  <h3 className={`line-clamp-3 text-[22px] font-semibold leading-snug tracking-tight ${t.done ? 'text-slate-400' : ''}`}>{t.title}<ChevronRight className="ml-1 inline h-5 w-5 align-[-3px] text-slate-400 transition group-hover:translate-x-0.5" /></h3>
+                  <p className="mt-1 line-clamp-2 text-sm text-slate-500">{t.subtitle}</p>
+                </Link>
+              : <>
+                  <h3 className={`mt-3 line-clamp-3 text-[22px] font-semibold leading-snug tracking-tight ${t.done ? 'text-slate-400' : ''}`}>{t.title}</h3>
+                  <p className="mt-1 line-clamp-2 text-sm text-slate-500">{t.subtitle}</p>
+                </>}
             <div className="mt-auto pt-5">
               {t.done
                 ? <div className="flex items-center justify-between"><span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" />Done</span>

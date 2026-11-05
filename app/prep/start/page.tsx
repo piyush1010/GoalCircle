@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, BookOpenCheck, CalendarDays, Check, Gauge, GraduationCap, ListChecks } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Check, ChevronDown, Gauge, GraduationCap, ListChecks } from 'lucide-react'
 import { localDateString } from '@/lib/exams'
 import { supabase } from '@/utils/supabase'
 import { addDays } from '@/lib/prep/revision'
@@ -57,7 +57,8 @@ export default function PrepStartPage() {
   const [date, setDate] = useState('')
   const [level, setLevel] = useState<Level | null>(null)
   const [hours, setHours] = useState(6)
-  const [done, setDone] = useState<Set<string>>(new Set())
+  const [done, setDone] = useState<Set<string>>(new Set()) // subtopics picked as already finished
+  const [openSubject, setOpenSubject] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [request, setRequest] = useState<{ open: boolean; name: string; note: string; sent: boolean; busy: boolean }>({ open: false, name: '', note: '', sent: false, busy: false })
@@ -90,12 +91,13 @@ export default function PrepStartPage() {
     const kids = childrenMap(data.nodes)
     const root = (kids.get('') ?? []).find((r) => r.kind === 'stage' && r.stages.length === 1 && r.stages[0] === (singleStage ? 'prelims' : stage))
     if (!root) return []
-    const out: { subject: SyllabusNode; paper: string; units: string[] }[] = []
+    const out: { subject: SyllabusNode; paper: string; units: string[]; topics: { topic: SyllabusNode; subs: SyllabusNode[] }[] }[] = []
     for (const paper of kids.get(root.id) ?? []) {
       if ((paper.code ?? '').endsWith('.OPT')) continue
       for (const subject of kids.get(paper.id) ?? []) {
-        const units = (kids.get(subject.id) ?? []).filter((t) => t.kind === 'topic' && !t.ownerId).flatMap((t) => { const subs = (kids.get(t.id) ?? []).filter((s) => s.kind === 'subtopic' && !s.ownerId); return subs.length ? subs.map((s) => s.id) : [t.id] })
-        if (units.length) out.push({ subject, paper: paper.title, units })
+        const topics = (kids.get(subject.id) ?? []).filter((t) => t.kind === 'topic' && !t.ownerId).map((topic) => ({ topic, subs: (kids.get(topic.id) ?? []).filter((s) => s.kind === 'subtopic' && !s.ownerId) }))
+        const units = topics.flatMap(({ topic, subs }) => (subs.length ? subs.map((s) => s.id) : [topic.id]))
+        if (units.length) out.push({ subject, paper: paper.title, units, topics })
       }
     }
     return out
@@ -116,7 +118,7 @@ export default function PrepStartPage() {
   }
   const finish = async () => {
     setBusy(true); setError(null)
-    const ids = subjects.filter((s) => done.has(s.subject.id)).flatMap((s) => s.units).filter((id) => !data.states.get(id)?.touchedOn)
+    const ids = [...done].filter((id) => !data.states.get(id)?.touchedOn)
     if (ids.length && !(await data.tickMany(ids))) { setBusy(false); setError('Could not save your ticks. Please try again.'); return }
     if (pushSupported() && !(await pushIsOn())) await enablePush()
     router.replace('/prep/plan?welcome=1')
@@ -135,7 +137,7 @@ export default function PrepStartPage() {
   const option = (active: boolean) => `flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${active ? 'border-amber-500 bg-amber-500/[0.06] ring-1 ring-amber-500' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'}`
   const Icon = [GraduationCap, CalendarDays, Gauge, ListChecks][step - 1]
   const title = [adding ? 'Add another exam' : 'What are you preparing for?', 'When is your exam?', 'Where are you right now?', 'What have you already finished?'][step - 1]
-  const subtitle = [adding ? 'Today will show all your exams together. Shared subtopics count for both.' : 'You can change this later. Progress is saved for each exam.', 'We work out how much to do each day to finish in time.', 'This sets how hard your daily plan pushes.', 'Tick whole subjects you have genuinely covered. You can change any of it later.'][step - 1]
+  const subtitle = [adding ? 'Today will show all your exams together. Shared subtopics count for both.' : 'You can change this later. Progress is saved for each exam.', 'We work out how much to do each day to finish in time.', 'This sets how hard your daily plan pushes.', 'Tick a whole subject, or open it to pick subtopics. You can change any of it later.'][step - 1]
 
   return <main className="mx-auto flex min-h-screen max-w-md flex-col px-5 pt-5">
     <div className="flex items-center gap-3">
@@ -196,17 +198,39 @@ export default function PrepStartPage() {
 
       {step === 4 && (subjects.length === 0
         ? <div className="h-40 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" aria-busy="true" />
-        : <div className="space-y-2">{subjects.map(({ subject, paper, units }) => { const on = done.has(subject.id); const already = units.every((u) => data.states.get(u)?.touchedOn); return <button key={subject.id} type="button" disabled={already} onClick={() => setDone((cur) => { const n = new Set(cur); if (n.has(subject.id)) n.delete(subject.id); else n.add(subject.id); return n })} aria-pressed={on || already} className={option(on || already)}>
-            <BookOpenCheck className={`h-5 w-5 shrink-0 ${on || already ? 'text-amber-600' : 'text-slate-400'}`} />
-            <span className="min-w-0 flex-1"><span className="block text-sm font-bold">{subject.title === paper ? paper : subject.title}</span><span className="block text-xs text-slate-500">{already ? 'Already ticked' : `${units.length} subtopics`}{subject.title !== paper ? ` · ${paper.replace(/^Paper [IVX]+: /, '')}` : ''}</span></span>
-            {(on || already) && <Check className="h-5 w-5 shrink-0 text-amber-600" />}
-          </button> })}</div>)}
+        : <div className="space-y-2">{subjects.map(({ subject, paper, units, topics }) => {
+            const ticked = (id: string) => done.has(id) || Boolean(data.states.get(id)?.touchedOn)
+            const count = units.filter(ticked).length
+            const all = count === units.length
+            const already = units.every((u) => data.states.get(u)?.touchedOn)
+            const toggle = (ids: string[], on: boolean) => setDone((cur) => { const n = new Set(cur); for (const id of ids) { if (data.states.get(id)?.touchedOn) continue; if (on) n.add(id); else n.delete(id) } return n })
+            const open = openSubject === subject.id
+            return <div key={subject.id} className={`overflow-hidden rounded-2xl border ${count ? 'border-amber-500 bg-amber-500/5' : 'border-slate-200 dark:border-slate-800'}`}>
+              <div className="flex items-center">
+                <button type="button" disabled={already} onClick={() => toggle(units, !all)} aria-pressed={all} className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-left">
+                  <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${all ? 'border-amber-500 bg-amber-500 text-slate-950' : count ? 'border-amber-500 text-amber-600' : 'border-slate-300 dark:border-slate-600'}`}>{all ? <Check className="h-3.5 w-3.5" /> : count ? <span className="h-0.5 w-2.5 rounded bg-amber-500" /> : null}</span>
+                  <span className="min-w-0 flex-1"><span className="block text-sm font-bold">{subject.title === paper ? paper : subject.title}</span><span className="block text-xs text-slate-500">{already ? 'Already ticked' : count ? `${count} of ${units.length} subtopics` : `${units.length} subtopics`}{subject.title !== paper ? ` · ${paper.replace(/^Paper [IVX]+: /, '')}` : ''}</span></span>
+                </button>
+                <button type="button" onClick={() => setOpenSubject(open ? null : subject.id)} aria-expanded={open} aria-label={`${open ? 'Hide' : 'Show'} subtopics of ${subject.title}`} className="grid h-14 w-12 shrink-0 place-items-center text-slate-400"><ChevronDown className={`h-5 w-5 transition ${open ? 'rotate-180' : ''}`} /></button>
+              </div>
+              {open && <div className="border-t border-slate-100 px-4 pb-2 dark:border-slate-800">{topics.map(({ topic, subs }) => {
+                const items = subs.length ? subs : [topic]
+                return <div key={topic.id} className="pt-2">
+                  {subs.length > 0 && <p className="pt-1 text-xs font-semibold text-slate-500">{topic.title}</p>}
+                  {items.map((u) => <label key={u.id} className="flex cursor-pointer items-start gap-3 py-1.5">
+                    <input type="checkbox" checked={ticked(u.id)} disabled={Boolean(data.states.get(u.id)?.touchedOn)} onChange={(e) => toggle([u.id], e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-amber-500" />
+                    <span className="text-sm leading-snug">{u.title}</span>
+                  </label>)}
+                </div>
+              })}</div>}
+            </div>
+          })}</div>)}
     </div>
 
     {error && <p role="alert" className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 text-center text-sm font-semibold text-rose-600">{error}</p>}
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-5 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 backdrop-blur dark:border-slate-800 dark:bg-[#07101F]/95"><div className="mx-auto max-w-md">
     <button type="button" disabled={busy || (step === 1 && !exam) || (step === 2 && !date) || (step === 3 && !level)} onClick={() => void (step === 4 ? finish() : next())} className="w-full rounded-xl bg-amber-500 py-3.5 text-base font-bold text-slate-950 transition active:scale-[0.99] disabled:opacity-40">
-      {busy ? 'Saving…' : step === 4 ? (done.size ? `Tick ${subjects.filter((s) => done.has(s.subject.id)).reduce((n, s) => n + s.units.length, 0)} subtopics and see my plan` : 'Skip, show my plan') : step === 3 && level === 'beginner' ? 'See my plan' : 'Continue'}
+      {busy ? 'Saving…' : step === 4 ? (done.size ? `Tick ${done.size} subtopic${done.size === 1 ? '' : 's'} and see my plan` : 'Skip, show my plan') : step === 3 && level === 'beginner' ? 'See my plan' : 'Continue'}
     </button>
     </div></div>
   </main>
