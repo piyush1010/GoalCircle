@@ -44,7 +44,7 @@ export default function PrepSettingsCard() {
           <div className="min-w-0"><h3 className="text-sm font-bold">Preparing for an exam</h3><p className="text-xs text-slate-500">{state.active ? `${state.exam ?? 'Your exam'} plan on Today, with reminders` : 'Paused. Your ticks and history are kept.'}</p></div>
           <button type="button" disabled={busy} onClick={() => void toggle()} aria-pressed={state.active} aria-label="Preparing for an exam" className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${state.active ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'}`}><span className={`absolute top-1 block h-4 w-4 rounded-full bg-white transition-transform ${state.active ? 'left-6' : 'left-1'}`} /></button>
         </div>
-        {state.active && <Link href="/prep/start" className="block text-sm font-bold text-amber-700 dark:text-amber-400">Change exam, date or level →</Link>}
+        {state.active && <Link href="/prep/plan?exams=1" className="block text-sm font-bold text-amber-700 dark:text-amber-400">Your exams: add, change or remove →</Link>}
       </>}
   </div>
 }

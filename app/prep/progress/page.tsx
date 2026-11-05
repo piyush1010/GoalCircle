@@ -102,7 +102,7 @@ export default function PrepProgressPage() {
         <HelpButton />
       </header>
       <PrepNav active="/prep/progress" />
-      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} />
+      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} manage={{ removed: data.removedPlans, onRemove: data.removePlan, onRestore: data.restorePlan }} />
 
       {/* One summary: where you stand, and this week */}
       <section data-guide="progress-summary" className={card}>

@@ -16,6 +16,7 @@ const KIND_LABEL: Record<Task['kind'], string> = { mentor: 'Mentor task', revise
 const topicHref = (t: Task) => (t.nodeId ? `/prep?topic=${t.nodeId}` : null)
 interface Room { template_id: string; node_id: string; title: string; subject: string; done: boolean; done_count: number; people: number }
 const INTRO_KEY = 'goalyaar-today-intro-seen'
+const FOCUS_KEY = 'goalyaar-today-exam' // which exam Today shows when there are several (empty = all)
 
 /**
  * Today for people preparing for exams: one task per slide, one big action each.
@@ -40,10 +41,16 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
   const closeIntro = () => { try { window.localStorage.setItem(INTRO_KEY, '1') } catch { /* fine */ } setIntro(false) }
   const rail = useRef<HTMLDivElement>(null)
 
+  // With several exams, Today can show all of them or just one.
+  const [only, setOnly] = useState<string | null>(null)
+  useEffect(() => { const t = window.setTimeout(() => { try { setOnly(window.localStorage.getItem(FOCUS_KEY) || null) } catch { /* all */ } }, 0); return () => window.clearTimeout(t) }, [])
+  const pick = (id: string | null) => { setOnly(id); try { if (id) window.localStorage.setItem(FOCUS_KEY, id); else window.localStorage.removeItem(FOCUS_KEY) } catch { /* not remembered */ } }
+  const focusId = only && data.plans.some((p) => p.templateId === only) ? only : null
+  const shown = useMemo(() => (focusId ? data.plans.filter((p) => p.templateId === focusId) : data.plans), [focusId, data.plans])
   const planned = useMemo(() => data.status !== 'ready' ? [] : todayTasks({
-    plans: data.plans.map((p) => ({ templateId: p.templateId, short: examInfo(p.code).short, nodes: data.nodesByTemplate.get(p.templateId) ?? [], settings: p })),
-    states: data.states, today, goals, mentor,
-  }), [data.status, data.plans, data.nodesByTemplate, data.states, today, goals, mentor])
+    plans: shown.map((p) => ({ templateId: p.templateId, short: examInfo(p.code).short, nodes: data.nodesByTemplate.get(p.templateId) ?? [], settings: p })),
+    states: data.states, today, goals: focusId ? [] : goals, mentor: focusId ? [] : mentor,
+  }), [data.status, shown, focusId, data.nodesByTemplate, data.states, today, goals, mentor])
 
   // Topic of the day: the same topic for everyone preparing for an exam, posted automatically.
   const [rooms, setRooms] = useState<Room[]>([])
@@ -52,7 +59,7 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
   const roomCheck = async (templateId: string, undo = false) => { const { error } = await supabase.rpc('prep_room_checkin', { target_template: templateId, undo }); if (!error) await loadRooms(); return !error }
   const tasks = useMemo(() => {
     const multi = data.plans.length > 1
-    const roomTasks: Task[] = rooms.map((r) => {
+    const roomTasks: Task[] = rooms.filter((r) => !focusId || r.template_id === focusId).map((r) => {
       const others = r.done_count - (r.done ? 1 : 0)
       const short = examInfo(data.plans.find((p) => p.templateId === r.template_id)?.code).short
       return { key: `room:${r.template_id}`, kind: 'room', nodeId: r.node_id, title: r.title, subtitle: `${r.subject} · ${others > 0 ? `${others} other${others === 1 ? '' : 's'} done today` : `Same topic for everyone preparing for ${short}`}`, exam: multi ? short : null, templateId: r.template_id, done: r.done }
@@ -60,7 +67,7 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
     // Open tasks first; the shared topic sits after your own study and before personal goals.
     const order = (t: Task) => (t.done ? 10 : 0) + (t.kind === 'goal' ? 2 : t.kind === 'room' ? 1 : 0)
     return [...planned, ...roomTasks].map((t, i) => ({ t, i })).sort((a, b) => order(a.t) - order(b.t) || a.i - b.i).map((x) => x.t)
-  }, [planned, rooms, data.plans])
+  }, [planned, rooms, data.plans, focusId])
   const done = tasks.filter((t) => t.done).length
   const studied = tasks.filter((t) => t.kind === 'study' && t.done).length
   const revised = tasks.filter((t) => t.kind === 'revise' && t.done).length
@@ -68,7 +75,8 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
   // Keep the target the reminder quotes in step with today's study slides.
   const target = tasks.filter((t) => t.kind === 'study').length
   const { saveTarget } = data
-  useEffect(() => { if (data.status === 'ready' && target) void saveTarget(target) }, [data.status, target, saveTarget])
+  // Only from the all-exams view, so the reminder always quotes the full day.
+  useEffect(() => { if (data.status === 'ready' && target && !focusId) void saveTarget(target) }, [data.status, target, saveTarget, focusId])
   useEffect(() => { if (!toast) return; const t = window.setTimeout(() => setToastState(null), toast.undo ? 5000 : 2600); return () => window.clearTimeout(t) }, [toast])
 
   if (data.status !== 'ready') return <div className="h-72 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-900" aria-busy="true" />
@@ -83,6 +91,9 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
   }
 
   return <section aria-label="Today" data-guide="deck" className="mb-6">
+    {data.plans.length > 1 && <div className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]" role="group" aria-label="Show exam">
+      {[{ id: null as string | null, label: 'All exams' }, ...data.plans.map((p) => ({ id: p.templateId as string | null, label: examInfo(p.code).short }))].map((o) => <button key={o.id ?? 'all'} type="button" onClick={() => pick(o.id)} aria-pressed={focusId === o.id} className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold ${focusId === o.id ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>{o.label}</button>)}
+    </div>}
     <div className="mb-3 flex items-end justify-between px-1">
       <div><p className="text-sm text-slate-500">Today&apos;s plan</p><p className="text-2xl font-semibold tracking-tight tabular-nums">{tasks.length ? `${done} of ${tasks.length} done` : 'All clear'}</p></div>
       {tasks.length > 1 && <p className="pb-1 text-sm text-slate-500">Swipe for more</p>}
@@ -103,10 +114,10 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
             <button type="button" onClick={() => { closeIntro(); rail.current?.scrollTo({ left: 0 }) }} className="mt-auto rounded-xl bg-white py-3 text-base font-semibold text-slate-900 dark:bg-slate-900 dark:text-white">Start</button>
           </article>}
           {tasks.map((t) => <article key={t.key} className={`flex min-h-[15rem] w-[88%] shrink-0 snap-center flex-col rounded-3xl border p-5 ${t.done ? 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'}`}>
-            <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">{KIND_LABEL[t.kind]}{t.exam ? ` · ${t.exam}` : ''}</p>
+            <div className="flex items-center justify-between gap-2"><p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">{KIND_LABEL[t.kind]}{t.exam ? ` · ${t.exam}` : ''}</p>{topicHref(t) && <Link href={topicHref(t)!} tabIndex={-1} aria-hidden="true" className="-m-2 p-2 text-slate-400"><ChevronRight className="h-5 w-5" /></Link>}</div>
             {topicHref(t)
-              ? <Link href={topicHref(t)!} className="group mt-3 block" aria-label={`Open ${t.title}`}>
-                  <h3 className={`line-clamp-3 text-[22px] font-semibold leading-snug tracking-tight ${t.done ? 'text-slate-400' : ''}`}>{t.title}<ChevronRight className="ml-1 inline h-5 w-5 align-[-3px] text-slate-400 transition group-hover:translate-x-0.5" /></h3>
+              ? <Link href={topicHref(t)!} className="mt-3 block" aria-label={`Open ${t.title}`}>
+                  <h3 className={`line-clamp-3 text-[22px] font-semibold leading-snug tracking-tight ${t.done ? 'text-slate-400' : ''}`}>{t.title}</h3>
                   <p className="mt-1 line-clamp-2 text-sm text-slate-500">{t.subtitle}</p>
                 </Link>
               : <>

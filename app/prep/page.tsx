@@ -127,7 +127,7 @@ export default function PrepExplorerPage() {
         <HelpButton />
       </header>
       <PrepNav active="/prep" />
-      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} />
+      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} manage={{ removed: data.removedPlans, onRemove: data.removePlan, onRestore: data.restorePlan }} />
 
       <div className={`grid gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 ${tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`} role="tablist" data-guide="syllabus-tabs">
         {tabs.map(({ root: code, label }) => <button key={code} type="button" role="tab" aria-selected={tab === code} onClick={() => setTab(code)} className={`rounded-lg py-2 text-sm font-bold transition ${tab === code ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}>{label}</button>)}
