@@ -12,9 +12,8 @@ export default function PushToggle({ embedded = false }: { embedded?: boolean } 
   const [note, setNote] = useState('')
 
   useEffect(() => {
-    const ok = pushSupported()
-    setSupported(ok)
-    if (ok) void pushIsOn().then(setOn)
+    const t = window.setTimeout(() => { const ok = pushSupported(); setSupported(ok); if (ok) void pushIsOn().then(setOn) }, 0)
+    return () => window.clearTimeout(t)
   }, [])
 
   const toggle = async () => {

@@ -9,6 +9,7 @@ import MusicPicker, { type SelectedTrack } from '@/components/MusicPicker'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
 import { MAX_VIDEO_SECONDS, mediaLimitError, shrinkImage, toLocalFile, UNREADABLE_FILE } from '@/lib/media'
 import { supabase } from '@/utils/supabase'
+import HelpButton from '@/components/HelpButton'
 
 const CREATE_TOUR: TourStep[] = [
   { target: 'goal-title', title: 'Name one clear action', text: "Small and specific works best: 'Read 20 pages a day', not 'Read more'. Or tap an idea to start." },
@@ -280,6 +281,7 @@ export default function CreateGoalPage() {
           <h1 className="text-xl font-bold tracking-tight">Create a goal</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Set it. Share it. Show up.</p>
         </div>
+        <HelpButton className="ml-auto" />
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-3">

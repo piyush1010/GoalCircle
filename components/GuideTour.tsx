@@ -52,7 +52,7 @@ export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: 
 
   useEffect(() => {
     if (controlled) {
-      if (!open) { setIndex(null); return }
+      if (!open) { const t = window.setTimeout(() => setIndex(null), 0); return () => window.clearTimeout(t) }
       const timer = window.setTimeout(start, 300)
       return () => window.clearTimeout(timer)
     }
@@ -85,6 +85,8 @@ export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: 
     // Bring the target near the top so the speech bubble below doesn't cover it.
     if (target) { target.style.scrollMarginTop = '96px'; target.scrollIntoView({ block: 'start', behavior: 'smooth' }) }
     const timer = window.setTimeout(measure, 350)
+    // Measured before paint on purpose, so the highlight never flashes in the wrong place.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     measure()
     window.addEventListener('resize', measure)
     window.addEventListener('scroll', measure, true)

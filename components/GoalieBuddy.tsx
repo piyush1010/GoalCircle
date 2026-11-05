@@ -53,18 +53,17 @@ export default function GoalieBuddy() {
   }, [])
 
   useEffect(() => {
-    setSay(undefined)
     const line = PAGE_LINES.find((item) => item.match(pathname))?.line
-    if (!line) return
     let seen = false
-    try {
+    if (line) try {
       const key = `goalcircle-goalie-said-${pathname.split('/')[1]}`
       seen = window.sessionStorage.getItem(key) === '1'
       window.sessionStorage.setItem(key, '1')
     } catch { /* storage unavailable */ }
-    if (seen) return
-    const timer = window.setTimeout(() => setSay(line), 1200)
-    return () => window.clearTimeout(timer)
+    // A new page clears the last line straight away, and says its own line (once a session) a moment later.
+    const clear = window.setTimeout(() => setSay(undefined), 0)
+    const timer = line && !seen ? window.setTimeout(() => setSay(line), 1200) : undefined
+    return () => { window.clearTimeout(clear); if (timer) window.clearTimeout(timer) }
   }, [pathname])
 
   // Batch pages are full of buttons in the corner Goalie would sit on; the tour has its own Goalie.

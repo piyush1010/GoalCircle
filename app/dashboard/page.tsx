@@ -135,9 +135,9 @@ export default function TodayPage() {
 
   const doneToday = useMemo(() => new Set(activity.filter((item) => item.logged && localKey(new Date(item.at)) === today).map((item) => item.goal_id)), [activity, today])
   const weekMinutes = useMemo(() => {
-    const since = Date.now() - 7 * 86_400_000
+    const since = new Date(`${today}T00:00:00`).getTime() - 6 * 86_400_000 // this week: today and the 6 days before
     return activity.filter((item) => new Date(item.at).getTime() >= since).reduce((sum, item) => sum + item.minutes, 0)
-  }, [activity])
+  }, [activity, today])
   // Days checked in this week, per goal (weeks start on Monday)
   const weekDays = useMemo(() => {
     const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - ((start.getDay() + 6) % 7))

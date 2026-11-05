@@ -92,7 +92,7 @@ export default function CirclePage() {
 
   // Show the last view of this circle instantly, then refresh it.
   useEffect(() => {
-    try {
+    const timer = window.setTimeout(() => { try {
       const cached = JSON.parse(window.localStorage.getItem(cacheKey) || 'null')
       if (cached?.circle && cached.today === today) {
         setCircle(cached.circle); setRole(cached.role); setMemberCount(cached.memberCount); setTask(cached.task); setCheckin(cached.checkin)
@@ -100,7 +100,8 @@ export default function CirclePage() {
         if (Array.isArray(cached.dashboard)) setDashboard(cached.dashboard)
         setLoading(false)
       }
-    } catch { /* no cache */ }
+    } catch { /* no cache */ } }, 0)
+    return () => window.clearTimeout(timer)
   }, [cacheKey, today])
 
   const load = useCallback(async () => {
@@ -209,7 +210,7 @@ export default function CirclePage() {
       <header className="mb-5 flex flex-wrap items-center gap-2">
         <button type="button" onClick={() => router.push('/circles')} aria-label="Back to circles" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101B2D]"><ArrowLeft className="h-4 w-4" /></button>
         <span className="flex-1" />
-        {isMember && <button type="button" onClick={() => setTourReplay((n) => n + 1)} aria-label="Show the guide" className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-500 hover:text-amber-500 dark:border-slate-700"><CircleHelp className="h-4 w-4" /></button>}
+        {isMember && <button type="button" data-guide-inline="" onClick={() => setTourReplay((n) => n + 1)} aria-label="Show the guide" className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 text-slate-500 hover:text-amber-500 dark:border-slate-700"><CircleHelp className="h-4 w-4" /></button>}
         {isMember && <div className="relative shrink-0">
           <button type="button" onClick={() => setMenuOpen((open) => !open)} aria-label="More options" aria-expanded={menuOpen} className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 text-slate-500 dark:border-slate-700"><MoreHorizontal className="h-4 w-4" /></button>
           {menuOpen && <button type="button" aria-hidden="true" tabIndex={-1} onClick={() => setMenuOpen(false)} className="fixed inset-0 z-10 cursor-default" />}

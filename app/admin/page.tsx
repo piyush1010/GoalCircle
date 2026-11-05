@@ -1,6 +1,7 @@
 'use client'
 
 import AdminExamRequests from '@/components/prep/AdminExamRequests'
+import AdminPrepPilot from '@/components/prep/AdminPrepPilot'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -96,6 +97,7 @@ export default function AdminPage() {
         <div className="mt-1 flex justify-between text-[11px] text-slate-500"><span>{shortDay(data.daily[0].day)}</span><span>today</span></div>
       </section>
 
+      <AdminPrepPilot />
       <AdminExamRequests />
 
       {/* Sign-ups */}

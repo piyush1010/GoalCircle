@@ -27,11 +27,11 @@ export default function ResetPasswordPage() {
     })
     void supabase.auth.getSession().then(({ data: { session } }) => { if (session) setReady(true) })
     const params = new URLSearchParams(window.location.hash.slice(1) || window.location.search)
-    if (params.get('error_code') || params.get('error')) setExpired(true)
+    const badLink = window.setTimeout(() => { if (params.get('error_code') || params.get('error')) setExpired(true) }, 0)
     const timer = window.setTimeout(() => {
       void supabase.auth.getSession().then(({ data: { session } }) => { if (!session) setExpired(true) })
     }, 4000)
-    return () => { listener.subscription.unsubscribe(); window.clearTimeout(timer) }
+    return () => { listener.subscription.unsubscribe(); window.clearTimeout(timer); window.clearTimeout(badLink) }
   }, [])
 
   const save = async (event: React.FormEvent) => {
