@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Check, ListChecks, Plus, Share2, Timer, X } from 'lucide-react'
+import { Check, ListChecks, Plus, RotateCcw, Share2, Timer, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import { examInfo } from '@/lib/prep/exam'
@@ -12,6 +12,7 @@ import Pomodoro from '@/components/prep/Pomodoro'
 import QuickLog from '@/components/prep/QuickLog'
 
 const KIND_LABEL: Record<Task['kind'], string> = { mentor: 'Mentor task', revise: 'Revise', study: 'Study', goal: 'Goal' }
+const INTRO_KEY = 'goalyaar-today-intro-seen'
 
 /**
  * Today for people preparing for exams: one task per slide, one big action each.
@@ -28,7 +29,12 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
   const [focus, setFocus] = useState<Task | null>(null)
   const [logOpen, setLogOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToastState] = useState<{ text: string; undo?: () => Promise<boolean> } | null>(null)
+  const setToast = (text: string | null, undo?: () => Promise<boolean>) => setToastState(text ? { text, undo } : null)
+  // First visit: one extra slide that says what this is. Hidden for good after "Start".
+  const [intro, setIntro] = useState(false)
+  useEffect(() => { const t = window.setTimeout(() => { try { setIntro(window.localStorage.getItem(INTRO_KEY) !== '1') } catch { /* show nothing */ } }, 0); return () => window.clearTimeout(t) }, [])
+  const closeIntro = () => { try { window.localStorage.setItem(INTRO_KEY, '1') } catch { /* fine */ } setIntro(false) }
   const rail = useRef<HTMLDivElement>(null)
 
   const tasks = useMemo(() => data.status !== 'ready' ? [] : todayTasks({
@@ -43,22 +49,22 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
   const target = tasks.filter((t) => t.kind === 'study').length
   const { saveTarget } = data
   useEffect(() => { if (data.status === 'ready' && target) void saveTarget(target) }, [data.status, target, saveTarget])
-  useEffect(() => { if (!toast) return; const t = window.setTimeout(() => setToast(null), 2600); return () => window.clearTimeout(t) }, [toast])
+  useEffect(() => { if (!toast) return; const t = window.setTimeout(() => setToastState(null), toast.undo ? 5000 : 2600); return () => window.clearTimeout(t) }, [toast])
 
   if (data.status !== 'ready') return <div className="h-72 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-900" aria-busy="true" />
 
-  const act = async (t: Task, fn: () => Promise<boolean>, message: string) => {
+  const act = async (t: Task, fn: () => Promise<boolean>, message: string, undo?: () => Promise<boolean>) => {
     setBusy(t.key)
     const ok = await fn()
     setBusy(null)
-    setToast(ok ? message : 'Could not save. Try again.')
+    setToast(ok ? message : 'Could not save. Try again.', ok ? undo : undefined)
     // Move to the next open slide.
     if (ok && rail.current) rail.current.scrollBy({ left: rail.current.clientWidth * 0.88, behavior: 'smooth' })
   }
 
   return <section aria-label="Today" data-guide="deck" className="mb-6">
     <div className="mb-3 flex items-end justify-between px-1">
-      <div><p className="text-sm text-slate-500">Today</p><p className="text-2xl font-semibold tracking-tight tabular-nums">{tasks.length ? `${done} of ${tasks.length}` : 'All clear'}</p></div>
+      <div><p className="text-sm text-slate-500">Today&apos;s plan</p><p className="text-2xl font-semibold tracking-tight tabular-nums">{tasks.length ? `${done} of ${tasks.length} done` : 'All clear'}</p></div>
       {tasks.length > 1 && <p className="pb-1 text-sm text-slate-500">Swipe for more</p>}
     </div>
     {tasks.length > 0 && <div className="mb-4 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-amber-500 transition-[width] duration-500" style={{ width: `${(done / tasks.length) * 100}%` }} /></div>}
@@ -66,6 +72,16 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
     {tasks.length === 0
       ? <div className="rounded-3xl border border-slate-200 p-6 text-center dark:border-slate-800"><p className="font-medium">Nothing due right now.</p><p className="mt-1 text-sm text-slate-500">Pick something from your syllabus, or rest.</p><Link href="/prep" className="mt-4 inline-block rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium dark:border-slate-700">Open syllabus</Link></div>
       : <div ref={rail} className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {intro && <article className="flex min-h-[15rem] w-[88%] shrink-0 snap-center flex-col rounded-3xl bg-slate-900 p-5 text-white dark:bg-white dark:text-slate-900">
+            <p className="text-xs font-medium uppercase tracking-[0.14em] opacity-60">How this works</p>
+            <h3 className="mt-3 text-[22px] font-semibold leading-snug tracking-tight">Your day, one card at a time.</h3>
+            <ul className="mb-5 mt-3 space-y-1.5 text-sm opacity-80">
+              <li>Each card is one thing from your plan: a subtopic to study, a topic to revise, or a goal.</li>
+              <li>Tap <b>Done</b> when you finish it. Tapped by mistake? <b>Undo</b>.</li>
+              <li><b>Focus</b> starts a 25-minute timer.</li>
+            </ul>
+            <button type="button" onClick={() => { closeIntro(); rail.current?.scrollTo({ left: 0 }) }} className="mt-auto rounded-xl bg-white py-3 text-base font-semibold text-slate-900 dark:bg-slate-900 dark:text-white">Start</button>
+          </article>}
           {tasks.map((t) => <article key={t.key} className={`flex min-h-[15rem] w-[88%] shrink-0 snap-center flex-col rounded-3xl border p-5 ${t.done ? 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'}`}>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">{KIND_LABEL[t.kind]}{t.exam ? ` · ${t.exam}` : ''}</p>
             <h3 className={`mt-3 line-clamp-3 text-[22px] font-semibold leading-snug tracking-tight ${t.done ? 'text-slate-400' : ''}`}>{t.title}</h3>
@@ -73,14 +89,14 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
             <div className="mt-auto pt-5">
               {t.done
                 ? <div className="flex items-center justify-between"><span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" />Done</span>
-                    {t.kind === 'study' && t.nodeId && <button type="button" disabled={busy !== null} onClick={() => void act(t, () => data.tick(t.nodeId!, false), 'Unticked.')} className="text-sm text-slate-400">Undo</button>}</div>
+                    {(t.kind === 'study' || t.kind === 'revise') && t.nodeId && <button type="button" disabled={busy !== null} onClick={() => void act(t, t.kind === 'study' ? () => data.tick(t.nodeId!, false) : () => data.unrevise(t.nodeId!), t.kind === 'study' ? 'Unticked.' : 'Revision undone.')} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300"><RotateCcw className="h-3.5 w-3.5" />Undo</button>}</div>
                 : t.kind === 'revise'
-                  ? <div className="grid grid-cols-3 gap-2">{([['all', 'Got it'], ['some', 'Partly'], ['little', 'Forgot']] as const).map(([recall, label]) => <button key={recall} type="button" disabled={busy !== null} onClick={() => void act(t, () => data.logEvent(t.nodeId!, 'revised', { details: { recall } }), recall === 'little' ? 'Back in 3 days.' : 'Revised.')} className={`rounded-xl py-3 text-sm font-semibold disabled:opacity-50 ${recall === 'all' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'border border-slate-200 dark:border-slate-700'}`}>{label}</button>)}</div>
+                  ? <div className="grid grid-cols-3 gap-2">{([['all', 'Got it'], ['some', 'Partly'], ['little', 'Forgot']] as const).map(([recall, label]) => <button key={recall} type="button" disabled={busy !== null} onClick={() => void act(t, () => data.revise(t.nodeId!, recall), recall === 'little' ? 'Revised. Back in 3 days.' : 'Revised.', () => data.unrevise(t.nodeId!))} className={`rounded-xl py-3 text-sm font-semibold disabled:opacity-50 ${recall === 'all' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'border border-slate-200 dark:border-slate-700'}`}>{label}</button>)}</div>
                   : t.kind === 'mentor'
                     ? <Link href={`/circles/${t.circleId}`} className="block w-full rounded-xl bg-slate-900 py-3.5 text-center text-base font-semibold text-white dark:bg-white dark:text-slate-900">Check in</Link>
                     : <div className="flex gap-2">
-                        <button type="button" disabled={busy !== null} onClick={() => void act(t, t.kind === 'study' ? () => data.tick(t.nodeId!, true) : () => onGoalDone(t.goalId!), 'Done.')} className="flex-1 rounded-xl bg-slate-900 py-3.5 text-base font-semibold text-white disabled:opacity-50 dark:bg-white dark:text-slate-900">{busy === t.key ? 'Saving…' : 'Done'}</button>
-                        {t.kind === 'study' && <button type="button" onClick={() => setFocus(t)} aria-label="Focus timer" className="grid w-14 place-items-center rounded-xl border border-slate-200 dark:border-slate-700"><Timer className="h-5 w-5" /></button>}
+                        <button type="button" disabled={busy !== null} onClick={() => void act(t, t.kind === 'study' ? () => data.tick(t.nodeId!, true) : () => onGoalDone(t.goalId!), t.kind === 'study' ? 'Ticked.' : 'Done.', t.kind === 'study' ? () => data.tick(t.nodeId!, false) : undefined)} className="flex-1 rounded-xl bg-slate-900 py-3.5 text-base font-semibold text-white disabled:opacity-50 dark:bg-white dark:text-slate-900">{busy === t.key ? 'Saving…' : 'Done'}</button>
+                        {t.kind === 'study' && <button type="button" onClick={() => setFocus(t)} aria-label="Focus timer, 25 minutes" className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 text-sm font-semibold dark:border-slate-700"><Timer className="h-4 w-4" />Focus</button>}
                       </div>}
             </div>
           </article>)}
@@ -94,11 +110,14 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
 
     {focus && focus.nodeId && <Pomodoro title={focus.title} subtitle={focus.subtitle} onClose={() => setFocus(null)} onFinish={async (minutes, markDone) => {
       const ok = markDone ? await data.tick(focus.nodeId!, true, minutes) : await data.logEvent(null, 'studied', { minutes, details: { timer: true, unit: focus.nodeId } })
-      setToast(ok ? `${minutes} min saved${markDone ? ', ticked' : ''}.` : 'Could not save.')
+      setToast(ok ? `${minutes} min saved${markDone ? ', ticked' : ''}.` : 'Could not save.', ok && markDone ? () => data.tick(focus.nodeId!, false) : undefined)
     }} />}
     {logOpen && <QuickLog nodes={data.nodes} states={data.states} examCode={data.template?.code} onClose={() => setLogOpen(false)} onLogged={setToast} logEvent={data.logEvent} />}
     {shareOpen && <ShareSheet text={[studied ? `${studied} subtopic${studied === 1 ? '' : 's'}` : '', revised ? `${revised} revision${revised === 1 ? '' : 's'}` : ''].filter(Boolean).join(', ')} exams={data.plans.map((p) => examInfo(p.code).short).join(' and ')} onClose={() => setShareOpen(false)} onDone={setToast} />}
-    {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-sm rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-medium text-white shadow-lg dark:bg-white dark:text-slate-900">{toast}</div>}
+    {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-sm items-center justify-between gap-3 rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-lg dark:bg-white dark:text-slate-900">
+      <span className={toast.undo ? '' : 'w-full text-center'}>{toast.text}</span>
+      {toast.undo && <button type="button" onClick={async () => { const undo = toast.undo!; setToastState(null); const ok = await undo(); setToast(ok ? 'Undone.' : 'Could not undo. Try again.') }} className="shrink-0 font-semibold text-amber-400 dark:text-amber-600">Undo</button>}
+    </div>}
   </section>
 }
 

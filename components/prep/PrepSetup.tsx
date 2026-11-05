@@ -14,6 +14,9 @@ export const EXAM_SHORT: Record<string, string> = { upsc_cse_v1: 'UPSC CSE', upp
 const HOURS = [2, 4, 6, 8, 10]
 const QUICK = [['3 months', 91], ['5 months', 152], ['1 year', 365]] as const
 const hourLabel = (h: number) => `${((h + 11) % 12) + 1}:00 ${h < 12 ? 'AM' : 'PM'}`
+/** For exams held in shifts: the date the student confirmed as their own shift (kept on this device). */
+export const shiftKey = (templateId: string) => `goalyaar-shift-date-${templateId}`
+export const readShiftDate = (templateId: string | null) => { if (!templateId) return null; try { return window.localStorage.getItem(shiftKey(templateId)) } catch { return null } }
 
 /** One screen of setup: which exam, which stage, by when, how many hours, and a reminder. Everything can be changed later. */
 export default function PrepSetup({ templates, templateId, profile, optionals = [], onSave, onClose, onRemove }: {
@@ -34,9 +37,12 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
   const [busy, setBusy] = useState(false)
   const [lang, setLang, t] = usePrepLang()
   const [error, setError] = useState<string | null>(null)
+  const [ownShift, setOwnShift] = useState(() => typeof window !== 'undefined' && Boolean(profile.examDate) && readShiftDate(templateId) === profile.examDate)
 
   const stagesFor = examInfo(templates.find((t) => t.id === exam)?.code).targetStages
   const presets = examInfo(templates.find((t) => t.id === exam)?.code).presets.filter((p) => p.date > today)
+  const shifts = examInfo(templates.find((t) => t.id === exam)?.code).shifts
+  const inShifts = Boolean(shifts?.stages.includes(stagesFor.includes(stage) ? stage : stagesFor[0]))
   const save = async () => {
     if (!date || date <= today) { setError('Pick a target date in the future.'); return }
     setBusy(true); setError(null)
@@ -46,6 +52,7 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
     if (reminder && pushSupported() && !(await pushIsOn())) await enablePush()
     const ok = await onSave({ templateId: exam, targetStage: finalStage, examDate: date, dailyMinutes: Math.min(960, Math.max(15, hours * 60)), planStartOn: restart ? today : profile.planStartOn, reminderEnabled: reminder, reminderHour: hour, optionalSubjectId: exam === templateId ? optional || null : null })
     setBusy(false)
+    if (ok) { try { if (inShifts && ownShift) window.localStorage.setItem(shiftKey(exam), date); else window.localStorage.removeItem(shiftKey(exam)) } catch { /* only hides a reminder */ } }
     if (ok) onClose(); else setError('Could not save. Please try again.')
   }
 
@@ -81,10 +88,15 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
         <p className="mt-1 text-xs text-slate-500">Included in your Mains plan; the other optionals are hidden from your syllabus.</p>
       </>}
 
-      <label className="mt-5 block text-sm font-bold" htmlFor="prep-date">{t('Finish by (exam date)')}</label>
+      <label className="mt-5 block text-sm font-bold" htmlFor="prep-date">{inShifts && !ownShift ? 'First day of the exam window' : t('Finish by (exam date)')}</label>
       <input id="prep-date" type="date" min={addDays(today, 7)} value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900" />
       {presets.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{presets.map((p) => <button key={p.date} type="button" onClick={() => { setDate(p.date); setStage(p.stage) }} title={p.source} className={`rounded-full border px-3 py-1 text-xs font-bold ${date === p.date ? 'border-amber-500 bg-amber-500/10 text-amber-800 dark:text-amber-300' : 'border-amber-500/40 text-amber-800 dark:text-amber-300'}`}>{p.label}</button>)}</div>}
       {presets.length > 0 && <p className="mt-1 text-[11px] text-slate-500">Official dates as announced. Check the commission’s site before relying on them.</p>}
+      {inShifts && shifts && <div className="mt-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+        <p>{shifts.window} {shifts.admitCard}</p>
+        <p className="mt-1">Until then, plan to the first day so you are ready whichever shift you get. Your plan stretches to fit once you set your own date.</p>
+        <label className="mt-2 flex items-center gap-2 font-semibold text-slate-900 dark:text-white"><input type="checkbox" checked={ownShift} onChange={(e) => setOwnShift(e.target.checked)} className="h-4 w-4 accent-amber-500" />This is my own shift date</label>
+      </div>}
       <div className="mt-2 flex flex-wrap gap-2">{QUICK.map(([label, days]) => <button key={label} type="button" onClick={() => setDate(addDays(today, days))} className="rounded-full border border-slate-200 px-3 py-1 text-xs font-bold dark:border-slate-700">In {label}</button>)}</div>
 
       <p className="mt-5 text-sm font-bold">{t('Study hours a day')}</p>

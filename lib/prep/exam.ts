@@ -16,6 +16,11 @@ export interface ExamInfo {
   pyqYears: [number, number]
   answerWriting: boolean
   readingHabit: string
+  /**
+   * Stages held over many days in shifts. Each candidate learns their own date only from the admit card,
+   * so the plan aims at the first day of the window until the student sets their shift date.
+   */
+  shifts?: { stages: ('prelims' | 'mains')[]; window: string; admitCard: string }
 }
 
 const CIVIL: Omit<ExamInfo, 'short' | 'pyqPapers' | 'presets'> = {
@@ -54,6 +59,7 @@ export const EXAMS: Record<string, ExamInfo> = {
     mockSections: [{ name: 'Reasoning', max: 50 }, { name: 'GA', max: 50 }, { name: 'Quant', max: 50 }, { name: 'English', max: 50 }],
     pyqPapers: [{ code: 'TIER1', label: 'Tier 1', questions: 100, plus: 2, minus: 0.5 }], pyqYears: [2017, 2025],
     answerWriting: false, readingHabit: 'Newspaper',
+    shifts: { stages: ['prelims'], window: 'Tier 1 runs over three to four weeks, three shifts a day.', admitCard: 'Your date and shift are on the admit card, released a few days before.' },
   },
   bank_po_v1: {
     short: 'Bank PO', presets: [],
@@ -63,6 +69,7 @@ export const EXAMS: Record<string, ExamInfo> = {
     mockSections: [{ name: 'English', max: 30 }, { name: 'Quant', max: 30 }, { name: 'Reasoning', max: 40 }],
     pyqPapers: [{ code: 'PRELIMS', label: 'Prelims', questions: 100, plus: 1, minus: 0.25 }], pyqYears: [2017, 2025],
     answerWriting: false, readingHabit: 'Newspaper',
+    shifts: { stages: ['prelims'], window: 'Prelims is held over a few days, several shifts a day.', admitCard: 'Your date and shift are on the call letter, released about ten days before.' },
   },
   ctet_v1: TET('CTET', [2016, 2025]),
   uptet_v1: TET('UPTET', [2017, 2026]),

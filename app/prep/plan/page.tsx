@@ -8,7 +8,7 @@ import { localDateString } from '@/lib/exams'
 import { optionalSubjects, planFor, type PacePlan, type Unit } from '@/lib/prep/pace'
 import { retention } from '@/lib/prep/revision'
 import { usePrepData } from '@/lib/prep/usePrepData'
-import PrepSetup, { EXAM_SHORT } from '@/components/prep/PrepSetup'
+import PrepSetup, { EXAM_SHORT, readShiftDate } from '@/components/prep/PrepSetup'
 import PrepNav from '@/components/prep/PrepNav'
 import HelpButton from '@/components/HelpButton'
 import ExamSwitcher from '@/components/prep/ExamSwitcher'
@@ -56,11 +56,16 @@ export default function PrepPlanPage() {
   useEffect(() => { if (needsSetup) router.replace('/prep/start') }, [needsSetup, router])
   // Arriving from setup: a one-line welcome that explains the screen.
   const [welcome, setWelcome] = useState(false)
+  // Exams held in shifts: until the student sets their own date, remind them near the window.
+  const [shiftDate, setShiftDate] = useState<string | null>(null)
+  useEffect(() => { const t = window.setTimeout(() => setShiftDate(readShiftDate(data.templateId)), 0); return () => window.clearTimeout(t) }, [data.templateId, setup])
   useEffect(() => { const t = window.setTimeout(() => setWelcome(new URLSearchParams(window.location.search).get('welcome') === '1'), 0); return () => window.clearTimeout(t) }, [])
 
   if (data.status === 'loading') return <main className="mx-auto max-w-xl space-y-3 px-4 pb-28 pt-6" aria-busy="true">{[1, 2, 3].map((k) => <div key={k} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}</main>
   if (data.status !== 'ready') return <main className="mx-auto grid min-h-[70vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">{data.status === 'denied' ? 'Not available yet' : "Couldn't load your plan"}</h1><Link href="/dashboard" className="mt-5 inline-block rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Back to Today</Link></div></main>
 
+  const shifts = examInfo(data.template?.code).shifts
+  const shiftNote = Boolean(shifts?.stages.includes(data.profile.targetStage)) && Boolean(data.profile.examDate) && shiftDate !== data.profile.examDate
   const examName = data.template ? EXAM_SHORT[data.template.code] ?? data.template.name : 'Your exam'
   const stageName = examInfo(data.template?.code).stageName[data.profile.targetStage]
   const tick = async (u: Unit, on: boolean) => { if (busy) return; setBusy(u.id); await data.tick(u.id, on); setBusy(null) }
@@ -91,6 +96,11 @@ export default function PrepPlanPage() {
       <p className="font-bold">Your plan is ready.</p>
       <p className="mt-1">Each day, tick the subtopics below as you study them. Revise when reminded. That is all you need to do; everything else updates itself.</p>
       <button type="button" onClick={() => setWelcome(false)} className="mt-2 text-xs font-bold underline">Got it</button>
+    </section>}
+
+    {shiftNote && plan && plan.daysLeft >= 0 && <section className="mb-3 flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <p className="min-w-0 flex-1 text-slate-600 dark:text-slate-300"><span className="font-semibold text-slate-900 dark:text-white">Held in shifts.</span> Your plan aims at the first day of the window. {plan.daysLeft <= 30 ? 'Got your admit card? Set your own date.' : 'Set your own date when the admit card is out.'}</p>
+      {plan.daysLeft <= 30 && <button type="button" onClick={() => setSetup(true)} className="shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold dark:border-slate-600">Set date</button>}
     </section>}
 
     {!plan

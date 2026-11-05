@@ -42,6 +42,7 @@ export default function PrepExplorerPage() {
   const [open, setOpen] = useState<Set<string>>(new Set())
   const [selected, setSelected] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [bulkUndo, setBulkUndo] = useState<{ title: string; ids: string[] } | null>(null) // the last "Tick all", for 6 seconds
   const [bulk, setBulk] = useState<string | null>(null)
   const [confirmBulk, setConfirmBulk] = useState<{ title: string; ids: string[] } | null>(null)
   const today = localDateString()
@@ -59,7 +60,7 @@ export default function PrepExplorerPage() {
   useEffect(() => { if (data.status === 'denied') { void supabase.auth.getSession().then(({ data: { session } }) => { if (!session) router.replace('/login?next=/prep') }) } }, [data.status, router])
   // Not set up yet: start with the step-by-step setup.
   useEffect(() => { if (data.status === 'ready' && !data.profile.saved) router.replace('/prep/start') }, [data.status, data.profile.saved, router])
-  useEffect(() => { if (!toast) return; const t = window.setTimeout(() => setToast(null), 3200); return () => window.clearTimeout(t) }, [toast])
+  useEffect(() => { if (!toast) return; const t = window.setTimeout(() => { setToast(null); setBulkUndo(null) }, bulkUndo ? 6000 : 3200); return () => window.clearTimeout(t) }, [toast, bulkUndo])
 
   const kids = useMemo(() => childrenMap(nodes), [nodes])
   const stateList = useMemo(() => [...states.values()], [states])
@@ -175,7 +176,8 @@ export default function PrepExplorerPage() {
         customs={(kids.get(selected) ?? []).filter((c) => c.ownerId)}
         onClose={() => setSelected(null)}
         onTick={async (id, on) => { const ok = await data.tick(id, on); if (!ok) setToast('Could not save. Please try again.') }}
-        onLog={async (kind, details, message) => { const ok = await data.logEvent(selected, kind, { details }); setToast(ok ? message : 'Could not save. Please try again.') }}
+        onLog={async (kind, details, message) => { const ok = kind === 'revised' ? await data.revise(selected, details.recall as 'all' | 'some' | 'little') : await data.logEvent(selected, kind, { details }); setToast(ok ? message : 'Could not save. Please try again.') }}
+        onUnrevise={async () => { const ok = await data.unrevise(selected); setToast(ok ? 'Revision undone.' : 'Could not undo. Please try again.') }}
         onAddSubtopic={async (title) => {
           const parent = byId.get(selected)!
           const { data: row, error } = await supabase.from('prep_syllabus_nodes').insert({ template_id: data.templateId, parent_id: selected, kind: 'subtopic', title, owner_id: data.userId, source: 'user', stages: parent.stages, papers: parent.papers }).select(NODE_COLS).single()
@@ -190,12 +192,15 @@ export default function PrepExplorerPage() {
           <p className="mt-1 text-sm text-slate-500">{confirmBulk.ids.length} subtopics will be marked as studied today, and revision dates will start. Only do this for what you have genuinely covered; you can untick any of them later.</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button type="button" onClick={() => setConfirmBulk(null)} className="rounded-xl border border-slate-300 py-3 text-sm font-bold dark:border-slate-600">Cancel</button>
-            <button type="button" onClick={async () => { const job = confirmBulk; setConfirmBulk(null); setBulk(job.title); const ok = await data.tickMany(job.ids); setBulk(null); setToast(ok ? `${job.ids.length} ticked in ${job.title}.` : 'Some could not be saved. Please try again.') }} className="rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950">Tick {confirmBulk.ids.length}</button>
+            <button type="button" onClick={async () => { const job = confirmBulk; setConfirmBulk(null); setBulk(job.title); const ok = await data.tickMany(job.ids); setBulk(null); setBulkUndo(ok ? job : null); setToast(ok ? `${job.ids.length} ticked in ${job.title}.` : 'Some could not be saved. Please try again.') }} className="rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950">Tick {confirmBulk.ids.length}</button>
           </div>
         </div>
       </div>}
 
-      {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
+      {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-md items-center justify-between gap-3 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">
+        <span className={bulkUndo ? '' : 'w-full text-center'}>{toast}</span>
+        {bulkUndo && <button type="button" onClick={async () => { const job = bulkUndo; setBulkUndo(null); setToast(null); setBulk(job.title); const ok = await data.untickMany(job.ids); setBulk(null); setToast(ok ? `Unticked ${job.title}.` : 'Could not undo. Please try again.') }} className="shrink-0 text-amber-400 dark:text-amber-600">Undo</button>}
+      </div>}
     </main>
   )
 }
@@ -213,12 +218,13 @@ function Center({ title, body, action }: { title: string; body: string; action?:
     {action ? <button type="button" onClick={action} className="mt-5 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Try again</button> : <Link href="/dashboard" className="mt-5 inline-block rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Back to Today</Link>}</div></main>
 }
 
-function TopicSheet({ node, path, state, states, today, share, subtopics, customs, onClose, onTick, onLog, onAddSubtopic }: {
+function TopicSheet({ node, path, state, states, today, share, subtopics, customs, onClose, onTick, onLog, onUnrevise, onAddSubtopic }: {
   node: SyllabusNode; path: string; state: TopicState | undefined; states: Map<string, TopicState>; today: string; share: number
   subtopics: SyllabusNode[]; customs: SyllabusNode[]
   onClose: () => void
   onTick: (id: string, on: boolean) => Promise<void>
   onLog: (kind: 'revised' | 'foundation', details: Record<string, unknown>, message: string) => Promise<void>
+  onUnrevise: () => Promise<void>
   onAddSubtopic: (title: string) => Promise<void>
 }) {
   const [busy, setBusy] = useState<string | null>(null)
@@ -260,14 +266,17 @@ function TopicSheet({ node, path, state, states, today, share, subtopics, custom
       {subtopics.length > 0
         ? <div className="mt-4">
             <div className="flex items-center justify-between"><p className="text-sm font-bold">Subtopics <span className="font-normal tabular-nums text-slate-500">{ticked}/{subtopics.length}</span></p>
-              {ticked < subtopics.length && <button type="button" disabled={busy !== null} onClick={() => void run('all', async () => { for (const s of subtopics) if (!states.get(s.id)?.touchedOn) await onTick(s.id, true) })} className="text-xs font-bold text-amber-700 disabled:opacity-50 dark:text-amber-400">{busy === 'all' ? 'Ticking…' : 'Tick all'}</button>}</div>
-            <p className="text-xs text-slate-500">Tick a subtopic once you have studied it.</p>
+              {ticked < subtopics.length
+                ? <button type="button" disabled={busy !== null} onClick={() => void run('all', async () => { for (const s of subtopics) if (!states.get(s.id)?.touchedOn) await onTick(s.id, true) })} className="text-xs font-bold text-amber-700 disabled:opacity-50 dark:text-amber-400">{busy === 'all' ? 'Ticking…' : 'Tick all'}</button>
+                : <button type="button" disabled={busy !== null} onClick={() => void run('all', async () => { for (const s of subtopics) if (states.get(s.id)?.touchedOn) await onTick(s.id, false) })} className="text-xs font-bold text-slate-500 disabled:opacity-50">{busy === 'all' ? 'Unticking…' : 'Untick all'}</button>}</div>
+            <p className="text-xs text-slate-500">Tick a subtopic once you have studied it. Tap again to untick.</p>
             <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{subtopics.map((s) => tickRow(s))}{customs.map((s) => tickRow(s, true))}</ul>
           </div>
         : <button type="button" disabled={busy !== null} onClick={() => void run('self', () => onTick(node.id, !touched))} className={`mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-bold shadow-sm disabled:opacity-60 ${touched ? 'border border-slate-300 dark:border-slate-600' : 'bg-amber-500 text-slate-950'}`}><Check className="h-4 w-4" />{touched ? (node.kind === 'ncert_book' ? 'Read · tap to undo' : 'Studied · tap to undo') : (node.kind === 'ncert_book' ? 'Mark as read' : 'Mark as studied')}</button>}
 
       {node.kind !== 'ncert_book' && <>
         <div className="mt-3"><RecallButton block disabled={busy !== null || !touched || revisedToday} label={revisedToday ? 'Revised today' : 'I revised this topic'} onPick={(recall) => run('rev', () => onLog('revised', { recall }, recall === 'little' ? 'Saved. It comes back in 3 days.' : recall === 'some' ? 'Saved. Same gap as last time.' : 'Revision logged. The next gap is longer.'))} /></div>
+        {revisedToday && <button type="button" disabled={busy !== null} onClick={() => void run('unrev', onUnrevise)} className="mt-2 w-full text-center text-xs font-semibold text-slate-500">{busy === 'unrev' ? 'Undoing…' : 'Revised by mistake? Undo'}</button>}
         {!touched && <p className="mt-2 text-xs text-slate-500">Revision unlocks after you tick at least one subtopic.</p>}
       </>}
 

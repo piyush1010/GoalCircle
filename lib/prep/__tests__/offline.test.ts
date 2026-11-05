@@ -37,4 +37,15 @@ describe('local apply mirrors the ledger trigger', () => {
     const undone = applyLocally(sub, 's', { kind: 'studied', details: { undo: true }, occurred_on: '2026-11-04' }, true)!
     expect(undone.touchedOn).toBeNull()
   })
+
+  it('undoes today\'s revision back to the saved schedule', () => {
+    const before = { nodeId: 't', touchedOn: '2026-11-01', foundation: {}, revisionCount: 1, lastRevisedOn: '2026-11-04', intervalDays: 7, nextRevisionOn: '2026-11-11', pyqAttempted: 0, pyqCorrect: 0, answersWritten: 0 }
+    const rev = applyLocally(before, 't', { kind: 'revised', details: { recall: 'all' }, occurred_on: '2026-11-11' }, false)!
+    expect(rev.revisionCount).toBe(2)
+    const prev = { revision_count: 1, last_revised_on: '2026-11-04', interval_days: 7, next_revision_on: '2026-11-11' }
+    const back = applyLocally(rev, 't', { kind: 'revised', details: { undo: true, prev }, occurred_on: '2026-11-11' }, false)!
+    expect([back.revisionCount, back.lastRevisedOn, back.intervalDays, back.nextRevisionOn]).toEqual([1, '2026-11-04', 7, '2026-11-11'])
+    // a stray undo on another day changes nothing
+    expect(applyLocally(back, 't', { kind: 'revised', details: { undo: true, prev }, occurred_on: '2026-11-12' }, false)).toEqual(back)
+  })
 })
