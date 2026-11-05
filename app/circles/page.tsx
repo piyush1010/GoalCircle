@@ -12,6 +12,7 @@ import CircleAvatar from '@/components/CircleAvatar'
 import { localDateString } from '@/lib/exams'
 import { supabase } from '@/utils/supabase'
 import CircleChallenges from '@/components/CircleChallenges'
+import HelpButton from '@/components/HelpButton'
 
 type Category = 'all' | 'work' | 'fitness' | 'learning' | 'habits'
 interface CircleRow { id: string; owner_id: string; name: string; description: string | null; category: Exclude<Category, 'all'>; emoji: string; created_at: string; visibility: 'public' | 'private'; exam: string | null }
@@ -54,25 +55,6 @@ export default function CirclesPage() {
   const [newVisibility, setNewVisibility] = useState<'private' | 'public'>('private')
   const [newExam, setNewExam] = useState('')
 
-  const loadCircles = useCallback(async () => {
-    setError(null)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.user) { router.replace('/login?next=/circles'); return }
-    const uid = session.user.id; setUserId(uid)
-    try { const cached = JSON.parse(window.localStorage.getItem(`goalcircle-circles-${uid}`) || 'null'); if (Array.isArray(cached) && cached.length) { setCircles(cached); setLoading(false) } } catch { /* no cache */ }
-    const [circleResult, membershipResult] = await Promise.all([
-      supabase.from('circles').select('id,owner_id,name,description,category,emoji,created_at,visibility,exam').order('created_at', { ascending: false }),
-      supabase.from('circle_memberships').select('circle_id,user_id'),
-    ])
-    if (circleResult.error || membershipResult.error) { setError('Circles could not be loaded. Please try again.'); setLoading(false); return }
-    const memberships = (membershipResult.data || []) as Array<{ circle_id: string; user_id: string }>
-    const next = ((circleResult.data || []) as CircleRow[]).map((circle) => ({ ...circle, owned: circle.owner_id === uid, joined: circle.owner_id === uid || memberships.some((m) => m.circle_id === circle.id && m.user_id === uid), memberCount: new Set([circle.owner_id, ...memberships.filter((m) => m.circle_id === circle.id).map((m) => m.user_id)]).size }))
-    setCircles(next)
-    void loadExtras(uid, next)
-    try { window.localStorage.setItem(`goalcircle-circles-${uid}`, JSON.stringify(next.filter((circle) => circle.joined).slice(0, 30))) } catch { /* storage full */ }
-    setLoading(false)
-  }, [router])
-
   // Photos and today's progress load after the list, so the list itself never waits on them.
   const loadExtras = useCallback(async (uid: string, list: CircleView[]) => {
     const joinedIds = list.filter((circle) => circle.joined).map((circle) => circle.id)
@@ -109,6 +91,26 @@ export default function CirclesPage() {
       }
     }))
   }, [])
+
+  const loadCircles = useCallback(async () => {
+    setError(null)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) { router.replace('/login?next=/circles'); return }
+    const uid = session.user.id; setUserId(uid)
+    try { const cached = JSON.parse(window.localStorage.getItem(`goalcircle-circles-${uid}`) || 'null'); if (Array.isArray(cached) && cached.length) { setCircles(cached); setLoading(false) } } catch { /* no cache */ }
+    const [circleResult, membershipResult] = await Promise.all([
+      supabase.from('circles').select('id,owner_id,name,description,category,emoji,created_at,visibility,exam').order('created_at', { ascending: false }),
+      supabase.from('circle_memberships').select('circle_id,user_id'),
+    ])
+    if (circleResult.error || membershipResult.error) { setError('Circles could not be loaded. Please try again.'); setLoading(false); return }
+    const memberships = (membershipResult.data || []) as Array<{ circle_id: string; user_id: string }>
+    const next = ((circleResult.data || []) as CircleRow[]).map((circle) => ({ ...circle, owned: circle.owner_id === uid, joined: circle.owner_id === uid || memberships.some((m) => m.circle_id === circle.id && m.user_id === uid), memberCount: new Set([circle.owner_id, ...memberships.filter((m) => m.circle_id === circle.id).map((m) => m.user_id)]).size }))
+    setCircles(next)
+    void loadExtras(uid, next)
+    try { window.localStorage.setItem(`goalcircle-circles-${uid}`, JSON.stringify(next.filter((circle) => circle.joined).slice(0, 30))) } catch { /* storage full */ }
+    setLoading(false)
+  }, [router, loadExtras])
+
 
   useEffect(() => { void Promise.resolve().then(loadCircles) }, [loadCircles])
   // Discover only lists public circles. Private batches are reached by invite link.
@@ -151,7 +153,7 @@ export default function CirclesPage() {
   }
 
   return <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-5">
-    <header className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800"><div><h1 className="text-xl font-bold">Circles</h1><p className="text-[11px] text-slate-500">Small groups for shared accountability</p></div><div className="flex items-center gap-2">{preparing && <Link href="/feed" className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold dark:border-slate-600">Feed</Link>}<button onClick={() => setShowCreate(true)} className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-slate-50 px-3 py-2 text-xs font-bold text-white dark:text-slate-900"><Plus className="h-4 w-4" />Create</button></div></header>
+    <header className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800"><div><h1 className="text-xl font-bold">Circles</h1><p className="text-[11px] text-slate-500">Small groups for shared accountability</p></div><div className="flex items-center gap-2"><HelpButton />{preparing && <Link href="/feed" className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold dark:border-slate-600">Feed</Link>}<button onClick={() => setShowCreate(true)} className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-slate-50 px-3 py-2 text-xs font-bold text-white dark:text-slate-900"><Plus className="h-4 w-4" />Create</button></div></header>
     {publicCircles.length > 0 && <div className="mb-3 grid grid-cols-2 rounded-xl bg-slate-200/70 p-1 dark:bg-slate-800"><button onClick={() => setTab('my')} className={`rounded-lg py-2 text-xs font-bold ${tab === 'my' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>My circles ({circles.filter((c) => c.joined).length})</button><button onClick={() => setTab('discover')} className={`rounded-lg py-2 text-xs font-bold ${tab === 'discover' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>Discover</button></div>}
     {tab === 'discover' && <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1">{categories.map((item) => <button key={item.id} onClick={() => setCategory(item.id)} className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[11px] font-extrabold ${category === item.id ? 'border-amber-500 bg-amber-500/10 text-amber-600' : 'border-slate-200 bg-white text-slate-500 dark:border-slate-800 dark:bg-[#101B2D]'}`}><CategoryIcon category={item.id} />{item.label}</button>)}</div>}
     {!loading && tab === 'my' && userId && circles.some((circle) => circle.joined && circle.visibility !== 'private') && <CircleChallenges userId={userId} circles={circles.filter((circle) => circle.joined).map((circle) => ({ id: circle.id, name: circle.name }))} />}

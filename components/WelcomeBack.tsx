@@ -14,7 +14,7 @@ export default function WelcomeBack() {
   const [daysAway, setDaysAway] = useState<number | null>(null)
 
   useEffect(() => {
-    try {
+    const t = window.setTimeout(() => { try {
       const now = Date.now()
       const last = Number(window.localStorage.getItem(LAST_VISIT_KEY) || 0)
       window.localStorage.setItem(LAST_VISIT_KEY, String(now))
@@ -22,7 +22,8 @@ export default function WelcomeBack() {
         const days = Math.floor((now - last) / 86_400_000)
         if (days >= AWAY_DAYS && claimNudge('welcome-back')) setDaysAway(days)
       }
-    } catch { /* storage unavailable: skip the note */ }
+    } catch { /* storage unavailable: skip the note */ } }, 0)
+    return () => window.clearTimeout(t)
   }, [])
 
   if (daysAway === null) return null

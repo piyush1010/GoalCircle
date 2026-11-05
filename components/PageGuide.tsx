@@ -8,6 +8,7 @@ import { guideFor, type Guide } from '@/lib/guides'
 export const GUIDE_HIDDEN_KEY = 'goalyaar-guide-hidden'
 export const GUIDE_EVENT = 'goalyaar-guide-changed'
 export const GUIDE_OPEN_EVENT = 'goalyaar-guide-open'
+export const GUIDE_INLINE_EVENT = 'goalyaar-guide-inline' // a header help button appeared or went away
 const TUCK_KEY = 'goalyaar-guide-tucked'
 const SEEN_KEY = 'goalyaar-guide-seen'
 
@@ -25,6 +26,12 @@ export default function PageGuide() {
   const [fresh, setFresh] = useState(false) // first visit to this page: a quiet hint next to the button
   const [inline, setInline] = useState(false) // the page has its own help button in the header
   useEffect(() => { const open = () => setOpen(true); window.addEventListener(GUIDE_OPEN_EVENT, open); return () => window.removeEventListener(GUIDE_OPEN_EVENT, open) }, [])
+  // Pages that load before showing their header add the button late, so check again whenever one comes or goes.
+  useEffect(() => {
+    const check = () => window.setTimeout(() => setInline(Boolean(document.querySelector('[data-guide-inline]'))), 0)
+    window.addEventListener(GUIDE_INLINE_EVENT, check)
+    return () => window.removeEventListener(GUIDE_INLINE_EVENT, check)
+  }, [])
 
   useEffect(() => {
     const read = () => { try { setHidden(window.localStorage.getItem(GUIDE_HIDDEN_KEY) === '1'); setTucked(window.localStorage.getItem(TUCK_KEY) === '1') } catch { setHidden(false) } }

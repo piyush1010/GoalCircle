@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useSyncExternalStore } from 'react'
 import {
   ThemeProvider as NextThemesProvider,
   useTheme as useNextTheme,
@@ -61,11 +61,15 @@ export function useDisplayPreferences() {
   return context
 }
 
+const noSubscribe = () => () => {}
+
 export function useTheme() {
   const { theme, resolvedTheme, setTheme } = useNextTheme()
+  // The saved theme is only known in the browser. Until then report none, so the server's HTML matches.
+  const mounted = useSyncExternalStore(noSubscribe, () => true, () => false)
 
   return {
-    theme: (theme as Theme | undefined) ?? 'dark',
+    theme: mounted ? ((theme as Theme | undefined) ?? 'system') : (undefined as Theme | undefined),
     resolvedTheme: (resolvedTheme as 'light' | 'dark' | undefined) ?? 'light',
     setTheme: (nextTheme: Theme) => setTheme(nextTheme),
   }
