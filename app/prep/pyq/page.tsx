@@ -42,6 +42,7 @@ export default function PyqPage() {
       <HelpButton />
     </header>
 
+    {exam.pyqPapers.length === 0 && <p className="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700">Year-by-year scoring isn&apos;t set up for {exam.short} yet. Log past-paper practice with Log on Today.</p>}
     {exam.pyqPapers.map((p) => {
       const done = years.map((y) => latest.get(`${p.code}:${y}`)).filter(Boolean) as Attempt[]
       const marks = done.map((a) => netMarks(p, a.attempted, a.correct).marks)

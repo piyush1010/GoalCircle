@@ -44,7 +44,7 @@ export default function BatchPrepPage() {
   return <main className="mx-auto max-w-xl px-4 pb-28 pt-5">
     <header className="mb-4 flex items-center gap-3">
       <Link href={circleId ? `/circles/${circleId}` : '/circles'} aria-label="Back to batch" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
-      <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Students&apos; preparation</h1><p className="text-sm text-slate-500">{rows ? `${shared.length} of ${rows.length} students share with you` : 'Loading…'}</p></div>
+      <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Students&apos; preparation</h1><p className="text-sm text-slate-500">{rows ? `${shared.length} of ${rows.length} students share with you` : error ? 'Open this from your batch page' : 'Loading…'}</p></div>
     </header>
 
     {error && <p className="rounded-2xl border border-rose-300 bg-white p-4 text-sm dark:border-rose-900 dark:bg-slate-900">{error}</p>}

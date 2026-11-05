@@ -71,6 +71,25 @@ export const EXAMS: Record<string, ExamInfo> = {
     answerWriting: false, readingHabit: 'Newspaper',
     shifts: { stages: ['prelims'], window: 'Prelims is held over a few days, several shifts a day.', admitCard: 'Your date and shift are on the call letter, released about ten days before.' },
   },
+  up_pcsj_v1: {
+    short: 'UP PCS-J', presets: [],
+    tabs: [{ root: 'PRE', label: 'Prelims' }, { root: 'MAI', label: 'Mains' }],
+    targetStages: ['prelims', 'mains'], stageName: { prelims: 'Prelims', mains: 'Mains' },
+    mockStages: [['prelims_gs', 'Prelims', 450], ['mains', 'Mains', 1000]],
+    mockSections: [{ name: 'GK', max: 150 }, { name: 'Law', max: 300 }],
+    pyqPapers: [], pyqYears: [2013, 2025],
+    answerWriting: true, readingHabit: 'Newspaper and judgments',
+  },
+  mp_civil_judge_v1: {
+    short: 'MP Civil Judge', presets: [],
+    tabs: [{ root: 'PRE', label: 'Prelims' }, { root: 'MAI', label: 'Mains' }],
+    targetStages: ['prelims', 'mains'], stageName: { prelims: 'Prelims', mains: 'Mains' },
+    mockStages: [['prelims_gs', 'Prelims', 150], ['mains', 'Mains', 400]],
+    mockSections: [{ name: 'Law', max: 120 }, { name: 'GK', max: 10 }, { name: 'Computer', max: 10 }, { name: 'English', max: 10 }],
+    pyqPapers: [], pyqYears: [2017, 2025],
+    answerWriting: true, readingHabit: 'Judgments and legal news',
+  },
+  mpsc_rajyaseva_v1: { ...CIVIL, short: 'MPSC Rajyaseva', presets: [], tabs: [{ root: 'PRE', label: 'Prelims' }, { root: 'MAI', label: 'Mains' }], pyqYears: [2013, 2025], mockStages: [['prelims_gs', 'Prelims GS', 200], ['csat', 'CSAT', 200], ['mains', 'Mains', 250], ['optional', 'Optional', 250]], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS', questions: 100, plus: 2, minus: 0.5 }, { code: 'CSAT', label: 'CSAT', questions: 80, plus: 2.5, minus: 0.625 }] },
   ctet_v1: TET('CTET', [2016, 2025]),
   uptet_v1: TET('UPTET', [2017, 2026]),
   cat_v1: {
@@ -89,7 +108,7 @@ export const EXAMS: Record<string, ExamInfo> = {
 }
 
 /** Most common exam first: used wherever exams are listed. */
-export const EXAM_ORDER = ['upsc_cse_v1', 'uppcs_v1', 'bpsc_v1', 'hpsc_hcs_v1', 'jkpsc_cce_v1', 'ssc_cgl_v1', 'bank_po_v1', 'ctet_v1', 'uptet_v1', 'cat_v1']
+export const EXAM_ORDER = ['upsc_cse_v1', 'uppcs_v1', 'bpsc_v1', 'hpsc_hcs_v1', 'jkpsc_cce_v1', 'ssc_cgl_v1', 'bank_po_v1', 'ctet_v1', 'uptet_v1', 'up_pcsj_v1', 'mp_civil_judge_v1', 'mpsc_rajyaseva_v1', 'cat_v1']
 export const byExamOrder = <T extends { code: string }>(a: T, b: T) => (EXAM_ORDER.indexOf(a.code) + 1 || 99) - (EXAM_ORDER.indexOf(b.code) + 1 || 99)
 
 export const examInfo = (code: string | null | undefined): ExamInfo => EXAMS[code ?? ''] ?? EXAMS.upsc_cse_v1

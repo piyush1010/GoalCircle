@@ -99,7 +99,8 @@ export default function PageGuide() {
             </span>
           </button>
         </li>)}</ol>
-        <button type="button" onClick={hideAll} className="mt-4 w-full py-2 text-center text-sm text-slate-500">Turn off page help (Settings brings it back)</button>
+        <a href="/settings#send-feedback" onClick={() => setOpen(false)} className="mt-4 block w-full rounded-xl border border-slate-200 py-2.5 text-center text-sm font-medium dark:border-slate-700">Still unclear? Tell us</a>
+        <button type="button" onClick={hideAll} className="mt-1 w-full py-2 text-center text-sm text-slate-500">Turn off page help (Settings brings it back)</button>
       </div>
     </div>}
   </>
