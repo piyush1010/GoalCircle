@@ -57,6 +57,20 @@ export default function PrepExplorerPage() {
     }, 0)
     return () => window.clearTimeout(t)
   }, [])
+  // A link may point at a subtopic (open its topic) or at a topic of another exam you prepare for (switch to it).
+  const { status: dataStatus, nodesByTemplate, templateId: viewId, setView } = data
+  useEffect(() => {
+    if (!selected || dataStatus !== 'ready') return
+    for (const [tid, list] of nodesByTemplate) {
+      const n = list.find((x) => x.id === selected)
+      if (!n) continue
+      const t = window.setTimeout(() => {
+        if (tid !== viewId) setView(tid)
+        if (n.kind === 'subtopic' && n.parentId) setSelected(n.parentId)
+      }, 0)
+      return () => window.clearTimeout(t)
+    }
+  }, [selected, dataStatus, nodesByTemplate, viewId, setView])
   useEffect(() => { if (data.status === 'denied') { void supabase.auth.getSession().then(({ data: { session } }) => { if (!session) router.replace('/login?next=/prep') }) } }, [data.status, router])
   // Not set up yet: start with the step-by-step setup.
   useEffect(() => { if (data.status === 'ready' && !data.profile.saved) router.replace('/prep/start') }, [data.status, data.profile.saved, router])

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, CalendarDays, ChevronDown, HelpCircle, RotateCcw, Settings2 } from 'lucide-react'
+import { ArrowLeft, CalendarDays, ChevronDown, ChevronRight, HelpCircle, RotateCcw, Settings2 } from 'lucide-react'
 import { localDateString } from '@/lib/exams'
 import { optionalSubjects, planFor, type PacePlan, type Unit } from '@/lib/prep/pace'
 import { retention } from '@/lib/prep/revision'
@@ -73,8 +73,8 @@ export default function PrepPlanPage() {
     const on = Boolean(data.states.get(u.id)?.touchedOn)
     return <li key={u.id}><label className="flex cursor-pointer items-start gap-3 px-4 py-2.5">
       <input type="checkbox" checked={on} disabled={busy !== null} onChange={() => void tick(u, !on)} className="mt-0.5 h-5 w-5 shrink-0 accent-amber-500" />
-      <span className="min-w-0"><span className={`block text-sm font-semibold leading-snug ${on ? 'text-slate-500 line-through decoration-slate-300' : ''}`}>{u.title}</span><span className="block text-xs text-slate-500">{u.topicTitle === u.title ? u.paperTitle : u.topicTitle}</span></span>
-    </label></li>
+      <span className="min-w-0 flex-1"><span className={`block text-sm font-semibold leading-snug ${on ? 'text-slate-500 line-through decoration-slate-300' : ''}`}>{u.title}</span><span className="block text-xs text-slate-500">{u.topicTitle === u.title ? u.paperTitle : u.topicTitle}</span></span>
+    <Link href={`/prep?topic=${u.topicId}`} aria-label={`Open ${u.topicTitle}`} className="-my-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-400"><ChevronRight className="h-4 w-4" /></Link></label></li>
   }
 
   const todayUnits = plan?.days[0]?.date === today ? plan.days[0].units : []
@@ -152,7 +152,7 @@ export default function PrepPlanPage() {
           <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-bold [&::-webkit-details-marker]:hidden"><CalendarDays className="h-4 w-4 text-slate-400" />{t('Next few days')}<ChevronDown className="ml-auto h-4 w-4 text-slate-400" /></summary>
           <div className="divide-y divide-slate-100 border-t border-slate-100 dark:divide-slate-800 dark:border-slate-800">{plan.days.slice(1).map((d) => <div key={d.date} className="px-4 py-2.5">
             <p className="text-xs font-bold text-slate-500">{dayLabel(d.date, today)} · {d.units.length}</p>
-            <p className="mt-0.5 text-sm leading-snug">{d.units.map((u) => u.title).join(' · ')}</p>
+            <p className="mt-0.5 text-sm leading-snug">{d.units.map((u, i) => <span key={u.id}>{i > 0 && ' · '}<Link href={`/prep?topic=${u.topicId}`} className="underline decoration-slate-300 underline-offset-2 dark:decoration-slate-600">{u.title}</Link></span>)}</p>
           </div>)}</div>
           <p className="border-t border-slate-100 px-4 py-2 text-[11px] text-slate-500 dark:border-slate-800">Follows the syllabus order. Tick subtopics out of order any time; the plan adjusts.</p>
         </details>}
