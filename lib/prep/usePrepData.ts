@@ -375,6 +375,17 @@ export function usePrepData(enabled = true) {
     return true
   }, [userId, plans, primaryId, templateId, setView])
 
+  /** Bring back an exam that was removed; its ticks and history were kept. */
+  const restorePlan = useCallback(async (id: string) => {
+    if (!userId) return false
+    const { error } = await supabase.from('prep_plans').update({ active: true, updated_at: new Date().toISOString() }).eq('user_id', userId).eq('template_id', id)
+    if (error) return false
+    if (userSettings && !userSettings.active) { await supabase.from('prep_profiles').update({ active: true }).eq('user_id', userId); announcePrepActive(true) }
+    try { window.localStorage.setItem(VIEW_KEY, id) } catch { /* view resets to the first exam */ }
+    setStatus('loading'); await load()
+    return true
+  }, [userId, userSettings, load])
+
   /** Mistake notebook: add one, or mark it revisited. */
   const addMistake = useCallback(async (m: { nodeId: string | null; category: string; note: string | null }) => {
     const { data, error } = await supabase.from('prep_mistakes').insert({ node_id: m.nodeId, category: m.category, note: m.note }).select('id,created_at').single()
@@ -395,5 +406,5 @@ export function usePrepData(enabled = true) {
     await supabase.from('prep_profiles').update({ daily_target: Math.min(500, Math.max(0, dailyTarget)), target_computed_on: localDateString() }).eq('user_id', userId)
   }, [userId, profile.saved])
 
-  return { status, pending, templateId, templates, plans: plans.filter((p) => p.active), nodesByTemplate, setView, removePlan, template: templates.find((t) => t.id === templateId) ?? null, studyDays, events, mistakes, addMistake, resolveMistake, saveTarget, tick, tickMany, untickMany, revise, unrevise, nodes, setNodes, states, mocks, answers, profile, userId, reload: load, refreshTopic, logEvent, saveProfile }
+  return { status, pending, templateId, templates, plans: plans.filter((p) => p.active), removedPlans: plans.filter((p) => !p.active), nodesByTemplate, setView, removePlan, restorePlan, template: templates.find((t) => t.id === templateId) ?? null, studyDays, events, mistakes, addMistake, resolveMistake, saveTarget, tick, tickMany, untickMany, revise, unrevise, nodes, setNodes, states, mocks, answers, profile, userId, reload: load, refreshTopic, logEvent, saveProfile }
 }

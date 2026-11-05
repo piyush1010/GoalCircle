@@ -10,6 +10,7 @@ const PREP_TODAY: Guide = {
   steps: [
     { title: 'One task per slide', target: '[data-guide="deck"]', text: 'Your mentor’s task, revisions due, today’s subtopics, the topic of the day (the same for everyone preparing for your exam) and personal goals, across all your exams.', example: 'Slide 1: “Revise · Fundamental Rights”. Slide 2: “Study · Directive Principles”.' },
     { title: 'Tap the one big button', target: '[data-guide="deck"]', text: 'Done ticks a subtopic. For a revision, say how much you remembered; that sets when it comes back. Tapped by mistake? Undo, on the card or in the message that pops up.', example: 'You revise Fundamental Rights and remember most of it: tap Got it, and it returns in a week instead of 3 days.' },
+    { title: 'Several exams?', target: '[data-guide="deck"]', text: 'Tap an exam at the top to see only its cards, or All exams for everything.' },
     { title: 'Focus with the timer', target: '[data-guide="deck"]', text: 'Focus on a study card starts a 25-minute Pomodoro. Finish to save the minutes and tick the subtopic.', example: 'Two rounds on “Directive Principles” saves 50 minutes to your week.' },
     { title: 'Log, plan, share', target: '[data-guide="deck-actions"]', text: 'Log adds anything else (PYQs, a mock, an answer). Plan shows the days ahead. Share is off unless you choose followers, everyone or WhatsApp.' },
   ],
@@ -36,7 +37,7 @@ export const GUIDES: { match: (path: string) => boolean; pick?: () => boolean; g
         { title: 'Your daily target', target: '[data-guide="plan-target"]', text: 'Subtopics left ÷ study days left. The last 15% of days are kept free for revision. It is worked out again every morning.', example: '470 subtopics, 127 study days → 4 a day. Miss a day and it becomes 4 or 5; get ahead and it drops.' },
         { title: 'Today’s list', target: '[data-guide="plan-today"]', text: 'Tick each subtopic as you finish it. Ticks also show on Today and in your Syllabus.' },
         { title: 'Study timer', target: '[data-guide="plan-timer"]', text: 'Pick a subtopic and start. “Done · tick” saves the time and ticks it in one go.' },
-        { title: 'More than one exam?', target: '[data-guide="exam-switcher"]', text: 'Switch exams here, or add another. Today always shows all of them together.', example: 'UPSC and UPPCS share Polity: tick it once and it counts for both.' },
+        { title: 'More than one exam?', target: '[data-guide="exam-switcher"]', text: 'Switch exams here. Exams lets you add one, remove one you were only exploring, or bring one back; ticks are never lost. Today shows all exams, or pick one at the top.', example: 'UPSC and UPPCS share Polity: tick it once and it counts for both.' },
       ],
     },
   },
