@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, CalendarDays, ChevronDown, ChevronRight, HelpCircle, RotateCcw, Settings2 } from 'lucide-react'
+import { ArrowLeft, CalendarDays, ChevronDown, ChevronRight, HelpCircle, Play, RotateCcw, Settings2, Timer } from 'lucide-react'
 import { localDateString } from '@/lib/exams'
 import { optionalSubjects, planFor, type PacePlan, type Unit } from '@/lib/prep/pace'
 import { retention } from '@/lib/prep/revision'
@@ -12,7 +12,7 @@ import PrepSetup, { EXAM_SHORT, readShiftDate } from '@/components/prep/PrepSetu
 import PrepNav from '@/components/prep/PrepNav'
 import HelpButton from '@/components/HelpButton'
 import ExamSwitcher from '@/components/prep/ExamSwitcher'
-import StudyTimer from '@/components/prep/StudyTimer'
+import FocusTimer, { savedFocusTitle } from '@/components/FocusTimer'
 import { examInfo } from '@/lib/prep/exam'
 import { usePrepLang } from '@/lib/prep/i18n'
 
@@ -59,6 +59,11 @@ export default function PrepPlanPage() {
   // Exams held in shifts: until the student sets their own date, remind them near the window.
   const [shiftDate, setShiftDate] = useState<string | null>(null)
   useEffect(() => { const t = window.setTimeout(() => setShiftDate(readShiftDate(data.templateId)), 0); return () => window.clearTimeout(t) }, [data.templateId, setup])
+  // The focus timer: which subtopic, and a session left running from before.
+  const [timerPick, setTimerPick] = useState<string | null>(null)
+  const [timerOpen, setTimerOpen] = useState(false)
+  const [runningTitle, setRunningTitle] = useState<string | null>(null)
+  useEffect(() => { const t = window.setTimeout(() => setRunningTitle(savedFocusTitle()), 0); return () => window.clearTimeout(t) }, [timerOpen])
   useEffect(() => { const t = window.setTimeout(() => setWelcome(new URLSearchParams(window.location.search).get('welcome') === '1'), 0); return () => window.clearTimeout(t) }, [])
 
   if (data.status === 'loading') return <main className="mx-auto max-w-xl space-y-3 px-4 pb-28 pt-6" aria-busy="true">{[1, 2, 3].map((k) => <div key={k} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}</main>
@@ -78,6 +83,10 @@ export default function PrepPlanPage() {
   }
 
   const todayUnits = plan?.days[0]?.date === today ? plan.days[0].units : []
+  const timerUnits = plan ? [...todayUnits, ...(plan.days[1]?.units ?? [])].slice(0, 8) : []
+  const runningUnit = runningTitle ? timerUnits.find((u) => u.title === runningTitle) : undefined
+  const timerUnit = timerUnits.find((u) => u.id === (timerOpen && runningUnit && !timerPick ? runningUnit.id : timerPick)) ?? runningUnit ?? timerUnits[0]
+  const resumable = Boolean(runningUnit && timerUnit && runningUnit.id === timerUnit.id)
   const doneTodayUnits = plan ? plan.units.filter((u) => data.states.get(u.id)?.touchedOn === today) : []
   const targetMet = plan ? plan.doneToday >= plan.perDay && plan.perDay > 0 : false
   const hoursNeeded = plan ? (plan.perDay * MIN_PER_SUBTOPIC) / 60 : 0
@@ -141,8 +150,13 @@ export default function PrepPlanPage() {
           {dueCount > 0 && <Link href="/prep?filter=due" className="flex items-center gap-2 border-t border-slate-100 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-slate-800 dark:text-rose-400"><RotateCcw className="h-4 w-4" />Plus {dueCount} revision{dueCount === 1 ? '' : 's'} due →</Link>}
         </section>}
 
-        {plan.status !== 'complete' && <StudyTimer units={[...todayUnits, ...(plan.days[1]?.units ?? [])].slice(0, 8)} onFinish={async (u, minutes, tickIt) => {
-          const ok = tickIt ? await data.tick(u.id, true, minutes) : await data.logEvent(null, 'studied', { minutes, details: { timer: true, unit: u.id } })
+        {plan.status !== 'complete' && timerUnits.length > 0 && <section data-guide="plan-timer" className="mt-3 flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <Timer className="h-5 w-5 shrink-0 text-amber-600" />
+          <select aria-label="What are you studying?" value={timerUnit?.id ?? ''} onChange={(e) => setTimerPick(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900">{timerUnits.map((u) => <option key={u.id} value={u.id}>{u.title}</option>)}</select>
+          <button type="button" onClick={() => setTimerOpen(true)} className="flex shrink-0 items-center gap-1 rounded-lg bg-amber-500 px-3 py-2 text-sm font-bold text-slate-950"><Play className="h-4 w-4" />{resumable ? 'Resume' : 'Focus'}</button>
+        </section>}
+        {timerOpen && timerUnit && <FocusTimer title={timerUnit.title} subtitle={timerUnit.topicTitle} doneLabel="Done with this subtopic" onClose={() => setTimerOpen(false)} onFinish={async (minutes, tickIt) => {
+          const ok = tickIt ? await data.tick(timerUnit.id, true, minutes) : await data.logEvent(null, 'studied', { minutes, details: { timer: true, unit: timerUnit.id } })
           setToastMsg(ok ? `${minutes} min saved${tickIt ? ' and ticked' : ''}.` : 'Could not save.')
         }} />}
 

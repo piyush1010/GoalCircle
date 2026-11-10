@@ -1,9 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
-import { GoalieBot } from '@/components/GoalieBot'
 
-export { GoalieBot }
 
 export interface TourStep {
   /** Value of a data-tour attribute on the page; omit for a welcome step with no target. */
@@ -36,7 +34,7 @@ export function resetTours() {
 }
 
 /**
- * A step-by-step guide with Goalie. Uncontrolled (default): runs once per device, replayable with replayKey.
+ * A short step-by-step guide. Uncontrolled (default): runs once per device, replayable with replayKey.
  * Controlled: pass `open` and `onDone`; the caller decides when it shows and remembers that it was seen.
  */
 export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: { name: string; steps: TourStep[]; replayKey?: number; open?: boolean; onDone?: () => void }) {
@@ -103,23 +101,17 @@ export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: 
 
   if (!step || index === null) return null
   const last = index === active.length - 1
-  // If the target is still low on screen (end of the page), put Goalie and the bubble at the top instead.
+  // If the target is still low on screen (end of the page), put the card at the top instead.
   const atTop = !!rect && rect.top + rect.height / 2 > window.innerHeight * 0.5
 
   return (
     <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label={`Guide: ${step.title}`}>
       <style>{`
-        @keyframes goalie-bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
-        @keyframes goalie-blink { 0%,92%,100% { transform: scaleY(1) } 95% { transform: scaleY(0.1) } }
-        @keyframes goalie-wiggle { 0%,100% { transform: rotate(0) } 50% { transform: rotate(10deg) } }
         @keyframes guide-point { 0%,100% { transform: translate(-50%, 0) } 50% { transform: translate(-50%, -8px) } }
         @keyframes guide-pop { from { opacity: 0; transform: translateY(12px) scale(.98) } to { opacity: 1; transform: none } }
-        .goalie-bob { animation: goalie-bob 2.4s ease-in-out infinite }
-        .goalie-eyes { transform-origin: 32px 32px; animation: goalie-blink 4s infinite }
-        .goalie-antenna { transform-origin: 32px 14px; animation: goalie-wiggle 1.6s ease-in-out infinite }
         .guide-pointer { animation: guide-point 1s ease-in-out infinite }
         .guide-card { animation: guide-pop .3s ease-out }
-        @media (prefers-reduced-motion: reduce) { .goalie-bob,.goalie-eyes,.goalie-antenna,.guide-pointer,.guide-card { animation: none } }
+        @media (prefers-reduced-motion: reduce) { .guide-pointer,.guide-card { animation: none } }
       `}</style>
 
       {/* Dim everything except the spotlighted element. */}
@@ -135,26 +127,16 @@ export default function GuideTour({ name, steps, replayKey = 0, open, onDone }: 
       <div className="absolute inset-0" />
 
       <div className={`guide-card absolute inset-x-4 mx-auto flex max-w-md select-none ${atTop ? 'top-4 flex-col-reverse' : 'bottom-20 flex-col'}`}>
-        {/* Comic speech bubble */}
-        <div className="relative rounded-[28px] border-[3px] border-slate-900 bg-white p-4 text-slate-900 shadow-[5px_5px_0_#101B2D]">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600">Goalie · {index + 1} of {active.length}</p>
-          <h2 className="mt-0.5 text-lg font-bold leading-snug">{step.title}</h2>
-          <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">{step.text}</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-slate-900 shadow-2xl dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Tip {index + 1} of {active.length}</p>
+          <h2 className="mt-0.5 text-lg font-semibold leading-snug">{step.title}</h2>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{step.text}</p>
           <div className="mt-4 flex items-center gap-2">
-            <button type="button" onClick={() => finish(true)} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Skip tips</button>
+            <button type="button" onClick={() => finish(true)} className="rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500">Skip tips</button>
             <span className="flex-1" />
-            {index > 0 && <button type="button" onClick={() => setIndex(index - 1)} className="rounded-xl border-2 border-slate-900 px-4 py-2 text-sm font-bold">Back</button>}
-            <button type="button" onClick={() => (last ? finish() : setIndex(index + 1))} autoFocus className="rounded-xl border-2 border-slate-900 bg-amber-400 px-5 py-2 text-sm font-bold text-slate-950 shadow-[2px_2px_0_#101B2D] active:translate-x-px active:translate-y-px active:shadow-none">{last ? 'Got it' : 'Next'}</button>
+            {index > 0 && <button type="button" onClick={() => setIndex(index - 1)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-slate-700">Back</button>}
+            <button type="button" onClick={() => (last ? finish() : setIndex(index + 1))} autoFocus className="rounded-xl bg-amber-500 px-5 py-2 text-sm font-semibold text-slate-950">{last ? 'Got it' : 'Next'}</button>
           </div>
-          {/* Tail pointing at Goalie */}
-          <svg width="36" height="26" viewBox="0 0 36 26" aria-hidden="true" className={`absolute left-12 ${atTop ? '-top-[23px] -scale-y-100' : '-bottom-[23px]'}`}>
-            <path d="M0 0 L12 24 L34 0 Z" fill="#fff" />
-            <path d="M2 1 L12 24 L32 1" fill="none" stroke="#101B2D" strokeWidth="3" strokeLinejoin="round" />
-          </svg>
-        </div>
-        {/* Goalie stands outside the bubble */}
-        <div className={`ml-1 w-fit drop-shadow-xl ${atTop ? 'mb-4' : 'mt-4'}`}>
-          <GoalieBot size={84} mood={index === 0 ? 'wave' : last ? 'happy' : 'think'} />
         </div>
       </div>
     </div>

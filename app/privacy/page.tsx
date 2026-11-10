@@ -1,68 +1,72 @@
 import type { Metadata } from 'next'
-import LogoMark from '@/components/LogoMark'
 import Link from 'next/link'
-import { ArrowLeft, Eye, LockKeyhole, ShieldCheck, UserRoundCheck } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import LogoMark from '@/components/LogoMark'
 import ThemeToggle from '@/components/ThemeToggle'
+import { APP_NAME, CONTACT_EMAIL } from '@/lib/appInfo'
 
 export const metadata: Metadata = {
-  title: 'Privacy | GoalYaar',
-  description: 'How GoalYaar approaches visibility, personal data, and user control.',
+  title: `Privacy policy | ${APP_NAME}`,
+  description: `What ${APP_NAME} stores, why, who processes it, and how to export or delete it.`,
 }
 
-const principles = [
-  {
-    icon: Eye,
-    title: 'Visibility is explicit',
-    copy: 'Goals and check-ins should clearly show whether they are public, shared with a circle, or private.',
-  },
-  {
-    icon: LockKeyhole,
-    title: 'Private means private',
-    copy: 'Private goals and updates are intended to be visible only to their owner and protected by account-level access rules.',
-  },
-  {
-    icon: UserRoundCheck,
-    title: 'You control your profile',
-    copy: 'You can update your profile, export your goal data, and remove content you created from within the app.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Minimal, purposeful data',
-    copy: 'GoalYaar uses account and progress information to provide the product rather than to build an advertising profile.',
-  },
-]
+const UPDATED = '10 November 2026'
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return <section className="border-t border-slate-200 py-6 dark:border-slate-800">
+    <h2 className="text-base font-semibold">{title}</h2>
+    <div className="mt-2 space-y-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{children}</div>
+  </section>
+}
 
 export default function PrivacyPage() {
-  return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-950 dark:bg-[#07101F] dark:text-slate-50 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-5xl">
-        <header className="flex items-center justify-between border-b border-slate-200 pb-5 dark:border-slate-800">
-          <Link href="/" className="flex items-center gap-2.5 font-bold"><LogoMark size={36} />GoalYaar</Link>
-          <ThemeToggle />
-        </header>
+  const mail = <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-amber-700 underline underline-offset-2 dark:text-amber-400">{CONTACT_EMAIL}</a>
+  return <main className="min-h-screen bg-slate-50 px-4 pb-16 pt-6 text-slate-950 dark:bg-[#07101F] dark:text-slate-50">
+    <div className="mx-auto max-w-2xl">
+      <header className="flex items-center justify-between pb-6">
+        <Link href="/" className="flex items-center gap-2.5 font-bold"><LogoMark size={32} />{APP_NAME}</Link>
+        <ThemeToggle />
+      </header>
+      <Link href="/about" className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-950 dark:hover:text-white"><ArrowLeft className="h-4 w-4" />About</Link>
+      <h1 className="mt-6 text-3xl font-semibold tracking-tight">Privacy policy</h1>
+      <p className="mt-2 text-sm text-slate-500">Last updated {UPDATED}</p>
+      <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-300">{APP_NAME} keeps only what it needs to plan your preparation and run your goals, circles and batches. We do not show ads, sell your data, or build advertising profiles.</p>
 
-        <section className="py-14 sm:py-20">
-          <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-950 dark:hover:text-white"><ArrowLeft className="h-4 w-4" />Back to home</Link>
-          <p className="mt-10 text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Privacy approach</p>
-          <h1 className="mt-3 max-w-3xl text-4xl font-bold tracking-[-0.045em] sm:text-6xl">Your progress belongs to you.</h1>
-          <p className="mt-5 max-w-2xl text-base font-medium leading-7 text-slate-600 dark:text-slate-300">GoalYaar is built for useful accountability, not performative oversharing. These principles guide how visibility and personal data should work as the product grows.</p>
+      <Section title="What we store">
+        <p><b>Account:</b> your email address, name and username, and your Google profile photo if you sign in with Google.</p>
+        <p><b>What you create:</b> goals, check-ins and their photos, comments, circles and batch posts, focus time, and anything you send as feedback.</p>
+        <p><b>Exam preparation:</b> your exams and dates, study hours, subtopics ticked, revisions, mistakes, notes, mock scores and answers you share for review.</p>
+        <p><b>Notifications:</b> if you turn on phone notifications, a notification address for your device, and your reminder time.</p>
+        <p><b>Error reports:</b> when something breaks, the error message, the page and your browser type, so we can fix it.</p>
+      </Section>
 
-          <div className="mt-12 grid gap-4 sm:grid-cols-2">
-            {principles.map(({ icon: Icon, title, copy }) => (
-              <article key={title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-[#101B2D]">
-                <span className="mb-5 grid h-11 w-11 place-items-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><Icon className="h-5 w-5" /></span>
-                <h2 className="font-bold">{title}</h2>
-                <p className="mt-2 text-sm font-medium leading-6 text-slate-600 dark:text-slate-400">{copy}</p>
-              </article>
-            ))}
-          </div>
+      <Section title="Who can see it">
+        <p>Your preparation data is private to you. A mentor sees your progress only if you choose to share it with them. Goals and check-ins are visible to the people you choose: only you, your circle, or everyone. Others preparing for the same exam see anonymous counts, never your name.</p>
+        <p>The app&apos;s administrator can see counts of activity and error reports to keep the app working, not your notes, mistakes or private posts.</p>
+      </Section>
 
-          <div className="mt-10 rounded-3xl border border-slate-200 bg-slate-100 p-6 dark:border-slate-800 dark:bg-slate-900/50">
-            <h2 className="font-bold">A note while GoalYaar is in early testing</h2>
-            <p className="mt-2 text-sm font-medium leading-6 text-slate-600 dark:text-slate-400">Only share information you are comfortable testing with trusted participants. Product controls and security policies will continue to be reviewed before broader release.</p>
-          </div>
-        </section>
-      </div>
-    </main>
-  )
+      <Section title="Who processes it for us">
+        <p><b>Supabase</b> stores the database, sign-in and uploaded photos. <b>Vercel</b> hosts the app. <b>Google</b> handles &ldquo;Sign in with Google&rdquo; if you use it. Your phone&apos;s push service (such as Google or Apple) delivers notifications you turn on. Each processes data only to provide its service.</p>
+      </Section>
+
+      <Section title="How long we keep it">
+        <p>Until you delete it or delete your account. Deleting your account removes your data from the app straight away; copies in service providers&apos; routine backups expire on their own schedules.</p>
+      </Section>
+
+      <Section title="Your choices">
+        <p><b>Export:</b> Settings → Download my data gives you everything as one file.</p>
+        <p><b>Correct:</b> edit your profile, goals and preparation in the app.</p>
+        <p><b>Delete:</b> Settings → Delete my account, or email {mail} if you cannot sign in. See <Link href="/about#delete" className="font-medium text-amber-700 underline underline-offset-2 dark:text-amber-400">deleting your account</Link>.</p>
+        <p><b>Notifications:</b> turn them off any time in Settings.</p>
+      </Section>
+
+      <Section title="Age">
+        <p>{APP_NAME} is meant for people aged 18 and over.</p>
+      </Section>
+
+      <Section title="Contact">
+        <p>Questions about privacy: {mail}. We will update this page when anything changes and show the new date at the top.</p>
+      </Section>
+    </div>
+  </main>
 }

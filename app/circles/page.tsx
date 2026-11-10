@@ -7,7 +7,7 @@ import { usePrepActive } from '@/lib/prep/active'
 import { useRouter } from 'next/navigation'
 import { BookOpen, BriefcaseBusiness, ChevronRight, Dumbbell, Globe2, LockKeyhole, LogOut, MoreHorizontal, Plus, Repeat2, Target, Trash2, Users, X, type LucideIcon } from 'lucide-react'
 import { EXAMS, examLabel } from '@/lib/exams'
-import GoalieMessage from '@/components/GoalieMessage'
+import EmptyState from '@/components/EmptyState'
 import CircleAvatar from '@/components/CircleAvatar'
 import { localDateString } from '@/lib/exams'
 import { supabase } from '@/utils/supabase'
@@ -160,7 +160,7 @@ export default function CirclesPage() {
     {error && <p role="alert" className="mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
     <div className="space-y-3">
       {loading && [1, 2].map((item) => <div key={item} className="h-36 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" />)}
-      {!loading && displayed.length === 0 && <GoalieMessage title={tab === 'my' ? 'No circles yet' : 'No circles to discover yet'} message={tab === 'my' ? 'Got an invite link from your mentor? Open it to join. Mentor? Create a private batch for your students.' : 'Create the first accountability circle.'} actionLabel="Create a circle" onAction={() => setShowCreate(true)} />}
+      {!loading && displayed.length === 0 && <EmptyState title={tab === 'my' ? 'No circles yet' : 'No circles to discover yet'} message={tab === 'my' ? 'Got an invite link from your mentor? Open it to join. Mentor? Create a private batch for your students.' : 'Create the first accountability circle.'} actionLabel="Create a circle" onAction={() => setShowCreate(true)} />}
       {displayed.map((circle) => <article key={circle.id} className="relative rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-[#101B2D]"><Link href={`/circles/${circle.id}`} aria-label={`Open ${circle.name}`} className="absolute inset-0 rounded-3xl" /><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 gap-3"><CircleAvatar name={circle.name} url={circle.avatarUrl} size={52} /><div className="min-w-0"><Link href={`/circles/${circle.id}`} className="group flex items-center gap-1"><h2 className="truncate text-base font-bold group-hover:text-amber-600">{circle.name}</h2>{circle.owned && <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">Mentor</span>}<ChevronRight className="h-4 w-4 shrink-0 text-slate-400" /></Link><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-500">{circle.visibility === 'private' && <LockKeyhole className="h-3 w-3" />}{examLabel(circle.exam) || categories.find((c) => c.id === circle.category)?.label} · {circle.memberCount} {circle.memberCount === 1 ? 'member' : 'members'}</p></div></div><div className="relative z-10 flex shrink-0 gap-1.5">{!circle.owned && !circle.joined
   ? <button onClick={() => void toggleMembership(circle)} disabled={busyId === circle.id} className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-slate-50 px-3 py-1.5 text-xs font-bold text-white dark:text-slate-900 disabled:opacity-60">{busyId === circle.id ? 'Saving…' : 'Join'}</button>
   : <div className="relative">

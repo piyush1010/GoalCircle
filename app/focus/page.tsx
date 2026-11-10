@@ -1,28 +1,24 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, CheckCircle2, Clock3, Pause, Play, RotateCcw } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock3, Play } from 'lucide-react'
+import FocusTimer from '@/components/FocusTimer'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
 import { localDateString } from '@/lib/exams'
 import { focusMinutesKey } from '@/lib/focusHandoff'
 import { supabase } from '@/utils/supabase'
 
 const FOCUS_TOUR: TourStep[] = [
-  { target: 'focus-modes', title: 'Pick a mode', text: 'Work is 25 minutes, then a short break. Deep work is a longer session.' },
   { target: 'focus-goal', title: 'What are you focusing on?', text: 'Pick a goal or today\'s batch task. The minutes are saved to it.' },
+  { target: 'focus-modes', title: 'Pick a mode', text: '25 / 5 and 50 / 10 run in rounds with breaks; the stopwatch simply counts up.' },
   { target: 'focus-start', title: 'Just start', text: "Press start and do the first five minutes. Starting is the hardest part; it usually gets easier." },
 ]
 
-type TimerMode = 'work' | 'shortBreak' | 'longBreak' | 'deepWork'
 type GoalOption = { id: string; title: string }
 // A focus target: one of your goals, today's batch task, or nothing in particular.
 type Target = { key: string; label: string; goalId: string | null; circleId: string | null }
-const PRESETS: Record<TimerMode, { label: string; minutes: number }> = {
-  work: { label: 'Pomodoro', minutes: 25 }, shortBreak: { label: 'Short break', minutes: 5 },
-  longBreak: { label: 'Long break', minutes: 15 }, deepWork: { label: 'Deep work', minutes: 45 },
-}
 function dayStart(date: Date) { const d = new Date(date); d.setHours(0, 0, 0, 0); return d }
 function weekStart(date: Date) { const d = dayStart(date); const day = d.getDay(); d.setDate(d.getDate() - (day === 0 ? 6 : day - 1)); return d }
 
@@ -31,16 +27,11 @@ export default function FocusRoomPage() {
   const [targets, setTargets] = useState<Target[]>([])
   const [targetKey, setTargetKey] = useState('none')
   const [userId, setUserId] = useState<string | null>(null)
-  const [mode, setMode] = useState<TimerMode>('work')
-  const [secondsLeft, setSecondsLeft] = useState(PRESETS.work.minutes * 60)
-  const [isRunning, setIsRunning] = useState(false)
   const [notes, setNotes] = useState('')
   const [stats, setStats] = useState({ today: 0, week: 0, sessions: 0 })
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [savedMinutes, setSavedMinutes] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const endAt = useRef<number | null>(null)
 
   const loadStats = useCallback(async (uid: string) => {
     const now = new Date()
@@ -82,55 +73,39 @@ export default function FocusRoomPage() {
   }) }, [loadStats, router])
 
   const target = targets.find((t) => t.key === targetKey) ?? null
-  const saveSession = useCallback(async () => {
-    if (!userId || saving) return
-    if (mode === 'shortBreak' || mode === 'longBreak') { setSavedMinutes(0); return }
-    const minutes = PRESETS[mode].minutes; setSaving(true); setError(null)
-    const { error: saveError } = await supabase.from('focus_logs').insert({ user_id: userId, goal_id: target?.goalId ?? null, minutes_logged: minutes, note: notes.trim() || (target?.circleId ? target.label : null) })
-    if (saveError) setError('The timer finished, but the session could not be saved. Please try again.')
-    else {
-      // Batch task: hand the minutes to the batch check-in so the student doesn't type them.
-      if (target?.circleId) {
-        try {
-          const key = focusMinutesKey(target.circleId, localDateString())
-          window.localStorage.setItem(key, String(Number(window.localStorage.getItem(key) || 0) + minutes))
-        } catch { /* storage unavailable */ }
-      }
-      setSavedMinutes(minutes); setNotes(''); await loadStats(userId)
-    }
-    setSaving(false)
-  }, [loadStats, mode, notes, saving, target, userId])
-
-  useEffect(() => {
-    if (!isRunning) return
-    const tick = () => { if (!endAt.current) return; const remaining = Math.max(0, Math.ceil((endAt.current - Date.now()) / 1000)); setSecondsLeft(remaining); if (!remaining) { setIsRunning(false); endAt.current = null; void saveSession() } }
-    tick(); const timer = window.setInterval(tick, 250); return () => window.clearInterval(timer)
-  }, [isRunning, saveSession])
-
-  const switchMode = (next: TimerMode) => { setIsRunning(false); endAt.current = null; setMode(next); setSecondsLeft(PRESETS[next].minutes * 60); setSavedMinutes(null) }
-  const toggleTimer = () => {
+  const [open, setOpen] = useState(false)
+  // Saves whatever was focused, rounds or stopwatch, when the timer is finished.
+  const saveSession = useCallback(async (minutes: number) => {
+    if (!userId) return
     setError(null); setSavedMinutes(null)
-    if (isRunning) { setIsRunning(false); endAt.current = null } else { endAt.current = Date.now() + secondsLeft * 1000; setIsRunning(true) }
-  }
-  const reset = () => { setIsRunning(false); endAt.current = null; setSecondsLeft(PRESETS[mode].minutes * 60); setSavedMinutes(null) }
-  const minutes = Math.floor(secondsLeft / 60).toString().padStart(2, '0'), seconds = (secondsLeft % 60).toString().padStart(2, '0')
-  const total = PRESETS[mode].minutes * 60, progress = ((total - secondsLeft) / total) * 100
+    const { error: saveError } = await supabase.from('focus_logs').insert({ user_id: userId, goal_id: target?.goalId ?? null, minutes_logged: minutes, note: notes.trim() || (target?.circleId ? target.label : null) })
+    if (saveError) { setError('The session could not be saved. Please try again.'); return }
+    // Batch task: hand the minutes to the batch check-in so the student doesn't type them.
+    if (target?.circleId) {
+      try {
+        const key = focusMinutesKey(target.circleId, localDateString())
+        window.localStorage.setItem(key, String(Number(window.localStorage.getItem(key) || 0) + minutes))
+      } catch { /* storage unavailable */ }
+    }
+    setSavedMinutes(minutes); setNotes(''); await loadStats(userId)
+  }, [loadStats, notes, target, userId])
 
   return <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4">
-    <header className="mb-6 flex items-center gap-3"><button onClick={() => router.back()} aria-label="Go back" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101B2D]"><ArrowLeft className="h-4 w-4" /></button><div><h1 className="text-lg font-bold">Focus Room</h1><p className="text-xs text-slate-500">Focus time that actually counts toward your goal.</p></div></header>
+    <header className="mb-6 flex items-center gap-3"><button onClick={() => router.back()} aria-label="Go back" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101B2D]"><ArrowLeft className="h-4 w-4" /></button><div><h1 className="text-lg font-bold">Focus</h1><p className="text-xs text-slate-500">Focus time that counts toward your goal.</p></div></header>
     {loading ? <div className="h-96 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" /> : <div className="space-y-4">
-      <div data-tour="focus-modes" className="grid grid-cols-4 gap-1 rounded-2xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-[#101B2D]">{(Object.keys(PRESETS) as TimerMode[]).map((preset) => <button key={preset} onClick={() => switchMode(preset)} className={`rounded-xl px-1 py-2 text-xs font-bold ${mode === preset ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900' : 'text-slate-500'}`}>{PRESETS[preset].label}</button>)}</div>
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-[#101B2D]">
         <label htmlFor="focus-goal" data-tour="focus-goal" className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Focusing on</label>
-        <select id="focus-goal" value={targetKey} onChange={(e) => setTargetKey(e.target.value)} disabled={isRunning} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold dark:border-slate-700 dark:bg-[#07101F]">{targets.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</select>
-        <div className="relative mx-auto my-7 grid h-52 w-52 place-items-center rounded-full" style={{ background: `conic-gradient(#f59e0b ${progress}%, var(--ring-missed) ${progress}%)` }}><div className="grid h-44 w-44 place-items-center rounded-full bg-white text-center dark:bg-[#101B2D]"><div><div aria-label={`${minutes} minutes ${seconds} seconds remaining`} className="font-mono text-5xl font-bold tracking-tight">{minutes}:{seconds}</div><div className="mt-1 text-xs font-bold uppercase tracking-widest text-amber-500">{isRunning ? 'Focusing' : PRESETS[mode].label}</div></div></div></div>
-        <div className="flex justify-center gap-2"><button data-tour="focus-start" onClick={toggleTimer} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-50 px-6 py-3 text-sm font-bold text-white dark:text-slate-900 disabled:opacity-50">{isRunning ? <Pause className="h-4 w-4" fill="currentColor" /> : <Play className="h-4 w-4" fill="currentColor" />}{isRunning ? 'Pause' : secondsLeft === total ? 'Start focus' : 'Resume'}</button><button onClick={reset} aria-label="Reset timer" className="grid h-11 w-11 place-items-center rounded-xl bg-slate-100 dark:bg-slate-800"><RotateCcw className="h-4 w-4" /></button></div>
+        <select id="focus-goal" value={targetKey} onChange={(e) => setTargetKey(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold dark:border-slate-700 dark:bg-[#07101F]">{targets.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</select>
+        <label htmlFor="focus-notes" className="mb-2 mt-4 block text-xs font-bold uppercase tracking-wider text-slate-500">Session note <span className="font-medium normal-case">(optional)</span></label>
+        <textarea id="focus-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} placeholder="What are you working on?" className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-[#07101F]" />
+        <button data-tour="focus-start" type="button" onClick={() => { setSavedMinutes(null); setOpen(true) }} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3.5 text-base font-bold text-slate-950"><Play className="h-4 w-4" fill="currentColor" />Start focus</button>
+        <p data-tour="focus-modes" className="mt-2 text-center text-xs text-slate-500">Choose 25 / 5, 50 / 10 or a stopwatch on the timer.</p>
       </section>
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#101B2D]"><label htmlFor="focus-notes" className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Session note <span className="font-medium normal-case">(optional)</span></label><textarea id="focus-notes" value={notes} onChange={(e) => setNotes(e.target.value)} disabled={isRunning} rows={2} maxLength={500} placeholder="What are you working on?" className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-[#07101F]" /></section>
       {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
-      {savedMinutes !== null && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"><CheckCircle2 className="mr-2 inline h-4 w-4" />{savedMinutes ? `${savedMinutes} focus minutes saved.` : 'Break complete. No focus minutes were added.'}{savedMinutes && target?.circleId ? <Link href={`/circles/${target.circleId}`} className="mt-2 block text-amber-700 underline dark:text-amber-300">Go back and check in →</Link> : null}</div>}
+      {savedMinutes !== null && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"><CheckCircle2 className="mr-2 inline h-4 w-4" />{savedMinutes} focus minutes saved.{target?.circleId ? <Link href={`/circles/${target.circleId}`} className="mt-2 block text-amber-700 underline dark:text-amber-300">Go back and check in →</Link> : null}</div>}
       <div className="grid grid-cols-3 gap-3 text-center"><Stat icon={<Clock3 className="mx-auto mb-1 h-4 w-4 text-amber-500" />} value={`${stats.today}m`} label="Today" /><Stat value={`${Math.floor(stats.week / 60)}h ${stats.week % 60}m`} label="This week" accent /><Stat value={String(stats.sessions)} label="Sessions" /></div>
     </div>}
+    {open && target && <FocusTimer title={target.key === 'none' ? 'Focus session' : target.label} onClose={() => setOpen(false)} onFinish={(minutes) => saveSession(minutes)} />}
   <GuideTour name="focus" steps={FOCUS_TOUR} />
     </main>
 }

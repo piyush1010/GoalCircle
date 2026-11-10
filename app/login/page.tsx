@@ -194,6 +194,7 @@ function AuthForm() {
       </div>
 
       {/* FORM */}
+      {searchParams.get('deleted') === '1' && <p role="status" className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">Your account and data have been deleted.</p>}
       <form onSubmit={handleSubmit} className="space-y-3">
         {mode === 'signup' && (
           <div>

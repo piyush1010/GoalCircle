@@ -49,7 +49,7 @@ function OAuthCallback() {
 
       if (!isActive) return
 
-      // New here: create the profile from the Google account and open Today, where Goalie's tour starts.
+      // New here: create the profile from the Google account and open Today.
       if (!profile?.is_onboarded) {
         setMessage('Preparing your profile…')
         const meta = user.user_metadata || {}
