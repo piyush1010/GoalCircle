@@ -69,7 +69,7 @@ export default function PrepTodayCard() {
     if (dismissed) return null
     return <section aria-label="Exam preparation" className="mb-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
       <p className="flex items-center gap-2 text-base font-bold"><GraduationCap className="h-5 w-5 text-amber-600" />Preparing for an exam?</p>
-      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Get a daily study plan and honest progress for UPSC, state PCS, SSC, banking, teaching exams or CAT. Takes a minute.</p>
+      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">A few subtopics a day and revision on time, for UPSC, state PCS, SSC, banking, teaching, judiciary or CAT. Takes a minute.</p>
       <div className="mt-3 grid grid-cols-2 gap-2">
         <button type="button" onClick={() => { try { window.localStorage.setItem('goalyaar-prep-invite', 'dismissed') } catch { /* shown again next time */ } setDismissed(true) }} className="rounded-xl border border-slate-300 py-2.5 text-sm font-bold dark:border-slate-600">Not now</button>
         <Link href="/prep/start" className="rounded-xl bg-amber-500 py-2.5 text-center text-sm font-bold text-slate-950">Start</Link>

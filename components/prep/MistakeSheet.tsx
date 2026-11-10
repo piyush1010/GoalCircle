@@ -8,15 +8,16 @@ import type { SyllabusNode } from '@/lib/prep/types'
 const ORDER = ['concept_not_studied', 'fact_forgotten', 'misread_statement', 'extreme_word', 'similar_options', 'incorrect_elimination', 'overthinking', 'current_affairs_gap', 'careless', 'blind_guess', 'other']
 
 /** Add a mistake in about ten seconds: what kind of mistake, which topic (optional), one line on the right fact. */
-export default function MistakeSheet({ nodes, onSave, onClose }: {
+export default function MistakeSheet({ nodes, initial, onSave, onClose }: {
   nodes: SyllabusNode[]
+  initial?: { nodeId: string | null; category: string; note: string | null } // editing an existing mistake
   onSave: (m: { nodeId: string | null; category: string; note: string | null }) => Promise<boolean>
   onClose: () => void
 }) {
-  const [category, setCategory] = useState<string | null>(null)
+  const [category, setCategory] = useState<string | null>(initial?.category ?? null)
   const [query, setQuery] = useState('')
-  const [topic, setTopic] = useState<SyllabusNode | null>(null)
-  const [note, setNote] = useState('')
+  const [topic, setTopic] = useState<SyllabusNode | null>(() => (initial?.nodeId ? nodes.find((n) => n.id === initial.nodeId) ?? null : null))
+  const [note, setNote] = useState(initial?.note ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const topics = useMemo(() => nodes.filter((n) => n.kind === 'topic' && !n.ownerId), [nodes])
@@ -32,9 +33,9 @@ export default function MistakeSheet({ nodes, onSave, onClose }: {
   }
 
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center" onClick={onClose}>
-    <div role="dialog" aria-modal="true" aria-label="Add a mistake" onClick={(e) => e.stopPropagation()} className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 pb-[calc(2rem+env(safe-area-inset-bottom))] shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
+    <div role="dialog" aria-modal="true" aria-label={initial ? "Edit mistake" : "Add a mistake"} onClick={(e) => e.stopPropagation()} className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 pb-[calc(2rem+env(safe-area-inset-bottom))] shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
       <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1"><h2 className="text-lg">Add to mistake notebook</h2><p className="text-sm text-slate-500">From a mock, PYQ or answer. You will be reminded to revisit it.</p></div>
+        <div className="min-w-0 flex-1"><h2 className="text-lg">{initial ? 'Edit mistake' : 'Add to mistake notebook'}</h2><p className="text-sm text-slate-500">{initial ? 'Change the type, topic or lesson.' : 'From a mock, PYQ or answer. You will be reminded to revisit it.'}</p></div>
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-4 w-4" /></button>
       </div>
       <p className="mt-4 text-sm font-bold">What went wrong?</p>
@@ -50,7 +51,7 @@ export default function MistakeSheet({ nodes, onSave, onClose }: {
       <textarea id="mistake-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} rows={2} placeholder="e.g. Article 32 is a fundamental right; Article 226 is wider in scope" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900" />
 
       {error && <p role="alert" className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
-      <button type="button" disabled={busy} onClick={() => void save()} className="mt-4 w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 shadow-sm disabled:opacity-60">{busy ? 'Saving…' : 'Save mistake'}</button>
+      <button type="button" disabled={busy} onClick={() => void save()} className="mt-4 w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 shadow-sm disabled:opacity-60">{busy ? 'Saving…' : initial ? 'Save changes' : 'Save mistake'}</button>
     </div>
   </div>
 }

@@ -16,7 +16,7 @@ export interface ExamTemplate { id: string; code: string; name: string }
 interface NodeRow { template_id?: string; id: string; parent_id: string | null; kind: SyllabusNode['kind']; code: string | null; title: string; stages: string[]; papers: string[]; weight: number; pyq_frequency: number | null; sort: number; owner_id: string | null }
 interface StateRow { node_id: string; touched_on: string | null; foundation: Foundation | null; revision_count: number; last_revised_on: string | null; interval_days: number | null; next_revision_on: string | null; pyq_attempted: number; pyq_correct: number; answers_written: number }
 export interface MockRow extends MockResult { id: string; name: string; correct: number | null; incorrect: number | null; unattempted: number | null; totalQuestions: number | null; sections: { name: string; score: number | null; max: number | null }[] }
-export interface AnswerRow { paper: string | null; count: number; timed: boolean; mentorReviewed: boolean; writtenOn: string; nodeId: string | null }
+export interface AnswerRow { id: string; paper: string | null; count: number; timed: boolean; mentorReviewed: boolean; writtenOn: string; nodeId: string | null }
 export interface PrepProfile {
   examDate: string | null; dailyMinutes: number | null
   targetStage: 'prelims' | 'mains'; planStartOn: string | null; revisionBufferPct: number
@@ -123,7 +123,7 @@ export function usePrepData(enabled = true) {
       allNodes(toLoad),
       supabase.from('prep_topic_state').select(STATE_COLS),
       supabase.from('prep_mock_tests').select('*').order('taken_on', { ascending: false }).limit(60),
-      supabase.from('prep_answer_logs').select('paper,count,timed,mentor_reviewed,written_on,node_id').order('written_on', { ascending: false }).limit(500),
+      supabase.from('prep_answer_logs').select('id,paper,count,timed,mentor_reviewed,written_on,node_id').order('written_on', { ascending: false }).limit(500),
       supabase.from('prep_events').select('occurred_on,kind,node_id,quantity,details,minutes').gte('occurred_on', since).order('occurred_on', { ascending: false }).limit(3000),
       supabase.from('prep_mistakes').select('id,node_id,category,note,created_at,resolved_on').order('created_at', { ascending: false }).limit(500),
     ])
@@ -145,8 +145,8 @@ export function usePrepData(enabled = true) {
     setStates(new Map(((s.data ?? []) as StateRow[]).map((r) => [r.node_id, toState(r)])))
     setMocks(((m.data ?? []) as { id: string; stage: MockRow['stage']; name: string; taken_on: string; score: number | null; max_score: number | null; correct: number | null; incorrect: number | null; unattempted: number | null; total_questions: number | null; sections?: { name: string; score: number | null; max: number | null }[] | null }[])
       .map((r) => ({ id: r.id, stage: r.stage, name: r.name, takenOn: r.taken_on, score: r.score === null ? null : Number(r.score), maxScore: r.max_score === null ? null : Number(r.max_score), correct: r.correct, incorrect: r.incorrect, unattempted: r.unattempted, totalQuestions: r.total_questions, sections: Array.isArray(r.sections) ? r.sections : [] })))
-    setAnswers(((a.data ?? []) as { paper: string | null; count: number; timed: boolean; mentor_reviewed: boolean; written_on: string; node_id: string | null }[])
-      .map((r) => ({ paper: r.paper, count: r.count, timed: r.timed, mentorReviewed: r.mentor_reviewed, writtenOn: r.written_on, nodeId: r.node_id })))
+    setAnswers(((a.data ?? []) as { id: string; paper: string | null; count: number; timed: boolean; mentor_reviewed: boolean; written_on: string; node_id: string | null }[])
+      .map((r) => ({ id: r.id, paper: r.paper, count: r.count, timed: r.timed, mentorReviewed: r.mentor_reviewed, writtenOn: r.written_on, nodeId: r.node_id })))
     setUserSettings(prof ? { dailyMinutes: prof.daily_minutes, reminderEnabled: prof.reminder_enabled ?? true, reminderHour: prof.reminder_hour ?? 7, active: prof.active !== false } : null)
     setStatus('ready')
   }, [])
@@ -400,11 +400,48 @@ export function usePrepData(enabled = true) {
     return !error
   }, [])
 
+  const updateMistake = useCallback(async (id: string, m: { nodeId: string | null; category: string; note: string | null }) => {
+    const { error } = await supabase.from('prep_mistakes').update({ node_id: m.nodeId, category: m.category, note: m.note }).eq('id', id)
+    if (!error) setMistakes((cur) => cur.map((x) => (x.id === id ? { ...x, ...m } : x)))
+    return !error
+  }, [])
+  const updateMock = useCallback(async (id: string, m: { name: string; takenOn: string; score: number | null; maxScore: number | null }) => {
+    const { error } = await supabase.from('prep_mock_tests').update({ name: m.name, taken_on: m.takenOn, score: m.score, max_score: m.maxScore }).eq('id', id)
+    if (!error) setMocks((cur) => cur.map((x) => (x.id === id ? { ...x, ...m } : x)).sort((a, b) => b.takenOn.localeCompare(a.takenOn)))
+    return !error
+  }, [])
+  const deleteMock = useCallback(async (id: string) => {
+    const { error } = await supabase.from('prep_mock_tests').delete().eq('id', id)
+    if (!error) setMocks((cur) => cur.filter((x) => x.id !== id))
+    return !error
+  }, [])
+  /** Change or remove an answer-writing log; the topic's answer count follows. */
+  const updateAnswer = useCallback(async (row: AnswerRow, next: { count: number; timed: boolean }) => {
+    const { error } = await supabase.from('prep_answer_logs').update({ count: next.count, timed: next.timed }).eq('id', row.id)
+    if (error) return false
+    const diff = next.count - row.count
+    if (row.nodeId && diff) await logEvent(row.nodeId, 'answers', diff > 0 ? { quantity: diff } : { quantity: -diff, details: { undo: true } })
+    setAnswers((cur) => cur.map((x) => (x.id === row.id ? { ...x, ...next } : x)))
+    return true
+  }, [logEvent])
+  const deleteAnswer = useCallback(async (row: AnswerRow) => {
+    const { error } = await supabase.from('prep_answer_logs').delete().eq('id', row.id)
+    if (error) return false
+    if (row.nodeId) await logEvent(row.nodeId, 'answers', { quantity: row.count, details: { undo: true } })
+    setAnswers((cur) => cur.filter((x) => x.id !== row.id))
+    return true
+  }, [logEvent])
+  const deleteMistake = useCallback(async (id: string) => {
+    const { error } = await supabase.from('prep_mistakes').delete().eq('id', id)
+    if (!error) setMistakes((cur) => cur.filter((x) => x.id !== id))
+    return !error
+  }, [])
+
   /** Remembers today's target so the reminder can quote it. Fire-and-forget. */
   const saveTarget = useCallback(async (dailyTarget: number) => {
     if (!userId || !profile.saved) return
     await supabase.from('prep_profiles').update({ daily_target: Math.min(500, Math.max(0, dailyTarget)), target_computed_on: localDateString() }).eq('user_id', userId)
   }, [userId, profile.saved])
 
-  return { status, pending, templateId, templates, plans: plans.filter((p) => p.active), removedPlans: plans.filter((p) => !p.active), nodesByTemplate, setView, removePlan, restorePlan, template: templates.find((t) => t.id === templateId) ?? null, studyDays, events, mistakes, addMistake, resolveMistake, saveTarget, tick, tickMany, untickMany, revise, unrevise, nodes, setNodes, states, mocks, answers, profile, userId, reload: load, refreshTopic, logEvent, saveProfile }
+  return { status, pending, templateId, templates, plans: plans.filter((p) => p.active), removedPlans: plans.filter((p) => !p.active), nodesByTemplate, setView, removePlan, restorePlan, template: templates.find((t) => t.id === templateId) ?? null, studyDays, events, mistakes, addMistake, resolveMistake, updateMistake, deleteMistake, updateMock, deleteMock, updateAnswer, deleteAnswer, saveTarget, tick, tickMany, untickMany, revise, unrevise, nodes, setNodes, states, mocks, answers, profile, userId, reload: load, refreshTopic, logEvent, saveProfile }
 }

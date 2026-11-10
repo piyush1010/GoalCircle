@@ -15,6 +15,7 @@ import { optionalSubjects } from '@/lib/prep/pace'
 import RecallButton from '@/components/prep/RecallButton'
 import PrepNav from '@/components/prep/PrepNav'
 import HelpButton from '@/components/HelpButton'
+import ItemMenu from '@/components/ItemMenu'
 import ExamSwitcher from '@/components/prep/ExamSwitcher'
 
 type TabCode = string
@@ -198,6 +199,18 @@ export default function PrepExplorerPage() {
           if (error || !row) { setToast('Could not add the subtopic.'); return }
           setNodes((cur) => [...cur, toNode(row as unknown as Parameters<typeof toNode>[0])])
         }}
+        onRenameSubtopic={async (id, title) => {
+          const { error } = await supabase.from('prep_syllabus_nodes').update({ title }).eq('id', id).eq('owner_id', data.userId)
+          if (error) { setToast('Could not rename it.'); return false }
+          setNodes((cur) => cur.map((n) => (n.id === id ? { ...n, title } : n))); setToast('Renamed.')
+          return true
+        }}
+        onDeleteSubtopic={async (id) => {
+          const { error } = await supabase.from('prep_syllabus_nodes').delete().eq('id', id).eq('owner_id', data.userId)
+          if (error) { setToast('Could not delete it.'); return false }
+          setNodes((cur) => cur.filter((n) => n.id !== id)); setToast('Subtopic deleted.')
+          return true
+        }}
       />}
 
       {confirmBulk && <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center" onClick={() => setConfirmBulk(null)}>
@@ -232,7 +245,7 @@ function Center({ title, body, action }: { title: string; body: string; action?:
     {action ? <button type="button" onClick={action} className="mt-5 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Try again</button> : <Link href="/dashboard" className="mt-5 inline-block rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Back to Today</Link>}</div></main>
 }
 
-function TopicSheet({ node, path, state, states, today, share, subtopics, customs, onClose, onTick, onLog, onUnrevise, onAddSubtopic }: {
+function TopicSheet({ node, path, state, states, today, share, subtopics, customs, onClose, onTick, onLog, onUnrevise, onAddSubtopic, onRenameSubtopic, onDeleteSubtopic }: {
   node: SyllabusNode; path: string; state: TopicState | undefined; states: Map<string, TopicState>; today: string; share: number
   subtopics: SyllabusNode[]; customs: SyllabusNode[]
   onClose: () => void
@@ -240,8 +253,11 @@ function TopicSheet({ node, path, state, states, today, share, subtopics, custom
   onLog: (kind: 'revised' | 'foundation', details: Record<string, unknown>, message: string) => Promise<void>
   onUnrevise: () => Promise<void>
   onAddSubtopic: (title: string) => Promise<void>
+  onRenameSubtopic: (id: string, title: string) => Promise<boolean>
+  onDeleteSubtopic: (id: string) => Promise<boolean>
 }) {
   const [busy, setBusy] = useState<string | null>(null)
+  const [renaming, setRenaming] = useState<{ id: string; title: string } | null>(null)
   const [why, setWhy] = useState(false)
   const [subtopic, setSubtopic] = useState('')
   const ticked = subtopics.filter((s) => states.get(s.id)?.touchedOn).length
@@ -251,10 +267,15 @@ function TopicSheet({ node, path, state, states, today, share, subtopics, custom
   const run = async (key: string, fn: () => Promise<void>) => { if (busy) return; setBusy(key); try { await fn() } finally { setBusy(null) } }
   const tickRow = (s: SyllabusNode, mine = false) => {
     const on = Boolean(states.get(s.id)?.touchedOn)
-    return <li key={s.id}><label className="flex cursor-pointer items-start gap-3 py-2">
+    if (mine && renaming?.id === s.id) return <li key={s.id}><form onSubmit={(e) => { e.preventDefault(); const t = renaming.title.trim(); if (t.length < 2) return; void run(s.id, async () => { if (await onRenameSubtopic(s.id, t.slice(0, 200))) setRenaming(null) }) }} className="flex items-center gap-2 py-1.5">
+      <input autoFocus value={renaming.title} onChange={(e) => setRenaming({ id: s.id, title: e.target.value })} aria-label="Subtopic name" className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900" />
+      <button type="button" onClick={() => setRenaming(null)} className="px-1 text-xs text-slate-500">Cancel</button>
+      <button type="submit" className="rounded-lg bg-amber-500 px-2.5 py-1.5 text-xs font-bold text-slate-950">Save</button>
+    </form></li>
+    return <li key={s.id} className="flex items-start gap-1"><label className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 py-2">
       <input type="checkbox" checked={on} disabled={busy !== null} onChange={() => void run(s.id, () => onTick(s.id, !on))} className="mt-0.5 h-5 w-5 shrink-0 accent-amber-500" />
       <span className={`text-sm leading-snug ${on ? 'text-slate-500 line-through decoration-slate-300 dark:decoration-slate-600' : ''}`}>{s.title}{mine && <span className="ml-1 text-xs text-slate-400">(mine)</span>}</span>
-    </label></li>
+    </label>{mine && <span className="pt-1.5"><ItemMenu label="subtopic" onEdit={() => setRenaming({ id: s.id, title: s.title })} onDelete={() => onDeleteSubtopic(s.id)} deleteMessage={`Delete “${s.title}”? Its tick and history go with it.`} /></span>}</li>
   }
 
   useEffect(() => {

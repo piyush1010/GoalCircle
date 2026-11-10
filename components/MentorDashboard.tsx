@@ -51,7 +51,7 @@ const timeAgo = (value: string | null) => {
   if (minutes < 60) return `${minutes}m ago`
   const hours = Math.round(minutes / 60)
   if (hours < 24) return `${hours}h ago`
-  return `${Math.round(hours / 24)}d ago`
+  return Math.round(hours / 24) === 1 ? 'yesterday' : `${Math.round(hours / 24)} days ago`
 }
 const whatsappUrl = (text: string) => `https://wa.me/?text=${encodeURIComponent(text)}`
 
