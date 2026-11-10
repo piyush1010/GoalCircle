@@ -6,6 +6,7 @@ import { ArrowLeft, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import { examInfo, netMarks, type PyqPaper } from '@/lib/prep/exam'
+import { confirmAction } from '@/lib/confirm'
 import { usePrepData } from '@/lib/prep/usePrepData'
 import HelpButton from '@/components/HelpButton'
 
@@ -61,7 +62,12 @@ export default function PyqPage() {
       </section>
     })}
 
-    {open && <PyqSheet paper={open.paper} year={open.year} previous={latest.get(`${open.paper.code}:${open.year}`) ?? null} onClose={() => setOpen(null)} onSave={async (attempted, correct) => {
+    {open && <PyqSheet paper={open.paper} year={open.year} previous={latest.get(`${open.paper.code}:${open.year}`) ?? null} onClose={() => setOpen(null)} onRemove={async (id) => {
+      const { error } = await supabase.from('prep_pyq_attempts').delete().eq('id', id)
+      if (error) return false
+      await load(); setToast(`Removed that attempt at ${open.paper.label} ${open.year}.`)
+      return true
+    }} onSave={async (attempted, correct) => {
       const { error } = await supabase.from('prep_pyq_attempts').insert({ exam: code, paper: open.paper.code, year: open.year, attempted, correct, attempted_on: localDateString() })
       if (error) return false
       await data.logEvent(null, 'pyq', { quantity: attempted, details: { correct, year: open.year, paper: open.paper.code } })
@@ -73,7 +79,7 @@ export default function PyqPage() {
   </main>
 }
 
-function PyqSheet({ paper, year, previous, onClose, onSave }: { paper: PyqPaper; year: number; previous: Attempt | null; onClose: () => void; onSave: (attempted: number, correct: number) => Promise<boolean> }) {
+function PyqSheet({ paper, year, previous, onClose, onSave, onRemove }: { paper: PyqPaper; year: number; previous: Attempt | null; onClose: () => void; onSave: (attempted: number, correct: number) => Promise<boolean>; onRemove: (id: string) => Promise<boolean> }) {
   const [attempted, setAttempted] = useState(previous ? String(previous.attempted) : '')
   const [correct, setCorrect] = useState(previous ? String(previous.correct) : '')
   const [busy, setBusy] = useState(false)
@@ -94,6 +100,7 @@ function PyqSheet({ paper, year, previous, onClose, onSave }: { paper: PyqPaper;
       {!valid && attempted !== '' && correct !== '' && <p className="mt-3 text-sm text-rose-600">Correct cannot exceed attempted, and attempted cannot exceed {paper.questions}.</p>}
       {error && <p role="alert" className="mt-2 text-sm font-semibold text-rose-600">{error}</p>}
       <button type="button" disabled={!valid || busy} onClick={async () => { setBusy(true); const ok = await onSave(a, c); setBusy(false); if (ok) onClose(); else setError('Could not save. Please try again.') }} className="mt-4 w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 disabled:opacity-50">{previous ? 'Save new attempt' : 'Save'}</button>
+      {previous && <button type="button" disabled={busy} onClick={async () => { if (!(await confirmAction(`Remove your ${previous.attempted_on} attempt at ${paper.label} ${year}?`, { confirmLabel: 'Remove', danger: true }))) return; setBusy(true); const ok = await onRemove(previous.id); setBusy(false); if (ok) onClose(); else setError('Could not remove. Please try again.') }} className="mt-2 w-full py-2 text-center text-sm font-medium text-rose-600 dark:text-rose-400">Remove the last attempt</button>}
     </div>
   </div>
 }

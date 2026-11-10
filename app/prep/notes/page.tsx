@@ -7,6 +7,7 @@ import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import { usePrepData } from '@/lib/prep/usePrepData'
 import HelpButton from '@/components/HelpButton'
+import ItemMenu from '@/components/ItemMenu'
 
 interface Note { id: string; title: string; kind: string; occurred_on: string | null; note: string | null; created_at: string }
 const KIND: Record<string, string> = { scheme: 'Scheme', judgment: 'Judgment', report: 'Report', committee: 'Committee', budget: 'Budget data', economic_survey: 'Economic Survey', state_example: 'State example', other: 'Other' }
@@ -22,6 +23,7 @@ export default function NotesPage() {
   const [topicId, setTopicId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null) // the note being changed in the form above
 
   const load = useCallback(async () => {
     const [{ data: n }, { data: l }] = await Promise.all([
@@ -49,6 +51,30 @@ export default function NotesPage() {
   }, [notes, links, titles])
   const hits = topicQuery.trim().length >= 2 ? topics.filter((t) => t.title.toLowerCase().includes(topicQuery.trim().toLowerCase())).slice(0, 5) : []
   const monthName = (ym: string) => new Date(`${ym}-01T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+
+  const startEdit = (n: Note) => {
+    setEditingId(n.id); setTitle(n.title); setKind(n.kind); setTopicId(links.get(n.id) ?? null); setTopicQuery('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  const cancelEdit = () => { setEditingId(null); setTitle(''); setTopicId(null); setTopicQuery('') }
+  const saveEdit = async () => {
+    if (!editingId || title.trim().length < 3) return
+    setBusy(true)
+    const { error } = await supabase.from('prep_current_affairs').update({ title: title.trim(), kind }).eq('id', editingId)
+    if (!error && (links.get(editingId) ?? null) !== topicId) {
+      await supabase.from('prep_current_affairs_links').delete().eq('item_id', editingId)
+      if (topicId) await supabase.from('prep_current_affairs_links').insert({ item_id: editingId, node_id: topicId })
+    }
+    setBusy(false)
+    if (error) { setToast('Could not save.'); return }
+    cancelEdit(); setToast('Note updated.'); void load()
+  }
+  const remove = async (id: string) => {
+    const { error } = await supabase.from('prep_current_affairs').delete().eq('id', id)
+    if (error) { setToast('Could not delete.'); return false }
+    if (editingId === id) cancelEdit()
+    setToast('Note deleted.'); void load(); return true
+  }
 
   const add = async () => {
     if (title.trim().length < 3) return
@@ -78,13 +104,15 @@ export default function NotesPage() {
       {topicId ? <button type="button" onClick={() => setTopicId(null)} className="mt-2 w-full rounded-xl border border-amber-500 bg-amber-500/10 px-3 py-2 text-left text-sm font-semibold">{titles.get(topicId)} ×</button>
         : <><input value={topicQuery} onChange={(e) => setTopicQuery(e.target.value)} placeholder="Link to a topic (optional)" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900" />
           {hits.length > 0 && <ul className="mt-1 rounded-xl border border-slate-200 dark:border-slate-700">{hits.map((t) => <li key={t.id}><button type="button" onClick={() => setTopicId(t.id)} className="w-full px-3 py-2 text-left text-sm">{t.title}</button></li>)}</ul>}</>}
-      <button type="button" disabled={busy || title.trim().length < 3} onClick={() => void add()} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-amber-500 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50"><Plus className="h-4 w-4" />Add note</button>
+      {editingId
+        ? <div className="mt-3 flex gap-2"><button type="button" onClick={cancelEdit} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold dark:border-slate-700">Cancel</button><button type="button" disabled={busy || title.trim().length < 3} onClick={() => void saveEdit()} className="flex-1 rounded-xl bg-amber-500 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50">Save changes</button></div>
+        : <button type="button" disabled={busy || title.trim().length < 3} onClick={() => void add()} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-amber-500 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50"><Plus className="h-4 w-4" />Add note</button>}
     </section>
 
     {notes && notes.length === 0 && <p className="mt-3 rounded-2xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500 dark:border-slate-700">One line a day from the newspaper adds up to a full revision file by exam time.</p>}
     {months.map(([ym, groups]) => <section key={ym} className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center justify-between"><h2 className="text-base">{monthName(ym)}</h2><button type="button" onClick={() => void copyMonth(ym, groups)} className="flex items-center gap-1 text-xs font-bold text-slate-600 dark:text-slate-300"><Copy className="h-3.5 w-3.5" />Copy month</button></div>
-      {[...groups].map(([topic, list]) => <div key={topic} className="mt-2"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">{topic}</p><ul className="mt-1 space-y-1 text-sm">{list.map((n) => <li key={n.id}>· {n.title} <span className="text-xs text-slate-500">({KIND[n.kind] ?? n.kind})</span></li>)}</ul></div>)}
+      {[...groups].map(([topic, list]) => <div key={topic} className="mt-2"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">{topic}</p><ul className="mt-1 divide-y divide-slate-100 text-sm dark:divide-slate-800">{list.map((n) => <li key={n.id} className={`flex items-center gap-2 py-1.5 ${editingId === n.id ? 'text-amber-700 dark:text-amber-400' : ''}`}><span className="min-w-0 flex-1">{n.title} <span className="text-xs text-slate-500">({KIND[n.kind] ?? n.kind})</span></span><ItemMenu label="note" onEdit={() => startEdit(n)} onDelete={() => remove(n.id)} /></li>)}</ul></div>)}
     </section>)}
     {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
   </main>

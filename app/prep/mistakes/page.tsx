@@ -9,11 +9,15 @@ import { daysBetween } from '@/lib/prep/revision'
 import { usePrepData } from '@/lib/prep/usePrepData'
 import HelpButton from '@/components/HelpButton'
 import MistakeSheet from '@/components/prep/MistakeSheet'
+import ItemMenu from '@/components/ItemMenu'
+
+const ago = (d: number) => (d <= 0 ? 'today' : d === 1 ? 'yesterday' : `${d} days ago`)
 
 /** Mistake notebook: every wrong answer worth remembering, revisited until it sticks. */
 export default function MistakesPage() {
   const data = usePrepData(true)
   const [adding, setAdding] = useState(false)
+  const [editing, setEditing] = useState<(typeof data.mistakes)[number] | null>(null)
   const [showDone, setShowDone] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const today = localDateString()
@@ -47,16 +51,19 @@ export default function MistakesPage() {
           <p className="px-4 pt-3 text-xs font-bold uppercase tracking-wide text-slate-500">To revisit</p>
           {summary.open.length === 0 && <p className="px-4 py-3 text-sm text-slate-500">All caught up.</p>}
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">{summary.open.map((m) => <li key={m.id} className="flex items-start gap-3 px-4 py-3">
-            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold leading-snug">{m.note ?? MISTAKE_LABEL[m.category]}</span><span className="block text-xs text-slate-500">{[m.note ? MISTAKE_LABEL[m.category] : null, `${daysBetween(m.createdOn, today)}d ago`].filter(Boolean).join(' · ')}{m.nodeId && titles.get(m.nodeId) && <> · <Link href={`/prep?topic=${m.nodeId}`} className="underline decoration-slate-300 underline-offset-2 dark:decoration-slate-600">{titles.get(m.nodeId)}</Link></>}</span></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold leading-snug">{m.note ?? MISTAKE_LABEL[m.category]}</span><span className="block text-xs text-slate-500">{[m.note ? MISTAKE_LABEL[m.category] : null, ago(daysBetween(m.createdOn, today))].filter(Boolean).join(' · ')}{m.nodeId && titles.get(m.nodeId) && <> · <Link href={`/prep?topic=${m.nodeId}`} className="underline decoration-slate-300 underline-offset-2 dark:decoration-slate-600">{titles.get(m.nodeId)}</Link></>}</span></span>
             <button type="button" disabled={busy !== null} onClick={() => void toggle(m.id, true)} className="flex shrink-0 items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-bold disabled:opacity-50 dark:border-slate-600"><Check className="h-3.5 w-3.5" />Got it</button>
+            <ItemMenu label="mistake" onEdit={() => setEditing(m)} onDelete={() => data.deleteMistake(m.id)} />
           </li>)}</ul>
           {done.length > 0 && <button type="button" onClick={() => setShowDone(!showDone)} className="w-full border-t border-slate-100 px-4 py-2.5 text-left text-xs font-bold text-slate-600 dark:border-slate-800 dark:text-slate-300">{showDone ? 'Hide' : 'Show'} {done.length} fixed</button>}
           {showDone && <ul className="divide-y divide-slate-100 border-t border-slate-100 dark:divide-slate-800 dark:border-slate-800">{done.map((m) => <li key={m.id} className="flex items-start gap-3 px-4 py-2.5 text-slate-500">
             <span className="min-w-0 flex-1 text-sm line-through decoration-slate-300">{m.note ?? MISTAKE_LABEL[m.category]}</span>
             <button type="button" disabled={busy !== null} onClick={() => void toggle(m.id, false)} aria-label="Revisit again" className="shrink-0 text-slate-400"><RotateCcw className="h-4 w-4" /></button>
+            <ItemMenu label="mistake" onEdit={() => setEditing(m)} onDelete={() => data.deleteMistake(m.id)} />
           </li>)}</ul>}
         </section>}
 
     {adding && <MistakeSheet nodes={data.nodes} onSave={data.addMistake} onClose={() => setAdding(false)} />}
+    {editing && <MistakeSheet nodes={data.nodes} initial={editing} onSave={(m) => data.updateMistake(editing.id, m)} onClose={() => setEditing(null)} />}
   </main>
 }

@@ -19,6 +19,10 @@ import MentorShare from '@/components/prep/MentorShare'
 import AnswerReviews from '@/components/prep/AnswerReviews'
 import PrepNav from '@/components/prep/PrepNav'
 import HelpButton from '@/components/HelpButton'
+import ItemMenu from '@/components/ItemMenu'
+import MockEditSheet from '@/components/prep/MockEditSheet'
+import type { AnswerRow, MockRow } from '@/lib/prep/usePrepData'
+import AnswerEditSheet from '@/components/prep/AnswerEditSheet'
 import ExamSwitcher from '@/components/prep/ExamSwitcher'
 import PrepSetup from '@/components/prep/PrepSetup'
 import { optionalSubjects } from '@/lib/prep/pace'
@@ -35,6 +39,11 @@ export default function PrepProgressPage() {
   const data = usePrepData(true)
   const [history, setHistory] = useState<Snapshot[]>([])
   const [logOpen, setLogOpen] = useState(false)
+  const [editMock, setEditMock] = useState<MockRow | null>(null)
+  const [allMocks, setAllMocks] = useState(false)
+  const [editAnswer, setEditAnswer] = useState<AnswerRow | null>(null)
+  const [allAnswers, setAllAnswers] = useState(false)
+  const nodeTitle = useMemo(() => new Map(data.nodes.map((n) => [n.id, n.title])), [data.nodes])
   const [toast, setToast] = useState<string | null>(null)
   const [setupOpen, setSetupOpen] = useState(false)
   const today = localDateString()
@@ -162,10 +171,12 @@ export default function PrepProgressPage() {
                 <div className="mt-1 flex h-14 items-end gap-1" role="img" aria-label="Mock score trend">{view.trend.points.slice(-12).map((p, i) => <span key={i} title={`${p.takenOn}: ${p.pct}%`} className="flex h-full flex-1 flex-col justify-end"><span className="block w-full rounded-t-[3px] bg-sky-500" style={{ height: `${Math.max(4, p.pct)}%` }} /></span>)}</div>
               </div>}
               {view.trend.sections.length > 0 && <ul className="mt-3 space-y-1.5">{view.trend.sections.map((x) => <li key={x.name} className="flex items-center gap-2 text-sm"><span className="w-16 shrink-0 font-medium">{x.name}</span><span className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><span className="block h-full rounded-full bg-sky-500" style={{ width: `${Math.max(2, Math.min(100, x.avgPct))}%` }} /></span><span className="w-10 shrink-0 text-right tabular-nums">{x.avgPct}%</span></li>)}</ul>}
-              <ul className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">{data.mocks.slice(0, 6).map((m) => <li key={m.id} className="flex items-center gap-3 py-2 text-sm">
+              <ul className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">{(allMocks ? data.mocks : data.mocks.slice(0, 6)).map((m) => <li key={m.id} className="flex items-center gap-3 py-2 text-sm">
                 <span className="min-w-0 flex-1"><span className="block truncate font-medium">{m.name}</span><span className="text-xs text-slate-500">{exam.mockStages.find(([id]) => id === m.stage)?.[1] ?? STAGE_NAME[m.stage]} · {m.takenOn}</span></span>
                 <span className="shrink-0 tabular-nums">{m.score ?? '–'}{m.maxScore ? <span className="text-slate-500">/{m.maxScore}</span> : null}</span>
+                <ItemMenu label="mock test" onEdit={() => setEditMock(m)} onDelete={() => data.deleteMock(m.id)} />
               </li>)}</ul>
+              {data.mocks.length > 6 && <button type="button" onClick={() => setAllMocks(!allMocks)} className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">{allMocks ? 'Show fewer' : `Show all ${data.mocks.length}`}</button>}
             </>}
         </Row>
 
@@ -175,6 +186,12 @@ export default function PrepProgressPage() {
             : <>
               <p className="text-sm">{view.answers.total} in total{view.answers.lastWeek ? ` · last week ${view.answers.lastWeek}` : ''} · {view.answers.timed} timed · {view.answers.reviewed} reviewed</p>
               <div className="mt-2 flex flex-wrap gap-1.5">{view.answers.byPaper.map(([paper, n]) => <span key={paper} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs dark:bg-slate-800">{paper.replace('ESSAY', 'Essay')}: {n}</span>)}</div>
+              <ul className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">{(allAnswers ? data.answers : data.answers.slice(0, 5)).map((a) => <li key={a.id} className="flex items-center gap-3 py-2 text-sm">
+                <span className="min-w-0 flex-1"><span className="block truncate font-medium">{(a.nodeId && nodeTitle.get(a.nodeId)) || a.paper || 'Answers'}</span><span className="text-xs text-slate-500">{a.writtenOn}{a.timed ? ' · timed' : ''}{a.mentorReviewed ? ' · reviewed' : ''}</span></span>
+                <span className="shrink-0 tabular-nums">{a.count}</span>
+                <ItemMenu label="answer log" onEdit={() => setEditAnswer(a)} onDelete={() => data.deleteAnswer(a)} deleteMessage={`Delete this log of ${a.count} answer${a.count === 1 ? '' : 's'}? Your answer count goes down by ${a.count}.`} />
+              </li>)}</ul>
+              {data.answers.length > 5 && <button type="button" onClick={() => setAllAnswers(!allAnswers)} className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">{allAnswers ? 'Show fewer' : `Show all ${data.answers.length}`}</button>}
             </>}
         </Row>}
 
@@ -191,6 +208,8 @@ export default function PrepProgressPage() {
 
       <p className="mt-4 px-1 text-xs text-slate-500">Based only on what you log (scoring {SCORING_VERSION}). Not a prediction of rank or selection.</p>
 
+      {editAnswer && <AnswerEditSheet row={editAnswer} title={(editAnswer.nodeId && nodeTitle.get(editAnswer.nodeId)) || editAnswer.paper || 'Answers'} onSave={(n) => data.updateAnswer(editAnswer, n)} onClose={() => setEditAnswer(null)} />}
+      {editMock && <MockEditSheet mock={editMock} onSave={(c) => data.updateMock(editMock.id, c)} onClose={() => setEditMock(null)} />}
       {logOpen && <QuickLog nodes={data.nodes} states={data.states} examCode={data.template?.code} onClose={() => setLogOpen(false)} onLogged={flash} logEvent={data.logEvent} />}
       {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(10rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toast}</div>}
     </main>

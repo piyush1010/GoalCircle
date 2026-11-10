@@ -32,7 +32,7 @@ export default function GuestPreviewBanner({ isAuthenticated }: { isAuthenticate
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center max-w-sm w-full shadow-2xl">
           <h2 className="text-xl font-bold text-white mb-2">Guest Preview Ended</h2>
           <p className="text-slate-400 text-sm mb-6">
-            Sign up now to join private groups, track your daily progress, earn badges, and boost your friends!
+            Sign up to save your progress, join your batch and check in with friends.
           </p>
           <div className="flex flex-col gap-3">
             <Link href="/signup" className="w-full py-3 bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 font-semibold rounded-xl">

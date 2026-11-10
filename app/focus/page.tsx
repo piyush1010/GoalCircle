@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, CheckCircle2, Clock3, Play } from 'lucide-react'
 import FocusTimer from '@/components/FocusTimer'
+import ItemMenu from '@/components/ItemMenu'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
 import { localDateString } from '@/lib/exams'
 import { focusMinutesKey } from '@/lib/focusHandoff'
@@ -17,6 +18,7 @@ const FOCUS_TOUR: TourStep[] = [
 ]
 
 type GoalOption = { id: string; title: string }
+type Session = { id: string; minutes_logged: number; logged_at: string; note: string | null; goal_id: string | null }
 // A focus target: one of your goals, today's batch task, or nothing in particular.
 type Target = { key: string; label: string; goalId: string | null; circleId: string | null }
 function dayStart(date: Date) { const d = new Date(date); d.setHours(0, 0, 0, 0); return d }
@@ -31,13 +33,16 @@ export default function FocusRoomPage() {
   const [stats, setStats] = useState({ today: 0, week: 0, sessions: 0 })
   const [loading, setLoading] = useState(true)
   const [savedMinutes, setSavedMinutes] = useState<number | null>(null)
+  const [recent, setRecent] = useState<Session[]>([]) // this week's sessions, newest first
+  const [editing, setEditing] = useState<{ id: string; minutes: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const loadStats = useCallback(async (uid: string) => {
     const now = new Date()
-    const { data, error: logsError } = await supabase.from('focus_logs').select('minutes_logged,logged_at').eq('user_id', uid).gte('logged_at', weekStart(now).toISOString())
+    const { data, error: logsError } = await supabase.from('focus_logs').select('id,minutes_logged,logged_at,note,goal_id').eq('user_id', uid).gte('logged_at', weekStart(now).toISOString()).order('logged_at', { ascending: false })
     if (logsError) throw logsError
     const logs = data || []; const todayStart = dayStart(now).getTime()
+    setRecent(logs as Session[])
     setStats({
       today: logs.reduce((sum, log) => sum + (new Date(log.logged_at).getTime() >= todayStart ? Number(log.minutes_logged) : 0), 0),
       week: logs.reduce((sum, log) => sum + Number(log.minutes_logged), 0), sessions: logs.length,
@@ -90,8 +95,22 @@ export default function FocusRoomPage() {
     setSavedMinutes(minutes); setNotes(''); await loadStats(userId)
   }, [loadStats, notes, target, userId])
 
+  const saveMinutes = async (id: string) => {
+    const m = Number(editing?.minutes)
+    if (!userId || !m || m < 1 || m > 1440) { setError('Minutes must be between 1 and 1440.'); return }
+    const { error: e } = await supabase.from('focus_logs').update({ minutes_logged: m }).eq('id', id)
+    if (e) { setError('Could not save the change.'); return }
+    setEditing(null); setError(null); await loadStats(userId)
+  }
+  const removeSession = async (id: string) => {
+    if (!userId) return false
+    const { error: e } = await supabase.from('focus_logs').delete().eq('id', id)
+    if (e) { setError('Could not delete the session.'); return false }
+    await loadStats(userId); return true
+  }
+
   return <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4">
-    <header className="mb-6 flex items-center gap-3"><button onClick={() => router.back()} aria-label="Go back" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101B2D]"><ArrowLeft className="h-4 w-4" /></button><div><h1 className="text-lg font-bold">Focus</h1><p className="text-xs text-slate-500">Focus time that counts toward your goal.</p></div></header>
+    <header className="mb-6 flex items-center gap-3"><button onClick={() => router.back()} aria-label="Go back" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101B2D]"><ArrowLeft className="h-4 w-4" /></button><div><h1 className="text-lg font-bold">Focus</h1><p className="text-xs text-slate-500">Timed study that counts toward your goal.</p></div></header>
     {loading ? <div className="h-96 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" /> : <div className="space-y-4">
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-[#101B2D]">
         <label htmlFor="focus-goal" data-tour="focus-goal" className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Focusing on</label>
@@ -104,6 +123,16 @@ export default function FocusRoomPage() {
       {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
       {savedMinutes !== null && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"><CheckCircle2 className="mr-2 inline h-4 w-4" />{savedMinutes} focus minutes saved.{target?.circleId ? <Link href={`/circles/${target.circleId}`} className="mt-2 block text-amber-700 underline dark:text-amber-300">Go back and check in →</Link> : null}</div>}
       <div className="grid grid-cols-3 gap-3 text-center"><Stat icon={<Clock3 className="mx-auto mb-1 h-4 w-4 text-amber-500" />} value={`${stats.today}m`} label="Today" /><Stat value={`${Math.floor(stats.week / 60)}h ${stats.week % 60}m`} label="This week" accent /><Stat value={String(stats.sessions)} label="Sessions" /></div>
+      {recent.length > 0 && <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#101B2D]">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">This week&apos;s sessions</h2>
+        <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{recent.slice(0, 12).map((r) => <li key={r.id} className="flex items-center gap-3 py-2 text-sm">
+          <span className="min-w-0 flex-1"><span className="block truncate font-medium">{targets.find((t) => t.goalId && t.goalId === r.goal_id)?.label ?? r.note ?? 'Focus session'}</span><span className="text-xs text-slate-500">{new Date(r.logged_at).toLocaleString('en-IN', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span></span>
+          {editing?.id === r.id
+            ? <form onSubmit={(e) => { e.preventDefault(); void saveMinutes(r.id) }} className="flex items-center gap-1.5"><input autoFocus inputMode="numeric" value={editing.minutes} onChange={(e) => setEditing({ id: r.id, minutes: e.target.value.replace(/\D/g, '') })} aria-label="Minutes" className="w-14 rounded-lg border border-slate-200 px-2 py-1 text-right text-sm dark:border-slate-700 dark:bg-slate-900" /><span className="text-xs text-slate-500">min</span><button type="submit" className="rounded-lg bg-amber-500 px-2 py-1 text-xs font-bold text-slate-950">Save</button></form>
+            : <span className="shrink-0 tabular-nums">{r.minutes_logged} min</span>}
+          <ItemMenu label="focus session" onEdit={() => setEditing({ id: r.id, minutes: String(r.minutes_logged) })} onDelete={() => removeSession(r.id)} deleteMessage={`Delete this ${r.minutes_logged}-minute session?`} />
+        </li>)}</ul>
+      </section>}
     </div>}
     {open && target && <FocusTimer title={target.key === 'none' ? 'Focus session' : target.label} onClose={() => setOpen(false)} onFinish={(minutes) => saveSession(minutes)} />}
   <GuideTour name="focus" steps={FOCUS_TOUR} />
