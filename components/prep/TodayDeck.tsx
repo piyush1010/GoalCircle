@@ -8,7 +8,7 @@ import { localDateString } from '@/lib/exams'
 import { examInfo } from '@/lib/prep/exam'
 import { todayTasks, type Task } from '@/lib/prep/today'
 import { usePrepData } from '@/lib/prep/usePrepData'
-import Pomodoro from '@/components/prep/Pomodoro'
+import FocusTimer from '@/components/FocusTimer'
 import QuickLog from '@/components/prep/QuickLog'
 
 const KIND_LABEL: Record<Task['kind'], string> = { mentor: 'Mentor task', revise: 'Revise', study: 'Study', goal: 'Goal', room: 'Topic of the day' }
@@ -109,7 +109,7 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
             <ul className="mb-5 mt-3 space-y-1.5 text-sm opacity-80">
               <li>Each card is one thing from your plan: a subtopic to study, a topic to revise, or a goal. The topic of the day is shared with everyone preparing for your exam.</li>
               <li>Tap <b>Done</b> when you finish it. Tapped by mistake? <b>Undo</b>.</li>
-              <li><b>Focus</b> starts a 25-minute timer.</li>
+              <li><b>Focus</b> opens the timer: 25 / 5, 50 / 10 or a stopwatch.</li>
             </ul>
             <button type="button" onClick={() => { closeIntro(); rail.current?.scrollTo({ left: 0 }) }} className="mt-auto rounded-xl bg-white py-3 text-base font-semibold text-slate-900 dark:bg-slate-900 dark:text-white">Start</button>
           </article>}
@@ -147,7 +147,7 @@ export default function TodayDeck({ goals, mentor, onGoalDone }: {
       <button type="button" disabled={done === 0} onClick={() => setShareOpen(true)} className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 font-medium disabled:opacity-40 dark:border-slate-800"><Share2 className="h-4 w-4" />Share</button>
     </div>
 
-    {focus && focus.nodeId && <Pomodoro title={focus.title} subtitle={focus.subtitle} onClose={() => setFocus(null)} onFinish={async (minutes, markDone) => {
+    {focus && focus.nodeId && <FocusTimer title={focus.title} subtitle={focus.subtitle} doneLabel="Done with this subtopic" onClose={() => setFocus(null)} onFinish={async (minutes, markDone) => {
       const ok = markDone ? await data.tick(focus.nodeId!, true, minutes) : await data.logEvent(null, 'studied', { minutes, details: { timer: true, unit: focus.nodeId } })
       setToast(ok ? `${minutes} min saved${markDone ? ', ticked' : ''}.` : 'Could not save.', ok && markDone ? () => data.tick(focus.nodeId!, false) : undefined)
     }} />}

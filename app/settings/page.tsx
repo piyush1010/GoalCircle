@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useDisplayPreferences, useTheme, type Theme } from '@/components/ThemeProvider'
 import InstallAppCard from '@/components/InstallAppCard'
 import FeedbackCard from '@/components/FeedbackCard'
+import DeleteAccount from '@/components/DeleteAccount'
+import DayEndSetting from '@/components/DayEndSetting'
 import { resetTours } from '@/components/GuideTour'
-import GoalieToggle from '@/components/GoalieToggle'
 import PushToggle from '@/components/PushToggle'
 import PrepSettingsCard from '@/components/prep/PrepSettingsCard'
 import PageGuideToggle from '@/components/PageGuideToggle'
@@ -142,18 +143,39 @@ export default function SettingsPage() {
   const handleExportData = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      const { data: goals } = await supabase.from('goals').select('*').eq('user_id', user.id)
+      // Everything you created: goals and check-ins, focus time, and exam preparation.
+      const tables = ['goals', 'posts', 'focus_logs', 'todo_items', 'circle_task_checkins', 'prep_plans', 'prep_profiles', 'prep_events', 'prep_topic_state',
+        'prep_mistakes', 'prep_mock_tests', 'prep_pyq_attempts', 'prep_answer_logs', 'prep_current_affairs', 'prep_answer_reviews'] as const
+      const results = await Promise.all(tables.map(async (table) => {
+        const rows: unknown[] = []
+        for (let from = 0; ; from += 1000) {
+          const { data, error } = await supabase.from(table).select('*').eq('user_id', user.id).range(from, from + 999)
+          if (error || !data) break
+          rows.push(...data)
+          if (data.length < 1000) break
+        }
+        return [table, rows] as const
+      }))
+      // Syllabus titles, so ticks and revisions are readable without the app.
+      const states = (results.find(([t]) => t === 'prep_topic_state')?.[1] ?? []) as Array<{ node_id: string }>
+      const titles: Record<string, string> = {}
+      const ids = [...new Set(states.map((s) => s.node_id))]
+      for (let i = 0; i < ids.length; i += 300) {
+        const { data } = await supabase.from('prep_syllabus_nodes').select('id,title').in('id', ids.slice(i, i + 300))
+        for (const n of data ?? []) titles[n.id as string] = n.title as string
+      }
       const exportObject = {
         user: { id: user.id, email: user.email, fullName, username },
         exportedAt: new Date().toISOString(),
-        goals: goals || [],
+        ...Object.fromEntries(results),
+        syllabusTitles: titles,
       }
 
       const blob = new Blob([JSON.stringify(exportObject, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `goalcircle_export_${new Date().toISOString().slice(0, 10)}.json`
+      a.download = `goalyaar_export_${new Date().toISOString().slice(0, 10)}.json`
       a.click()
       URL.revokeObjectURL(url)
     }
@@ -241,6 +263,7 @@ export default function SettingsPage() {
       </div>
 
       <PrepSettingsCard />
+      <DayEndSetting />
 
       {/* SECTION 3: NOTIFICATIONS & REMINDERS */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
@@ -325,7 +348,7 @@ export default function SettingsPage() {
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">Download my data</h3>
-            <p className="text-xs text-slate-500">A copy of your goals and progress, as a file</p>
+            <p className="text-xs text-slate-500">Goals, check-ins, focus time and exam preparation, as one file</p>
           </div>
           <button
             type="button"
@@ -344,14 +367,13 @@ export default function SettingsPage() {
       >
         <span>
           <span className="block text-sm font-bold">Show me around again</span>
-          <span className="block text-xs text-slate-500">Replay Goalie&apos;s tours on every page.</span>
+          <span className="block text-xs text-slate-500">Show the quick tips on each page again.</span>
         </span>
         <span className="text-amber-500">→</span>
       </button>
 
 
       <PageGuideToggle />
-      <GoalieToggle />
 
       <FeedbackCard />
 
@@ -378,6 +400,9 @@ export default function SettingsPage() {
           <span className="inline-flex items-center gap-2"><LogOut className="h-4 w-4" />Log Out of GoalYaar</span>
           <span>→</span>
         </button>
+
+        <Link href="/about" className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"><span>About GoalYaar · Privacy</span><span>→</span></Link>
+        <DeleteAccount />
       </div>
     </div>
   )

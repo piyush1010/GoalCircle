@@ -1,15 +1,16 @@
-import { Sparkles } from 'lucide-react';
+import Link from 'next/link'
 
-export default function EmptyState({ title, message }: { title: string; message: string }) {
+/** An empty screen: what is missing and the one next step. Plain on purpose. */
+export default function EmptyState({ title, message, actionLabel, href, onAction }: {
+  title: string; message: string; actionLabel?: string; href?: string; onAction?: () => void
+}) {
+  const button = 'mt-4 inline-flex rounded-xl bg-slate-900 dark:bg-slate-50 px-5 py-2.5 text-sm font-bold text-white dark:text-slate-900 transition hover:bg-slate-800 dark:hover:bg-white'
   return (
-    <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3">
-      <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-        <Sparkles size={24} />
-      </div>
-      <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</h3>
-      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
-        {message}
-      </p>
+    <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-6 text-center dark:border-slate-700 dark:bg-[#101B2D]">
+      <h2 className="text-base font-bold">{title}</h2>
+      <p className="mx-auto mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400">{message}</p>
+      {actionLabel && href && <Link href={href} className={button}>{actionLabel}</Link>}
+      {actionLabel && !href && onAction && <button type="button" onClick={onAction} className={button}>{actionLabel}</button>}
     </div>
-  );
+  )
 }

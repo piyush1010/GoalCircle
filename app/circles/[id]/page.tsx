@@ -5,7 +5,7 @@ import ProofMedia from '@/components/ProofMedia'
 import ClampedText from '@/components/ClampedText'
 import CircleAvatar from '@/components/CircleAvatar'
 import { confirmAction } from '@/lib/confirm'
-import { cheer } from '@/lib/goalie'
+import { cheer } from '@/lib/cheer'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePrepFeature } from '@/lib/prep/feature'
@@ -29,7 +29,7 @@ interface ProgressPerson { name: string; avatar_url: string | null; status: stri
 interface Progress { checked_in: number; members: number; people: ProgressPerson[] }
 
 const MENTOR_TOUR: TourStep[] = [
-  { title: "Hi, I'm Goalie!", text: 'This is your batch. In four quick steps I\'ll show you how to run it in a few minutes a day.' },
+  { title: 'Your batch', text: 'Four quick steps on running it in a few minutes a day.' },
   { target: 'invite', title: 'Invite your students', text: 'Share this link in your WhatsApp group. Students join with one tap.' },
   { target: 'task', title: "Post today's task", text: 'Write what everyone should finish today. Students get a notification and check in against it.' },
   { target: 'students-tab', title: 'See who needs you', text: 'Students shows who is done, who isn\'t yet and who has gone quiet. Search, filter and nudge from here.' },

@@ -10,19 +10,19 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'sw
 export const metadata: Metadata = {
   metadataBase: new URL('https://goalyaar.in'),
   title: 'GoalYaar',
-  description: 'Track habits, build daily consistency, and stay accountable.',
+  description: 'A free daily study plan for UPSC, state PCS, SSC, banking, teaching, judiciary and CAT. Tick the syllabus, revise on time, prepare with your batch.',
   applicationName: 'GoalYaar',
   // Link previews on LinkedIn, WhatsApp and X.
   openGraph: {
     title: 'GoalYaar',
-    description: 'Track habits, build daily consistency, and stay accountable.',
+    description: 'A free daily study plan for UPSC, state PCS, SSC, banking, teaching, judiciary and CAT. Tick the syllabus, revise on time, prepare with your batch.',
     url: 'https://goalyaar.in',
     siteName: 'GoalYaar',
     type: 'website',
     locale: 'en_IN',
     images: [{ url: '/og-goalyaar.jpg', width: 1200, height: 630, alt: 'GoalYaar: goals become real when you show up' }],
   },
-  twitter: { card: 'summary_large_image', title: 'GoalYaar', description: 'Track habits, build daily consistency, and stay accountable.', images: ['/og-goalyaar.jpg'] },
+  twitter: { card: 'summary_large_image', title: 'GoalYaar', description: 'A free daily study plan for UPSC, state PCS, SSC, banking, teaching, judiciary and CAT. Tick the syllabus, revise on time, prepare with your batch.', images: ['/og-goalyaar.jpg'] },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
