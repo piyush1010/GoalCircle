@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: '/',
     name: 'GoalYaar: Exam Study Planner',
     short_name: 'GoalYaar',
-    description: 'A free daily study plan for UPSC, state PCS, SSC, banking, teaching, judiciary and CAT: tick the syllabus, revise on time, prepare with your batch.',
+    description: 'A free daily study plan for UPSC, state PCS, SSC, banking, teaching, judiciary, defence (CDS) and CAT: tick the syllabus, revise on time, prepare with your batch.',
     lang: 'en-IN',
     start_url: '/dashboard',
     scope: '/',

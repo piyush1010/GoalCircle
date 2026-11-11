@@ -279,7 +279,7 @@ export default function CreateGoalPage() {
         <button type="button" onClick={() => router.back()} aria-label="Go back" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 bg-white transition hover:border-amber-500 dark:border-slate-700 dark:bg-[#101B2D]"><ArrowLeft className="h-4 w-4" /></button>
         <div>
           <h1 className="text-xl font-bold tracking-tight">Create a goal</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">One small thing you'll do regularly.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">One small thing you&apos;ll do regularly.</p>
         </div>
         <HelpButton className="ml-auto" />
       </header>

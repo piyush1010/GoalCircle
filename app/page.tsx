@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: 'Pick your exam and date. GoalYaar splits the syllabus into a few subtopics a day, brings topics back for revision, and keeps your batch in the loop. Free, no ads.',
   openGraph: {
     title: 'GoalYaar: a study plan you can keep',
-    description: 'A few subtopics a day, revision on time, and your batch in the loop. Free for UPSC, state PCS, SSC, banking, teaching, judiciary and CAT.',
+    description: 'A few subtopics a day, revision on time, and your batch in the loop. Free for UPSC, state PCS, SSC, banking, teaching, judiciary, defence (CDS) and CAT.',
     url: 'https://goalyaar.in',
     siteName: 'GoalYaar',
     type: 'website',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', images: ['/og-goalyaar.jpg'] },
 }
 
-const EXAMS = ['UPSC CSE', 'UPPCS', 'BPSC', 'MPSC', 'HCS', 'JKPSC', 'SSC CGL', 'Bank PO', 'CTET', 'UPTET', 'UP PCS-J', 'MP Civil Judge', 'CAT']
+const EXAMS = ['UPSC CSE', 'UPPCS', 'BPSC', 'MPSC', 'HCS', 'JKPSC', 'SSC CGL', 'Bank PO', 'CTET', 'UPTET', 'UP PCS-J', 'MP Civil Judge', 'UPSC CDS', 'CAT']
 
 const steps = [
   ['Tell us your exam and date', 'Pick the exam and when you sit it. Already finished some subjects? Tick them in a minute and they are taken off your plan.'],

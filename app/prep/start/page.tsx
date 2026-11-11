@@ -27,13 +27,14 @@ const EXAM_LABEL: Record<string, [string, string]> = {
   up_pcsj_v1: ['UP PCS-J', 'Civil Judge, Uttar Pradesh'],
   mp_civil_judge_v1: ['MP Civil Judge', 'Judiciary, Madhya Pradesh'],
   mpsc_rajyaseva_v1: ['MPSC Rajyaseva', 'Maharashtra'],
+  cds_v1: ['UPSC CDS', 'Combined Defence Services'],
   cat_v1: ['CAT', 'MBA entrance'],
 }
 /** Other words people type when looking for an exam. */
 const EXAM_WORDS: Record<string, string> = {
   upsc_cse_v1: 'ias ips civil services', uppcs_v1: 'uppsc ro aro uttar pradesh', bpsc_v1: 'bihar', jkpsc_cce_v1: 'kashmir jammu kas', hpsc_hcs_v1: 'haryana hpsc',
   ssc_cgl_v1: 'ssc staff selection cgl', bank_po_v1: 'ibps sbi bank banking', ctet_v1: 'teacher tet', uptet_v1: 'teacher tet uttar pradesh',
-  up_pcsj_v1: 'judiciary judge law pcsj pcs j uttar pradesh', mp_civil_judge_v1: 'judiciary judge law mpcj madhya pradesh mp', mpsc_rajyaseva_v1: 'maharashtra rajyaseva state services mpsc', cat_v1: 'mba iim',
+  up_pcsj_v1: 'judiciary judge law pcsj pcs j uttar pradesh', mp_civil_judge_v1: 'judiciary judge law mpcj madhya pradesh mp', mpsc_rajyaseva_v1: 'maharashtra rajyaseva state services mpsc', cds_v1: 'cds defence army navy air force ima ina afa ota ssb', cat_v1: 'mba iim',
 }
 const LEVELS: [Level, string, string][] = [
   ['beginner', 'Just starting', 'Starting fresh with the syllabus'],
@@ -177,7 +178,7 @@ export default function PrepStartPage() {
       {step === 2 && <>
         {info.targetStages.length > 1 && <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">{info.targetStages.map((s) => <button key={s} type="button" onClick={() => setStage(s)} aria-pressed={stage === s} className={`rounded-lg py-2.5 text-sm font-bold ${stage === s ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>{info.stageName[s]}</button>)}</div>}
         {presets.map((p) => <button key={p.date} type="button" onClick={() => setDate(p.date)} aria-pressed={date === p.date} className={option(date === p.date)}>
-          <span className="min-w-0 flex-1"><span className="block text-base font-bold">{info.short} {p.label}</span><span className="block text-xs text-slate-500">Official date · {p.source}</span></span>
+          <span className="min-w-0 flex-1"><span className="block text-base font-bold">{p.label.startsWith(info.short) ? p.label : `${info.short} ${p.label}`}</span><span className="block text-xs text-slate-500">Official date · {p.source}</span></span>
           {date === p.date && <Check className="h-5 w-5 shrink-0 text-amber-600" />}
         </button>)}
         <div className="grid grid-cols-3 gap-2">{QUICK.map(([label, days]) => <button key={label} type="button" onClick={() => setDate(addDays(today, days))} className={`rounded-xl border py-2.5 text-sm font-bold ${date === addDays(today, days) ? 'border-amber-500 bg-amber-500/10' : 'border-slate-200 dark:border-slate-700'}`}>In {label}</button>)}</div>
