@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, BookOpenCheck, Check, Layers, NotebookPen, Target, UsersRound } from 'lucide-react'
+import TodayDemo from '@/components/TodayDemo'
 import LogoMark from '@/components/LogoMark'
 import ThemeToggle from '@/components/ThemeToggle'
 import SignedInRedirect from '@/components/SignedInRedirect'
@@ -44,26 +45,6 @@ const faqs = [
 ]
 
 /** A small, honest picture of the Today screen. */
-function TodayPreview() {
-  return <div className="mx-auto w-full max-w-sm rounded-[2rem] border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-800 dark:bg-[#0E1A2C]">
-    <p className="text-xs text-slate-500">Tuesday, 10 November</p>
-    <p className="text-lg font-semibold">Good evening, Riya</p>
-    <div className="mt-3 flex items-baseline justify-between"><p className="text-2xl font-semibold tabular-nums">2 of 5 done</p><p className="text-xs text-slate-500">UPSC · 200 days left</p></div>
-    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><span className="block h-full w-2/5 rounded-full bg-amber-500" /></div>
-    <div className="mt-4 rounded-2xl bg-slate-900 p-4 text-white dark:bg-white dark:text-slate-900">
-      <p className="text-[11px] uppercase tracking-[0.14em] opacity-60">Study</p>
-      <p className="mt-2 text-lg font-semibold leading-snug">Fundamental Rights: Articles 12 to 18</p>
-      <p className="mt-1 text-sm opacity-70">Indian polity</p>
-      <div className="mt-4 flex gap-2"><span className="flex-1 rounded-xl bg-white py-2.5 text-center text-sm font-semibold text-slate-900 dark:bg-slate-900 dark:text-white">Done</span><span className="rounded-xl border border-white/30 px-4 py-2.5 text-sm font-semibold dark:border-slate-300">Focus</span></div>
-    </div>
-    <div className="mt-3 rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-      <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Revise</p>
-      <p className="mt-2 font-semibold leading-snug">Monsoon and its mechanism</p>
-      <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-semibold"><span className="rounded-lg bg-slate-900 py-2 text-white dark:bg-white dark:text-slate-900">Got it</span><span className="rounded-lg border border-slate-200 py-2 dark:border-slate-700">Partly</span><span className="rounded-lg border border-slate-200 py-2 dark:border-slate-700">Forgot</span></div>
-    </div>
-  </div>
-}
-
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f8fafc] text-slate-950 dark:bg-[#07101F] dark:text-slate-50">
@@ -90,7 +71,7 @@ export default function HomePage() {
             </div>
             <p className="landing-enter landing-delay-4 mt-6 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500"><span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" />Free, no ads</span><span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" />Takes a minute to set up</span><span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" />Private unless you share</span></p>
           </div>
-          <div className="landing-enter landing-delay-3"><TodayPreview /></div>
+          <div className="landing-enter landing-delay-3"><TodayDemo /></div>
         </div>
       </section>
 
