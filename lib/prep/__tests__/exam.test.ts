@@ -15,6 +15,16 @@ describe('HCS', () => {
   })
 })
 
+describe('CDS', () => {
+  it('has one written stage with the SSB after it, and cuts a third of the marks for a wrong answer', () => {
+    expect(examInfo('cds_v1').targetStages).toEqual(['prelims'])
+    expect(examInfo('cds_v1').tabs.map((t) => t.root)).toEqual(['PRE', 'INT'])
+    const [eng, , maths] = EXAMS.cds_v1.pyqPapers
+    expect(netMarks(eng, 100, 90)).toEqual({ marks: 72.2, max: 100, accuracy: 90 })
+    expect(netMarks(maths, 80, 60)).toEqual({ marks: 53.3, max: 100, accuracy: 75 })
+  })
+})
+
 describe('PYQ net marks', () => {
   it('applies negative marking', () => {
     expect(netMarks(EXAMS.upsc_cse_v1.pyqPapers[0], 80, 55)).toEqual({ marks: 93.5, max: 200, accuracy: 69 })

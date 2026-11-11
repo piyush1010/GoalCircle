@@ -58,7 +58,7 @@ export default function PyqPage() {
             <span className="block text-[11px] text-slate-500">{n ? `${n.marks} marks · ${n.accuracy ?? 0}%` : 'Not done'}</span>
           </button>
         })}</div>
-        <p className="mt-2 text-[11px] text-slate-500">Marks use the paper&apos;s scheme (+{p.plus}, −{p.minus}) and are approximate; questions without negative marking are not separated.</p>
+        <p className="mt-2 text-[11px] text-slate-500">Marks use the paper&apos;s scheme (+{+p.plus.toFixed(2)}, −{+p.minus.toFixed(2)}) and are approximate; questions without negative marking are not separated.</p>
       </section>
     })}
 

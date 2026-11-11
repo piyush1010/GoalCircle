@@ -7,7 +7,7 @@ import { APP_NAME, APP_VERSION, CONTACT_EMAIL } from '@/lib/appInfo'
 
 export const metadata: Metadata = {
   title: `About | ${APP_NAME}`,
-  description: `${APP_NAME} is an independent study planner for UPSC, state PCS, SSC, banking, teaching, judiciary and CAT preparation.`,
+  description: `${APP_NAME} is an independent study planner for UPSC, state PCS, SSC, banking, teaching, judiciary, defence (CDS) and CAT preparation.`,
 }
 
 function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
