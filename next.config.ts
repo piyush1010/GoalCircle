@@ -8,7 +8,15 @@ const nextConfig = {
         hostname: '**.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      // Photos uploaded through our own address (see rewrites below).
+      ...['goalyaar.in', 'www.goalyaar.in'].map((hostname) => ({ protocol: 'https', hostname, pathname: '/sb/storage/v1/object/public/**' })),
     ],
+  },
+  // Some Indian networks block *.supabase.co. The app in the browser calls goalyaar.in/sb/... and
+  // this passes it on to Supabase, so those students can still sign up and use the app.
+  async rewrites() {
+    const supabase = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '')
+    return supabase ? [{ source: '/sb/:path*', destination: `${supabase}/:path*` }] : []
   },
   // Old pages that were never finished; anyone with a saved link lands on Today.
   async redirects() {
