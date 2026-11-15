@@ -4,13 +4,15 @@ import { confirmAction } from '@/lib/confirm'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { BookOpen, BriefcaseBusiness, ChevronRight, Dumbbell, Globe2, LockKeyhole, LogOut, MoreHorizontal, Plus, Repeat2, Target, Trash2, Users, X, type LucideIcon } from 'lucide-react'
+import { BookOpen, BriefcaseBusiness, ChevronRight, Dumbbell, Globe2, LockKeyhole, LogOut, MoreHorizontal, Plus, Repeat2, Search, Target, Trash2, X, type LucideIcon } from 'lucide-react'
 import { EXAMS, examLabel } from '@/lib/exams'
 import EmptyState from '@/components/EmptyState'
 import CircleAvatar from '@/components/CircleAvatar'
 import { localDateString } from '@/lib/exams'
 import { supabase } from '@/utils/supabase'
 import CircleChallenges from '@/components/CircleChallenges'
+import ChallengeCard from '@/components/communities/ChallengeCard'
+import { describe, todayLine, type CommunityRow } from '@/lib/communities'
 import HelpButton from '@/components/HelpButton'
 
 type Category = 'all' | 'work' | 'fitness' | 'learning' | 'habits'
@@ -52,6 +54,16 @@ export default function CirclesPage() {
   const [description, setDescription] = useState('')
   const [newVisibility, setNewVisibility] = useState<'private' | 'public'>('private')
   const [newExam, setNewExam] = useState('')
+  const [communities, setCommunities] = useState<CommunityRow[] | null>(null)
+  const [query, setQuery] = useState('')
+  const matches = useCallback((text: string) => !query.trim() || text.toLowerCase().includes(query.trim().toLowerCase()), [query])
+  useEffect(() => {
+    // Communities arrive with the "communities" database update. Until then this part simply stays hidden.
+    void supabase.rpc('community_overview').then(({ data, error: e }) => setCommunities(e ? [] : (data || []) as CommunityRow[]))
+  }, [])
+  const mine = useMemo(() => (communities ?? []).filter((c) => c.member).sort((a, b) => Number(b.key.startsWith('exam:')) - Number(a.key.startsWith('exam:')) || b.members - a.members), [communities])
+  const explore = useMemo(() => (communities ?? []).filter((c) => !c.member && !c.key.startsWith('exam:')), [communities])
+  const updateRow = (next: CommunityRow) => setCommunities((rows) => (rows ?? []).map((row) => row.key === next.key ? next : row))
 
   // Photos and today's progress load after the list, so the list itself never waits on them.
   const loadExtras = useCallback(async (uid: string, list: CircleView[]) => {
@@ -100,7 +112,7 @@ export default function CirclesPage() {
       supabase.from('circles').select('id,owner_id,name,description,category,emoji,created_at,visibility,exam').order('created_at', { ascending: false }),
       supabase.from('circle_memberships').select('circle_id,user_id'),
     ])
-    if (circleResult.error || membershipResult.error) { setError('Circles could not be loaded. Please try again.'); setLoading(false); return }
+    if (circleResult.error || membershipResult.error) { setError('Your batches and groups could not be loaded. Please try again.'); setLoading(false); return }
     const memberships = (membershipResult.data || []) as Array<{ circle_id: string; user_id: string }>
     const next = ((circleResult.data || []) as CircleRow[]).map((circle) => ({ ...circle, owned: circle.owner_id === uid, joined: circle.owner_id === uid || memberships.some((m) => m.circle_id === circle.id && m.user_id === uid), memberCount: new Set([circle.owner_id, ...memberships.filter((m) => m.circle_id === circle.id).map((m) => m.user_id)]).size }))
     setCircles(next)
@@ -113,7 +125,7 @@ export default function CirclesPage() {
   useEffect(() => { void Promise.resolve().then(loadCircles) }, [loadCircles])
   // Discover only lists public circles. Private batches are reached by invite link.
   const publicCircles = useMemo(() => circles.filter((circle) => circle.visibility === 'public'), [circles])
-  const displayed = useMemo(() => tab === 'discover' ? publicCircles.filter((circle) => category === 'all' || circle.category === category) : circles.filter((circle) => circle.joined), [category, circles, publicCircles, tab])
+  const displayed = useMemo(() => (tab === 'discover' ? publicCircles.filter((circle) => category === 'all' || circle.category === category) : circles.filter((circle) => circle.joined)).filter((circle) => matches(circle.name)), [category, circles, matches, publicCircles, tab])
 
   const toggleMembership = async (circle: CircleView) => {
     if (!userId || circle.owned) return
@@ -133,7 +145,7 @@ export default function CirclesPage() {
     setBusyId(circle.id); setError(null)
     // .select() returns the deleted row, so a silent "0 rows deleted" shows as an error instead of doing nothing.
     const { data: deleted, error: deleteError } = await supabase.from('circles').delete().eq('id', circle.id).eq('owner_id', userId).select('id')
-    if (deleteError || !deleted?.length) setError(deleteError ? `The circle could not be deleted: ${deleteError.message}` : 'The circle could not be deleted. Only the owner can delete it.')
+    if (deleteError || !deleted?.length) setError(deleteError ? 'It could not be deleted. Please try again.' : 'Only the person who started it can delete it.')
     else setCircles((items) => items.filter((item) => item.id !== circle.id))
     setBusyId(null)
   }
@@ -142,24 +154,44 @@ export default function CirclesPage() {
     event.preventDefault(); if (!userId || !name.trim()) return
     setBusyId('create'); setError(null)
     const { data, error: createError } = await supabase.from('circles').insert({ owner_id: userId, name: name.trim(), description: description.trim() || null, category: newVisibility === 'private' ? 'learning' : newCategory, emoji: 'circle', member_count: 1, visibility: newVisibility, exam: newExam || null }).select('id,owner_id,name,description,category,emoji,created_at,visibility,exam').single()
-    if (createError || !data) { setError(createError?.message || 'The circle could not be created.'); setBusyId(null); return }
+    if (createError || !data) { setError('The group could not be created. Please try again.'); setBusyId(null); return }
     const { error: membershipError } = await supabase.from('circle_memberships').insert({ circle_id: data.id, user_id: userId, role: 'owner' })
-    if (membershipError) setError('The circle was created, but its membership record needs repair.')
+    if (membershipError) setError('The group was created, but something went wrong. Please reopen Communities.')
     setCircles((items) => [{ ...(data as CircleRow), memberCount: 1, joined: true, owned: true }, ...items])
     setName(''); setDescription(''); setNewExam(''); setShowCreate(false); setBusyId(null)
     router.push(`/circles/${data.id}`)
   }
 
   return <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-5">
-    <header className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800"><div><h1 className="text-xl font-bold">Circles</h1><p className="text-[11px] text-slate-500">Your batch, or a small group of friends</p></div><div className="flex items-center gap-2"><HelpButton /><Link href="/feed" className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold dark:border-slate-600">Feed</Link><Link href="/circles/new" className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-slate-50 px-3 py-2 text-xs font-bold text-white dark:text-slate-900"><Plus className="h-4 w-4" />Start a batch</Link></div></header>
-    {publicCircles.length > 0 && <div className="mb-3 grid grid-cols-2 rounded-xl bg-slate-200/70 p-1 dark:bg-slate-800"><button onClick={() => setTab('my')} className={`rounded-lg py-2 text-xs font-bold ${tab === 'my' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>My circles ({circles.filter((c) => c.joined).length})</button><button onClick={() => setTab('discover')} className={`rounded-lg py-2 text-xs font-bold ${tab === 'discover' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>Discover</button></div>}
-    {tab === 'discover' && <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1">{categories.map((item) => <button key={item.id} onClick={() => setCategory(item.id)} className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[11px] font-extrabold ${category === item.id ? 'border-amber-500 bg-amber-500/10 text-amber-600' : 'border-slate-200 bg-white text-slate-500 dark:border-slate-800 dark:bg-[#101B2D]'}`}><CategoryIcon category={item.id} />{item.label}</button>)}</div>}
+    <header className="mb-4 flex items-center justify-between gap-3"><h1 className="text-[26px] font-bold tracking-tight">Communities</h1><div className="flex items-center gap-2"><HelpButton /><Link href="/feed" className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold dark:border-slate-600">Feed</Link></div></header>
+    <div className="relative mb-5">
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      <input value={query} onChange={(event) => setQuery(event.target.value)} type="search" aria-label="Search communities, batches and groups" placeholder="Search communities, batches and groups" className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-[15px] dark:border-slate-700 dark:bg-slate-900" />
+    </div>
+
+    {mine.filter((c) => matches(describe(c.key).name)).length > 0 && <section aria-labelledby="challenges-h" className="mb-6">
+      <h2 id="challenges-h" className="text-base font-semibold">This week&apos;s challenges</h2>
+      <p className="mb-3 text-sm text-slate-500">Your progress updates as you tick things off.</p>
+      <div className="space-y-2.5">{mine.filter((c) => matches(describe(c.key).name)).map((row) => <ChallengeCard key={row.key} row={row} onChange={updateRow} />)}</div>
+    </section>}
+
+    {mine.filter((c) => matches(describe(c.key).name)).length > 0 && <section aria-labelledby="mine-h" className="mb-6">
+      <h2 id="mine-h" className="mb-3 text-base font-semibold">Your communities</h2>
+      <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
+        {mine.filter((c) => matches(describe(c.key).name)).map((row) => <CommunityLink key={row.key} row={row} line={todayLine(row)} />)}
+      </ul>
+    </section>}
+
+    <section aria-labelledby="groups-h" className="mb-6">
+    <div className="mb-3 flex items-center justify-between gap-3"><h2 id="groups-h" className="whitespace-nowrap text-base font-semibold">Batches and groups</h2><div className="flex shrink-0 items-center gap-3 whitespace-nowrap text-sm font-semibold"><Link href="/circles/join" className="text-slate-600 dark:text-slate-300">Join with a code</Link><Link href="/circles/new" className="inline-flex items-center gap-1 text-slate-900 dark:text-white"><Plus className="h-4 w-4" />Start</Link></div></div>
+    {publicCircles.length > 0 && <div className="mb-3 grid grid-cols-2 rounded-xl bg-slate-200/70 p-1 dark:bg-slate-800"><button onClick={() => setTab('my')} className={`rounded-lg py-2 text-sm font-semibold ${tab === 'my' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>Yours ({circles.filter((c) => c.joined).length})</button><button onClick={() => setTab('discover')} className={`rounded-lg py-2 text-sm font-semibold ${tab === 'discover' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>Open groups</button></div>}
+    {tab === 'discover' && <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1">{categories.map((item) => <button key={item.id} onClick={() => setCategory(item.id)} className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold ${category === item.id ? 'border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900' : 'border-slate-200 bg-white text-slate-500 dark:border-slate-800 dark:bg-[#101B2D]'}`}><CategoryIcon category={item.id} />{item.label}</button>)}</div>}
     {!loading && tab === 'my' && userId && circles.some((circle) => circle.joined && circle.visibility !== 'private') && <CircleChallenges userId={userId} circles={circles.filter((circle) => circle.joined).map((circle) => ({ id: circle.id, name: circle.name }))} />}
     {error && <p role="alert" className="mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
     <div className="space-y-3">
       {loading && [1, 2].map((item) => <div key={item} className="h-36 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" />)}
-      {!loading && displayed.length === 0 && <EmptyState title={tab === 'my' ? 'No circles yet' : 'No circles to discover yet'} message={tab === 'my' ? 'Got an invite link from your mentor? Open it to join. Mentor? Create a private batch for your students.' : 'Create the first circle.'} actionLabel="Start a batch" onAction={() => router.push('/circles/new')} />}
-      {displayed.map((circle) => <article key={circle.id} className="relative rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-[#101B2D]"><Link href={`/circles/${circle.id}`} aria-label={`Open ${circle.name}`} className="absolute inset-0 rounded-3xl" /><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 gap-3"><CircleAvatar name={circle.name} url={circle.avatarUrl} size={52} /><div className="min-w-0"><Link href={`/circles/${circle.id}`} className="group flex items-center gap-1"><h2 className="truncate text-base font-bold group-hover:text-amber-600">{circle.name}</h2>{circle.owned && <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">Mentor</span>}<ChevronRight className="h-4 w-4 shrink-0 text-slate-400" /></Link><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-500">{circle.visibility === 'private' && <LockKeyhole className="h-3 w-3" />}{examLabel(circle.exam) || categories.find((c) => c.id === circle.category)?.label} · {circle.memberCount} {circle.memberCount === 1 ? 'member' : 'members'}</p></div></div><div className="relative z-10 flex shrink-0 gap-1.5">{!circle.owned && !circle.joined
+      {!loading && displayed.length === 0 && <EmptyState title={query.trim() ? 'Nothing matches your search' : tab === 'my' ? 'No batches or groups yet' : 'No open groups yet'} message={tab === 'my' ? 'Got a link or code from your mentor? Use Join with a code. Teaching or training? Start a batch for your students.' : 'Start the first one.'} actionLabel="Start a batch" onAction={() => router.push('/circles/new')} />}
+      {displayed.map((circle) => <article key={circle.id} className="relative rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-[#101B2D]"><Link href={`/circles/${circle.id}`} aria-label={`Open ${circle.name}`} className="absolute inset-0 rounded-3xl" /><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 gap-3"><CircleAvatar name={circle.name} url={circle.avatarUrl} size={52} /><div className="min-w-0"><Link href={`/circles/${circle.id}`} className="group flex items-center gap-1"><h2 className="truncate text-base font-bold group-hover:underline">{circle.name}</h2>{circle.owned && <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">Mentor</span>}<ChevronRight className="h-4 w-4 shrink-0 text-slate-400" /></Link><p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-slate-500">{circle.visibility === 'private' && <LockKeyhole className="h-3 w-3" />}{examLabel(circle.exam) || categories.find((c) => c.id === circle.category)?.label}{', '}{circle.memberCount} {circle.memberCount === 1 ? 'member' : 'members'}</p></div></div><div className="relative z-10 flex shrink-0 gap-1.5">{!circle.owned && !circle.joined
   ? <button onClick={() => void toggleMembership(circle)} disabled={busyId === circle.id} className="inline-flex items-center gap-1 rounded-xl bg-slate-900 dark:bg-slate-50 px-3 py-1.5 text-xs font-bold text-white dark:text-slate-900 disabled:opacity-60">{busyId === circle.id ? 'Saving…' : 'Join'}</button>
   : <div className="relative">
     {/* Leave and Delete live behind a menu so they can't be tapped by accident. */}
@@ -167,8 +199,8 @@ export default function CirclesPage() {
     {menuFor === circle.id && <button type="button" aria-hidden="true" tabIndex={-1} onClick={() => setMenuFor(null)} className="fixed inset-0 z-10 cursor-default" />}
     {menuFor === circle.id && <div className="absolute right-0 top-9 z-20 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-[#101B2D]">
       {circle.owned
-        ? <button type="button" onClick={() => { setMenuFor(null); void deleteCircle(circle) }} disabled={busyId === circle.id} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><Trash2 className="h-4 w-4" />Delete circle</button>
-        : <button type="button" onClick={() => { setMenuFor(null); void toggleMembership(circle) }} disabled={busyId === circle.id} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><LogOut className="h-4 w-4" />Leave circle</button>}
+        ? <button type="button" onClick={() => { setMenuFor(null); void deleteCircle(circle) }} disabled={busyId === circle.id} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><Trash2 className="h-4 w-4" />Delete</button>
+        : <button type="button" onClick={() => { setMenuFor(null); void toggleMembership(circle) }} disabled={busyId === circle.id} className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><LogOut className="h-4 w-4" />Leave</button>}
     </div>}
   </div>}</div></div>{circle.description && <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{circle.description}</p>}
       {circle.today && <TodayLine circle={circle} />}</article>)}
@@ -184,11 +216,19 @@ export default function CirclesPage() {
             <p className="font-semibold text-slate-800 dark:text-slate-100">Joining another batch?</p>
             <p className="mt-1">Open the invite link your mentor shared on WhatsApp. You&apos;ll be added in one tap.</p>
             <p className="mt-4 font-semibold text-slate-800 dark:text-slate-100">Teaching a batch?</p>
-            <p className="mt-1">Create a private batch, post one task a day, and see who checked in. <Link href="/circles/new" className="font-semibold text-amber-700 underline underline-offset-2 dark:text-amber-400">Start a batch</Link></p>
+            <p className="mt-1">Create a private batch, post one task a day, and see who checked in. <Link href="/circles/new" className="font-semibold text-slate-900 underline underline-offset-2 dark:text-white">Start a batch</Link></p>
           </>}
       </div>}
     </div>
-    {showCreate && <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/75 p-4 backdrop-blur-sm"><div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-[#101B2D]"><div className="mb-4 flex items-center justify-between"><h2 className="font-bold">Create a circle</h2><button onClick={() => setShowCreate(false)} aria-label="Close"><X className="h-5 w-5" /></button></div><form onSubmit={createCircle} className="space-y-3"><label className="block text-xs font-bold uppercase text-slate-500">Name<input required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} placeholder="UPSC daily sprints" className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold normal-case dark:border-slate-700 dark:bg-[#07101F]" /></label><div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Who can join">{([['private', 'Private batch', 'Invite link only', LockKeyhole], ['public', 'Public group', 'Anyone can join', Globe2]] as const).map(([value, label, hint, Icon]) => <button type="button" role="radio" aria-checked={newVisibility === value} key={value} onClick={() => setNewVisibility(value)} className={`rounded-2xl border p-3 text-left ${newVisibility === value ? 'border-amber-500 bg-amber-500/10' : 'border-slate-200 dark:border-slate-700'}`}><Icon className={`mb-1 h-4 w-4 ${newVisibility === value ? 'text-amber-500' : 'text-slate-400'}`} /><span className="block text-sm font-bold">{label}</span><span className="block text-[11px] text-slate-500">{hint}</span></button>)}</div>{newVisibility === 'public' && <label className="block text-xs font-bold uppercase text-slate-500">Category<select value={newCategory} onChange={(e) => setNewCategory(e.target.value as Exclude<Category, 'all'>)} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm normal-case dark:border-slate-700 dark:bg-[#07101F]">{categories.filter((c) => c.id !== 'all').map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select></label>}<label className="block text-xs font-bold uppercase text-slate-500">Exam<select value={newExam} onChange={(e) => setNewExam(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm normal-case dark:border-slate-700 dark:bg-[#07101F]"><option value="">No exam</option>{EXAMS.map((exam) => <option key={exam.id} value={exam.id}>{exam.label}</option>)}</select></label><label className="block text-xs font-bold uppercase text-slate-500">Description <span className="font-semibold normal-case text-slate-400">(optional)</span><textarea rows={3} maxLength={300} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={newVisibility === 'private' ? 'e.g. Daily answer writing for Mains 2027' : 'What will members accomplish together?'} className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm normal-case dark:border-slate-700 dark:bg-[#07101F]" /></label><button disabled={busyId === 'create'} className="w-full rounded-xl bg-slate-900 dark:bg-slate-50 py-3 text-sm font-bold text-white dark:text-slate-900 disabled:opacity-60">{busyId === 'create' ? 'Creating…' : 'Create circle'}</button></form></div></div>}
+    </section>
+
+    {explore.filter((c) => matches(describe(c.key).name)).length > 0 && <section aria-labelledby="explore-h" className="mb-6">
+      <h2 id="explore-h" className="mb-3 text-base font-semibold">Explore more</h2>
+      <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
+        {explore.filter((c) => matches(describe(c.key).name)).map((row) => <CommunityLink key={row.key} row={row} line={row.members > 0 ? `${describe(row.key).line}. ${row.members.toLocaleString('en-IN')} ${row.members === 1 ? 'member' : 'members'}` : describe(row.key).line} />)}
+      </ul>
+    </section>}
+    {showCreate && <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/75 p-4 backdrop-blur-sm"><div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-[#101B2D]"><div className="mb-4 flex items-center justify-between"><h2 className="font-bold">Start a group</h2><button onClick={() => setShowCreate(false)} aria-label="Close"><X className="h-5 w-5" /></button></div><form onSubmit={createCircle} className="space-y-3"><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Name<input required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} placeholder="UPSC daily sprints" className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold dark:border-slate-700 dark:bg-[#07101F]" /></label><div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Who can join">{([['private', 'Private batch', 'Invite link only', LockKeyhole], ['public', 'Public group', 'Anyone can join', Globe2]] as const).map(([value, label, hint, Icon]) => <button type="button" role="radio" aria-checked={newVisibility === value} key={value} onClick={() => setNewVisibility(value)} className={`rounded-2xl border p-3 text-left ${newVisibility === value ? 'border-slate-900 ring-1 ring-slate-900 dark:border-white dark:ring-white' : 'border-slate-200 dark:border-slate-700'}`}><Icon className={`mb-1 h-4 w-4 ${newVisibility === value ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`} /><span className="block text-sm font-bold">{label}</span><span className="block text-[11px] text-slate-500">{hint}</span></button>)}</div>{newVisibility === 'public' && <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Category<select value={newCategory} onChange={(e) => setNewCategory(e.target.value as Exclude<Category, 'all'>)} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-[#07101F]">{categories.filter((c) => c.id !== 'all').map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select></label>}<label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Exam<select value={newExam} onChange={(e) => setNewExam(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-[#07101F]"><option value="">No exam</option>{EXAMS.map((exam) => <option key={exam.id} value={exam.id}>{exam.label}</option>)}</select></label><label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Description <span className="font-semibold text-slate-400">(optional)</span><textarea rows={3} maxLength={300} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={newVisibility === 'private' ? 'e.g. Daily answer writing for Mains 2027' : 'What will members accomplish together?'} className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-[#07101F]" /></label><button disabled={busyId === 'create'} className="w-full rounded-xl bg-slate-900 dark:bg-slate-50 py-3 text-sm font-bold text-white dark:text-slate-900 disabled:opacity-60">{busyId === 'create' ? 'Creating…' : 'Create group'}</button></form></div></div>}
   </main>
 }
 
@@ -197,12 +237,12 @@ function TodayLine({ circle }: { circle: CircleView }) {
   const today = circle.today!
   const students = Math.max(0, circle.memberCount - 1)
   let right: React.ReactNode = null
-  if (circle.owned) right = today.task ? <span className="shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">{today.checkedIn} of {students} checked in</span> : <span className="shrink-0 text-sm font-semibold text-amber-700 dark:text-amber-400">Post task</span>
+  if (circle.owned) right = today.task ? <span className="shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">{today.checkedIn} of {students} checked in</span> : <span className="shrink-0 text-sm font-semibold text-slate-900 dark:text-white">Post task</span>
   else if (today.task) right = today.mine === 'done' || today.mine === 'partial'
     ? <span className="shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">Checked in</span>
     : today.mine === 'missed'
       ? <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">Missed</span>
-      : <span className="shrink-0 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-slate-950">Check in</span>
+      : <span className="shrink-0 rounded-full bg-slate-900 px-3 py-1 text-xs font-bold text-white dark:bg-white dark:text-slate-900">Check in</span>
   return <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-3 dark:border-slate-800">
     <div className="min-w-0 flex-1">
       <p className="text-xs font-semibold text-slate-500">Today</p>
@@ -211,4 +251,15 @@ function TodayLine({ circle }: { circle: CircleView }) {
     </div>
     {right}
   </div>
+}
+
+/** A community in a list: its icon or exam name, and what is happening there today. */
+function CommunityLink({ row, line }: { row: CommunityRow; line: string }) {
+  const d = describe(row.key)
+  const Icon = d.icon
+  return <li><Link href={`/communities/${encodeURIComponent(row.key)}`} className="flex items-center gap-3 px-4 py-3.5">
+    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">{d.short ? <span className="text-[11px] font-bold">{d.short.slice(0, 5)}</span> : <Icon className="h-5 w-5" />}</span>
+    <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{d.name}</span><span className="block text-sm text-slate-500">{line}</span></span>
+    <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+  </Link></li>
 }

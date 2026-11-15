@@ -30,7 +30,7 @@ export function clearDraft() { try { window.localStorage.removeItem(KEY) } catch
 /** The personal goals offered at setup, with a small, specific default for each. */
 export const HABITS: { id: HabitId; name: string; line: string; title: string; category: string; perWeek: number }[] = [
   { id: 'fitness', name: 'Fitness', line: 'Gym, yoga, running', title: 'Work out for 30 minutes', category: 'fitness', perWeek: 5 },
-  { id: 'health', name: 'Health and mind', line: 'Sleep, meditation, mental health', title: 'Meditate for 10 minutes', category: 'habits', perWeek: 7 },
+  { id: 'health', name: 'Health and mind', line: 'Sleep, meditation, mental health', title: 'Meditate for 10 minutes', category: 'health', perWeek: 7 },
   { id: 'reading', name: 'Reading', line: 'A few pages a day', title: 'Read 20 pages', category: 'reading', perWeek: 7 },
   { id: 'skill', name: 'Learn a skill', line: 'Coding, a language, music', title: 'Practise for 30 minutes', category: 'learning', perWeek: 5 },
   { id: 'cooking', name: 'Cooking', line: 'New dishes, eating well', title: 'Cook a new dish', category: 'cooking', perWeek: 1 },
