@@ -7,7 +7,7 @@ import { APP_NAME, APP_VERSION, CONTACT_EMAIL } from '@/lib/appInfo'
 
 export const metadata: Metadata = {
   title: `About | ${APP_NAME}`,
-  description: `${APP_NAME} is an independent study planner for UPSC, state PCS, SSC, banking, teaching, judiciary, defence (CDS) and CAT preparation.`,
+  description: `${APP_NAME} is a free, independent app for keeping goals: exam preparation, fitness, reading, health and mind, and new skills, with mentors, batches and communities.`,
 }
 
 function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
@@ -18,7 +18,7 @@ function Section({ id, title, children }: { id?: string; title: string; children
 }
 
 export default function AboutPage() {
-  const mail = <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-amber-700 underline underline-offset-2 dark:text-amber-400">{CONTACT_EMAIL}</a>
+  const mail = <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-slate-900 underline underline-offset-2 dark:text-white">{CONTACT_EMAIL}</a>
   return <main className="min-h-screen bg-slate-50 px-4 pb-16 pt-6 text-slate-950 dark:bg-[#07101F] dark:text-slate-50">
     <div className="mx-auto max-w-2xl">
       <header className="flex items-center justify-between pb-6">
@@ -27,10 +27,10 @@ export default function AboutPage() {
       </header>
       <Link href="/settings" className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-950 dark:hover:text-white"><ArrowLeft className="h-4 w-4" />Back</Link>
       <h1 className="mt-6 text-3xl font-semibold tracking-tight">About {APP_NAME}</h1>
-      <p className="mt-3 text-base leading-7 text-slate-600 dark:text-slate-300">A free study planner for competitive exams. It turns your syllabus and exam date into a daily plan, reminds you to revise before you forget, and lets you prepare alongside a mentor, a batch or friends.</p>
+      <p className="mt-3 text-base leading-7 text-slate-600 dark:text-slate-300">A free app for keeping your goals: an exam, fitness, reading, your mind or a new skill. It puts everything due today on one short list, and lets you work alongside a mentor, a batch, friends or a community with the same goal. For exams, it turns the syllabus and your exam date into a daily plan and brings each topic back before you forget it.</p>
 
       <Section id="disclaimer" title="Not affiliated with any commission">
-        <p>{APP_NAME} is an independent study app. It is not affiliated with, authorised or endorsed by the Union Public Service Commission (UPSC), the Uttar Pradesh Public Service Commission (UPPSC), the Staff Selection Commission, any state public service commission, any High Court, or any other government body.</p>
+        <p>{APP_NAME} is an independent app. It is not affiliated with, authorised or endorsed by the Union Public Service Commission (UPSC), the Uttar Pradesh Public Service Commission (UPPSC), the Staff Selection Commission, any state public service commission, any High Court, or any other government body.</p>
         <p>Commission and exam names are used only to say which exam a feature is for.</p>
       </Section>
 
@@ -50,7 +50,7 @@ export default function AboutPage() {
       </Section>
 
       <Section title="Privacy">
-        <p>What we store, why, and who processes it: <Link href="/privacy" className="font-medium text-amber-700 underline underline-offset-2 dark:text-amber-400">Privacy policy</Link>.</p>
+        <p>What we store, why, and who processes it: <Link href="/privacy" className="font-medium text-slate-900 underline underline-offset-2 dark:text-white">Privacy policy</Link>.</p>
       </Section>
 
       <p className="border-t border-slate-200 pt-6 text-xs text-slate-500 dark:border-slate-800">{APP_NAME} · version {APP_VERSION} · Free for students, no ads.</p>

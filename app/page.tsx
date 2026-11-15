@@ -1,50 +1,54 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, BookOpenCheck, Check, Layers, NotebookPen, Target, UsersRound } from 'lucide-react'
+import { ArrowRight, BookOpenCheck, Check, Layers, Target, UsersRound } from 'lucide-react'
 import TodayDemo from '@/components/TodayDemo'
 import LogoMark from '@/components/LogoMark'
 import ThemeToggle from '@/components/ThemeToggle'
 import SignedInRedirect from '@/components/SignedInRedirect'
 
 export const metadata: Metadata = {
-  title: 'GoalYaar: a study plan you can keep',
-  description: 'Pick your exam and date. GoalYaar splits the syllabus into a few subtopics a day, brings topics back for revision, and keeps your batch in the loop. Free, no ads.',
+  title: 'GoalYaar: goals you actually keep',
+  description: 'An exam, fitness, reading, your mind or a new skill. GoalYaar turns your goals into one short list for today, with a mentor, a batch or a community to keep you going. Free, no ads.',
   openGraph: {
-    title: 'GoalYaar: a study plan you can keep',
-    description: 'A few subtopics a day, revision on time, and your batch in the loop. Free for UPSC, state PCS, SSC, banking, teaching, judiciary, defence (CDS) and CAT.',
+    title: 'GoalYaar: goals you actually keep',
+    description: 'One short list for today across all your goals, from UPSC to the gym. Mentors, batches and weekly challenges keep you going. Free, no ads.',
     url: 'https://goalyaar.in',
     siteName: 'GoalYaar',
     type: 'website',
     locale: 'en_IN',
-    images: [{ url: '/og-goalyaar.jpg', width: 1200, height: 630, alt: 'GoalYaar study planner' }],
+    images: [{ url: '/og-goalyaar.jpg', width: 1200, height: 630, alt: 'GoalYaar' }],
   },
   twitter: { card: 'summary_large_image', images: ['/og-goalyaar.jpg'] },
 }
 
 const EXAMS = ['UPSC CSE', 'UPPCS', 'BPSC', 'MPSC', 'HCS', 'JKPSC', 'SSC CGL', 'Bank PO', 'CTET', 'UPTET', 'UP PCS-J', 'MP Civil Judge', 'UPSC CDS', 'CAT']
 
+const GOALS = ['Competitive exams', 'Fitness', 'Health and mind', 'Reading', 'Skills', 'Cooking', 'Travel', 'Your own goal']
+
 const steps = [
-  ['Tell us your exam and date', 'Pick the exam and when you sit it. Already finished some subjects? Tick them in a minute and they are taken off your plan.'],
-  ['Study a few subtopics a day', 'Today shows exactly what is next. Tick each one when you are done. Tapped by mistake? Undo.'],
-  ['Revise before you forget', 'Topics come back after a few days, then a week, then a month. Say how much you remembered and the gap adjusts.'],
+  ['Pick your goals', 'An exam, the gym, reading, meditation or something of your own. Choose up to five, and say how often. It takes a minute.'],
+  ['Do today’s list', 'Home shows what is due today across every goal: a few subtopics, a walk, ten pages. Tick each one off. Tapped by mistake? Undo.'],
+  ['Keep each other going', 'Join your mentor’s or trainer’s batch, or a community with the same goal. A challenge each week keeps the streak honest.'],
 ]
 
 const features = [
-  { icon: Layers, title: 'Two exams, one plan', copy: 'Preparing for UPSC and UPPCS together? Topics they share are ticked once and count for both.' },
-  { icon: UsersRound, title: 'Your batch, minus the WhatsApp mess', copy: 'Mentors post one task a day and see who did it. Students share their progress only if they want to.' },
-  { icon: NotebookPen, title: 'A notebook for your mistakes', copy: 'Write down what tripped you up in a mock. It keeps coming back until you get it right.' },
-  { icon: Target, title: 'Not just exams', copy: 'Gym, reading, a side project. Set any goal and check in each day, on your own or with friends.' },
+  { icon: BookOpenCheck, title: 'Built deep for exams', copy: 'Your syllabus split into a few subtopics a day, revision before you forget, a notebook for mistakes, and topics shared by two exams ticked once.' },
+  { icon: UsersRound, title: 'For any teacher, trainer or coach', copy: 'Post one task a day and see who did it, from written answers to workout photos. Members share more only if they choose.' },
+  { icon: Layers, title: 'Communities and weekly challenges', copy: 'One for every exam and every kind of goal. Progress counts by itself as you tick things off.' },
+  { icon: Target, title: 'Private unless you share', copy: 'Only you see your goals. In a community, others see how many showed up today, never your name.' },
 ]
 
 const faqs = [
   ['Is it really free?', 'Yes. Everything students use is free, and there are no ads.'],
+  ['What kind of goals can I set?', 'Any. Fitness, health and mind, reading, a skill, cooking, travel, or something of your own. Exams get a full plan built from the syllabus.'],
   ['Which exams are covered?', `${EXAMS.join(', ')}. Yours is missing? Request it from the app and we will add it.`],
-  ['Who can see my progress?', 'Only you, unless you share it with your mentor or a circle. Others preparing for the same exam see a count of how many studied today, never your name.'],
-  ['I fell behind. Now what?', 'Tap “Start fresh from today”. What is left is spread over the days you have. Nothing you ticked is lost.'],
+  ['I teach, train or coach. Can I use it?', 'Yes, for free. Start a batch in a minute, share the link on WhatsApp, and post one task a day.'],
+  ['Who can see my progress?', 'Only you, unless you share it with your mentor or a batch. In a community, others see a count of how many showed up today, never your name.'],
+  ['I fell behind. Now what?', 'Nothing is lost. Check in today and carry on. For an exam plan, tap “Start fresh from today” and what is left is spread over the days you have.'],
   ['Is this an official app?', 'No. GoalYaar is independent and is not connected to UPSC or any other commission.'],
 ]
 
-/** A small, honest picture of the Today screen. */
+/** The welcome page: what GoalYaar is, a sample day to tap through, and the way in. */
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f8fafc] text-slate-950 dark:bg-[#07101F] dark:text-slate-50">
@@ -63,10 +67,10 @@ export default function HomePage() {
       <section className="px-4 pb-16 pt-12 sm:px-6 sm:pt-16 lg:pb-24">
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <h1 className="landing-enter text-balance text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">A study plan you can <span className="text-amber-600 dark:text-amber-400">actually keep.</span></h1>
-            <p className="landing-enter landing-delay-2 mt-5 max-w-xl text-pretty text-base leading-7 text-slate-600 sm:text-lg dark:text-slate-300">Pick your exam and your date. GoalYaar splits the syllabus into a few subtopics a day, brings each topic back before you forget it, and keeps your batch in the loop.</p>
+            <h1 className="landing-enter text-balance text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">Goals you <span className="text-amber-600 dark:text-amber-400">actually keep.</span></h1>
+            <p className="landing-enter landing-delay-2 mt-5 max-w-xl text-pretty text-base leading-7 text-slate-600 sm:text-lg dark:text-slate-300">An exam, fitness, reading, your mind or a new skill. GoalYaar turns them into one short list for today, with a mentor, a batch or a community to keep you going.</p>
             <div className="landing-enter landing-delay-3 mt-7 flex flex-col gap-3 sm:flex-row">
-              <Link href="/start" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-base font-semibold text-slate-950 shadow-sm hover:bg-amber-400">Make my plan <ArrowRight className="h-4 w-4" /></Link>
+              <Link href="/start" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-slate-800 dark:bg-white dark:text-slate-900">Set my goals <ArrowRight className="h-4 w-4" /></Link>
               <a href="#how-it-works" className="inline-flex items-center justify-center rounded-2xl border border-slate-300 px-6 py-3.5 text-sm font-semibold text-slate-700 hover:bg-white dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900">How it works</a>
             </div>
             <p className="landing-enter landing-delay-4 mt-6 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500"><span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" />Free, no ads</span><span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" />Takes a minute to set up</span><span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" />Private unless you share</span></p>
@@ -75,8 +79,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-slate-200/80 bg-white/70 py-5 dark:border-slate-800 dark:bg-slate-900/30" aria-label="Exams covered">
-        <p className="mx-auto max-w-5xl px-4 text-center text-sm leading-7 text-slate-500 dark:text-slate-400"><BookOpenCheck className="mr-1.5 inline h-4 w-4 align-[-3px] text-amber-500" />{EXAMS.join(' · ')}</p>
+      <section className="border-y border-slate-200/80 bg-white/70 py-5 dark:border-slate-800 dark:bg-slate-900/30" aria-label="Goals you can set">
+        <ul className="mx-auto flex max-w-5xl flex-wrap justify-center gap-2 px-4">{GOALS.map((goal) => <li key={goal} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">{goal}</li>)}</ul>
       </section>
 
       <section id="how-it-works" className="scroll-mt-20 px-4 py-16 sm:px-6 lg:py-24">
@@ -85,7 +89,7 @@ export default function HomePage() {
           <ol className="mt-8 grid gap-4 lg:grid-cols-3">
             {steps.map(([title, copy], i) => (
               <li key={title} className="landing-reveal rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-[#101B2D]">
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-amber-500/15 text-sm font-semibold text-amber-700 dark:text-amber-400">{i + 1}</span>
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{i + 1}</span>
                 <h3 className="mt-4 text-lg font-semibold">{title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{copy}</p>
               </li>
@@ -98,7 +102,7 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-4 sm:grid-cols-2">
           {features.map(({ icon: Icon, title, copy }) => (
             <article key={title} className="landing-reveal rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-[#101B2D]">
-              <Icon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <Icon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
               <h3 className="mt-4 text-base font-semibold">{title}</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{copy}</p>
             </article>
@@ -111,7 +115,7 @@ export default function HomePage() {
           <h2 className="landing-reveal text-3xl font-bold tracking-tight sm:text-4xl">Questions</h2>
           <div className="mt-6 space-y-3">
             {faqs.map(([question, answer]) => (
-              <details key={question} className="landing-reveal group rounded-2xl border border-slate-200 bg-white p-5 open:border-amber-500/40 dark:border-slate-800 dark:bg-[#101B2D]">
+              <details key={question} className="landing-reveal group rounded-2xl border border-slate-200 bg-white p-5 open:border-slate-300 dark:open:border-slate-600 dark:border-slate-800 dark:bg-[#101B2D]">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold [&::-webkit-details-marker]:hidden"><span>{question}</span><span aria-hidden="true" className="text-xl leading-none text-slate-400 transition group-open:rotate-45">+</span></summary>
                 <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">{answer}</p>
               </details>
@@ -122,17 +126,17 @@ export default function HomePage() {
 
       <section className="px-4 pb-16 sm:px-6 lg:pb-24">
         <div className="landing-reveal mx-auto max-w-4xl rounded-[2rem] bg-slate-900 px-6 py-12 text-center text-white sm:px-12 dark:bg-slate-800/60">
-          <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-4xl">Start with today&apos;s five subtopics.</h2>
-          <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-300">Setting up takes about a minute. You can change your exam, date or hours whenever you like.</p>
-          <Link href="/start" className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-sm font-semibold text-slate-950 hover:bg-amber-400">Make my plan <ArrowRight className="h-4 w-4" /></Link>
+          <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-4xl">Start with today.</h2>
+          <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-300">Setting up takes about a minute. You can change your goals whenever you like.</p>
+          <Link href="/start" className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900">Set my goals <ArrowRight className="h-4 w-4" /></Link>
         </div>
       </section>
 
       <footer className="border-t border-slate-200 px-4 py-8 dark:border-slate-800">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-center text-sm sm:flex-row sm:text-left">
           <div className="flex items-center gap-2 font-semibold"><LogoMark size={20} />GoalYaar</div>
-          <p className="text-xs text-slate-500">An independent study planner. Not connected to any commission.</p>
-          <div className="flex items-center gap-4 text-xs font-semibold"><Link href="/about" className="text-slate-500 hover:text-slate-900 dark:hover:text-white">About</Link><Link href="/privacy" className="text-slate-500 hover:text-slate-900 dark:hover:text-white">Privacy</Link><Link href="/login" className="text-amber-600 dark:text-amber-400">Sign in</Link></div>
+          <p className="text-xs text-slate-500">Independent, and not connected to any exam commission.</p>
+          <div className="flex items-center gap-4 text-xs font-semibold"><Link href="/about" className="text-slate-500 hover:text-slate-900 dark:hover:text-white">About</Link><Link href="/privacy" className="text-slate-500 hover:text-slate-900 dark:hover:text-white">Privacy</Link><Link href="/login" className="text-slate-900 dark:text-white">Sign in</Link></div>
         </div>
       </footer>
     </main>

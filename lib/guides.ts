@@ -97,12 +97,6 @@ export const GUIDES: { match: (path: string) => boolean; pick?: () => boolean; g
       { title: 'Private or public', target: '[data-tour="checkin-submit"]', text: 'Private check-ins are only for you. Public ones can include a photo.' },
     ] },
   },
-  {
-    match: (p) => p === '/create-goal',
-    guide: { title: 'New goal', intro: 'Name it, choose how often, and who can see it.', steps: [
-      { title: 'Keep it small', target: '[data-tour="goal-title"]', text: 'A goal you can do today works best.', example: '“Read 10 pages” beats “Read more”.' },
-    ] },
-  },
 ]
 
 export function guideFor(path: string): Guide | null {
