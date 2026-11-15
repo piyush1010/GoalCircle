@@ -7,30 +7,10 @@ import { ArrowLeft, Check, ChevronRight, Search, UsersRound } from 'lucide-react
 import LogoMark from '@/components/LogoMark'
 import { examInfo } from '@/lib/prep/exam'
 import { localDateString } from '@/lib/exams'
+import { ALL_EXAMS, GROUPS, SEARCH_WORDS } from '@/lib/examGroups'
 import { HABITS, howOften, readDraft, writeDraft, type HabitDraft, type HabitId, type Level, type StartDraft } from '@/lib/startDraft'
 import { supabase } from '@/utils/supabase'
 
-/** Exams, grouped the way students think of them. State services ask for the state first. */
-const GROUPS: { name: string; line: string; ask?: string; exams: { code: string; name: string; line: string }[] }[] = [
-  { name: 'Civil services', line: 'UPSC Civil Services Examination', exams: [{ code: 'upsc_cse_v1', name: 'UPSC CSE', line: 'Prelims, Mains and interview' }] },
-  { name: 'State services', line: 'UPPCS, BPSC, MPSC and more', ask: 'Which state?', exams: [
-    { code: 'uppcs_v1', name: 'Uttar Pradesh', line: 'UPPCS' }, { code: 'bpsc_v1', name: 'Bihar', line: 'BPSC' }, { code: 'mpsc_rajyaseva_v1', name: 'Maharashtra', line: 'MPSC Rajyaseva' },
-    { code: 'hpsc_hcs_v1', name: 'Haryana', line: 'HCS' }, { code: 'jkpsc_cce_v1', name: 'Jammu and Kashmir', line: 'JKPSC CCE' },
-  ] },
-  { name: 'Staff Selection Commission', line: 'SSC CGL', exams: [{ code: 'ssc_cgl_v1', name: 'SSC CGL', line: 'Tier 1 and Tier 2' }] },
-  { name: 'Banking', line: 'IBPS PO and SBI PO', exams: [{ code: 'bank_po_v1', name: 'Bank PO', line: 'Prelims and Mains' }] },
-  { name: 'Teaching', line: 'CTET and UPTET', exams: [{ code: 'ctet_v1', name: 'CTET', line: 'Central teacher eligibility' }, { code: 'uptet_v1', name: 'UPTET', line: 'Uttar Pradesh teacher eligibility' }] },
-  { name: 'Judiciary', line: 'Civil judge examinations', exams: [{ code: 'up_pcsj_v1', name: 'UP PCS-J', line: 'Uttar Pradesh' }, { code: 'mp_civil_judge_v1', name: 'MP Civil Judge', line: 'Madhya Pradesh' }] },
-  { name: 'Defence', line: 'UPSC CDS', exams: [{ code: 'cds_v1', name: 'UPSC CDS', line: 'IMA, INA, AFA and OTA' }] },
-  { name: 'MBA entrance', line: 'CAT', exams: [{ code: 'cat_v1', name: 'CAT', line: 'For the IIMs and other business schools' }] },
-]
-const ALL_EXAMS = GROUPS.flatMap((g) => g.exams.map((e) => ({ ...e, group: g.name, label: g.ask ? e.line : e.name })))
-const SEARCH_WORDS: Record<string, string> = {
-  upsc_cse_v1: 'upsc cse ias ips civil services', uppcs_v1: 'uppcs uppsc ro aro uttar pradesh up', bpsc_v1: 'bpsc bihar', mpsc_rajyaseva_v1: 'mpsc maharashtra rajyaseva',
-  hpsc_hcs_v1: 'hcs hpsc haryana', jkpsc_cce_v1: 'jkpsc jammu kashmir kas', ssc_cgl_v1: 'ssc cgl staff selection', bank_po_v1: 'bank po ibps sbi banking',
-  ctet_v1: 'ctet teacher tet', uptet_v1: 'uptet teacher tet uttar pradesh', up_pcsj_v1: 'up pcs-j pcsj judiciary judge law', mp_civil_judge_v1: 'mp civil judge judiciary madhya pradesh',
-  cds_v1: 'cds defence army navy air force ssb', cat_v1: 'cat mba iim',
-}
 const LEVELS: [Level, string, string][] = [
   ['beginner', 'Just starting', 'Starting the syllabus from the beginning'],
   ['intermediate', 'Partly done', 'I have covered some subjects already'],
@@ -149,7 +129,7 @@ export default function StartPage() {
             </button>
           })}
         </div>
-        <Link href={signedIn ? '/circles' : '/login?mode=signup&next=/circles'} className="mt-3 flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 p-3.5 dark:border-slate-700">
+        <Link href={signedIn ? '/circles/new' : '/login?mode=signup&next=/circles/new'} className="mt-3 flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 p-3.5 dark:border-slate-700">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"><UsersRound className="h-5 w-5" /></span>
           <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">I teach, train or coach</span><span className="block text-xs text-slate-500">Set up a batch for your students</span></span>
           <ChevronRight className="h-4 w-4 text-slate-400" />
