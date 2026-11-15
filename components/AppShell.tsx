@@ -13,7 +13,7 @@ import PageGuide from '@/components/PageGuide'
 import DayEndSync from '@/components/DayEndSync'
 
 // Full-screen flows hide the bar: sign-in, and first-time and exam setup (one question at a time, no distractions).
-const NAV_HIDDEN_ROUTES = ['/', '/login', '/signup', '/auth', '/privacy', '/about', '/circles/join', '/prep/start', '/start']
+const NAV_HIDDEN_ROUTES = ['/', '/login', '/signup', '/auth', '/privacy', '/about', '/circles/join', '/circles/new', '/prep/start', '/start']
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

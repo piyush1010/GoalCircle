@@ -59,8 +59,8 @@ export default function CircleNotices({ circleId, userId, isAdmin }: { circleId:
   return (
     <section data-tour="notices" className="mt-3 space-y-3">
       <div className="flex items-center justify-between px-1">
-        <h2 className="flex items-center gap-1.5 text-sm font-bold"><Megaphone className="h-4 w-4 text-amber-500" />Notices</h2>
-        {isAdmin && !composing && <button type="button" onClick={() => setComposing(true)} className="text-xs font-bold text-amber-600 dark:text-amber-400">+ New notice</button>}
+        <h2 className="flex items-center gap-1.5 text-sm font-bold"><Megaphone className="h-4 w-4 text-slate-500" />Notices</h2>
+        {isAdmin && !composing && <button type="button" onClick={() => setComposing(true)} className="text-xs font-bold text-slate-700 dark:text-slate-200">+ New notice</button>}
       </div>
 
       {isAdmin && composing && <div className={card}>

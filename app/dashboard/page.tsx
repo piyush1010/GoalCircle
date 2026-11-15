@@ -27,7 +27,7 @@ interface Goal {
   category?: string | null
   shared?: boolean
 }
-interface Batch { id: string; name: string; admin: boolean; task: string | null; done: boolean; checkedIn: number; members: number }
+interface Batch { id: string; name: string; admin: boolean; exam: boolean; task: string | null; done: boolean; checkedIn: number; members: number; answers: number }
 interface Activity { goal_id: string | null; at: string; logged: boolean }
 
 const VIEW_KEY = 'goalyaar-prep-view' // which exam the plan screens open on
@@ -72,21 +72,23 @@ export default function HomePage() {
       supabase.from('goals').select(fields).eq('user_id', u.id).order('created_at', { ascending: true }),
       supabase.from('posts').select('goal_id,created_at').eq('user_id', u.id).gte('created_at', since.toISOString()),
       supabase.from('goal_collaborators').select('goal_id').eq('user_id', u.id).eq('status', 'accepted'),
-      supabase.from('circle_memberships').select('role, circles(id,name,owner_id)').eq('user_id', u.id),
+      supabase.from('circle_memberships').select('role, circles(id,name,owner_id,exam)').eq('user_id', u.id),
     ])
     if (goalsResult.error || postsResult.error || collabResult.error) { setError('Your day could not be loaded. Check your connection and try again.'); setLoading(false); return }
 
     const sharedIds = (collabResult.data || []).map((row) => row.goal_id)
-    type MembershipRow = { role: string; circles: { id: string; name: string; owner_id: string } | null }
+    type MembershipRow = { role: string; circles: { id: string; name: string; owner_id: string; exam: string | null } | null }
     const memberships = ((membershipResult.data || []) as unknown as MembershipRow[]).filter((row) => row.circles)
     const circleIds = memberships.map((row) => row.circles!.id)
     const adminIds = memberships.filter((row) => row.circles!.owner_id === u.id || ['owner', 'moderator'].includes(row.role)).map((row) => row.circles!.id)
-    const [sharedResult, tasksResult, checkinsResult, membersResult] = await Promise.all([
+    const [sharedResult, tasksResult, checkinsResult, membersResult, answersResult] = await Promise.all([
       sharedIds.length ? supabase.from('goals').select(fields).in('id', sharedIds) : Promise.resolve({ data: [], error: null }),
       circleIds.length ? supabase.from('circle_tasks').select('circle_id,title').in('circle_id', circleIds).eq('task_date', todayKey) : Promise.resolve({ data: [], error: null }),
       circleIds.length ? supabase.from('circle_task_checkins').select('circle_id,user_id,status,circle_tasks!inner(task_date)').in('circle_id', circleIds).eq('circle_tasks.task_date', todayKey) : Promise.resolve({ data: [], error: null }),
       adminIds.length ? supabase.from('circle_memberships').select('circle_id,role').in('circle_id', adminIds) : Promise.resolve({ data: [], error: null }),
+      adminIds.length ? supabase.from('prep_answer_reviews').select('circle_id').in('circle_id', adminIds).is('reviewed_at', null).limit(500) : Promise.resolve({ data: [], error: null }),
     ])
+    const answerRows = (answersResult.data || []) as Array<{ circle_id: string }>
     const taskByCircle = new Map(((tasksResult.data || []) as Array<{ circle_id: string; title: string }>).map((row) => [row.circle_id, row.title]))
     const checkins = (checkinsResult.data || []) as Array<{ circle_id: string; user_id: string; status: string }>
     const memberRows = (membersResult.data || []) as Array<{ circle_id: string; role: string }>
@@ -95,6 +97,8 @@ export default function HomePage() {
       return {
         id, name: row.circles!.name,
         admin: adminIds.includes(id),
+        exam: Boolean(row.circles!.exam),
+        answers: answerRows.filter((a) => a.circle_id === id).length,
         task: taskByCircle.get(id) ?? null,
         done: checkins.some((c) => c.circle_id === id && c.user_id === u.id),
         checkedIn: checkins.filter((c) => c.circle_id === id && c.user_id !== u.id && c.status !== 'missed').length,
@@ -130,7 +134,16 @@ export default function HomePage() {
     detail: g.frequency === 'weekly' ? `${g.times_per_week} times a week` : g.frequency === 'once' ? 'One-time goal' : (g.current_streak || 0) > 1 ? `Every day. ${g.current_streak} days in a row.` : 'Every day',
   })), [personal, doneToday, weekMet, weekDays, daysLeftInWeek])
   const mentorTasks = useMemo(() => batches.filter((b) => !b.admin && b.task).map((b) => ({ circleId: b.id, name: b.name, task: b.task!, done: b.done })), [batches])
-  const toPost = batches.filter((b) => b.admin && !b.task)
+  // A mentor's jobs for today, one line each: post the task, review answers, nudge who hasn't checked in.
+  const mentorJobs = useMemo(() => batches.filter((b) => b.admin).flatMap((b) => [
+    ...(!b.task ? [{ key: `post:${b.id}`, batch: b.name, title: "Post today's task", action: 'Post', href: `/circles/${b.id}` }] : []),
+    ...(b.answers > 0 ? [{ key: `answers:${b.id}`, batch: b.name, title: `${b.answers} ${b.answers === 1 ? 'answer' : 'answers'} to review`, action: 'Review', href: `/circles/${b.id}?tab=reviews` }] : []),
+    ...(b.task && b.members > b.checkedIn && new Date().getHours() >= 17 ? [{ key: `nudge:${b.id}`, batch: b.name, title: `${b.members - b.checkedIn} haven't checked in yet`, action: 'Nudge', href: `/circles/${b.id}` }] : []),
+  ]), [batches])
+  const runsExamBatch = batches.some((b) => b.admin && b.exam)
+  const [mockSprintSeen, setMockSprintSeen] = useState(true)
+  useEffect(() => { const t = window.setTimeout(() => { try { setMockSprintSeen(window.localStorage.getItem('goalyaar-mocksprint-card') === 'done') } catch { /* keep hidden */ } }, 0); return () => window.clearTimeout(t) }, [])
+  const hideMockSprint = () => { setMockSprintSeen(true); try { window.localStorage.setItem('goalyaar-mocksprint-card', 'done') } catch { /* fine */ } }
 
   const quickDone = async (goalId: string) => {
     if (!user) return false
@@ -193,7 +206,7 @@ export default function HomePage() {
             <div className="space-y-2.5">
               {[
                 { href: '/start', icon: GraduationCap, title: 'Set up your goals', line: 'An exam, fitness, reading or your own' },
-                { href: '/circles', icon: UsersRound, title: 'Join a batch', line: 'Use the code your mentor shared' },
+                { href: '/circles/join', icon: UsersRound, title: 'Join a batch', line: 'Use the code your mentor shared' },
               ].map((o) => <Link key={o.href} href={o.href} className={`${card} flex items-center gap-3 p-4`}>
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"><o.icon className="h-5 w-5" /></span>
                 <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{o.title}</span><span className="block text-sm text-slate-500">{o.line}</span></span>
@@ -205,14 +218,23 @@ export default function HomePage() {
             <TodayList data={prep} userId={user.id} goals={listGoals} mentor={mentorTasks} onGoalDone={quickDone} onCounts={setCounts} />
           </div>}
 
-      {toPost.length > 0 && <section aria-labelledby="batches-h" className={`${card} mt-4`}>
-        <h2 id="batches-h" className="px-4 pt-4 text-base font-semibold">For your {toPost.length === 1 ? 'batch' : 'batches'}</h2>
+      {mentorJobs.length > 0 && <section aria-labelledby="batches-h" className={`${card} mt-4`}>
+        <h2 id="batches-h" className="px-4 pt-4 text-base font-semibold">For your {batches.filter((b) => b.admin).length === 1 ? 'batch' : 'batches'}</h2>
         <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">
-          {toPost.map((b) => <li key={b.id} className="flex items-center gap-3 px-4 py-3.5">
-            <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-slate-500">{b.name}</span><span className="block text-[15px] font-semibold">Post today&apos;s task</span></span>
-            <Link href={`/circles/${b.id}`} className="h-10 shrink-0 rounded-xl bg-slate-900 px-4 text-sm font-semibold leading-10 text-white dark:bg-white dark:text-slate-900">Post</Link>
+          {mentorJobs.map((job) => <li key={job.key} className="flex items-center gap-3 px-4 py-3.5">
+            <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-slate-500">{job.batch}</span><span className="block text-[15px] font-semibold">{job.title}</span></span>
+            <Link href={job.href} className="h-10 shrink-0 rounded-xl bg-slate-900 px-4 text-sm font-semibold leading-10 text-white dark:bg-white dark:text-slate-900">{job.action}</Link>
           </li>)}
         </ul>
+      </section>}
+
+      {runsExamBatch && !mockSprintSeen && <section className={`${card} mt-4 p-4`}>
+        <h2 className="text-[15px] font-semibold">Mock tests for your batch</h2>
+        <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">Make a timed test on MockSprint and post its link from the Tests tab in your batch. Students check in once they finish.</p>
+        <div className="mt-3 flex gap-2">
+          <Link href={`/circles/${batches.find((b) => b.admin && b.exam)!.id}?tab=tests`} onClick={hideMockSprint} className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-semibold leading-10 text-white dark:bg-white dark:text-slate-900">Open Tests</Link>
+          <button type="button" onClick={hideMockSprint} className="h-10 rounded-xl px-3 text-sm font-semibold text-slate-600 dark:text-slate-300">Not now</button>
+        </div>
       </section>}
 
       <div className="mt-4"><InstallNudge /></div>

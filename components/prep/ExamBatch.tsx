@@ -106,8 +106,8 @@ export default function ExamBatch({ userId, templateId, examName }: { userId: st
     <AnswerReviews userId={userId} />
 
     <div className="grid grid-cols-2 gap-2 pt-1">
-      <Link href="/circles" className="grid h-12 place-items-center rounded-2xl border border-slate-300 text-sm font-semibold dark:border-slate-600">Join with a code</Link>
-      <Link href="/circles" className="grid h-12 place-items-center rounded-2xl border border-slate-300 text-sm font-semibold dark:border-slate-600">Start a batch</Link>
+      <Link href="/circles/join" className="grid h-12 place-items-center rounded-2xl border border-slate-300 text-sm font-semibold dark:border-slate-600">Join with a code</Link>
+      <Link href="/circles/new" className="grid h-12 place-items-center rounded-2xl border border-slate-300 text-sm font-semibold dark:border-slate-600">Start a batch</Link>
     </div>
   </div>
 }
