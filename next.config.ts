@@ -23,6 +23,8 @@ const nextConfig = {
     return [
       { source: '/leaderboard', destination: '/dashboard', permanent: false },
       { source: '/referrals', destination: '/dashboard', permanent: false },
+      // The old goal form; setup now covers finish dates and sharing on the feed.
+      { source: '/create-goal', destination: '/start', permanent: false },
     ]
   },
   async headers() {
