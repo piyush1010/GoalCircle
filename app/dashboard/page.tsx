@@ -1,19 +1,17 @@
 'use client'
 
-import CircleAvatar from '@/components/CircleAvatar'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { CalendarCheck2, CheckCircle2, ChevronDown, Flame, Plus, Timer, Trash2 } from 'lucide-react'
-import StarterGoals from '@/components/StarterGoals'
+import { Bell, ChevronRight, GraduationCap, Target, UsersRound } from 'lucide-react'
+import LogoMark from '@/components/LogoMark'
+import ProfileAvatar from '@/components/ProfileAvatar'
 import InstallNudge from '@/components/InstallNudge'
-import PrepTodayCard from '@/components/PrepTodayCard'
-import TodayDeck from '@/components/prep/TodayDeck'
-import HelpButton from '@/components/HelpButton'
-import { usePrepActive } from '@/lib/prep/active'
-import MonthRing, { type MonthDay } from '@/components/MonthRing'
-import TodoWidget from '@/components/TodoWidget'
-import { confirmAction } from '@/lib/confirm'
+import GoalCircles, { type GoalCircle } from '@/components/home/GoalCircles'
+import TodayList, { type TodayCounts } from '@/components/home/TodayList'
+import { examInfo } from '@/lib/prep/exam'
+import { usePrepData } from '@/lib/prep/usePrepData'
+import { localDateString } from '@/lib/exams'
 import { supabase } from '@/utils/supabase'
 
 interface Goal {
@@ -29,292 +27,196 @@ interface Goal {
   category?: string | null
   shared?: boolean
 }
-interface BatchCard { id: string; name: string; admin: boolean; task: string | null; done: boolean; status: 'done' | 'partial' | 'missed' | null; avatarUrl?: string | null }
-// checkin: counts as showing up. logged: any check-in today, including an honest "Missed".
-interface Activity { goal_id: string | null; at: string; minutes: number; checkin: boolean; logged?: boolean }
+interface Batch { id: string; name: string; admin: boolean; task: string | null; done: boolean; checkedIn: number; members: number }
+interface Activity { goal_id: string | null; at: string; logged: boolean }
 
+const VIEW_KEY = 'goalyaar-prep-view' // which exam the plan screens open on
 const localKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+const weekStart = () => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d }
 
 function greeting() {
   const hour = new Date().getHours()
   return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 }
 
-export default function TodayPage() {
+/**
+ * Home: your goals as circles, and one list of everything due today across all of them.
+ * Exams open their plan, personal goals open their page, and batches you run open the batch.
+ */
+export default function HomePage() {
   const router = useRouter()
+  const prep = usePrepData(true)
   const [goals, setGoals] = useState<Goal[]>([])
   const [activity, setActivity] = useState<Activity[]>([])
-  const [firstName, setFirstName] = useState('')
-  const [userId, setUserId] = useState<string | null>(null)
+  const [batches, setBatches] = useState<Batch[]>([])
+  const [user, setUser] = useState<{ id: string; firstName: string; name: string; avatar: string | null } | null>(null)
+  const [unread, setUnread] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [busyGoalId, setBusyGoalId] = useState<string | null>(null)
-  const [stepsOpen, setStepsOpen] = useState(false)
-  const preparing = usePrepActive() // exam users: plan first, a one-line goals summary, to-dos in Profile
-  const [batches, setBatches] = useState<BatchCard[]>([])
+  const [counts, setCounts] = useState<TodayCounts | null>(null)
 
   const load = useCallback(async () => {
     setError(null)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) { router.replace('/login?next=/dashboard'); return }
-    const user = session.user
-    setUserId(user.id)
-    setFirstName(String(user.user_metadata?.full_name || user.user_metadata?.name || '').split(' ')[0])
+    const u = session.user
+    const name = String(u.user_metadata?.full_name || u.user_metadata?.name || '')
+    setUser({ id: u.id, firstName: name.split(' ')[0], name, avatar: (u.user_metadata?.avatar_url as string | undefined) ?? null })
     void supabase.rpc('resume_expired_goal_pauses')
+    void supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('is_read', false).then(({ count }) => setUnread(count || 0))
 
-    const monthStart = new Date(); monthStart.setHours(0, 0, 0, 0); monthStart.setDate(1)
-    // Weekly goals need this week's check-ins even when the week started last month.
-    const weekStart = new Date(); weekStart.setHours(0, 0, 0, 0); weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7))
-    const since = weekStart < monthStart ? weekStart : monthStart
+    const since = weekStart()
+    const todayKey = localDateString()
     const fields = 'id,user_id,title,current_streak,status,pause_until,frequency,times_per_week,is_completed,category'
-    const todayKey = localKey(new Date())
-    const [goalsResult, postsResult, logsResult, collabResult, membershipResult] = await Promise.all([
-      supabase.from('goals').select(fields).eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('posts').select('goal_id,created_at,checkin_status').eq('user_id', user.id).gte('created_at', since.toISOString()),
-      supabase.from('focus_logs').select('goal_id,minutes_logged,logged_at').eq('user_id', user.id).gte('logged_at', since.toISOString()),
-      supabase.from('goal_collaborators').select('goal_id').eq('user_id', user.id).eq('status', 'accepted'),
-      supabase.from('circle_memberships').select('role, circles(id,name,owner_id)').eq('user_id', user.id),
+    const [goalsResult, postsResult, collabResult, membershipResult] = await Promise.all([
+      supabase.from('goals').select(fields).eq('user_id', u.id).order('created_at', { ascending: true }),
+      supabase.from('posts').select('goal_id,created_at').eq('user_id', u.id).gte('created_at', since.toISOString()),
+      supabase.from('goal_collaborators').select('goal_id').eq('user_id', u.id).eq('status', 'accepted'),
+      supabase.from('circle_memberships').select('role, circles(id,name,owner_id)').eq('user_id', u.id),
     ])
+    if (goalsResult.error || postsResult.error || collabResult.error) { setError('Your day could not be loaded. Check your connection and try again.'); setLoading(false); return }
+
     const sharedIds = (collabResult.data || []).map((row) => row.goal_id)
     type MembershipRow = { role: string; circles: { id: string; name: string; owner_id: string } | null }
     const memberships = ((membershipResult.data || []) as unknown as MembershipRow[]).filter((row) => row.circles)
     const circleIds = memberships.map((row) => row.circles!.id)
-    const [sharedResult, tasksResult, myCheckinsResult] = await Promise.all([
+    const adminIds = memberships.filter((row) => row.circles!.owner_id === u.id || ['owner', 'moderator'].includes(row.role)).map((row) => row.circles!.id)
+    const [sharedResult, tasksResult, checkinsResult, membersResult] = await Promise.all([
       sharedIds.length ? supabase.from('goals').select(fields).in('id', sharedIds) : Promise.resolve({ data: [], error: null }),
       circleIds.length ? supabase.from('circle_tasks').select('circle_id,title').in('circle_id', circleIds).eq('task_date', todayKey) : Promise.resolve({ data: [], error: null }),
-      // This month's batch check-ins: today's status for the cards, and showing up for the ring.
-      circleIds.length ? supabase.from('circle_task_checkins').select('circle_id,status,minutes,hours,circle_tasks!inner(task_date)').in('circle_id', circleIds).eq('user_id', user.id).gte('circle_tasks.task_date', localKey(monthStart)) : Promise.resolve({ data: [], error: null }),
+      circleIds.length ? supabase.from('circle_task_checkins').select('circle_id,user_id,status,circle_tasks!inner(task_date)').in('circle_id', circleIds).eq('circle_tasks.task_date', todayKey) : Promise.resolve({ data: [], error: null }),
+      adminIds.length ? supabase.from('circle_memberships').select('circle_id,role').in('circle_id', adminIds) : Promise.resolve({ data: [], error: null }),
     ])
-    type BatchCheckin = { circle_id: string; status: 'done' | 'partial' | 'missed'; minutes: number | null; hours: number | null; circle_tasks: { task_date: string } | null }
-    const batchCheckins = (myCheckinsResult.data || []) as unknown as BatchCheckin[]
     const taskByCircle = new Map(((tasksResult.data || []) as Array<{ circle_id: string; title: string }>).map((row) => [row.circle_id, row.title]))
-    const statusByCircle = new Map(batchCheckins.filter((row) => row.circle_tasks?.task_date === todayKey).map((row) => [row.circle_id, row.status]))
-    setBatches(memberships.map((row) => ({ id: row.circles!.id, name: row.circles!.name, admin: row.circles!.owner_id === user.id || ['owner', 'moderator'].includes(row.role), task: taskByCircle.get(row.circles!.id) ?? null, done: statusByCircle.has(row.circles!.id), status: statusByCircle.get(row.circles!.id) ?? null })))
-    if (circleIds.length) void supabase.from('circles').select('id,avatar_url').in('id', circleIds).then(({ data, error: photoError }) => {
-      if (photoError || !data) return
-      const byId = new Map(data.map((row) => [row.id as string, (row as { avatar_url?: string | null }).avatar_url ?? null]))
-      setBatches((items) => items.map((item) => ({ ...item, avatarUrl: byId.get(item.id) ?? null })))
-    })
-    const failed = goalsResult.error || postsResult.error || logsResult.error || collabResult.error || sharedResult.error
-    if (failed) { setError('Your day could not be loaded. Pull down or tap Retry.'); setLoading(false); return }
+    const checkins = (checkinsResult.data || []) as Array<{ circle_id: string; user_id: string; status: string }>
+    const memberRows = (membersResult.data || []) as Array<{ circle_id: string; role: string }>
+    setBatches(memberships.map((row) => {
+      const id = row.circles!.id
+      return {
+        id, name: row.circles!.name,
+        admin: adminIds.includes(id),
+        task: taskByCircle.get(id) ?? null,
+        done: checkins.some((c) => c.circle_id === id && c.user_id === u.id),
+        checkedIn: checkins.filter((c) => c.circle_id === id && c.user_id !== u.id && c.status !== 'missed').length,
+        members: memberRows.filter((m) => m.circle_id === id && m.role === 'member').length,
+      }
+    }))
 
     const owned = ((goalsResult.data || []) as Goal[]).map((goal) => ({ ...goal, shared: false }))
     const ownedIds = new Set(owned.map((goal) => goal.id))
     const shared = ((sharedResult.data || []) as Goal[]).filter((goal) => !ownedIds.has(goal.id)).map((goal) => ({ ...goal, shared: true }))
     setGoals([...owned, ...shared])
-    setActivity([
-      // "Missed" is honest, but it doesn't fill the ring.
-      ...(postsResult.data || []).map((row) => ({ goal_id: row.goal_id, at: row.created_at, minutes: 0, checkin: row.checkin_status !== 'missed', logged: true })),
-      ...(logsResult.data || []).map((row) => ({ goal_id: row.goal_id, at: row.logged_at, minutes: row.minutes_logged || 0, checkin: false })),
-      ...batchCheckins.filter((row) => row.status !== 'missed' && row.circle_tasks).map((row) => ({ goal_id: null, at: `${row.circle_tasks!.task_date}T12:00:00`, minutes: row.minutes ?? (row.hours != null ? Math.round(row.hours * 60) : 0), checkin: true })),
-    ])
+    setActivity((postsResult.data || []).map((row) => ({ goal_id: row.goal_id, at: row.created_at, logged: true })))
     setLoading(false)
   }, [router])
 
   useEffect(() => { void Promise.resolve().then(load) }, [load])
 
   const today = localKey(new Date())
-  const { month, monthName } = useMemo(() => {
-    const now = new Date()
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-    const byDay = new Map<string, { minutes: number; checkins: number }>()
-    activity.forEach((item) => {
-      const key = localKey(new Date(item.at))
-      const entry = byDay.get(key) || { minutes: 0, checkins: 0 }
-      entry.minutes += item.minutes; if (item.checkin) entry.checkins += 1
-      byDay.set(key, entry)
-    })
-    const list: MonthDay[] = Array.from({ length: daysInMonth }, (_, index) => {
-      const date = new Date(now.getFullYear(), now.getMonth(), index + 1)
-      const key = localKey(date)
-      const entry = byDay.get(key)
-      return { day: index + 1, key, active: Boolean(entry && (entry.checkins || entry.minutes)), minutes: entry?.minutes || 0, checkins: entry?.checkins || 0, future: key > today, today: key === today }
-    })
-    return { month: list, monthName: now.toLocaleDateString(undefined, { month: 'long' }) }
-  }, [activity, today])
-
-  const doneToday = useMemo(() => new Set(activity.filter((item) => item.logged && localKey(new Date(item.at)) === today).map((item) => item.goal_id)), [activity, today])
-  const weekMinutes = useMemo(() => {
-    const since = new Date(`${today}T00:00:00`).getTime() - 6 * 86_400_000 // this week: today and the 6 days before
-    return activity.filter((item) => new Date(item.at).getTime() >= since).reduce((sum, item) => sum + item.minutes, 0)
-  }, [activity, today])
-  // Days checked in this week, per goal (weeks start on Monday)
+  const doneToday = useMemo(() => new Set(activity.filter((a) => localKey(new Date(a.at)) === today).map((a) => a.goal_id)), [activity, today])
   const weekDays = useMemo(() => {
-    const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - ((start.getDay() + 6) % 7))
     const map = new Map<string, Set<string>>()
-    activity.forEach((item) => { if (!item.goal_id || new Date(item.at) < start) return; const days = map.get(item.goal_id) || new Set<string>(); days.add(localKey(new Date(item.at))); map.set(item.goal_id, days) })
+    activity.forEach((a) => { if (!a.goal_id) return; const days = map.get(a.goal_id) || new Set<string>(); days.add(localKey(new Date(a.at))); map.set(a.goal_id, days) })
     return map
   }, [activity])
-  const dailyStreak = goals.filter((goal) => (goal.frequency ?? 'daily') === 'daily').reduce((max, goal) => Math.max(max, goal.current_streak || 0), 0)
-  const visibleGoals = goals.filter((goal) => !(goal.frequency === 'once' && goal.is_completed))
-  const finishedOnce = goals.filter((goal) => goal.frequency === 'once' && goal.is_completed).length
-  const isPaused = (goal: Goal) => goal.status === 'paused' && Boolean(goal.pause_until && new Date(goal.pause_until) > new Date())
-  const weekMet = (goal: Goal) => (weekDays.get(goal.id)?.size || 0) >= (goal.times_per_week || 1)
-  // Only goals that are actually due today count: a weekly goal that already hit its target isn't.
-  // A weekly goal only counts as due when today is needed to still hit the week's target;
-  // otherwise it's an optional check-in, so rest days never look like falling behind.
+
+  const isPaused = (g: Goal) => g.status === 'paused' && Boolean(g.pause_until && new Date(g.pause_until) > new Date())
+  const weekMet = useCallback((g: Goal) => (weekDays.get(g.id)?.size || 0) >= (g.times_per_week || 1), [weekDays])
+  const personal = useMemo(() => goals.filter((g) => g.category !== 'exam_prep' && !(g.frequency === 'once' && g.is_completed)), [goals])
+  // A weekly goal is due only when today is needed to reach the week's target; otherwise rest days never look like falling behind.
   const daysLeftInWeek = 7 - ((new Date().getDay() + 6) % 7)
-  const weeklyDue = (goal: Goal) => (goal.times_per_week || 1) - (weekDays.get(goal.id)?.size || 0) >= daysLeftInWeek
-  const activeGoals = visibleGoals.filter((goal) => !isPaused(goal) && (goal.frequency !== 'weekly' || doneToday.has(goal.id) || (!weekMet(goal) && weeklyDue(goal))))
-  const checkedCount = activeGoals.filter((goal) => doneToday.has(goal.id)).length
-  const studentTasks = batches.filter((batch) => !batch.admin && batch.task)
-  const totalDue = activeGoals.length + studentTasks.length
-  const totalDone = checkedCount + studentTasks.filter((batch) => batch.done).length
+  const listGoals = useMemo(() => personal.filter((g) => !isPaused(g) && (g.frequency !== 'weekly' || doneToday.has(g.id) || (!weekMet(g) && (g.times_per_week || 1) - (weekDays.get(g.id)?.size || 0) >= daysLeftInWeek))).map((g) => ({
+    id: g.id, title: g.title, done: doneToday.has(g.id) || (g.frequency === 'weekly' && weekMet(g)),
+    detail: g.frequency === 'weekly' ? `${g.times_per_week} times a week` : g.frequency === 'once' ? 'One-time goal' : (g.current_streak || 0) > 1 ? `Every day. ${g.current_streak} days in a row.` : 'Every day',
+  })), [personal, doneToday, weekMet, weekDays, daysLeftInWeek])
+  const mentorTasks = useMemo(() => batches.filter((b) => !b.admin && b.task).map((b) => ({ circleId: b.id, name: b.name, task: b.task!, done: b.done })), [batches])
+  const toPost = batches.filter((b) => b.admin && !b.task)
 
-  const deleteGoal = async (goal: Goal) => {
-    if (goal.user_id !== userId || !(await confirmAction(`Delete “${goal.title}” and all its progress? This cannot be undone.`))) return
-    setBusyGoalId(goal.id)
-    const { data, error: deleteError } = await supabase.from('goals').delete().eq('id', goal.id).eq('user_id', goal.user_id).select('id')
-    setBusyGoalId(null)
-    if (deleteError || !data?.length) { setError('That goal could not be deleted. Please try again.'); return }
-    setGoals((current) => current.filter((item) => item.id !== goal.id))
-  }
-
-  // One tap from the Today slides: a private "done" check-in. Notes, photos and sharing stay on the check-in page.
   const quickDone = async (goalId: string) => {
-    if (!userId) return false
-    const { error: postError } = await supabase.from('posts').insert({ user_id: userId, goal_id: goalId, caption: 'Completed today’s check-in.', proof_type: 'text', checkin_status: 'done', visibility: 'private' })
+    if (!user) return false
+    const { error: postError } = await supabase.from('posts').insert({ user_id: user.id, goal_id: goalId, caption: 'Completed today’s check-in.', proof_type: 'text', checkin_status: 'done', visibility: 'private' })
     if (postError) return false
-    setActivity((cur) => [...cur, { goal_id: goalId, at: new Date().toISOString(), minutes: 0, checkin: true, logged: true }])
+    setActivity((cur) => [...cur, { goal_id: goalId, at: new Date().toISOString(), logged: true }])
     return true
   }
-  const deckGoals = activeGoals.filter((goal) => goal.category !== 'exam_prep' && !isPaused(goal)).map((goal) => ({
-    id: goal.id, title: goal.title, done: doneToday.has(goal.id) || (goal.frequency === 'weekly' && weekMet(goal)),
-    detail: goal.frequency === 'weekly' ? `${goal.times_per_week} times a week` : goal.frequency === 'once' ? 'One-time goal' : `Every day · ${goal.current_streak || 0}-day streak`,
-  }))
-  const deckMentor = batches.filter((batch) => !batch.admin && batch.task).map((batch) => ({ circleId: batch.id, name: batch.name, task: batch.task!, done: batch.done }))
 
-  if (loading) {
+  const circles: GoalCircle[] = [
+    ...prep.plans.map((p) => {
+      const c = counts?.byTemplate.get(p.templateId)
+      return { key: `exam:${p.templateId}`, label: examInfo(p.code).short, short: examInfo(p.code).short, href: `/prep/plan?exam=${p.templateId}`, onOpen: () => { try { window.localStorage.setItem(VIEW_KEY, p.templateId) } catch { /* opens the last exam viewed */ } }, progress: c && c.total ? c.done / c.total : 0 }
+    }),
+    ...personal.filter((g) => !isPaused(g)).map((g) => ({
+      key: `goal:${g.id}`, label: g.title, category: g.category, href: `/goal/${g.id}`,
+      progress: g.frequency === 'weekly' ? Math.min(1, (weekDays.get(g.id)?.size || 0) / (g.times_per_week || 1)) : doneToday.has(g.id) ? 1 : 0,
+    })),
+    ...batches.filter((b) => b.admin).map((b) => ({ key: `batch:${b.id}`, label: b.name, href: `/circles/${b.id}`, runs: true, progress: b.task && b.members ? b.checkedIn / b.members : 0 })),
+  ]
+
+  if (loading || !user) {
     return <main className="mx-auto min-h-screen max-w-xl space-y-4 px-4 pb-28 pt-5" aria-busy="true">
       <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-      <div className="h-48 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-      {[1, 2].map((item) => <div key={item} className="h-20 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}
+      <div className="flex gap-3">{[1, 2, 3, 4].map((i) => <div key={i} className="h-16 w-16 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />)}</div>
+      <div className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
     </main>
   }
 
-  const shownDays = month.filter((day) => day.active).length
-  const soFar = month.filter((day) => !day.future).length
-  const weekTime = weekMinutes >= 60 ? `${Math.floor(weekMinutes / 60)} h ${weekMinutes % 60 ? `${weekMinutes % 60} m` : ''}`.trim() : `${weekMinutes} min`
-  const row = 'flex items-center gap-3 px-4 py-3'
-  const ghostButton = 'shrink-0 rounded-xl border border-slate-300 px-3.5 py-2 text-sm font-bold dark:border-slate-600'
-  const inkButton = 'shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 shadow-sm transition hover:bg-amber-400 active:scale-95'
-  const doneTag = 'inline-flex shrink-0 items-center gap-1 rounded-lg bg-emerald-500/10 px-2.5 py-1.5 text-sm font-bold text-emerald-700 dark:text-emerald-400'
-  const card = 'rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900'
-  const todayPct = totalDue ? Math.round((totalDone / totalDue) * 100) : 0
-  const studentBatches = batches.filter((batch) => !batch.admin)
-  const mentorBatches = batches.filter((batch) => batch.admin)
+  const left = counts ? counts.total - counts.done : null
+  const isNew = prep.status === 'ready' && prep.plans.length === 0 && goals.length === 0 && batches.length === 0
+  const card = 'rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
 
   return (
-    <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-6">
-      <header className="mb-4 flex items-start justify-between gap-3"><div>
-        <p className="text-sm font-semibold text-slate-500">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-        <h1 className="mt-0.5 text-[26px] font-extrabold leading-tight tracking-tight">{greeting()}{firstName ? `, ${firstName}` : ''}</h1>
-      </div><HelpButton className="mt-1" /></header>
+    <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4">
+      <header className="flex items-center justify-between">
+        <Link href="/profile" aria-label="Your profile and settings" className="overflow-hidden rounded-full"><ProfileAvatar value={user.avatar} name={user.name || 'You'} size={40} className="rounded-full" /></Link>
+        <span className="flex items-center gap-2"><LogoMark size={28} /><span className="text-lg font-bold tracking-tight">GoalYaar</span></span>
+        <Link href="/notifications" aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'} className="relative grid h-10 w-10 place-items-center rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
+          <Bell className="h-5 w-5" />
+          {unread > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-600" />}
+        </Link>
+      </header>
 
-      {error && <div role="alert" className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"><span>{error}</span><button onClick={() => void load()} className="shrink-0 font-bold underline">Retry</button></div>}
-
-      {preparing
-        ? <TodayDeck goals={deckGoals} mentor={deckMentor} onGoalDone={quickDone} />
-        : <>
-      {/* Exam preparation first for people preparing; a one-time invitation for everyone else */}
-      <PrepTodayCard />
-
-      {/* Today's progress and consistency: one line for people preparing for an exam, the full card for everyone else */}
-      {preparing ? (totalDue > 0 || dailyStreak > 0) && <p className="mb-1 flex items-center gap-2 px-1 text-sm text-slate-500">
-        <CalendarCheck2 className="h-4 w-4 shrink-0 text-emerald-500" />
-        <span>{totalDue === 0 ? 'No goals due today' : totalDone === totalDue ? 'All goals done today' : `${totalDone} of ${totalDue} goals done today`}{dailyStreak > 0 ? ` · ${dailyStreak}-day streak` : ''}{weekMinutes > 0 ? ` · ${weekTime} this week` : ''}</span>
-      </p> : <>
-      <section data-tour="today-ring" className={`${card} p-4`}>
-        <div className="flex items-center gap-4">
-          <MonthRing days={month} monthName={monthName} compact />
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Your progress</p>
-            <p className="mt-0.5 text-2xl font-extrabold leading-tight tracking-tight tabular-nums">
-              {totalDue === 0 ? 'Nothing due yet' : totalDone === totalDue ? 'All done' : <>{totalDone}<span className="text-base font-semibold text-slate-500"> of {totalDue} done</span></>}
-            </p>
-            {totalDue > 0 && <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" role="progressbar" aria-valuenow={todayPct} aria-valuemin={0} aria-valuemax={100} aria-label="Done today">
-              <div className={`h-full rounded-full transition-[width] duration-500 ${totalDone === totalDue ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${Math.max(todayPct, 4)}%` }} />
-            </div>}
-          </div>
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><Flame className="h-4 w-4 text-orange-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{dailyStreak}</p><p className="mt-1 text-xs font-semibold text-slate-500">day streak</p></div>
-          <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><CalendarCheck2 className="h-4 w-4 text-emerald-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{shownDays}<span className="text-sm font-semibold text-slate-500">/{soFar}</span></p><p className="mt-1 text-xs font-semibold text-slate-500">this month</p></div>
-          <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60"><Timer className="h-4 w-4 text-sky-500" /><p className="mt-1 text-lg font-extrabold leading-none tabular-nums">{weekTime}</p><p className="mt-1 text-xs font-semibold text-slate-500">this week</p></div>
-        </div>
+      <section className="mt-5">
+        <h1 className="text-2xl font-bold tracking-tight">{greeting()}{user.firstName ? `, ${user.firstName}` : ''}</h1>
+        <p className="mt-1 text-sm text-slate-500">{isNew ? 'Set your first goal to get a plan for today.' : left === null ? ' ' : left === 0 ? (counts!.total ? 'All done for today. See you tomorrow.' : 'Nothing is due today.') : left === 1 ? 'One thing left today' : `${left} things left today`}</p>
       </section>
 
-      </>}
+      {error && <div role="alert" className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"><span>{error}</span><button type="button" onClick={() => void load()} className="shrink-0 font-semibold underline">Try again</button></div>}
 
-      <InstallNudge />
+      {!isNew && <section aria-labelledby="goals-h" data-guide="goals" className="mt-6">
+        <div className="mb-3 flex items-baseline justify-between"><h2 id="goals-h" className="text-base font-semibold">Your goals</h2>{prep.plans.length > 0 && <Link href="/prep/plan?exams=1" className="text-sm font-medium text-amber-700 dark:text-amber-400">Manage exams</Link>}</div>
+        <GoalCircles items={circles} />
+      </section>}
 
-      {/* Everything to do today, in one list: the mentor's task first, then your goals */}
-      <section data-tour="today-checkin" className="mt-5">
-        <div className="mb-2 flex items-baseline justify-between"><h2 className="text-lg font-extrabold">Today</h2><Link href="/create-goal" className="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white"><Plus className="h-4 w-4" />New goal</Link></div>
-        {goals.length === 0 && batches.length === 0
-          ? <StarterGoals />
-          : <div className={`divide-y divide-slate-100 overflow-hidden dark:divide-slate-800 ${card}`}>
-            {studentBatches.map((batch) => <Link key={batch.id} href={`/circles/${batch.id}`} className={`${row} transition hover:bg-slate-50 dark:hover:bg-slate-800/50`}>
-              <CircleAvatar name={batch.name} url={batch.avatarUrl} size={40} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">{batch.task ? `From your mentor · ${batch.name}` : batch.name}</span>
-                <span className="line-clamp-2 break-words text-base font-bold leading-snug">{batch.task ?? 'No task from your mentor today'}</span>
-              </span>
-              {batch.task && (batch.done
-                ? batch.status === 'missed' ? <span className="shrink-0 text-sm font-semibold text-slate-500">Missed</span> : <span className={doneTag}><CheckCircle2 className="h-4 w-4" />{batch.status === 'partial' ? 'Partly' : 'Done'}</span>
-                : <span className={inkButton}>Check in</span>)}
-            </Link>)}
-
-            {visibleGoals.map((goal) => {
-              const paused = isPaused(goal)
-              const weekly = goal.frequency === 'weekly'
-              const once = goal.frequency === 'once'
-              const daysThisWeek = weekDays.get(goal.id)?.size || 0
-              const done = doneToday.has(goal.id) || (weekly && weekMet(goal))
-              return <article key={goal.id} className={row}>
-                <div className="min-w-0 flex-1">
-                  <Link href={`/goal/${goal.id}`} className={`line-clamp-2 break-words text-base font-bold leading-snug ${done ? 'text-slate-500' : ''}`}>{goal.title}</Link>
-                  <p className="mt-0.5 line-clamp-2 text-sm text-slate-500">
-                    {once ? 'One-time goal'
-                      : weekly ? `${goal.times_per_week} times a week · ${Math.min(daysThisWeek, goal.times_per_week || 1)} of ${goal.times_per_week}`
-                      : `Every day · ${goal.current_streak || 0}-day streak`}
-                    {goal.shared ? ' · Shared' : ''}{paused ? ' · Paused' : ''}
-                  </p>
-                </div>
-                {!paused && (done
-                  ? <span className={doneTag}><CheckCircle2 className="h-4 w-4" />{weekly && !doneToday.has(goal.id) ? 'Week done' : 'Done'}</span>
-                  : <Link href={`/check-in?goal=${goal.id}`} className={studentBatches.some((batch) => batch.task && !batch.done) ? ghostButton : inkButton}>Check in</Link>)}
-                {!goal.shared && <button type="button" onClick={() => void deleteGoal(goal)} disabled={busyGoalId === goal.id} aria-label={`Delete ${goal.title}`} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-500 disabled:opacity-40"><Trash2 className="h-4 w-4" /></button>}
-              </article>
-            })}
-
-            {goals.length === 0 && <Link href="/create-goal" className={`${row} text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white`}><Plus className="h-4 w-4" />Add a personal goal too, like “Revise 2 hours daily”</Link>}
+      {isNew
+        ? <section aria-labelledby="start-h" className="mt-6">
+            <h2 id="start-h" className="mb-3 text-base font-semibold">Get started</h2>
+            <div className="space-y-2.5">
+              {[
+                { href: '/prep/start', icon: GraduationCap, title: 'Prepare for an exam', line: 'UPSC, state services, SSC, banking and more' },
+                { href: '/create-goal', icon: Target, title: 'Set a personal goal', line: 'Fitness, reading, a skill or your own' },
+                { href: '/circles', icon: UsersRound, title: 'Join a batch', line: 'Use the code your mentor shared' },
+              ].map((o) => <Link key={o.href} href={o.href} className={`${card} flex items-center gap-3 p-4`}>
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"><o.icon className="h-5 w-5" /></span>
+                <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{o.title}</span><span className="block text-sm text-slate-500">{o.line}</span></span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+              </Link>)}
+            </div>
+          </section>
+        : <div className="mt-6">
+            <TodayList data={prep} userId={user.id} goals={listGoals} mentor={mentorTasks} onGoalDone={quickDone} onCounts={setCounts} />
           </div>}
-        {finishedOnce > 0 && <p className="mt-2 px-1 text-sm text-slate-500">{finishedOnce} one-time goal{finishedOnce > 1 ? 's' : ''} completed</p>}
-      </section>
 
-        </>}
-
-      {mentorBatches.length > 0 && <section className="mt-5">
-        <h2 className="mb-2 text-lg font-extrabold">{mentorBatches.length === 1 ? 'Your batch' : 'Your batches'}</h2>
-        <div className={`divide-y divide-slate-100 overflow-hidden dark:divide-slate-800 ${card}`}>
-          {mentorBatches.map((batch) => <Link key={batch.id} href={`/circles/${batch.id}`} className={`${row} transition hover:bg-slate-50 dark:hover:bg-slate-800/50`}>
-            <CircleAvatar name={batch.name} url={batch.avatarUrl} size={40} />
-            <span className="min-w-0 flex-1">
-              <span className="line-clamp-2 break-words text-base font-bold leading-snug">{batch.name}</span>
-              <span className="mt-0.5 line-clamp-2 text-sm text-slate-500">{batch.task ? `Today: ${batch.task}` : 'You run this batch. Post today’s task for your students.'}</span>
-            </span>
-            <span className={batch.task ? ghostButton : inkButton}>{batch.task ? 'Students' : 'Post task'}</span>
-          </Link>)}
-        </div>
+      {toPost.length > 0 && <section aria-labelledby="batches-h" className={`${card} mt-4`}>
+        <h2 id="batches-h" className="px-4 pt-4 text-base font-semibold">For your {toPost.length === 1 ? 'batch' : 'batches'}</h2>
+        <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">
+          {toPost.map((b) => <li key={b.id} className="flex items-center gap-3 px-4 py-3.5">
+            <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-slate-500">{b.name}</span><span className="block text-[15px] font-semibold">Post today&apos;s task</span></span>
+            <Link href={`/circles/${b.id}`} className="h-10 shrink-0 rounded-xl bg-slate-900 px-4 text-sm font-semibold leading-10 text-white dark:bg-white dark:text-slate-900">Post</Link>
+          </li>)}
+        </ul>
       </section>}
 
-      {userId && !preparing && <section className="mt-5">
-        <button type="button" onClick={() => setStepsOpen((open) => !open)} aria-expanded={stepsOpen} className={`flex w-full items-center justify-between px-4 py-3 text-left text-base font-bold ${card}`}>
-          Small steps for today <ChevronDown className={`h-5 w-5 text-slate-400 transition ${stepsOpen ? 'rotate-180' : ''}`} />
-        </button>
-        {stepsOpen && <div className="mt-2"><TodoWidget userId={userId} /></div>}
-      </section>}
+      <div className="mt-4"><InstallNudge /></div>
     </main>
   )
 }

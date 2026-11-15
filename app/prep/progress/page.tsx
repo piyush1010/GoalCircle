@@ -39,6 +39,8 @@ export default function PrepProgressPage() {
   const data = usePrepData(true)
   const [history, setHistory] = useState<Snapshot[]>([])
   const [logOpen, setLogOpen] = useState(false)
+  // Opened from the + sheet: start on the log.
+  useEffect(() => { if (new URLSearchParams(window.location.search).get('log') !== '1') return; const t = window.setTimeout(() => setLogOpen(true), 0); return () => window.clearTimeout(t) }, [])
   const [editMock, setEditMock] = useState<MockRow | null>(null)
   const [allMocks, setAllMocks] = useState(false)
   const [editAnswer, setEditAnswer] = useState<AnswerRow | null>(null)

@@ -9,12 +9,12 @@ import ProfileAvatar from '@/components/ProfileAvatar'
 import GuideTour, { type TourStep } from '@/components/GuideTour'
 
 const WELCOME_TOUR: TourStep[] = [
-  { title: 'Your profile', text: 'A one-minute tour of your progress and settings.' },
-  { target: 'nav-create', title: 'Start here', text: "Create a goal, or post today's progress on one you already have." },
-  { target: 'nav-feed', title: 'Feed', text: 'See progress from people you follow. Boost a win, comment or send a nudge.' },
-  { target: 'nav-circles', title: 'Circles', text: "Join your mentor's batch with an invite link, or start a group with friends." },
-  { target: 'nav-progress', title: 'Today', text: 'Your home: today’s goals and how many days you’ve shown up this month.' },
-  { target: 'nav-profile', title: 'Profile', text: 'Your goals and settings. Tap the ? on this page any time to see this tour again.' },
+  { title: 'Your profile', text: 'A quick tour of where everything is.' },
+  { target: 'nav-home', title: 'Home', text: 'Your goals and everything due today.' },
+  { target: 'nav-communities', title: 'Communities', text: 'Your batches and study groups, the feed, and people with the same goal.' },
+  { target: 'nav-add', title: 'The + button', text: 'Log today, start the focus timer, add a task, set a new goal or join a batch.' },
+  { target: 'nav-progress', title: 'Progress', text: 'Your month, each exam’s coverage and each goal’s run.' },
+  { title: 'Profile and settings', text: 'Open them any time from your photo at the top of Home. Tap the ? on this page to see this tour again.' },
 ]
 import { CircleHelp, Film, Flame, Settings as SettingsIcon, Sparkles } from 'lucide-react'
 import Link from 'next/link'
