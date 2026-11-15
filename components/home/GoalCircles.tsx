@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { BookOpen, Briefcase, Dumbbell, HeartPulse, Plus, Target, UsersRound, type LucideIcon } from 'lucide-react'
+import { BookOpen, Briefcase, ChefHat, Dumbbell, HeartPulse, Plane, Plus, Target, UsersRound, type LucideIcon } from 'lucide-react'
 
 export interface GoalCircle {
   key: string
@@ -17,7 +17,7 @@ export interface GoalCircle {
   runs?: boolean
 }
 
-const ICONS: Record<string, LucideIcon> = { fitness: Dumbbell, learning: BookOpen, reading: BookOpen, habits: HeartPulse, health: HeartPulse, work: Briefcase, community: UsersRound }
+const ICONS: Record<string, LucideIcon> = { fitness: Dumbbell, learning: BookOpen, reading: BookOpen, habits: HeartPulse, health: HeartPulse, work: Briefcase, community: UsersRound, cooking: ChefHat, travel: Plane }
 
 const R = 29
 const C = 2 * Math.PI * R
@@ -41,7 +41,7 @@ export default function GoalCircles({ items }: { items: GoalCircle[] }) {
         <span className="line-clamp-2 w-full text-center text-xs font-medium leading-tight text-slate-600 dark:text-slate-300">{g.label}</span>
       </Link>
     })}
-    <Link href="/create-goal" className="flex w-[68px] shrink-0 flex-col items-center gap-1.5">
+    <Link href="/start" className="flex w-[68px] shrink-0 flex-col items-center gap-1.5">
       <span className="grid h-16 w-16 place-items-center"><span className="grid h-[52px] w-[52px] place-items-center rounded-full border-2 border-dashed border-slate-300 text-slate-500 dark:border-slate-600"><Plus className="h-5 w-5" aria-hidden="true" /></span></span>
       <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Add</span>
     </Link>

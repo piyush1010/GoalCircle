@@ -69,9 +69,12 @@ export default function PrepStartPage() {
   useEffect(() => {
     if (data.status !== 'ready') return
     const t = window.setTimeout(() => {
-      const add = new URLSearchParams(window.location.search).get('add') === '1'
+      const params = new URLSearchParams(window.location.search)
+      const add = params.get('add') === '1'
       setAdding(add)
       if (add) return
+      // Straight from first-time setup: the plan exists, so go to "What have you already finished?"
+      if (params.get('step') === '4' && data.profile.saved) setStep(4)
       setExam((cur) => cur ?? (data.profile.saved ? data.templateId : null))
       setStage(data.profile.targetStage)
       setDate((cur) => cur || (data.profile.examDate && data.profile.examDate > today ? data.profile.examDate : ''))
@@ -122,7 +125,7 @@ export default function PrepStartPage() {
     const ids = [...done].filter((id) => !data.states.get(id)?.touchedOn)
     if (ids.length && !(await data.tickMany(ids))) { setBusy(false); setError('Could not save your ticks. Please try again.'); return }
     if (pushSupported() && !(await pushIsOn())) await enablePush()
-    router.replace('/prep/plan?welcome=1')
+    router.replace(new URLSearchParams(window.location.search).get('from') === 'start' ? '/dashboard' : '/prep/plan?welcome=1')
   }
   const next = async () => {
     if (step === 1 && !exam) return

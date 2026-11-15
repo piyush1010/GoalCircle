@@ -55,7 +55,7 @@ export default function HomePage() {
           <nav className="flex items-center gap-1.5" aria-label="Site">
             <div className="hidden sm:block"><ThemeToggle /></div>
             <Link href="/login" className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Sign in</Link>
-            <Link href="/login?mode=signup" className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">Start free</Link>
+            <Link href="/start" className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">Start free</Link>
           </nav>
         </div>
       </header>
@@ -66,7 +66,7 @@ export default function HomePage() {
             <h1 className="landing-enter text-balance text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">A study plan you can <span className="text-amber-600 dark:text-amber-400">actually keep.</span></h1>
             <p className="landing-enter landing-delay-2 mt-5 max-w-xl text-pretty text-base leading-7 text-slate-600 sm:text-lg dark:text-slate-300">Pick your exam and your date. GoalYaar splits the syllabus into a few subtopics a day, brings each topic back before you forget it, and keeps your batch in the loop.</p>
             <div className="landing-enter landing-delay-3 mt-7 flex flex-col gap-3 sm:flex-row">
-              <Link href="/login?mode=signup&next=/prep/start" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-base font-semibold text-slate-950 shadow-sm hover:bg-amber-400">Make my plan <ArrowRight className="h-4 w-4" /></Link>
+              <Link href="/start" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-base font-semibold text-slate-950 shadow-sm hover:bg-amber-400">Make my plan <ArrowRight className="h-4 w-4" /></Link>
               <a href="#how-it-works" className="inline-flex items-center justify-center rounded-2xl border border-slate-300 px-6 py-3.5 text-sm font-semibold text-slate-700 hover:bg-white dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900">How it works</a>
             </div>
             <p className="landing-enter landing-delay-4 mt-6 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500"><span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" />Free, no ads</span><span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" />Takes a minute to set up</span><span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" />Private unless you share</span></p>
@@ -124,7 +124,7 @@ export default function HomePage() {
         <div className="landing-reveal mx-auto max-w-4xl rounded-[2rem] bg-slate-900 px-6 py-12 text-center text-white sm:px-12 dark:bg-slate-800/60">
           <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-4xl">Start with today&apos;s five subtopics.</h2>
           <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-300">Setting up takes about a minute. You can change your exam, date or hours whenever you like.</p>
-          <Link href="/login?mode=signup&next=/prep/start" className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-sm font-semibold text-slate-950 hover:bg-amber-400">Make my plan <ArrowRight className="h-4 w-4" /></Link>
+          <Link href="/start" className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-sm font-semibold text-slate-950 hover:bg-amber-400">Make my plan <ArrowRight className="h-4 w-4" /></Link>
         </div>
       </section>
 

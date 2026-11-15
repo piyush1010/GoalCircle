@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Bell, ChevronRight, GraduationCap, Target, UsersRound } from 'lucide-react'
+import { Bell, ChevronRight, GraduationCap, UsersRound } from 'lucide-react'
 import LogoMark from '@/components/LogoMark'
 import ProfileAvatar from '@/components/ProfileAvatar'
 import InstallNudge from '@/components/InstallNudge'
@@ -192,8 +192,7 @@ export default function HomePage() {
             <h2 id="start-h" className="mb-3 text-base font-semibold">Get started</h2>
             <div className="space-y-2.5">
               {[
-                { href: '/prep/start', icon: GraduationCap, title: 'Prepare for an exam', line: 'UPSC, state services, SSC, banking and more' },
-                { href: '/create-goal', icon: Target, title: 'Set a personal goal', line: 'Fitness, reading, a skill or your own' },
+                { href: '/start', icon: GraduationCap, title: 'Set up your goals', line: 'An exam, fitness, reading or your own' },
                 { href: '/circles', icon: UsersRound, title: 'Join a batch', line: 'Use the code your mentor shared' },
               ].map((o) => <Link key={o.href} href={o.href} className={`${card} flex items-center gap-3 p-4`}>
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"><o.icon className="h-5 w-5" /></span>
