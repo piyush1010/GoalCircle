@@ -5,11 +5,13 @@
 
 export type HabitId = 'fitness' | 'health' | 'reading' | 'skill' | 'cooking' | 'travel' | 'own'
 export type Level = 'beginner' | 'intermediate' | 'advanced'
-export interface HabitDraft { id: HabitId; title: string; perWeek: number } // 7 means every day
+export interface HabitDraft { id: HabitId; title: string; perWeek: number; finishBy?: string } // perWeek 7 means every day; finishBy is YYYY-MM-DD
 export interface StartDraft {
   goals: ('exam' | HabitId)[]
   exam: { code: string; date: string; stage: 'prelims' | 'mains'; hours: number; level: Level } | null
   habits: HabitDraft[]
+  /** Post the new goals on the feed, where followers can cheer them on. */
+  share?: boolean
   savedAt: number
 }
 
