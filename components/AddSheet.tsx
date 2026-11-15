@@ -47,7 +47,7 @@ export default function AddSheet({ onClose }: { onClose: () => void }) {
     { href: '/focus', icon: Timer, title: 'Start focus', line: 'A timer for focused study or practice' },
     ...(preparing ? [{ href: '/prep/mistakes?add=1', icon: CircleAlert, title: 'Add a mistake', line: 'Something that tripped you up in a test' }] : []),
     { onPick: () => setView('task'), icon: ListPlus, title: 'Add a task', line: 'A one-off thing for today, like filling in a form' },
-    { href: '/create-goal', icon: Target, title: 'New goal', line: 'An exam, a habit or something of your own' },
+    { href: '/start', icon: Target, title: 'New goal', line: 'An exam, a habit or something of your own' },
     { href: '/circles', icon: UsersRound, title: 'Join or start a batch', line: 'Use your mentor’s code, or coach your own students' },
   ]
   const row = 'flex w-full items-center gap-3.5 py-3 text-left'
