@@ -4,31 +4,18 @@
 export interface GuideStep { title: string; text: string; example?: string; target?: string }
 export interface Guide { title: string; intro: string; steps: GuideStep[] }
 
-const PREP_TODAY: Guide = {
-  title: 'Today',
-  intro: 'Your plan for today, one card at a time: what to study, what to revise, and your goals. Swipe through and act on each.',
+const HOME: Guide = {
+  title: 'Home',
+  intro: 'Your goals at the top, and everything due today in one list below.',
   steps: [
-    { title: 'One task per slide', target: '[data-guide="deck"]', text: 'Your mentor’s task, revisions due, today’s subtopics, the topic of the day (the same for everyone preparing for your exam) and personal goals, across all your exams.', example: 'Slide 1: “Revise · Fundamental Rights”. Slide 2: “Study · Directive Principles”.' },
-    { title: 'Tap the one big button', target: '[data-guide="deck"]', text: 'Done ticks a subtopic. For a revision, say how much you remembered; that sets when it comes back. Tapped by mistake? Undo, on the card or in the message that pops up.', example: 'You revise Fundamental Rights and remember most of it: tap Got it, and it returns in a week instead of 3 days.' },
-    { title: 'Several exams?', target: '[data-guide="deck"]', text: 'Tap an exam at the top to see only its cards, or All exams for everything.' },
-    { title: 'Focus with the timer', target: '[data-guide="deck"]', text: 'Focus on a study card opens the timer: 25 / 5, 50 / 10 or a stopwatch. Finish to save the minutes and tick the subtopic.', example: 'Two rounds on “Directive Principles” saves 50 minutes to your week.' },
-    { title: 'Log, plan, share', target: '[data-guide="deck-actions"]', text: 'Log adds anything else (PYQs, a mock, an answer). Plan shows the days ahead. Share is off unless you choose followers, everyone or WhatsApp.' },
-  ],
-}
-
-const GOALS_TODAY: Guide = {
-  title: 'Today',
-  intro: 'Your goals and your batch’s task for today, with your month at a glance.',
-  steps: [
-    { title: 'Check in', target: '[data-tour="today-checkin"]', text: 'Tap Check in when you have done today’s part. Add a note or a photo if you like; it takes seconds.', example: '“Run 3 km” → Check in → Done → “Felt easy today”.' },
-    { title: 'Your month', target: '[data-tour="today-ring"]', text: 'Every day you show up fills a piece of the ring. Missed days are honest, not failures.' },
-    { title: 'Preparing for an exam?', text: 'Turn on exam preparation in Settings to get a daily study plan here instead.' },
+    { title: 'Your goals', target: '[data-guide="goals"]', text: 'Each circle is one goal: an exam, a personal goal, or a batch you run. The ring fills as you finish today’s part. Tap a circle to open it.', example: 'Tap UPSC to open your study plan; tap Fitness to see your streak.' },
+    { title: 'Today', target: '[data-guide="deck"]', text: 'Study, revision, your mentor’s task, personal goals and to-dos, across all your goals. Tap Done as you finish each one. Anything tapped by mistake can be undone.', example: 'You revise Fundamental Rights and remember most of it: tap Got it, and it comes back in a week rather than three days.' },
+    { title: 'The + button', text: 'Log a goal, start the focus timer, add a mistake or a one-off task, set a new goal, or join a batch.' },
   ],
 }
 
 export const GUIDES: { match: (path: string) => boolean; pick?: () => boolean; guide: Guide }[] = [
-  { match: (p) => p === '/dashboard', pick: () => Boolean(document.querySelector('[data-guide="deck"]')), guide: PREP_TODAY },
-  { match: (p) => p === '/dashboard', guide: GOALS_TODAY },
+  { match: (p) => p === '/dashboard', guide: HOME },
   {
     match: (p) => p === '/prep/plan',
     guide: {

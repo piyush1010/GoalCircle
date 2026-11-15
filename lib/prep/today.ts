@@ -33,7 +33,7 @@ export function todayTasks(input: {
       const r = retention(s, today)
       if (!revisedToday && r.status !== 'overdue' && r.status !== 'due_today') continue
       if (!once(n.code, n.id)) continue
-      revise.push({ key: `r:${n.id}`, kind: 'revise', title: n.title, subtitle: revisedToday ? 'Revised today' : r.status === 'due_today' ? 'Revision due today' : `Revision ${r.daysOverdue} day${r.daysOverdue === 1 ? '' : 's'} overdue`, exam: multi ? p.short : null, nodeId: n.id, done: revisedToday, overdue: revisedToday ? -1 : r.daysOverdue })
+      revise.push({ key: `r:${n.id}`, kind: 'revise', title: n.title, subtitle: revisedToday ? 'Revised today' : r.status === 'due_today' ? 'Revision due today' : `Revision ${r.daysOverdue} day${r.daysOverdue === 1 ? '' : 's'} overdue`, exam: multi ? p.short : null, templateId: p.templateId, nodeId: n.id, done: revisedToday, overdue: revisedToday ? -1 : r.daysOverdue })
     }
     const plan = planFor(p.nodes, states, p.settings, today)
     if (!plan) continue
@@ -41,7 +41,7 @@ export function todayTasks(input: {
     const todo = plan.days[0]?.date === today ? plan.days[0].units : []
     for (const [u, done] of [...doneToday.map((u) => [u, true] as const), ...todo.map((u) => [u, false] as const)]) {
       if (!once(byId.get(u.id)?.code ?? null, u.id)) continue
-      study.push({ key: `s:${u.id}`, kind: 'study', title: u.title, subtitle: u.topicTitle === u.title ? u.paperTitle : u.topicTitle, exam: multi ? p.short : null, nodeId: u.id, done })
+      study.push({ key: `s:${u.id}`, kind: 'study', title: u.title, subtitle: u.topicTitle === u.title ? u.paperTitle : u.topicTitle, exam: multi ? p.short : null, templateId: p.templateId, nodeId: u.id, done })
     }
   }
   const max = input.maxRevisions ?? 5
@@ -50,7 +50,7 @@ export function todayTasks(input: {
 
   const mentor: Task[] = (input.mentor ?? []).map((m) => ({ key: `m:${m.circleId}`, kind: 'mentor', title: m.task, subtitle: `From your mentor · ${m.name}`, exam: null, circleId: m.circleId, done: m.done }))
   const goals: Task[] = (input.goals ?? []).map((g) => ({ key: `g:${g.id}`, kind: 'goal', title: g.title, subtitle: g.detail, exam: null, goalId: g.id, done: g.done }))
-  const strip = (t: Task & { overdue: number }): Task => ({ key: t.key, kind: t.kind, title: t.title, subtitle: t.subtitle, exam: t.exam, nodeId: t.nodeId, done: t.done })
+  const strip = (t: Task & { overdue: number }): Task => ({ key: t.key, kind: t.kind, title: t.title, subtitle: t.subtitle, exam: t.exam, templateId: t.templateId, nodeId: t.nodeId, done: t.done })
   const all = [...mentor, ...openRevise.map(strip), ...doneRevise.map(strip), ...study, ...goals]
   // Open tasks first, finished ones after, keeping the order within each group.
   return [...all.filter((t) => !t.done), ...all.filter((t) => t.done)]
