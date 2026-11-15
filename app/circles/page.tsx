@@ -12,6 +12,7 @@ import { localDateString } from '@/lib/exams'
 import { supabase } from '@/utils/supabase'
 import CircleChallenges from '@/components/CircleChallenges'
 import ChallengeCard from '@/components/communities/ChallengeCard'
+import CommunityTabs from '@/components/communities/CommunityTabs'
 import { describe, todayLine, type CommunityRow } from '@/lib/communities'
 import HelpButton from '@/components/HelpButton'
 
@@ -163,7 +164,7 @@ export default function CirclesPage() {
   }
 
   return <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-5">
-    <header className="mb-4 flex items-center justify-between gap-3"><h1 className="text-[26px] font-bold tracking-tight">Communities</h1><div className="flex items-center gap-2"><HelpButton /><Link href="/feed" className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold dark:border-slate-600">Feed</Link></div></header>
+    <header className="mb-4 flex items-center justify-between gap-3"><h1 className="sr-only">Communities</h1><CommunityTabs active="communities" /><HelpButton /></header>
     <div className="relative mb-5">
       <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
       <input value={query} onChange={(event) => setQuery(event.target.value)} type="search" aria-label="Search communities, batches and groups" placeholder="Search communities, batches and groups" className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-[15px] dark:border-slate-700 dark:bg-slate-900" />

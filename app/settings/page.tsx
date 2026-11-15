@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDisplayPreferences, useTheme, type Theme } from '@/components/ThemeProvider'
 import InstallAppCard from '@/components/InstallAppCard'
@@ -12,7 +12,7 @@ import PushToggle from '@/components/PushToggle'
 import PrepSettingsCard from '@/components/prep/PrepSettingsCard'
 import PageGuideToggle from '@/components/PageGuideToggle'
 import { supabase } from '@/utils/supabase'
-import { BarChart3, Bell, Download, KeyRound, LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, Type, UserRound } from 'lucide-react'
+import { ArrowLeft, BarChart3, Bell, Check, ChevronRight, Compass, Download, Info, KeyRound, LogOut, Monitor, Moon, Shield, Sun, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { readReminderPreferences, saveReminderPreferences } from '@/lib/notifications/reminderPreferences'
 import { readDailyReminder, saveDailyReminder } from '@/lib/notifications/dailyReminder'
@@ -35,7 +35,6 @@ export default function SettingsPage() {
   const [isPublicProfile, setIsPublicProfile] = useState(true)
 
   // Status & Feedback States
-  const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
   const [passwordResetSent, setPasswordResetSent] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -186,225 +185,100 @@ export default function SettingsPage() {
     router.push('/login')
   }
 
+  const card = 'rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900'
+  const heading = 'mb-2 mt-7 px-1 text-sm font-semibold text-slate-500'
+  const row = 'flex w-full items-center gap-3 px-4 py-3.5 text-left'
+  const toggle = (on: boolean) => `relative h-6 w-11 shrink-0 rounded-full transition-colors ${on ? 'bg-slate-900 dark:bg-slate-400' : 'bg-slate-200 dark:bg-slate-700'}`
+  const knob = (on: boolean) => `absolute top-1 block h-4 w-4 rounded-full bg-white transition-all ${on ? 'left-6' : 'left-1'}`
+
   return (
-    <div className="p-4 max-w-xl mx-auto space-y-5 pb-28 text-slate-800 dark:text-slate-200 select-none">
-      {/* Header */}
-      <div className="pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <h1 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <Settings className="h-4 w-4 text-amber-500" /> App Settings
-        </h1>
-        <button
-          onClick={() => router.back()}
-          className="text-xs font-bold text-amber-500 hover:underline"
-        >
-          ← Back
-        </button>
+    <main className="mx-auto max-w-xl px-4 pb-28 pt-4 text-slate-800 dark:text-slate-200">
+      <div className="flex h-10 items-center gap-2">
+        <button type="button" onClick={() => { if (window.history.length > 1) router.back(); else router.push('/profile') }} aria-label="Back" className="-ml-2 grid h-10 w-10 place-items-center rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" /></button>
+      </div>
+      <h1 className="mt-1 text-[26px] font-bold tracking-tight text-slate-900 dark:text-white">Settings</h1>
+      {saveMessage && <p role="status" className="mt-3 rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200">{saveMessage}</p>}
+
+      {isAdmin && <Link href="/admin" className={`${card} mt-4 flex items-center gap-3`}><BarChart3 className="h-5 w-5 text-slate-400" /><span className="flex-1 text-[15px] font-semibold">Insights for the team</span><ChevronRight className="h-4 w-4 text-slate-400" /></Link>}
+
+      <h2 className={heading}>Account</h2>
+      <div className={`${card} divide-y divide-slate-100 p-0 dark:divide-slate-800`}>
+        <Link href="/profile?edit=1" className={row}><UserRound className="h-5 w-5 shrink-0 text-slate-400" /><span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Edit profile</span><span className="block text-sm text-slate-500">Photo, name, username and bio</span></span><ChevronRight className="h-4 w-4 text-slate-400" /></Link>
+        <button type="button" onClick={() => void handlePasswordReset()} className={row}><KeyRound className="h-5 w-5 shrink-0 text-slate-400" /><span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Change password</span><span className="block text-sm text-slate-500">{passwordResetSent ? 'Check your email for the link.' : 'We email you a link to set a new one.'}</span></span>{passwordResetSent ? <Check className="h-4 w-4 text-emerald-600" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}</button>
       </div>
 
-      {isAdmin && <Link href="/admin" className="flex items-center justify-between rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300"><span className="flex items-center gap-2"><BarChart3 className="h-4 w-4" />Insights: users, reminder test, errors</span><span aria-hidden="true">→</span></Link>}
-
-      {/* Profile details live on the Profile page only */}
-      <button type="button" onClick={() => router.push('/profile?edit=1')} className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-amber-500 dark:border-slate-800 dark:bg-slate-900">
-        <UserRound className="h-5 w-5 text-amber-500" />
-        <span className="flex-1"><span className="block text-sm font-bold">Edit profile</span><span className="block text-xs text-slate-500">Photo, name, username and bio</span></span>
-        <span className="text-amber-500">→</span>
-      </button>
-      {saveMessage && <p role="status" className="text-xs font-bold text-amber-500">{saveMessage}</p>}
-
-      {/* SECTION 2: THEME & LANDING VIEW */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-4">
-        <div>
-          <label className="flex items-center gap-1.5 text-xs uppercase font-extrabold text-slate-400 tracking-wider mb-2">
-            <Palette className="h-3.5 w-3.5" /> Theme Preference
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {(['light', 'dark', 'system'] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => handleThemeChange(mode)}
-                className={`py-2 px-3 rounded-xl text-xs font-bold capitalize transition border active:scale-95 ${
-                  theme === mode
-                    ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 border-slate-900 dark:border-slate-50 shadow-sm'
-                    : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-amber-500'
-                }`}
-              >
-                <span className="inline-flex items-center justify-center gap-1.5">{mode === 'light' ? <Sun className="h-3.5 w-3.5" /> : mode === 'dark' ? <Moon className="h-3.5 w-3.5" /> : <Monitor className="h-3.5 w-3.5" />}{mode}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-          <label className="mb-2 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-slate-400">
-            <Type className="h-3.5 w-3.5" /> Text Size
-          </label>
-          <div className="grid grid-cols-3 gap-2" aria-label="Choose text size">
-            {([
-              { value: 'small' as const, label: 'Small', sample: 'A' },
-              { value: 'standard' as const, label: 'Standard', sample: 'A' },
-              { value: 'large' as const, label: 'Large', sample: 'A' },
-            ]).map((option) => (
-              <button
-                type="button"
-                key={option.value}
-                onClick={() => setFontSize(option.value)}
-                aria-pressed={fontSize === option.value}
-                className={`rounded-xl border px-2 py-2.5 text-center transition ${fontSize === option.value ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400'}`}
-              >
-                <span className={`block font-bold ${option.value === 'small' ? 'text-xs' : option.value === 'large' ? 'text-xl' : 'text-base'}`}>{option.sample}</span>
-                <span className="mt-0.5 block text-xs font-bold">{option.label}</span>
-              </button>
-            ))}
-          </div>
-          <p className="mt-2 text-xs leading-4 text-slate-400">Changes apply across GoalYaar and stay on this device.</p>
-        </div>
-
-      </div>
-
-      <PrepSettingsCard />
-      <DayEndSetting />
-
-      {/* SECTION 3: NOTIFICATIONS & REMINDERS */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
-        <label className="flex items-center gap-1.5 text-xs uppercase font-extrabold text-slate-400 tracking-wider">
-          <Bell className="h-3.5 w-3.5" /> Notifications & Reminders
-        </label>
+      <h2 className={heading}>Reminders</h2>
+      <div className={`${card} space-y-4`}>
         <PushToggle embedded />
-
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Daily reminder</h3>
-            <p className="text-xs text-slate-500">Once a day, only if you haven&apos;t checked in yet</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void handleNotificationsToggle()}
-            aria-pressed={notificationsEnabled}
-            aria-label={notificationsEnabled ? 'Turn off daily reminders' : 'Turn on daily reminders'}
-            className={`w-11 h-6 rounded-full transition-colors relative ${
-              notificationsEnabled ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'
-            }`}
-          >
-            <span
-              className={`block w-4 h-4 bg-white rounded-full transition-transform absolute top-1 ${
-                notificationsEnabled ? 'left-6' : 'left-1'
-              }`}
-            />
-          </button>
+        <div className="flex items-center gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+          <Bell className="h-5 w-5 shrink-0 text-slate-400" />
+          <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Daily reminder</span><span className="block text-sm text-slate-500">Once a day, only if you haven&apos;t checked in</span></span>
+          <button type="button" role="switch" aria-checked={notificationsEnabled} aria-label="Daily reminder" onClick={() => void handleNotificationsToggle()} className={toggle(notificationsEnabled)}><span className={knob(notificationsEnabled)} /></button>
         </div>
-
-        {notificationsEnabled && (
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <label htmlFor="reminder-hour" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Remind me at</label>
-            <select
-              id="reminder-hour"
-              value={`${reminderTime.slice(0, 2)}:00`}
-              onChange={(e) => handleReminderTimeChange(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-900 focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-            >
-              {Array.from({ length: 18 }, (_, index) => index + 6).map((hour) => { const value = `${String(hour).padStart(2, '0')}:00`; return <option key={value} value={value}>{formatHour(value)}</option> })}
-            </select>
-          </div>
-        )}
-        <div className="border-t border-slate-100 pt-3 dark:border-slate-800">
-          <div className="flex items-center justify-between"><div><h3 className="text-xs font-bold text-slate-900 dark:text-white">Quiet hours</h3><p className="text-xs text-slate-400">Pause reminders and social prompts overnight</p></div><button type="button" onClick={() => saveQuietHours(!quietHoursEnabled)} aria-pressed={quietHoursEnabled} className={`relative h-6 w-11 rounded-full transition-colors ${quietHoursEnabled ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'}`}><span className={`absolute top-1 block h-4 w-4 rounded-full bg-white transition-transform ${quietHoursEnabled ? 'left-6' : 'left-1'}`} /></button></div>
-          {quietHoursEnabled && <div className="mt-3 grid grid-cols-2 gap-2"><label className="text-xs font-bold text-slate-500">From<input type="time" value={quietHoursStart} onChange={(event) => saveQuietHours(true, event.target.value, quietHoursEnd)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label><label className="text-xs font-bold text-slate-500">Until<input type="time" value={quietHoursEnd} onChange={(event) => saveQuietHours(true, quietHoursStart, event.target.value)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950" /></label></div>}
+        {notificationsEnabled && <div className="flex items-center justify-between gap-3 pl-8">
+          <label htmlFor="reminder-hour" className="text-[15px]">Remind me at</label>
+          <select id="reminder-hour" value={`${reminderTime.slice(0, 2)}:00`} onChange={(e) => handleReminderTimeChange(e.target.value)} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900">
+            {Array.from({ length: 18 }, (_, index) => index + 6).map((hour) => { const value = `${String(hour).padStart(2, '0')}:00`; return <option key={value} value={value}>{formatHour(value)}</option> })}
+          </select>
+        </div>}
+        <div className="flex items-center gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+          <Moon className="h-5 w-5 shrink-0 text-slate-400" />
+          <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Quiet hours</span><span className="block text-sm text-slate-500">No reminders or nudges overnight</span></span>
+          <button type="button" role="switch" aria-checked={quietHoursEnabled} aria-label="Quiet hours" onClick={() => saveQuietHours(!quietHoursEnabled)} className={toggle(quietHoursEnabled)}><span className={knob(quietHoursEnabled)} /></button>
         </div>
-        <p className="text-xs leading-relaxed text-slate-500">The daily reminder reaches your phone when Phone notifications are on. Each goal can also go in your phone&apos;s calendar when you create it.</p>
+        {quietHoursEnabled && <div className="grid grid-cols-2 gap-2 pl-8">
+          <label className="text-sm text-slate-500">From<input type="time" value={quietHoursStart} onChange={(event) => saveQuietHours(true, event.target.value, quietHoursEnd)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" /></label>
+          <label className="text-sm text-slate-500">Until<input type="time" value={quietHoursEnd} onChange={(event) => saveQuietHours(true, quietHoursStart, event.target.value)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" /></label>
+        </div>}
       </div>
+      <div className="mt-2.5"><DayEndSetting /></div>
 
-      <InstallAppCard />
+      <div className="mt-7"><PrepSettingsCard /></div>
 
-      {/* SECTION 4: PRIVACY & DATA */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
-        <label className="flex items-center gap-1.5 text-xs uppercase font-extrabold text-slate-400 tracking-wider">
-          <Shield className="h-3.5 w-3.5" /> Privacy & Data Export
-        </label>
-
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Show my progress to my circles</h3>
-            <p className="text-xs text-slate-500">People in your circles can see your streak calendar</p>
+      <h2 className={heading}>Appearance</h2>
+      <div className={`${card} space-y-4`}>
+        <div>
+          <p className="mb-2 text-[15px] font-semibold">Theme</p>
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Theme">
+            {([['light', 'Light', Sun], ['dark', 'Dark', Moon], ['system', 'Same as phone', Monitor]] as const).map(([mode, label, Icon]) => <button key={mode} type="button" role="radio" aria-checked={theme === mode} onClick={() => handleThemeChange(mode as Theme)}
+              className={`flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${theme === mode ? 'border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900' : 'border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300'}`}><Icon className="h-4 w-4" />{label}</button>)}
           </div>
-          <button
-            type="button"
-            onClick={() => void togglePublicProfile()}
-            role="switch"
-            aria-checked={isPublicProfile}
-            aria-label="Show my progress to my circles"
-            className={`w-11 h-6 rounded-full transition-colors relative ${
-              isPublicProfile ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'
-            }`}
-          >
-            <span
-              className={`block w-4 h-4 bg-white rounded-full transition-transform absolute top-1 ${
-                isPublicProfile ? 'left-6' : 'left-1'
-              }`}
-            />
-          </button>
         </div>
-
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Download my data</h3>
-            <p className="text-xs text-slate-500">Goals, check-ins, focus time and exam preparation, as one file</p>
+        <div className="border-t border-slate-100 pt-4 dark:border-slate-800">
+          <p className="mb-2 text-[15px] font-semibold">Text size</p>
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Text size">
+            {([['small', 'Small', 'text-xs'], ['standard', 'Standard', 'text-base'], ['large', 'Large', 'text-xl']] as const).map(([value, label, size]) => <button type="button" key={value} role="radio" aria-checked={fontSize === value} onClick={() => setFontSize(value)}
+              className={`rounded-xl border px-2 py-2 text-center transition ${fontSize === value ? 'border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900' : 'border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300'}`}>
+              <span className={`block font-bold ${size}`}>A</span><span className="block text-xs font-semibold">{label}</span></button>)}
           </div>
-          <button
-            type="button"
-            onClick={handleExportData}
-            className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold rounded-xl transition"
-          >
-            <span className="inline-flex items-center gap-1.5"><Download className="h-3.5 w-3.5" />Export</span>
-          </button>
+          <p className="mt-2 text-sm text-slate-500">Applies on this device.</p>
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => { resetTours(); router.push('/profile?guide=1') }}
-        className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-amber-500 dark:border-slate-800 dark:bg-slate-900"
-      >
-        <span>
-          <span className="block text-sm font-bold">Show me around again</span>
-          <span className="block text-xs text-slate-500">Show the quick tips on each page again.</span>
-        </span>
-        <span className="text-amber-500">→</span>
-      </button>
-
-
-      <PageGuideToggle />
-
-      <FeedbackCard />
-
-      {/* SECTION 5: ACCOUNT SECURITY & SIGN OUT */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-2">
-        <label className="block text-xs uppercase font-extrabold text-slate-400 tracking-wider mb-1">
-          Security & Account Actions
-        </label>
-
-        <button
-          type="button"
-          onClick={handlePasswordReset}
-          className="w-full py-2.5 px-3 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between transition mb-2"
-        >
-          <span className="inline-flex items-center gap-2"><KeyRound className="h-4 w-4" />Reset Password via Email</span>
-          <span>{passwordResetSent ? 'Sent' : '→'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="w-full py-2.5 px-3 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center justify-between transition"
-        >
-          <span className="inline-flex items-center gap-2"><LogOut className="h-4 w-4" />Log Out of GoalYaar</span>
-          <span>→</span>
-        </button>
-
-        <Link href="/about" className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"><span>About GoalYaar · Privacy</span><span>→</span></Link>
-        <DeleteAccount />
+      <h2 className={heading}>Privacy</h2>
+      <div className={`${card} divide-y divide-slate-100 p-0 dark:divide-slate-800`}>
+        <div className={row}>
+          <Shield className="h-5 w-5 shrink-0 text-slate-400" />
+          <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Show my progress to my batches</span><span className="block text-sm text-slate-500">People in your batches and groups can see your streak calendar</span></span>
+          <button type="button" role="switch" aria-checked={isPublicProfile} aria-label="Show my progress to my batches" onClick={() => void togglePublicProfile()} className={toggle(isPublicProfile)}><span className={knob(isPublicProfile)} /></button>
+        </div>
+        <button type="button" onClick={() => void handleExportData()} className={row}><Download className="h-5 w-5 shrink-0 text-slate-400" /><span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Download my data</span><span className="block text-sm text-slate-500">Goals, check-ins, focus time and exam preparation, in one file</span></span><ChevronRight className="h-4 w-4 text-slate-400" /></button>
+        <Link href="/about" className={row}><Info className="h-5 w-5 shrink-0 text-slate-400" /><span className="min-w-0 flex-1 text-[15px] font-semibold">About GoalYaar and privacy</span><ChevronRight className="h-4 w-4 text-slate-400" /></Link>
       </div>
-    </div>
+
+      <h2 className={heading}>Help</h2>
+      <div className="space-y-2.5">
+        <div className={`${card} divide-y divide-slate-100 p-0 dark:divide-slate-800`}>
+          <button type="button" onClick={() => { resetTours(); router.push('/profile?guide=1') }} className={row}><Compass className="h-5 w-5 shrink-0 text-slate-400" /><span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Show me around again</span><span className="block text-sm text-slate-500">The quick tips on each page come back</span></span><ChevronRight className="h-4 w-4 text-slate-400" /></button>
+        </div>
+        <PageGuideToggle />
+        <InstallAppCard />
+        <FeedbackCard />
+      </div>
+
+      <button type="button" onClick={() => void handleSignOut()} className={`${card} mt-7 flex w-full items-center justify-center gap-2 text-[15px] font-semibold text-rose-600 dark:text-rose-400`}><LogOut className="h-4 w-4" />Sign out</button>
+      <div className="mt-2.5"><DeleteAccount /></div>
+    </main>
   )
 }
 
