@@ -36,7 +36,7 @@ export default function InstallAppCard() {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#101B2D]">
       <div className="flex items-start gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><Smartphone className="h-5 w-5" /></span>
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"><Smartphone className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1">
           <h3 className="text-xs font-bold">Install GoalYaar</h3>
           <p className="mt-1 text-xs leading-4 text-slate-500">Open GoalYaar from your home screen with an app-like layout.</p>

@@ -38,7 +38,7 @@ export default function FeedBatchStrip({ userId }: { userId: string }) {
     {batches.map((batch) => <Link key={batch.id} href={`/circles/${batch.id}`} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:border-slate-400 dark:border-slate-700/70 dark:bg-[#101B2D]">
       <CircleAvatar name={batch.name} size={40} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold">{batch.name} · today</span>
+        <span className="block truncate text-sm font-semibold">{batch.name}</span>
         <span className="block truncate text-sm text-slate-600 dark:text-slate-300">{batch.task}</span>
       </span>
       {batch.members > 0 && <span className="shrink-0 text-right text-xs text-slate-500"><span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">{batch.checked}/{batch.members}</span>checked in</span>}
