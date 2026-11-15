@@ -48,16 +48,28 @@ export default function PrepExplorerPage() {
   const [confirmBulk, setConfirmBulk] = useState<{ title: string; ids: string[] } | null>(null)
   const today = localDateString()
 
-  // Deep links from Today and Progress: /prep?filter=due, /prep?topic=<id>
+  const [openParam, setOpenParam] = useState<string | null>(null)
+  // Deep links from Today and Progress: /prep?filter=due, /prep?topic=<id>, /prep?open=<subject id>
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const t = window.setTimeout(() => {
       if (params.get('filter') === 'due') setFilter('due')
       const topic = params.get('topic')
       if (topic) setSelected(topic)
+      setOpenParam(params.get('open'))
     }, 0)
     return () => window.clearTimeout(t)
   }, [])
+  // /prep?open=<subject id>, from the exam's syllabus list: expand that subject and everything above it.
+  useEffect(() => {
+    if (!openParam || data.status !== 'ready') return
+    const byId = new Map(data.nodes.map((n) => [n.id, n]))
+    if (!byId.has(openParam)) return
+    const chain: string[] = []
+    for (let n = byId.get(openParam); n; n = n.parentId ? byId.get(n.parentId) : undefined) chain.push(n.id)
+    const t = window.setTimeout(() => { setOpen((cur) => new Set([...cur, ...chain])); setOpenParam(null); window.setTimeout(() => document.getElementById(`node-${openParam}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 100) }, 0)
+    return () => window.clearTimeout(t)
+  }, [openParam, data.status, data.nodes])
   // A link may point at a subtopic (open its topic) or at a topic of another exam you prepare for (switch to it).
   const { status: dataStatus, nodesByTemplate, templateId: viewId, setView } = data
   useEffect(() => {
@@ -168,7 +180,7 @@ export default function PrepExplorerPage() {
                   <ChevronDown className={`h-5 w-5 shrink-0 text-slate-400 transition ${isOpen(paper.id) ? 'rotate-180' : ''}`} />
                 </button>
                 {isOpen(paper.id) && <div className="border-t border-slate-100 dark:border-slate-800">
-                  {subjects.map(({ subject, topics }) => <div key={subject.id}>
+                  {subjects.map(({ subject, topics }) => <div key={subject.id} id={`node-${subject.id}`} className="scroll-mt-4">
                     {(() => {
                       const left = topics.flatMap((t) => { const subs = officialSubs(t.id); return subs.length ? subs : [t] }).filter((u) => !states.get(u.id)?.touchedOn)
                       return <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 dark:bg-slate-800/60">

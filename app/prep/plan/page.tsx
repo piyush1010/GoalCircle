@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, CalendarDays, ChevronDown, ChevronRight, HelpCircle, Play, RotateCcw, Settings2, Timer } from 'lucide-react'
+import { ArrowLeft, CalendarDays, ChevronRight, CircleAlert, FileText, HelpCircle, ListTree, NotebookPen, Play, RotateCcw, Settings2, Timer, TrendingUp } from 'lucide-react'
 import { localDateString } from '@/lib/exams'
 import { optionalSubjects, planFor, type PacePlan, type Unit } from '@/lib/prep/pace'
 import { retention } from '@/lib/prep/revision'
 import { usePrepData } from '@/lib/prep/usePrepData'
 import PrepSetup, { EXAM_SHORT, readShiftDate } from '@/components/prep/PrepSetup'
-import PrepNav from '@/components/prep/PrepNav'
+import ExamBatch from '@/components/prep/ExamBatch'
+import { childrenMap } from '@/lib/prep/explorer'
 import HelpButton from '@/components/HelpButton'
 import ExamSwitcher from '@/components/prep/ExamSwitcher'
 import FocusTimer, { savedFocusTitle } from '@/components/FocusTimer'
@@ -31,7 +32,13 @@ const dayLabel = (iso: string, today: string) => {
   return diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
-/** The time-bound plan: how many subtopics a day to finish by the exam date, and exactly which ones. */
+const longDate = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+const hoursFor = (units: number) => { const min = units * MIN_PER_SUBTOPIC; return min < 60 ? `about ${min} minutes` : `about ${Math.round(min / 30) / 2} hours`.replace('.5 hours', ' and a half hours').replace('about 1 and a half hours', 'about an hour and a half').replace('about 1 hours', 'about an hour') }
+
+/**
+ * One exam's space. My Plan: the daily target, today's subtopics, the week ahead, the syllabus by
+ * subject, and practice and review. Batch: your batches, your mentor's requests and what you share.
+ */
 export default function PrepPlanPage() {
   const data = usePrepData(true)
   const router = useRouter()
@@ -42,9 +49,29 @@ export default function PrepPlanPage() {
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const [, , t] = usePrepLang()
   const today = localDateString()
+  const [tab, setTab] = useState<'plan' | 'batch'>('plan')
+  const [day, setDay] = useState(0)
+  useEffect(() => { const x = window.setTimeout(() => { if (new URLSearchParams(window.location.search).get('tab') === 'batch') setTab('batch') }, 0); return () => window.clearTimeout(x) }, [])
 
   const plan = useMemo(() => (data.status === 'ready' ? planFor(data.nodes, data.states, data.profile, today) : null), [data.status, data.nodes, data.states, data.profile, today])
   const dueCount = useMemo(() => data.nodes.filter((n) => n.kind === 'topic' && !n.ownerId).filter((n) => { const s = data.states.get(n.id); const r = s ? retention(s, today) : null; return r?.status === 'overdue' || r?.status === 'due_today' }).length, [data.nodes, data.states, today])
+
+  // Coverage by subject, for the syllabus list: each official subtopic (or a topic without any) counts once.
+  const subjects = useMemo(() => {
+    if (data.status !== 'ready') return []
+    const kids = childrenMap(data.nodes)
+    const stage = data.profile.targetStage
+    const roots = (kids.get('') ?? []).filter((r) => r.kind === 'stage' && r.stages.length === 1 && r.stages[0] === stage)
+    const out: { id: string; name: string; done: number; total: number }[] = []
+    for (const root of roots) for (const paper of kids.get(root.id) ?? []) {
+      if ((paper.code ?? '').endsWith('.OPT')) continue
+      for (const subject of kids.get(paper.id) ?? []) {
+        const units = (kids.get(subject.id) ?? []).filter((n) => n.kind === 'topic' && !n.ownerId).flatMap((topic) => { const subs = (kids.get(topic.id) ?? []).filter((x) => x.kind === 'subtopic' && !x.ownerId); return subs.length ? subs : [topic] })
+        if (units.length) out.push({ id: subject.id, name: subject.title, done: units.filter((u) => data.states.get(u.id)?.touchedOn).length, total: units.length })
+      }
+    }
+    return out
+  }, [data.status, data.nodes, data.states, data.profile.targetStage])
 
   // Remember today's target for the reminder.
   const { saveTarget } = data
@@ -95,11 +122,15 @@ export default function PrepPlanPage() {
   return <main className="mx-auto max-w-xl px-4 pb-28 pt-5">
     <header className="mb-4 flex items-center gap-3">
       <Link href="/dashboard" aria-label="Back to Today" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
-      <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">{t('My plan')}</h1><p className="text-sm text-slate-500">{examName} {stageName}{data.profile.examDate ? ` · by ${new Date(`${data.profile.examDate}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}</p></div>
+      <div className="min-w-0 flex-1"><h1 className="text-2xl font-bold leading-tight tracking-tight">{examName}</h1><p className="text-sm text-slate-500">{data.profile.examDate ? `${stageName} on ${longDate(data.profile.examDate)}${plan && plan.daysLeft >= 0 ? `, in ${plan.daysLeft} ${plan.daysLeft === 1 ? 'day' : 'days'}` : ''}` : `${stageName}: set your exam date`}</p></div>
       <HelpButton />
       <button type="button" onClick={() => setSetup(true)} aria-label="Change plan" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><Settings2 className="h-4 w-4" /></button>
     </header>
-    <PrepNav active="/prep/plan" />
+    <div role="tablist" aria-label="Exam" className="mb-4 grid grid-cols-2 border-b border-slate-200 dark:border-slate-800">
+      {([['plan', 'My Plan'], ['batch', 'Batch']] as const).map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`-mb-px h-11 border-b-2 text-sm font-semibold ${tab === id ? 'border-amber-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500'}`}>{label}</button>)}
+    </div>
+    {tab === 'batch' && data.userId && data.templateId && <ExamBatch userId={data.userId} templateId={data.templateId} examName={examName} />}
+    {tab === 'plan' && <>
       <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} manage={{ removed: data.removedPlans, onRemove: data.removePlan, onRestore: data.restorePlan }} />
     {welcome && plan && <section className="mb-3 rounded-2xl bg-emerald-500/10 p-4 text-sm text-emerald-900 dark:text-emerald-200">
       <p className="font-bold">Your plan is ready.</p>
@@ -162,17 +193,56 @@ export default function PrepPlanPage() {
 
         {plan.status === 'revision_window' && <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900">You are in your revision window. Focus on revising what you have covered and on mocks; {plan.remaining} subtopics are still unticked. <Link href="/prep?filter=due" className="font-bold text-amber-700 dark:text-amber-400">Revisions due →</Link></section>}
 
-        {plan.days.length > 1 && plan.status !== 'complete' && <details className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-bold [&::-webkit-details-marker]:hidden"><CalendarDays className="h-4 w-4 text-slate-400" />{t('Next few days')}<ChevronDown className="ml-auto h-4 w-4 text-slate-400" /></summary>
-          <div className="divide-y divide-slate-100 border-t border-slate-100 dark:divide-slate-800 dark:border-slate-800">{plan.days.slice(1).map((d) => <div key={d.date} className="px-4 py-2.5">
-            <p className="text-xs font-bold text-slate-500">{dayLabel(d.date, today)} · {d.units.length}</p>
-            <p className="mt-0.5 text-sm leading-snug">{d.units.map((u, i) => <span key={u.id}>{i > 0 && ' · '}<Link href={`/prep?topic=${u.topicId}`} className="underline decoration-slate-300 underline-offset-2 dark:decoration-slate-600">{u.title}</Link></span>)}</p>
-          </div>)}</div>
-          <p className="border-t border-slate-100 px-4 py-2 text-[11px] text-slate-500 dark:border-slate-800">Follows the syllabus order. Tick subtopics out of order any time; the plan adjusts.</p>
-        </details>}
+        {plan.days.length > 1 && plan.status !== 'complete' && (() => {
+          const coming = plan.days.slice(1, 8)
+          const pick = coming[Math.min(day, coming.length - 1)]
+          return <section aria-labelledby="week-h" className="mt-6">
+            <h2 id="week-h" className="text-base font-semibold">Coming up</h2>
+            <div className="mt-3 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${coming.length}, minmax(0, 1fr))` }}>
+              {coming.map((d, i) => { const on = i === day; const date = new Date(`${d.date}T00:00:00`); return <button key={d.date} type="button" onClick={() => setDay(i)} aria-pressed={on} className={`flex h-16 flex-col items-center justify-center rounded-2xl border text-center ${on ? 'border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'}`}>
+                <span className="text-[11px] font-medium opacity-80">{date.toLocaleDateString('en-IN', { weekday: 'short' })}</span>
+                <span className="text-base font-bold">{date.getDate()}</span>
+              </button> })}
+            </div>
+            {pick && <div className="mt-2 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+              <p className="px-4 pt-3 text-sm text-slate-500">{dayLabel(pick.date, today)}: {pick.units.length} {pick.units.length === 1 ? 'subtopic' : 'subtopics'}, {hoursFor(pick.units.length)}</p>
+              <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{pick.units.map((u) => <li key={u.id}><Link href={`/prep?topic=${u.topicId}`} className="flex items-center gap-3 px-4 py-2.5"><span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" /><span className="min-w-0 flex-1"><span className="block text-sm font-semibold leading-snug">{u.title}</span><span className="block text-xs text-slate-500">{u.topicTitle === u.title ? u.paperTitle : u.topicTitle}</span></span><ChevronRight className="h-4 w-4 shrink-0 text-slate-400" /></Link></li>)}</ul>
+              <p className="border-t border-slate-100 px-4 py-2.5 text-xs text-slate-500 dark:border-slate-800">The plan follows the syllabus order. Tick subtopics in any order; it adjusts.</p>
+            </div>}
+          </section>
+        })()}
       </>}
 
+    {subjects.length > 0 && <section aria-labelledby="syllabus-h" className="mt-6">
+      <div className="flex items-baseline justify-between"><h2 id="syllabus-h" className="text-base font-semibold">Syllabus</h2><Link href="/prep" className="text-sm font-medium text-amber-700 dark:text-amber-400">Open all</Link></div>
+      <div className="mt-3 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
+        {subjects.map((sub) => { const pct = Math.round((sub.done / sub.total) * 100); return <Link key={sub.id} href={`/prep?open=${sub.id}`} className="flex items-center gap-3 px-4 py-3">
+          <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{sub.name}</span><span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><span className="block h-full rounded-full bg-amber-500" style={{ width: `${pct}%` }} /></span></span>
+          <span className="w-10 text-right text-sm font-semibold tabular-nums text-slate-600 dark:text-slate-300">{pct}%</span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+        </Link> })}
+      </div>
+    </section>}
+
+    <section aria-labelledby="practice-h" className="mt-6">
+      <h2 id="practice-h" className="text-base font-semibold">Practice and review</h2>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {[
+          { href: '/prep/progress', icon: TrendingUp, title: 'Mock tests', line: data.mocks[0] ? `Last: ${data.mocks[0].score} out of ${data.mocks[0].maxScore}` : 'Scores and weak areas' },
+          { href: '/prep/mistakes', icon: CircleAlert, title: 'Mistakes', line: data.mistakes.filter((m) => !m.resolvedOn).length ? `${data.mistakes.filter((m) => !m.resolvedOn).length} to go over` : 'What tripped you up' },
+          { href: '/prep/pyq', icon: FileText, title: 'Past papers', line: 'Year by year' },
+          { href: '/prep/notes', icon: NotebookPen, title: 'Notes', line: 'Current affairs' },
+          { href: '/prep', icon: ListTree, title: 'Full syllabus', line: 'Every topic, with revision' },
+        ].map((o) => <Link key={o.href + o.title} href={o.href} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
+          <o.icon className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
+          <span className="min-w-0"><span className="block text-sm font-semibold">{o.title}</span><span className="block text-xs text-slate-500">{o.line}</span></span>
+        </Link>)}
+      </div>
+    </section>
+
     <button type="button" onClick={() => setSetup(true)} className="mt-4 w-full text-center text-sm text-slate-500">{data.profile.reminderEnabled ? `Reminder at ${((data.profile.reminderHour + 11) % 12) + 1}:00 ${data.profile.reminderHour < 12 ? 'AM' : 'PM'}` : 'Reminder off'} · Change</button>
+
+    </>}
 
     {toastMsg && <button type="button" onClick={() => setToastMsg(null)} role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toastMsg}</button>}
     {setup && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onRemove={data.plans.length > 1 && data.templateId ? () => data.removePlan(data.templateId!) : undefined} onClose={() => setSetup(false)} />}
