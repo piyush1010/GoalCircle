@@ -39,8 +39,8 @@ export const PROOF_LABEL: Record<Proof, string> = { tick: 'A tick', answer: 'A w
 const PROOFS: Record<CoachKind, Proof[]> = { exam: ['tick', 'answer', 'link'], fitness: ['tick', 'photo', 'minutes'], skill: ['minutes', 'photo', 'link'], other: ['tick', 'photo', 'minutes'] }
 /** Read the batch's own setting, then fall back to "exam" for batches made before batches could be for anything. */
 export const coachKindOf = (value: string | null | undefined, exam?: string | null): CoachKind => (['exam', 'fitness', 'skill', 'other'] as const).find((k) => k === value) ?? (exam ? 'exam' : 'other')
-/** Set in the deployment to show the MockSprint button to exam mentors. */
-const MOCKSPRINT_URL = process.env.NEXT_PUBLIC_MOCKSPRINT_URL || ''
+/** MockSprint, our partner app for mock tests. The deployment can point it elsewhere with NEXT_PUBLIC_MOCKSPRINT_URL. */
+const MOCKSPRINT_URL = process.env.NEXT_PUBLIC_MOCKSPRINT_URL || 'https://mocksprint-nine.vercel.app/'
 
 type Filter = 'all' | 'done' | 'missed' | 'not_done' | 'quiet'
 
