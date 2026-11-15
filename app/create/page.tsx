@@ -64,7 +64,7 @@ export default function CreatePage() {
         <Target className="mx-auto h-8 w-8 text-amber-500" />
         <h2 className="mt-2 text-lg font-bold">Nothing to check in yet</h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Start with one small goal you can do every day, or join your mentor&apos;s batch with their invite link.</p>
-        <Link href="/create-goal" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-50 px-5 py-3 text-sm font-bold text-white dark:text-slate-900"><Plus className="h-4 w-4" />Create your first goal</Link>
+        <Link href="/start" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-50 px-5 py-3 text-sm font-bold text-white dark:text-slate-900"><Plus className="h-4 w-4" />Create your first goal</Link>
       </div>}
 
       {!loading && !nothing && <div className="space-y-6">
@@ -93,7 +93,7 @@ export default function CreatePage() {
           </div>
         </section>}
 
-        <Link href="/create-goal" className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 py-3.5 text-sm font-bold text-slate-600 transition hover:border-amber-500 hover:text-amber-600 dark:border-slate-700 dark:text-slate-300"><Plus className="h-4 w-4" />Start a new goal</Link>
+        <Link href="/start" className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 py-3.5 text-sm font-bold text-slate-600 transition hover:border-amber-500 hover:text-amber-600 dark:border-slate-700 dark:text-slate-300"><Plus className="h-4 w-4" />Start a new goal</Link>
       </div>}
     </main>
   )

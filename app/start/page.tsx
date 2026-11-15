@@ -44,6 +44,7 @@ export default function StartPage() {
   const [at, setAt] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [share, setShare] = useState(false)
 
   // Pick up where the visitor left off on this device, and know whether they already have an account.
   useEffect(() => {
@@ -53,6 +54,7 @@ export default function StartPage() {
         setPicked(d.goals)
         if (d.exam) { setCode(d.exam.code); setDate(d.exam.date); setStage(d.exam.stage); setHours(d.exam.hours); setLevel(d.exam.level) }
         setHabits(Object.fromEntries(d.habits.map((h) => [h.id, h])))
+        setShare(Boolean(d.share))
       }
     }, 0)
     void supabase.auth.getSession().then(({ data }) => setSignedIn(Boolean(data.session)))
@@ -75,6 +77,7 @@ export default function StartPage() {
     goals: picked,
     exam: picked.includes('exam') && code && date && level ? { code, date, stage: info.targetStages.includes(stage) ? stage : info.targetStages[0], hours, level } : null,
     habits: habitList,
+    share,
   })
   useEffect(() => { if (picked.length) writeDraft(draft()) })
 
@@ -211,7 +214,12 @@ export default function StartPage() {
           <div className="mt-2 grid grid-cols-2 gap-2">
             {OFTEN.map(([n, label]) => <button key={n} type="button" onClick={() => setHabit(h.id, { perWeek: n })} aria-pressed={value.perWeek === n} className={`rounded-2xl border bg-white px-3 py-3.5 text-[15px] font-semibold dark:bg-slate-900 ${value.perWeek === n ? 'border-slate-900 ring-1 ring-slate-900 dark:border-white dark:ring-white' : 'border-slate-200 dark:border-slate-800'}`}>{label}</button>)}
           </div>
-          {signedIn && <p className="mt-6 text-sm text-slate-500">Want to announce it on your feed, or set a finish date? <Link href="/create-goal" className="font-semibold text-slate-900 underline underline-offset-2 dark:text-white">Use the full goal form</Link>.</p>}
+          <label htmlFor="habit-finish" className="mt-6 block text-sm font-semibold text-slate-700 dark:text-slate-300">Finish by <span className="font-normal text-slate-500">(optional)</span></label>
+          <div className="mt-2 flex items-center gap-2">
+            <input id="habit-finish" type="date" min={today} value={value.finishBy ?? ''} onChange={(e) => setHabit(h.id, { finishBy: e.target.value || undefined })} className="min-w-0 flex-1 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base dark:border-slate-700 dark:bg-slate-900" />
+            {value.finishBy && <button type="button" onClick={() => setHabit(h.id, { finishBy: undefined })} className="shrink-0 px-2 text-sm font-medium text-slate-500">Clear</button>}
+          </div>
+          <p className="mt-1.5 text-xs text-slate-500">Leave it empty for a goal that keeps going.</p>
         </>
       })()}
 
@@ -225,9 +233,13 @@ export default function StartPage() {
           </li>}
           {habitList.map((h) => <li key={h.id} className="px-4 py-3.5">
             <span className="block text-[15px] font-semibold">{h.title.trim()}</span>
-            <span className="mt-0.5 block text-sm text-slate-500">{howOften(h.perWeek).replace(/^./, (c) => c.toUpperCase())}</span>
+            <span className="mt-0.5 block text-sm text-slate-500">{howOften(h.perWeek).replace(/^./, (c) => c.toUpperCase())}{h.finishBy ? `, until ${longDate(h.finishBy)}` : ''}</span>
           </li>)}
         </ul>
+        {habitList.length > 0 && <label className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 dark:border-slate-800 dark:bg-slate-900">
+          <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-slate-900" />
+          <span><span className="block text-[15px] font-semibold">Share my {habitList.length === 1 ? 'goal' : 'goals'} on the feed</span><span className="block text-sm text-slate-500">People who follow you can cheer you on. Otherwise only you see {habitList.length === 1 ? 'it' : 'them'}.</span></span>
+        </label>}
         {error && <p role="alert" className="mt-4 text-sm font-medium text-rose-600">{error}</p>}
       </>}
 
