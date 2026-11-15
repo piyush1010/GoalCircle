@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ChevronDown, Plus } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronRight, Plus } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import { usePrepData } from '@/lib/prep/usePrepData'
@@ -15,8 +15,6 @@ import QuickLog from '@/components/prep/QuickLog'
 import { weakTopics, weekReview, mistakeSummary, type WeekStats } from '@/lib/prep/insights'
 import { studyStreak } from '@/lib/prep/streak'
 import { examInfo, mockTrend } from '@/lib/prep/exam'
-import MentorShare from '@/components/prep/MentorShare'
-import AnswerReviews from '@/components/prep/AnswerReviews'
 import PrepNav from '@/components/prep/PrepNav'
 import HelpButton from '@/components/HelpButton'
 import ItemMenu from '@/components/ItemMenu'
@@ -203,8 +201,10 @@ export default function PrepProgressPage() {
         <button type="button" onClick={() => setSetupOpen(true)} className="flex w-full items-center justify-between px-4 py-3.5 text-left"><span className="font-medium">Exam, date and reminders</span><span className="text-sm text-slate-500">{data.profile.examDate ?? 'Set date'} →</span></button>
       </div>
 
-      <AnswerReviews userId={data.userId} />
-      <MentorShare userId={data.userId} />
+      <Link href="/prep/plan?tab=batch" className="mt-3 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Your batch and mentor</span><span className="block text-sm text-slate-500">Answer reviews, and what your mentor can see, are in the Batch tab.</span></span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+      </Link>
 
       {setupOpen && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onRemove={data.plans.length > 1 && data.templateId ? () => data.removePlan(data.templateId!) : undefined} onClose={() => setSetupOpen(false)} />}
 

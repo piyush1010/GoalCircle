@@ -1,13 +1,14 @@
 'use client'
 
 import { confirmAction } from '@/lib/confirm'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CalendarDays, Check, CircleCheck, Flame, PauseCircle, Pencil, Plus, Timer, Trash2, X } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Check, CircleCheck, PauseCircle, RotateCcw, Timer, UsersRound } from 'lucide-react'
 import GoalCollaborators from '@/components/GoalCollaborators'
 import GoalCalendarActions from '@/components/GoalCalendarActions'
+import ItemMenu from '@/components/ItemMenu'
 import { supabase } from '@/utils/supabase'
 
 interface Goal {
@@ -21,6 +22,8 @@ interface Goal {
   pause_count: number | null
   pause_until: string | null
   target_date: string | null
+  frequency: 'daily' | 'weekly' | 'once' | null
+  times_per_week: number | null
   created_at: string
 }
 
@@ -35,6 +38,9 @@ interface Post {
   created_at: string
 }
 
+const QUICK_CAPTION = 'Completed today’s check-in.'
+const OFTEN: [number, string][] = [[7, 'Every day'], [5, 'Five days a week'], [3, 'Three days a week'], [1, 'Once a week']]
+const localKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const goalMediaPath = (value: string | null | undefined) => {
   if (!value) return null
   try {
@@ -46,248 +52,211 @@ const goalMediaPath = (value: string | null | undefined) => {
     return null
   }
 }
+const howOften = (g: Goal) => g.frequency === 'once' ? 'One-time goal' : g.frequency === 'weekly' ? (g.times_per_week === 1 ? 'Once a week' : `${['', '', 'Two', 'Three', 'Four', 'Five', 'Six'][g.times_per_week ?? 1] ?? g.times_per_week} days a week`) : 'Every day'
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })
 
+/**
+ * A personal goal's space. My Goal: log today, your run, this week, and every check-in.
+ * Group: the people you share it with. Edit, pause, finish and delete are all here.
+ */
 export default function GoalDetailPage() {
   const params = useParams()
   const router = useRouter()
   const goalId = params.id as string
 
   const [goal, setGoal] = useState<Goal | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [tab, setTab] = useState<'goal' | 'group'>('goal')
   const [editing, setEditing] = useState(false)
-  const [editTitle, setEditTitle] = useState('')
-  const [editTargetDate, setEditTargetDate] = useState('')
+  const [edit, setEdit] = useState({ title: '', targetDate: '', perWeek: 7 })
   const [message, setMessage] = useState<string | null>(null)
-  const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
 
   const loadGoalDetails = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       setUserId(session?.user.id || null)
       await supabase.rpc('resume_expired_goal_pauses')
-      const { data: goalData, error: goalError } = await supabase
-        .from('goals')
-        .select('*')
-        .eq('id', goalId)
-        .single()
-
+      const { data: goalData, error: goalError } = await supabase.from('goals').select('*').eq('id', goalId).single()
       if (goalError) throw goalError
-      setGoal(goalData)
-      setEditTitle(goalData.title)
-      setEditTargetDate(goalData.target_date || '')
-
-      const { data: postsData, error: postsError } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('goal_id', goalId)
-        .order('created_at', { ascending: false })
-
-      if (postsError) console.warn('Could not fetch posts for goal:', postsError)
+      setGoal(goalData as Goal)
+      const { data: postsData } = await supabase.from('posts').select('*').eq('goal_id', goalId).order('created_at', { ascending: false })
       setPosts(postsData || [])
-    } catch (err) {
-      console.error('Error loading goal details:', err)
+    } catch {
+      setGoal(null)
     } finally {
       setLoading(false)
     }
   }, [goalId])
 
-  useEffect(() => {
-    if (goalId) void Promise.resolve().then(loadGoalDetails)
-  }, [goalId, loadGoalDetails])
+  useEffect(() => { if (goalId) void Promise.resolve().then(loadGoalDetails) }, [goalId, loadGoalDetails])
+  useEffect(() => { if (!message) return; const t = window.setTimeout(() => setMessage(null), 3000); return () => window.clearTimeout(t) }, [message])
 
-  const toggleGoalCompletion = async () => {
-    if (!goal || goal.user_id !== userId) return
-    const isCompleted = Boolean(goal.is_completed || goal.status === 'completed')
-    const newStatus = isCompleted ? 'active' : 'completed'
+  const today = localKey(new Date())
+  const week = useMemo(() => {
+    const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - ((start.getDay() + 6) % 7))
+    const done = new Set(posts.filter((p) => p.checkin_status !== 'missed').map((p) => localKey(new Date(p.created_at))))
+    return Array.from({ length: 7 }, (_, i) => { const d = new Date(start); d.setDate(start.getDate() + i); const key = localKey(d); return { key, name: d.toLocaleDateString('en-IN', { weekday: 'narrow' }), done: done.has(key), future: key > today } })
+  }, [posts, today])
+  const mineToday = posts.filter((p) => p.user_id === userId && localKey(new Date(p.created_at)) === today && p.checkin_status !== 'missed')
 
-    try {
-      setUpdating(true)
-      const { error } = await supabase
-        .from('goals')
-        .update({ status: newStatus, is_completed: !isCompleted })
-        .eq('id', goal.id)
-
-      if (error) throw error
-      setGoal({ ...goal, status: newStatus, is_completed: !isCompleted })
-    } catch (err: unknown) {
-      setActionError(err instanceof Error ? err.message : 'Failed to update goal status')
-    } finally {
-      setUpdating(false)
-    }
-  }
-
-  const saveGoal = async () => {
-    if (!goal || goal.user_id !== userId || editTitle.trim().length < 3) return
-    setUpdating(true); setMessage(null)
-    const { error } = await supabase.from('goals').update({ title: editTitle.trim(), target_date: editTargetDate || null, updated_at: new Date().toISOString() }).eq('id', goal.id).eq('user_id', userId)
-    setUpdating(false)
-    if (error) { setMessage('Goal changes could not be saved.'); return }
-    setGoal({ ...goal, title: editTitle.trim(), target_date: editTargetDate || null }); setEditing(false); setMessage('Goal updated')
-  }
-
-  const deleteGoal = async () => {
-    if (!goal || goal.user_id !== userId || !(await confirmAction('Delete this goal and all of its progress posts? This cannot be undone.'))) return
-    setUpdating(true)
-    const { error } = await supabase.from('goals').delete().eq('id', goal.id).eq('user_id', userId)
-    if (error) { setMessage('Goal could not be deleted.'); setUpdating(false); return }
-    router.replace('/dashboard'); router.refresh()
-  }
-
-  const pauseGoal = async () => {
-    if (!goal || goal.user_id !== userId || !(await confirmAction('Use this goal’s one-time seven-day pause? It cannot be used again.'))) return
-    setUpdating(true); setMessage(null)
-    const { data, error } = await supabase.rpc('pause_goal_for_week', { target_goal_id: goal.id })
-    setUpdating(false)
-    if (error) { setMessage(error.message || 'Goal could not be paused.'); return }
-    setGoal({ ...goal, status: 'paused', pause_count: 1, pause_until: String(data) }); setMessage('Goal paused for seven days. Take care of yourself.')
-  }
-
-  const deleteProgressPost = async (post: Post) => {
-    if (!goal || post.user_id !== userId || !(await confirmAction('Delete this progress update? This cannot be undone.'))) return
-    setDeletingPostId(post.id)
-    setMessage(null)
-
-    const { error } = await supabase
-      .from('posts')
-      .delete()
-      .eq('id', post.id)
-      .eq('user_id', userId)
-
-    if (error) {
-      setMessage('Progress update could not be deleted.')
-      setDeletingPostId(null)
-      return
-    }
-
-    setPosts((current) => current.filter((item) => item.id !== post.id))
-    const mediaPaths = [post.media_url, ...(post.media_urls || [])]
-      .map(goalMediaPath)
-      .filter((path): path is string => Boolean(path?.startsWith(`${userId}/`)))
-    if (mediaPaths.length > 0) await supabase.storage.from('goal-media').remove(mediaPaths)
-    setDeletingPostId(null)
-    setMessage('Progress update deleted')
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 p-4 flex items-center justify-center">
-        <p className="text-xs text-slate-500 animate-pulse">Loading goal timeline...</p>
-      </div>
-    )
-  }
-
-  if (!goal) {
-    return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 p-4 max-w-md mx-auto flex flex-col items-center justify-center space-y-3">
-        <p className="text-sm font-bold">Goal not found</p>
-        <Link href="/dashboard" className="text-xs text-amber-400 underline">
-          Return to Dashboard
-        </Link>
-      </div>
-    )
-  }
+  if (loading) return <main className="mx-auto max-w-xl space-y-3 px-4 pb-28 pt-5" aria-busy="true">{[1, 2, 3].map((k) => <div key={k} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}</main>
+  if (!goal) return <main className="mx-auto grid min-h-[70vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl font-bold">Goal not found</h1><p className="mt-2 text-sm text-slate-500">It may have been deleted, or it belongs to someone else.</p><Link href="/dashboard" className="mt-5 inline-block rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">Back to Home</Link></div></main>
 
   const isCompleted = Boolean(goal.is_completed || goal.status === 'completed')
   const isOwner = goal.user_id === userId
   const isPaused = goal.status === 'paused' && Boolean(goal.pause_until && new Date(goal.pause_until) > new Date())
-  const doneCount = posts.filter((post) => post.checkin_status === 'done').length
-  const partialCount = posts.filter((post) => post.checkin_status === 'partial').length
-  const trackedCount = posts.filter((post) => post.checkin_status).length
-  const consistencyRate = trackedCount ? Math.round(((doneCount + partialCount * 0.5) / trackedCount) * 100) : 0
+  const target = goal.frequency === 'weekly' ? goal.times_per_week || 1 : goal.frequency === 'once' ? 1 : 7
+  const weekDone = week.filter((d) => d.done).length
 
-  return (
-    <div className="min-h-screen text-slate-900 dark:text-slate-100 pb-28 pt-4 px-4 max-w-md mx-auto">
-      {actionError && <button type="button" role="alert" onClick={() => setActionError(null)} className="mb-3 w-full rounded-xl border border-rose-200 bg-rose-50 p-3 text-left text-xs font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{actionError} <span className="opacity-60">(tap to close)</span></button>}
-      {/* Top Header */}
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={() => router.back()} className="text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
-          ← Back
-        </button>
-        <div className="flex items-center gap-1">{isOwner && <><button onClick={() => setEditing(true)} aria-label="Edit goal" className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 dark:border-slate-700"><Pencil className="h-3.5 w-3.5" /></button><button onClick={() => void deleteGoal()} aria-label="Delete goal" className="grid h-8 w-8 place-items-center rounded-lg border border-rose-200 text-rose-500 dark:border-rose-900"><Trash2 className="h-3.5 w-3.5" /></button></>}<span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg">{goal.category || 'Personal'}</span></div>
-      </div>
+  // The run is worked out in the database when a check-in is added or removed; read it back.
+  const refreshStreak = async () => {
+    const { data } = await supabase.from('goals').select('current_streak,status,is_completed').eq('id', goalId).single()
+    if (data) setGoal((g) => (g ? { ...g, ...data } : g))
+  }
+  const logToday = async () => {
+    if (!userId) return
+    setUpdating(true)
+    const { data, error } = await supabase.from('posts').insert({ user_id: userId, goal_id: goal.id, caption: QUICK_CAPTION, proof_type: 'text', checkin_status: 'done', visibility: 'private' }).select('*').single()
+    setUpdating(false)
+    if (error || !data) { setMessage('Could not log today. Please try again.'); return }
+    setPosts((cur) => [data as Post, ...cur]); setMessage('Logged. Well done.'); void refreshStreak()
+    if (goal.frequency === 'once') { await supabase.from('goals').update({ status: 'completed', is_completed: true }).eq('id', goal.id).eq('user_id', userId); setGoal({ ...goal, status: 'completed', is_completed: true }) }
+  }
+  const undoToday = async () => {
+    const last = mineToday[0]
+    if (!last || !userId) return
+    setUpdating(true)
+    const { error } = await supabase.from('posts').delete().eq('id', last.id).eq('user_id', userId)
+    setUpdating(false)
+    if (error) { setMessage('Could not undo. Please try again.'); return }
+    setPosts((cur) => cur.filter((p) => p.id !== last.id)); setMessage('Undone.'); void refreshStreak()
+  }
+  const startEdit = () => { setEdit({ title: goal.title, targetDate: goal.target_date || '', perWeek: goal.frequency === 'weekly' ? goal.times_per_week || 1 : 7 }); setEditing(true) }
+  const saveGoal = async () => {
+    if (!isOwner || edit.title.trim().length < 3) { setMessage('Give the goal a name of at least three letters.'); return }
+    setUpdating(true)
+    const frequency = goal.frequency === 'once' ? 'once' : edit.perWeek >= 7 ? 'daily' : 'weekly'
+    const changes = { title: edit.title.trim(), target_date: edit.targetDate || null, frequency, times_per_week: frequency === 'weekly' ? edit.perWeek : null, updated_at: new Date().toISOString() }
+    const { error } = await supabase.from('goals').update(changes).eq('id', goal.id).eq('user_id', userId!)
+    setUpdating(false)
+    if (error) { setMessage('Your changes could not be saved.'); return }
+    setGoal({ ...goal, ...changes, frequency: frequency as Goal['frequency'] }); setEditing(false); setMessage('Saved.')
+  }
+  const deleteGoal = async () => {
+    setUpdating(true)
+    const { error } = await supabase.from('goals').delete().eq('id', goal.id).eq('user_id', userId!)
+    if (error) { setMessage('The goal could not be deleted.'); setUpdating(false); return false }
+    router.replace('/dashboard'); router.refresh(); return true
+  }
+  const toggleComplete = async () => {
+    const next = !isCompleted
+    setUpdating(true)
+    const { error } = await supabase.from('goals').update({ status: next ? 'completed' : 'active', is_completed: next }).eq('id', goal.id).eq('user_id', userId!)
+    setUpdating(false)
+    if (error) { setMessage('Could not update the goal.'); return }
+    setGoal({ ...goal, status: next ? 'completed' : 'active', is_completed: next }); setMessage(next ? 'Marked as achieved. Congratulations.' : 'Back to active.')
+  }
+  const pauseGoal = async () => {
+    if (!(await confirmAction('Pause this goal for seven days? Your run is kept while it is paused. Each goal can be paused once.', { confirmLabel: 'Pause' }))) return
+    setUpdating(true)
+    const { data, error } = await supabase.rpc('pause_goal_for_week', { target_goal_id: goal.id })
+    setUpdating(false)
+    if (error) { setMessage(error.message || 'The goal could not be paused.'); return }
+    setGoal({ ...goal, status: 'paused', pause_count: 1, pause_until: String(data) }); setMessage('Paused for seven days. Take care of yourself.')
+  }
+  const deletePost = async (post: Post) => {
+    const { error } = await supabase.from('posts').delete().eq('id', post.id).eq('user_id', userId!)
+    if (error) return false
+    setPosts((cur) => cur.filter((p) => p.id !== post.id)); void refreshStreak()
+    const paths = [post.media_url, ...(post.media_urls || [])].map(goalMediaPath).filter((p): p is string => Boolean(p?.startsWith(`${userId}/`)))
+    if (paths.length) await supabase.storage.from('goal-media').remove(paths)
+    return true
+  }
 
-      {/* Goal Summary Card */}
-      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl p-5 space-y-4 mb-6 shadow-xl">
-        <div className="flex items-start justify-between">
-          <div>
-            {editing ? <div className="space-y-2"><input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} maxLength={100} className="w-full rounded-xl border border-amber-500 bg-slate-50 px-3 py-2 text-sm font-bold outline-none dark:bg-slate-950" /><label className="block text-xs font-bold uppercase text-slate-500">Achievement date<input type="date" value={editTargetDate} min={new Date().toISOString().slice(0, 10)} onChange={(event) => setEditTargetDate(event.target.value)} className="mt-1 block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs normal-case dark:border-slate-700 dark:bg-slate-950" /></label><div className="flex gap-2"><button onClick={() => void saveGoal()} disabled={updating} className="inline-flex items-center gap-1 rounded-lg bg-slate-900 dark:bg-slate-50 px-3 py-1.5 text-xs font-bold text-white dark:text-slate-900"><Check className="h-3.5 w-3.5" />Save</button><button onClick={() => setEditing(false)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold dark:border-slate-700"><X className="h-3.5 w-3.5" />Cancel</button></div></div> : <h1 className="text-lg font-bold">{goal.title}</h1>}
-            <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-amber-400">
-              <Flame className="h-3.5 w-3.5" /> {(goal as { frequency?: string }).frequency === 'once' ? 'One-time goal' : (goal as { frequency?: string }).frequency === 'weekly' ? `${goal.current_streak || 0} week streak` : `${goal.current_streak || 0} day streak`}
-            </p>
-            {goal.target_date && <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-slate-500"><CalendarDays className="h-3 w-3" />Target {new Date(`${goal.target_date}T00:00:00`).toLocaleDateString()}</p>}
-            {goal.target_date && !editing && <GoalCalendarActions goalId={goal.id} title={goal.title} targetDate={goal.target_date} />}
-            {isOwner && !editing && <Link href={`/focus?goal=${goal.id}`} className="mt-2 inline-flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] font-bold text-amber-700 transition hover:bg-amber-500/20 dark:text-amber-300"><Timer className="h-3.5 w-3.5" />Start focus</Link>}
-            {isPaused && <p className="mt-1 text-xs font-bold text-sky-500">Paused until {new Date(goal.pause_until as string).toLocaleDateString()}</p>}
-          </div>
-          {isOwner && !isPaused && <button
-            onClick={toggleGoalCompletion}
-            disabled={updating}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-              isCompleted
-                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-            }`}
-          >
-            {isCompleted ? <span className="inline-flex items-center gap-1.5"><CircleCheck className="h-4 w-4" />Completed</span> : 'Mark Complete'}
-          </button>}
-        </div>
+  const card = 'rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
+  const input = 'mt-1.5 w-full rounded-xl border border-slate-300 bg-transparent px-3.5 py-3 text-[15px] dark:border-slate-600'
 
-        {message && <p role="status" className="rounded-xl bg-amber-500/10 p-3 text-xs font-semibold text-amber-700 dark:text-amber-300">{message}</p>}
-        {isOwner && !isCompleted && !isPaused && Number(goal.pause_count || 0) === 0 && <button onClick={() => void pauseGoal()} disabled={updating} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-300 bg-sky-50 px-4 py-2.5 text-xs font-bold text-sky-700 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-300"><PauseCircle className="h-4 w-4" />Use one-time 7-day compassionate pause</button>}
+  return <main className="mx-auto max-w-xl px-4 pb-28 pt-5">
+    <header className="flex items-center gap-3">
+      <Link href="/dashboard" aria-label="Back to Home" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
+      <div className="min-w-0 flex-1"><h1 className="truncate text-2xl font-bold tracking-tight">{goal.title}</h1><p className="text-sm text-slate-500">{isCompleted ? 'Achieved' : isPaused ? `Paused until ${new Date(goal.pause_until as string).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}` : howOften(goal)}</p></div>
+      {isOwner && <ItemMenu label="goal" onEdit={startEdit} onDelete={deleteGoal} deleteMessage="Delete this goal and all of its check-ins? This can't be undone." />}
+    </header>
 
-        {/* Milestone Statistics */}
-        <div className="grid grid-cols-3 gap-2 pt-2">
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 dark:bg-slate-950 dark:border-slate-800/60 text-center">
-            <p className="text-lg font-bold text-amber-400">{trackedCount || posts.length}</p>
-            <p className="text-xs text-slate-500">Check-ins</p>
-          </div>
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 dark:bg-slate-950 dark:border-slate-800/60 text-center">
-            <p className="text-lg font-bold text-emerald-400">{consistencyRate}%</p>
-            <p className="text-xs text-slate-500">Consistency</p>
-          </div>
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 dark:bg-slate-950 dark:border-slate-800/60 text-center">
-            <p className="text-lg font-bold text-sky-500">{doneCount}</p>
-            <p className="text-xs text-slate-500">Done days</p>
-          </div>
-        </div>
-      </div>
-
-      {userId && <GoalCollaborators goalId={goal.id} ownerId={goal.user_id} currentUserId={userId} />}
-
-      {!isCompleted && !isPaused && <Link href={`/check-in?goal=${goal.id}`} className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-50 py-3 text-xs font-bold text-white dark:text-slate-900"><Plus className="h-4 w-4" />Add a check-in</Link>}
-
-      {/* Progress Posts Timeline */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-bold px-1">Goal Timeline</h2>
-
-        {posts.length === 0 ? (
-          <div className="bg-white border border-slate-200 dark:bg-slate-900/50 dark:border-slate-800/80 rounded-2xl p-6 text-center space-y-2">
-            <p className="text-xs text-slate-400">No updates logged for this goal yet.</p>
-            <Link
-              href={`/check-in?goal=${goal.id}`}
-              className="inline-block text-xs font-bold text-amber-400 hover:underline"
-            >
-              Log your first update →
-            </Link>
-          </div>
-        ) : (
-          posts.map(p => (
-            <div key={p.id} className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl p-4 space-y-2">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2"><span className="text-xs font-mono text-slate-500">{new Date(p.created_at).toLocaleDateString()}</span>{p.checkin_status && <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold uppercase ${p.checkin_status === 'done' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : p.checkin_status === 'partial' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-slate-200 text-slate-500 dark:bg-slate-800'}`}>{p.checkin_status}</span>}</div>
-                {p.user_id === userId && <button type="button" onClick={() => void deleteProgressPost(p)} disabled={deletingPostId === p.id} aria-label="Delete progress update" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:opacity-50 dark:hover:bg-rose-950/30"><Trash2 className="h-3.5 w-3.5" /></button>}
-              </div>
-              {p.caption && <p className="text-xs text-slate-700 dark:text-slate-200">{p.caption}</p>}
-              {p.media_url && (p.proof_type === 'video' ? <video src={p.media_url} controls preload="metadata" playsInline className="max-h-96 w-full rounded-xl bg-slate-950 object-contain" /> : <div className="relative h-44 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"><Image src={p.media_url} alt="Goal proof" fill unoptimized className="object-contain" /></div>)}
-            </div>
-          ))
-        )}
-      </div>
-
+    <div role="tablist" aria-label="Goal" className="mb-4 mt-4 grid grid-cols-2 border-b border-slate-200 dark:border-slate-800">
+      {([['goal', 'My Goal'], ['group', 'Group']] as const).map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`-mb-px h-11 border-b-2 text-sm font-semibold ${tab === id ? 'border-amber-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500'}`}>{label}</button>)}
     </div>
-  )
+
+    {message && <p role="status" className="mb-3 rounded-xl bg-slate-900 px-4 py-2.5 text-center text-sm font-medium text-white dark:bg-white dark:text-slate-900">{message}</p>}
+
+    {tab === 'goal' && <div className="space-y-3">
+      {editing && <section className={`${card} p-4`}>
+        <h2 className="text-base font-semibold">Edit goal</h2>
+        <label className="mt-3 block text-sm font-medium text-slate-700 dark:text-slate-300">Name<input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} maxLength={100} className={input} /></label>
+        {goal.frequency !== 'once' && <><p className="mt-4 text-sm font-medium text-slate-700 dark:text-slate-300">How often</p>
+          <div className="mt-1.5 grid grid-cols-2 gap-2">{OFTEN.map(([n, label]) => <button key={n} type="button" onClick={() => setEdit({ ...edit, perWeek: n })} aria-pressed={edit.perWeek === n} className={`rounded-xl border px-3 py-2.5 text-sm font-semibold ${edit.perWeek === n ? 'border-slate-900 ring-1 ring-slate-900 dark:border-white dark:ring-white' : 'border-slate-200 dark:border-slate-700'}`}>{label}</button>)}</div></>}
+        <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Finish by (optional)<input type="date" value={edit.targetDate} min={today} onChange={(e) => setEdit({ ...edit, targetDate: e.target.value })} className={`${input} dark:[color-scheme:dark]`} /></label>
+        <div className="mt-4 flex gap-2"><button type="button" onClick={() => setEditing(false)} className="h-11 rounded-xl border border-slate-300 px-5 text-sm font-semibold dark:border-slate-600">Cancel</button><button type="button" disabled={updating} onClick={() => void saveGoal()} className="h-11 flex-1 rounded-xl bg-slate-900 text-sm font-semibold text-white disabled:opacity-50 dark:bg-white dark:text-slate-900">Save changes</button></div>
+      </section>}
+
+      {isOwner && !isCompleted && !isPaused && <section className={`${card} p-4 text-center`}>
+        <p className="text-sm text-slate-500">Today</p>
+        {mineToday.length
+          ? <><p className="mt-2 inline-flex items-center gap-2 text-lg font-semibold text-emerald-700 dark:text-emerald-400"><Check className="h-5 w-5" />Logged</p>
+              <div className="mt-1 flex justify-center gap-2"><button type="button" disabled={updating} onClick={() => void undoToday()} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><RotateCcw className="h-3.5 w-3.5" />Undo</button><Link href={`/check-in?goal=${goal.id}`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">Add a note or photo</Link></div></>
+          : <><button type="button" disabled={updating} onClick={() => void logToday()} className="mt-3 h-12 w-full rounded-xl bg-slate-900 text-base font-semibold text-white disabled:opacity-50 dark:bg-white dark:text-slate-900">Log today</button>
+              <Link href={`/check-in?goal=${goal.id}`} className="mt-2 inline-block text-sm font-medium text-slate-500 underline-offset-2 hover:underline">Log with a note or photo</Link></>}
+      </section>}
+
+      <section className="grid grid-cols-2 gap-2">
+        <div className={`${card} p-4`}><p className="text-2xl font-bold tabular-nums">{goal.current_streak || 0}</p><p className="text-sm text-slate-500">{goal.frequency === 'weekly' ? (goal.current_streak === 1 ? 'week in a row' : 'weeks in a row') : (goal.current_streak === 1 ? 'day in a row' : 'days in a row')}</p></div>
+        <div className={`${card} p-4`}><p className="text-2xl font-bold tabular-nums">{Math.min(weekDone, target)}<span className="text-base font-medium text-slate-500"> of {target}</span></p><p className="text-sm text-slate-500">this week</p></div>
+      </section>
+
+      <section aria-label="This week" className={`${card} p-4`}>
+        <div className="grid grid-cols-7 gap-1.5 text-center">{week.map((d) => <div key={d.key} className="flex flex-col items-center gap-1.5">
+          <span className="text-xs text-slate-500">{d.name}</span>
+          <span className={`grid h-8 w-8 place-items-center rounded-full ${d.done ? 'bg-emerald-600 text-white' : d.future ? 'border border-dashed border-slate-200 dark:border-slate-700' : 'border border-slate-300 dark:border-slate-600'}`}>{d.done && <Check className="h-4 w-4" strokeWidth={3} />}</span>
+        </div>)}</div>
+      </section>
+
+      {isOwner && <section className="flex flex-wrap gap-2">
+        {!isCompleted && <Link href={`/focus?goal=${goal.id}`} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold dark:border-slate-600"><Timer className="h-4 w-4" />Start focus</Link>}
+        {!isCompleted && !isPaused && Number(goal.pause_count || 0) === 0 && <button type="button" disabled={updating} onClick={() => void pauseGoal()} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold dark:border-slate-600"><PauseCircle className="h-4 w-4" />Pause for a week</button>}
+        <button type="button" disabled={updating} onClick={() => void toggleComplete()} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold dark:border-slate-600"><CircleCheck className="h-4 w-4" />{isCompleted ? 'Mark as active again' : 'Mark as achieved'}</button>
+      </section>}
+
+      {goal.target_date && <section className={`${card} p-4`}>
+        <p className="flex items-center gap-2 text-sm font-semibold"><CalendarDays className="h-4 w-4 text-slate-500" />Finish by {new Date(`${goal.target_date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        <GoalCalendarActions goalId={goal.id} title={goal.title} targetDate={goal.target_date} />
+      </section>}
+
+      <section aria-labelledby="recent-h" className="pt-2">
+        <h2 id="recent-h" className="mb-2 text-base font-semibold">Check-ins</h2>
+        {posts.length === 0
+          ? <p className={`${card} p-5 text-sm text-slate-500`}>No check-ins yet. Log today to start your run.</p>
+          : <ul className={`${card} divide-y divide-slate-100 dark:divide-slate-800`}>{posts.map((p) => <li key={p.id} className="px-4 py-3">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">{shortDate(p.created_at)}{p.checkin_status === 'partial' ? ', partly done' : p.checkin_status === 'missed' ? ', missed' : ''}</p>
+                  {p.caption && p.caption !== QUICK_CAPTION && <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">{p.caption}</p>}
+                </div>
+                {p.user_id === userId && <ItemMenu label="check-in" onDelete={() => deletePost(p)} deleteMessage="Delete this check-in? This can't be undone." />}
+              </div>
+              {p.media_url && (p.proof_type === 'video' ? <video src={p.media_url} controls preload="metadata" playsInline className="mt-2 max-h-96 w-full rounded-xl bg-slate-950 object-contain" /> : <div className="relative mt-2 h-44 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"><Image src={p.media_url} alt="Check-in photo" fill unoptimized className="object-contain" /></div>)}
+            </li>)}</ul>}
+      </section>
+    </div>}
+
+    {tab === 'group' && <div className="space-y-3">
+      {userId && <GoalCollaborators goalId={goal.id} ownerId={goal.user_id} currentUserId={userId} />}
+      <Link href="/circles" className={`${card} flex items-center gap-3 p-4`}>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"><UsersRound className="h-5 w-5" /></span>
+        <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Join a batch or community</span><span className="block text-sm text-slate-500">A coach&apos;s batch, or a group of friends with the same goal</span></span>
+      </Link>
+    </div>}
+  </main>
 }
