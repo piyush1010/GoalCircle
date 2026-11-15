@@ -51,10 +51,10 @@ export default function NewBatchPage() {
     if (clean.length < 2) { setError('Give the batch a name of at least two letters.'); return }
     if (kind !== 'exam' && !target.trim()) { setError('Say what members will do, and how often.'); return }
     setBusy(true); setError(null)
-    const { data, error: createError } = await supabase.from('circles').insert({
-      owner_id: userId, name: clean, description: null, category: info.category, emoji: 'circle', member_count: 1, visibility: 'private',
-      exam: kind === 'exam' ? batchExamTag(exam) : null, coach_kind: kind, exam_template: kind === 'exam' ? exam : null, target: kind === 'exam' ? null : target.trim(),
-    }).select('id,name,invite_code').single()
+    const base = { owner_id: userId, name: clean, description: kind === 'exam' ? null : target.trim(), category: info.category, emoji: 'circle', member_count: 1, visibility: 'private', exam: kind === 'exam' ? batchExamTag(exam) : null }
+    let { data, error: createError } = await supabase.from('circles').insert({ ...base, description: null, coach_kind: kind, exam_template: kind === 'exam' ? exam : null, target: kind === 'exam' ? null : target.trim() }).select('id,name,invite_code').single()
+    // Until the database has the new batch columns, save the target as the description instead.
+    if (createError && /coach_kind|exam_template|target|PGRST204|42703/.test(`${createError.code} ${createError.message}`)) ({ data, error: createError } = await supabase.from('circles').insert(base).select('id,name,invite_code').single())
     if (createError || !data) { setBusy(false); setError('The batch could not be created. Please try again.'); return }
     const { error: memberError } = await supabase.from('circle_memberships').insert({ circle_id: data.id, user_id: userId, role: 'owner' })
     setBusy(false)
