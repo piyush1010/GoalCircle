@@ -46,7 +46,10 @@ export default function StartFinishPage() {
         const { data: goalId, error: goalError } = await supabase.rpc('create_goal_post', { goal_title: title, goal_visibility: draft.share ? 'public' : 'private', announcement_media_url: null, announcement_type: 'text', achievement_date: habit.finishBy && habit.finishBy >= localDateString() ? habit.finishBy : null, announcement_caption: null, track_title: null, track_artist: null, track_artwork_url: null, track_preview_url: null, track_source: null })
         if (goalError || typeof goalId !== 'string') { setError('One of your goals could not be saved. Please try again.'); started.current = false; return }
         const category = HABITS.find((h) => h.id === habit.id)?.category ?? 'personal'
-        await supabase.from('goals').update({ category, frequency: habit.perWeek >= 7 ? 'daily' : 'weekly', times_per_week: habit.perWeek >= 7 ? null : habit.perWeek }).eq('id', goalId).eq('user_id', session.user.id)
+        const settings = { category, frequency: habit.perWeek >= 7 ? 'daily' : 'weekly', times_per_week: habit.perWeek >= 7 ? null : habit.perWeek }
+        const { error: unitError } = await supabase.from('goals').update({ ...settings, ...(habit.unit ? { track_unit: habit.unit } : {}) }).eq('id', goalId).eq('user_id', session.user.id)
+        // Before the goal-numbers migration runs, save the rest without the unit.
+        if (unitError && habit.unit) await supabase.from('goals').update(settings).eq('id', goalId).eq('user_id', session.user.id)
       }
 
       clearDraft()

@@ -5,7 +5,8 @@
 
 export type HabitId = 'fitness' | 'health' | 'reading' | 'skill' | 'cooking' | 'travel' | 'own'
 export type Level = 'beginner' | 'intermediate' | 'advanced'
-export interface HabitDraft { id: HabitId; title: string; perWeek: number; finishBy?: string } // perWeek 7 means every day; finishBy is YYYY-MM-DD
+// perWeek 7 means every day; finishBy is YYYY-MM-DD; unit is what each check-in counts (km, pages), if anything.
+export interface HabitDraft { id: HabitId; title: string; perWeek: number; finishBy?: string; unit?: string | null }
 export interface StartDraft {
   goals: ('exam' | HabitId)[]
   exam: { code: string; date: string; stage: 'prelims' | 'mains'; hours: number; level: Level } | null

@@ -25,6 +25,7 @@ interface Goal {
   times_per_week?: number | null
   is_completed?: boolean | null
   category?: string | null
+  track_unit?: string | null
   shared?: boolean
 }
 interface Batch { id: string; name: string; admin: boolean; exam: boolean; task: string | null; done: boolean; checkedIn: number; members: number; answers: number }
@@ -67,7 +68,8 @@ export default function HomePage() {
 
     const since = weekStart()
     const todayKey = localDateString()
-    const fields = 'id,user_id,title,current_streak,status,pause_until,frequency,times_per_week,is_completed,category'
+    // '*' so the goal's unit (km, pages...) comes along once its migration has run, without breaking before.
+    const fields = '*'
     const [goalsResult, postsResult, collabResult, membershipResult] = await Promise.all([
       supabase.from('goals').select(fields).eq('user_id', u.id).order('created_at', { ascending: true }),
       supabase.from('posts').select('goal_id,created_at').eq('user_id', u.id).gte('created_at', since.toISOString()),
@@ -130,7 +132,7 @@ export default function HomePage() {
   // A weekly goal is due only when today is needed to reach the week's target; otherwise rest days never look like falling behind.
   const daysLeftInWeek = 7 - ((new Date().getDay() + 6) % 7)
   const listGoals = useMemo(() => personal.filter((g) => !isPaused(g) && (g.frequency !== 'weekly' || doneToday.has(g.id) || (!weekMet(g) && (g.times_per_week || 1) - (weekDays.get(g.id)?.size || 0) >= daysLeftInWeek))).map((g) => ({
-    id: g.id, title: g.title, done: doneToday.has(g.id) || (g.frequency === 'weekly' && weekMet(g)),
+    id: g.id, title: g.title, unit: g.track_unit ?? null, done: doneToday.has(g.id) || (g.frequency === 'weekly' && weekMet(g)),
     detail: g.frequency === 'weekly' ? `${g.times_per_week} times a week` : g.frequency === 'once' ? 'One-time goal' : (g.current_streak || 0) > 1 ? `Every day. ${g.current_streak} days in a row.` : 'Every day',
   })), [personal, doneToday, weekMet, weekDays, daysLeftInWeek])
   const mentorTasks = useMemo(() => batches.filter((b) => !b.admin && b.task).map((b) => ({ circleId: b.id, name: b.name, task: b.task!, done: b.done })), [batches])
@@ -145,12 +147,13 @@ export default function HomePage() {
   useEffect(() => { const t = window.setTimeout(() => { try { setMockSprintSeen(window.localStorage.getItem('goalyaar-mocksprint-card') === 'done') } catch { /* keep hidden */ } }, 0); return () => window.clearTimeout(t) }, [])
   const hideMockSprint = () => { setMockSprintSeen(true); try { window.localStorage.setItem('goalyaar-mocksprint-card', 'done') } catch { /* fine */ } }
 
+  /** Log a goal for today. Returns the new check-in's id, so Home can ask for the number. */
   const quickDone = async (goalId: string) => {
-    if (!user) return false
-    const { error: postError } = await supabase.from('posts').insert({ user_id: user.id, goal_id: goalId, caption: 'Completed today’s check-in.', proof_type: 'text', checkin_status: 'done', visibility: 'private' })
-    if (postError) return false
+    if (!user) return null
+    const { data: row, error: postError } = await supabase.from('posts').insert({ user_id: user.id, goal_id: goalId, caption: 'Completed today’s check-in.', proof_type: 'text', checkin_status: 'done', visibility: 'private' }).select('id').single()
+    if (postError || !row) return null
     setActivity((cur) => [...cur, { goal_id: goalId, at: new Date().toISOString(), logged: true }])
-    return true
+    return String(row.id)
   }
 
   const circles: GoalCircle[] = [

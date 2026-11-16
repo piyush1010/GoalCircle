@@ -68,9 +68,12 @@ textarea {
   -webkit-tap-highlight-color: transparent;
 }
 
-:focus-visible {
-  outline: 2px solid var(--foreground);
-  outline-offset: 2px;
+/* In the base layer, so a box with its own focus style (focus-visible:outline-none) can turn it off. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
 }
 
 @keyframes landing-enter {

@@ -10,6 +10,10 @@ import GoalCollaborators from '@/components/GoalCollaborators'
 import GoalCalendarActions from '@/components/GoalCalendarActions'
 import ItemMenu from '@/components/ItemMenu'
 import { supabase } from '@/utils/supabase'
+import AmountSheet from '@/components/AmountSheet'
+import GoalReportCard from '@/components/GoalReportCard'
+import UnitPicker from '@/components/UnitPicker'
+import { goalReport, withUnit } from '@/lib/goalReport'
 
 interface Goal {
   id: string
@@ -24,6 +28,7 @@ interface Goal {
   target_date: string | null
   frequency: 'daily' | 'weekly' | 'once' | null
   times_per_week: number | null
+  track_unit?: string | null
   created_at: string
 }
 
@@ -35,6 +40,8 @@ interface Post {
   media_urls?: string[] | null
   proof_type?: string | null
   checkin_status?: 'done' | 'partial' | 'missed' | null
+  amount?: number | string | null
+  minutes_logged?: number | null
   created_at: string
 }
 
@@ -71,7 +78,8 @@ export default function GoalDetailPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [tab, setTab] = useState<'goal' | 'group'>('goal')
   const [editing, setEditing] = useState(false)
-  const [edit, setEdit] = useState({ title: '', targetDate: '', perWeek: 7 })
+  const [edit, setEdit] = useState<{ title: string; targetDate: string; perWeek: number; unit: string | null }>({ title: '', targetDate: '', perWeek: 7, unit: null })
+  const [asking, setAsking] = useState<{ post: Post; editing: boolean } | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
   const loadGoalDetails = useCallback(async () => {
@@ -100,6 +108,7 @@ export default function GoalDetailPage() {
     const done = new Set(posts.filter((p) => p.checkin_status !== 'missed').map((p) => localKey(new Date(p.created_at))))
     return Array.from({ length: 7 }, (_, i) => { const d = new Date(start); d.setDate(start.getDate() + i); const key = localKey(d); return { key, name: d.toLocaleDateString('en-IN', { weekday: 'narrow' }), done: done.has(key), future: key > today } })
   }, [posts, today])
+  const report = useMemo(() => goalReport(posts, goal?.track_unit ?? null), [posts, goal?.track_unit])
   const mineToday = posts.filter((p) => p.user_id === userId && localKey(new Date(p.created_at)) === today && p.checkin_status !== 'missed')
 
   if (loading) return <main className="mx-auto max-w-xl space-y-3 px-4 pb-28 pt-5" aria-busy="true">{[1, 2, 3].map((k) => <div key={k} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}</main>
@@ -122,7 +131,8 @@ export default function GoalDetailPage() {
     const { data, error } = await supabase.from('posts').insert({ user_id: userId, goal_id: goal.id, caption: QUICK_CAPTION, proof_type: 'text', checkin_status: 'done', visibility: 'private' }).select('*').single()
     setUpdating(false)
     if (error || !data) { setMessage('Could not log today. Please try again.'); return }
-    setPosts((cur) => [data as Post, ...cur]); setMessage('Logged. Well done.'); void refreshStreak()
+    setPosts((cur) => [data as Post, ...cur]); void refreshStreak()
+    if (goal.track_unit) setAsking({ post: data as Post, editing: false }); else setMessage('Logged. Well done.')
     if (goal.frequency === 'once') { await supabase.from('goals').update({ status: 'completed', is_completed: true }).eq('id', goal.id).eq('user_id', userId); setGoal({ ...goal, status: 'completed', is_completed: true }) }
   }
   const undoToday = async () => {
@@ -134,13 +144,21 @@ export default function GoalDetailPage() {
     if (error) { setMessage('Could not undo. Please try again.'); return }
     setPosts((cur) => cur.filter((p) => p.id !== last.id)); setMessage('Undone.'); void refreshStreak()
   }
-  const startEdit = () => { setEdit({ title: goal.title, targetDate: goal.target_date || '', perWeek: goal.frequency === 'weekly' ? goal.times_per_week || 1 : 7 }); setEditing(true) }
+  const startEdit = () => { setEdit({ title: goal.title, targetDate: goal.target_date || '', perWeek: goal.frequency === 'weekly' ? goal.times_per_week || 1 : 7, unit: goal.track_unit ?? null }); setEditing(true) }
+  const saveAmount = async (post: Post, amount: number | null) => {
+    const { error } = await supabase.from('posts').update({ amount }).eq('id', post.id).eq('user_id', userId!)
+    if (error) return false
+    setPosts((cur) => cur.map((p) => (p.id === post.id ? { ...p, amount } : p)))
+    return true
+  }
   const saveGoal = async () => {
     if (!isOwner || edit.title.trim().length < 3) { setMessage('Give the goal a name of at least three letters.'); return }
     setUpdating(true)
     const frequency = goal.frequency === 'once' ? 'once' : edit.perWeek >= 7 ? 'daily' : 'weekly'
-    const changes = { title: edit.title.trim(), target_date: edit.targetDate || null, frequency, times_per_week: frequency === 'weekly' ? edit.perWeek : null, updated_at: new Date().toISOString() }
-    const { error } = await supabase.from('goals').update(changes).eq('id', goal.id).eq('user_id', userId!)
+    const changes = { title: edit.title.trim(), target_date: edit.targetDate || null, frequency, times_per_week: frequency === 'weekly' ? edit.perWeek : null, track_unit: edit.unit, updated_at: new Date().toISOString() }
+    let { error } = await supabase.from('goals').update(changes).eq('id', goal.id).eq('user_id', userId!)
+    // Before the goal-numbers migration runs, save everything else.
+    if (error && /track_unit|PGRST204|42703/.test(`${error.code} ${error.message}`)) ({ error } = await supabase.from('goals').update({ ...changes, track_unit: undefined }).eq('id', goal.id).eq('user_id', userId!))
     setUpdating(false)
     if (error) { setMessage('Your changes could not be saved.'); return }
     setGoal({ ...goal, ...changes, frequency: frequency as Goal['frequency'] }); setEditing(false); setMessage('Saved.')
@@ -198,6 +216,9 @@ export default function GoalDetailPage() {
         <label className="mt-3 block text-sm font-medium text-slate-700 dark:text-slate-300">Name<input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} maxLength={100} className={input} /></label>
         {goal.frequency !== 'once' && <><p className="mt-4 text-sm font-medium text-slate-700 dark:text-slate-300">How often</p>
           <div className="mt-1.5 grid grid-cols-2 gap-2">{OFTEN.map(([n, label]) => <button key={n} type="button" onClick={() => setEdit({ ...edit, perWeek: n })} aria-pressed={edit.perWeek === n} className={`rounded-xl border px-3 py-2.5 text-sm font-semibold ${edit.perWeek === n ? 'border-slate-900 ring-1 ring-slate-900 dark:border-white dark:ring-white' : 'border-slate-200 dark:border-slate-700'}`}>{label}</button>)}</div></>}
+        <p className="mt-4 text-sm font-medium text-slate-700 dark:text-slate-300">What to count</p>
+        <p className="text-sm text-slate-500">Log a number each time, like km run or pages read, and see it add up.</p>
+        <div className="mt-2"><UnitPicker value={edit.unit} onChange={(unit) => setEdit({ ...edit, unit })} category={goal.category} /></div>
         <label className="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300">Finish by (optional)<input type="date" value={edit.targetDate} min={today} onChange={(e) => setEdit({ ...edit, targetDate: e.target.value })} className={`${input} dark:[color-scheme:dark]`} /></label>
         <div className="mt-4 flex gap-2"><button type="button" onClick={() => setEditing(false)} className="h-11 rounded-xl border border-slate-300 px-5 text-sm font-semibold dark:border-slate-600">Cancel</button><button type="button" disabled={updating} onClick={() => void saveGoal()} className="h-11 flex-1 rounded-xl bg-slate-900 text-sm font-semibold text-white disabled:opacity-50 dark:bg-white dark:text-slate-900">Save changes</button></div>
       </section>}
@@ -223,6 +244,11 @@ export default function GoalDetailPage() {
         </div>)}</div>
       </section>
 
+      {goal.frequency !== 'once' && posts.length > 0 && <section aria-labelledby="report-h" className={`${card} p-4`}>
+        <div className="mb-2 flex items-baseline justify-between gap-3"><h2 id="report-h" className="text-base font-semibold">Your report</h2>{isOwner && !goal.track_unit && <button type="button" onClick={startEdit} className="text-sm font-medium text-slate-500 underline-offset-2 hover:underline">Count km, pages…</button>}</div>
+        <GoalReportCard report={report} />
+      </section>}
+
       {isOwner && <section className="flex flex-wrap gap-2">
         {!isCompleted && <Link href={`/focus?goal=${goal.id}`} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold dark:border-slate-600"><Timer className="h-4 w-4" />Start focus</Link>}
         {!isCompleted && !isPaused && Number(goal.pause_count || 0) === 0 && <button type="button" disabled={updating} onClick={() => void pauseGoal()} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold dark:border-slate-600"><PauseCircle className="h-4 w-4" />Pause for a week</button>}
@@ -242,14 +268,18 @@ export default function GoalDetailPage() {
               <div className="flex items-start gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold">{shortDate(p.created_at)}{p.checkin_status === 'partial' ? ', partly done' : p.checkin_status === 'missed' ? ', missed' : ''}</p>
+                  {goal.track_unit && p.amount !== null && p.amount !== undefined && p.amount !== '' && <p className="text-sm text-slate-600 dark:text-slate-300">{withUnit(Number(p.amount), goal.track_unit)}</p>}
                   {p.caption && p.caption !== QUICK_CAPTION && <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">{p.caption}</p>}
                 </div>
-                {p.user_id === userId && <ItemMenu label="check-in" onDelete={() => deletePost(p)} deleteMessage="Delete this check-in? This can't be undone." />}
+                {p.user_id === userId && <ItemMenu label="check-in" onEdit={goal.track_unit ? () => setAsking({ post: p, editing: true }) : undefined} onDelete={() => deletePost(p)} deleteMessage="Delete this check-in? This can't be undone." />}
               </div>
               {p.media_url && (p.proof_type === 'video' ? <video src={p.media_url} controls preload="metadata" playsInline className="mt-2 max-h-96 w-full rounded-xl bg-slate-950 object-contain" /> : <div className="relative mt-2 h-44 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"><Image src={p.media_url} alt="Check-in photo" fill unoptimized className="object-contain" /></div>)}
             </li>)}</ul>}
       </section>
     </div>}
+
+    {asking && goal.track_unit && <AmountSheet unit={goal.track_unit} goalTitle={goal.title} editing={asking.editing} initial={asking.post.amount === null || asking.post.amount === undefined || asking.post.amount === '' ? null : Number(asking.post.amount)}
+      onSave={(amount) => saveAmount(asking.post, amount)} onClose={() => { if (!asking.editing) setMessage('Logged. Well done.'); setAsking(null) }} />}
 
     {tab === 'group' && <div className="space-y-3">
       {userId && <GoalCollaborators goalId={goal.id} ownerId={goal.user_id} currentUserId={userId} />}

@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ChevronRight, Timer } from 'lucide-react'
 import MonthRing, { type MonthDay } from '@/components/MonthRing'
+import GoalSlides from '@/components/GoalSlides'
+import { goalReport, type CheckIn } from '@/lib/goalReport'
 import { examInfo } from '@/lib/prep/exam'
 import { planFor } from '@/lib/prep/pace'
 import { retention } from '@/lib/prep/revision'
@@ -12,7 +14,7 @@ import { usePrepData } from '@/lib/prep/usePrepData'
 import { localDateString } from '@/lib/exams'
 import { supabase } from '@/utils/supabase'
 
-interface Goal { id: string; title: string; current_streak: number | null; frequency: string | null; times_per_week: number | null; category: string | null; is_completed: boolean | null }
+interface Goal { id: string; title: string; current_streak: number | null; frequency: string | null; times_per_week: number | null; category: string | null; is_completed: boolean | null; track_unit?: string | null; status?: string | null }
 
 const VIEW_KEY = 'goalyaar-prep-view'
 const localKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -24,7 +26,7 @@ export default function ProgressPage() {
   const prep = usePrepData(true)
   const today = localDateString()
   const [goals, setGoals] = useState<Goal[]>([])
-  const [posts, setPosts] = useState<{ goal_id: string | null; created_at: string }[]>([])
+  const [posts, setPosts] = useState<(CheckIn & { goal_id: string | null })[]>([])
   const [focus, setFocus] = useState<{ minutes_logged: number | null; logged_at: string }[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -34,13 +36,16 @@ export default function ProgressPage() {
       if (!session) { router.replace('/login?next=/progress'); return }
       const monthStart = new Date(); monthStart.setHours(0, 0, 0, 0); monthStart.setDate(1)
       const weekStart = new Date(); weekStart.setHours(0, 0, 0, 0); weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7))
-      const since = weekStart < monthStart ? weekStart : monthStart
+      // Eight weeks back, for each goal's report.
+      const since = new Date(weekStart); since.setDate(since.getDate() - 7 * 7)
       const [g, p, f] = await Promise.all([
-        supabase.from('goals').select('id,title,current_streak,frequency,times_per_week,category,is_completed').eq('user_id', session.user.id).order('created_at', { ascending: true }),
-        supabase.from('posts').select('goal_id,created_at').eq('user_id', session.user.id).gte('created_at', since.toISOString()),
+        supabase.from('goals').select('*').eq('user_id', session.user.id).order('created_at', { ascending: true }),
+        supabase.from('posts').select('goal_id,created_at,checkin_status,minutes_logged,amount').eq('user_id', session.user.id).gte('created_at', since.toISOString())
+          // Before the goal-numbers migration, read without the amount.
+          .then((res) => res.error ? supabase.from('posts').select('goal_id,created_at,checkin_status,minutes_logged').eq('user_id', session.user.id).gte('created_at', since.toISOString()) : res),
         supabase.from('focus_logs').select('minutes_logged,logged_at').eq('user_id', session.user.id).gte('logged_at', since.toISOString()),
       ])
-      setGoals(((g.data ?? []) as Goal[]).filter((x) => x.category !== 'exam_prep' && !(x.frequency === 'once' && x.is_completed)))
+      setGoals(((g.data ?? []) as Goal[]).filter((x) => x.category !== 'exam_prep' && !x.is_completed && x.status !== 'completed'))
       setPosts((p.data ?? []) as typeof posts)
       setFocus((f.data ?? []) as typeof focus)
       setLoading(false)
@@ -83,6 +88,16 @@ export default function ProgressPage() {
     return new Set(posts.filter((p) => p.goal_id === goalId && new Date(p.created_at) >= ws).map((p) => localKey(new Date(p.created_at)))).size
   }
 
+  const slides = useMemo(() => goals.map((g) => {
+    const week = weekCount(g.id)
+    const line = g.frequency === 'weekly' ? `${Math.min(week, g.times_per_week || 1)} of ${g.times_per_week || 1} this week` : g.frequency === 'once' ? 'One-time goal' : (g.current_streak || 0) > 0 ? `${g.current_streak} ${g.current_streak === 1 ? 'day' : 'days'} in a row` : 'Every day'
+    const mine = posts.filter((p) => p.goal_id === g.id)
+    const last = mine.reduce((max, p) => (p.created_at > max ? p.created_at : max), '')
+    return { id: g.id, title: g.title, line, last, report: goalReport(mine, g.track_unit ?? null) }
+  // The goal you logged most recently comes first.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }).sort((a, b) => b.last.localeCompare(a.last)), [goals, posts])
+
   const card = 'rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
   return <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-6">
     <h1 className="text-2xl font-bold tracking-tight">Progress</h1>
@@ -115,18 +130,9 @@ export default function ProgressPage() {
             <p className="mt-2 px-1 text-sm text-slate-500">Open an exam for mock scores, weak topics and mistakes.</p>
           </section>}
 
-          {goals.length > 0 && <section aria-labelledby="goals-h" className="mt-6">
-            <h2 id="goals-h" className="mb-3 text-base font-semibold">Personal goals</h2>
-            <div className={`${card} divide-y divide-slate-100 dark:divide-slate-800`}>
-              {goals.map((g) => {
-                const week = weekCount(g.id)
-                const line = g.frequency === 'weekly' ? `${Math.min(week, g.times_per_week || 1)} of ${g.times_per_week || 1} this week` : g.frequency === 'once' ? 'One-time goal' : (g.current_streak || 0) > 0 ? `${g.current_streak} ${g.current_streak === 1 ? 'day' : 'days'} in a row` : 'Not started this week'
-                return <Link key={g.id} href={`/goal/${g.id}`} className="flex items-center gap-3 px-4 py-3.5">
-                  <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{g.title}</span><span className="block text-sm text-slate-500">{line}</span></span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-                </Link>
-              })}
-            </div>
+          {slides.length > 0 && <section aria-labelledby="goals-h" className="mt-6">
+            <h2 id="goals-h" className="mb-3 text-base font-semibold">{slides.length === 1 ? 'Your goal' : `Your goals (${slides.length})`}</h2>
+            <GoalSlides slides={slides} />
           </section>}
 
           <Link href="/focus" className={`${card} mt-6 flex items-center gap-3 p-4`}>
