@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Check, Download, Smartphone } from 'lucide-react'
-import { getInstallPrompt, setInstallPrompt, subscribeToInstallPrompt } from '@/lib/pwa'
+import { getInstallPrompt, setInstallPrompt, subscribeToInstallPrompt, isInstalledApp } from '@/lib/pwa'
 
 export default function InstallAppCard() {
   const [installAvailable, setInstallAvailable] = useState(false)
@@ -15,7 +15,7 @@ export default function InstallAppCard() {
     const unsubscribe = subscribeToInstallPrompt(refresh)
     const installed = () => { setIsInstalled(true); setMessage('GoalYaar is installed.') }
     const loadDeviceState = window.setTimeout(() => {
-      setIsInstalled(window.matchMedia('(display-mode: standalone)').matches)
+      setIsInstalled(isInstalledApp())
       setIsIos((/iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)))
       refresh()
     }, 0)
