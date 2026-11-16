@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { CircleAlert, ListPlus, NotebookPen, SquareCheckBig, Target, Timer, UsersRound, X, type LucideIcon } from 'lucide-react'
+import { CircleAlert, ListPlus, MessageCircleQuestion, NotebookPen, SquareCheckBig, Target, Timer, UsersRound, X, type LucideIcon } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import { usePrepActive } from '@/lib/prep/active'
@@ -12,7 +12,7 @@ interface Option { href?: string; onPick?: () => void; icon: LucideIcon; title: 
 
 /**
  * The + button: one place for every "add". Log a goal, start the timer, note a mistake, add a
- * one-off task, set a new goal, or join or start a batch.
+ * one-off task, ask your community, set a new goal, or join or start a batch.
  */
 export default function AddSheet({ onClose }: { onClose: () => void }) {
   const preparing = usePrepActive()
@@ -47,6 +47,7 @@ export default function AddSheet({ onClose }: { onClose: () => void }) {
     { href: '/focus', icon: Timer, title: 'Start focus', line: 'A timer for focused study or practice' },
     ...(preparing ? [{ href: '/prep/mistakes?add=1', icon: CircleAlert, title: 'Add a mistake', line: 'Something that tripped you up in a test' }] : []),
     { onPick: () => setView('task'), icon: ListPlus, title: 'Add a task', line: 'A one-off thing for today, like filling in a form' },
+    { href: '/discuss/new', icon: MessageCircleQuestion, title: 'Ask a question', line: 'Ask your community about a doubt, a plan or anything else' },
     { href: '/start', icon: Target, title: 'New goal', line: 'An exam, a habit or something of your own' },
     { href: '/circles/join', icon: UsersRound, title: 'Join or start a batch', line: 'Use your mentor’s code, or coach your own students' },
   ]

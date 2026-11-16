@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 interface PushRequest {
-  notification: { id: string; kind: string; message: string | null; post_id: string | null; circle_id: string | null; goal_id: string | null }
+  notification: { id: string; kind: string; message: string | null; post_id: string | null; circle_id: string | null; goal_id: string | null; community_post_id?: string | null }
   actor: string | null
   circle: string | null
   subscriptions: PushTarget[]
@@ -33,12 +33,15 @@ function compose({ notification: n, actor, circle }: PushRequest) {
     weekly_recap: 'Your week on GoalYaar',
     prep_reminder: 'Your study plan for today',
     prep_weekly: 'Your preparation this week',
+    community_answer: 'New answer',
+    community_helpful: 'Your answer helped',
   }
   const fallbackBody: Record<string, string> = {
     boost: 'Tap to see it.', comment: 'Tap to read and reply.', follow: 'Tap to see their profile.',
     nudge: 'One small step today?',
   }
-  const url = n.kind === 'goal_collaboration_invite' ? '/notifications'
+  const url = n.community_post_id ? `/discuss/${n.community_post_id}`
+    : n.kind === 'goal_collaboration_invite' ? '/notifications'
     : n.kind === 'prep_reminder' ? '/prep/plan'
     : n.kind === 'prep_weekly' ? '/prep/progress'
     : n.post_id ? `/feed?post=${n.post_id}`
@@ -50,7 +53,7 @@ function compose({ notification: n, actor, circle }: PushRequest) {
     body: n.message ? (n.kind === 'accountability_invite' || n.kind.startsWith('goal_collaboration') ? `${who} ${n.message}` : n.message) : (fallbackBody[n.kind] || 'Open GoalYaar to see it.'),
     url,
     // One notification per circle or post, so 3 nudges don't stack into 3 alerts.
-    tag: `${n.kind}-${n.circle_id || n.post_id || n.goal_id || n.id}`,
+    tag: `${n.kind}-${n.community_post_id || n.circle_id || n.post_id || n.goal_id || n.id}`,
   }
 }
 

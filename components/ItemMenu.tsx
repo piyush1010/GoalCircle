@@ -1,18 +1,21 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, type LucideIcon } from 'lucide-react'
 import { confirmAction } from '@/lib/confirm'
 
 /**
  * The same small "⋯" menu on every list item a person created: Edit and Delete.
  * Delete always asks first, in plain words, and says what will be lost.
  */
-export default function ItemMenu({ label, onEdit, onDelete, deleteMessage }: {
+export interface MenuAction { label: string; icon: LucideIcon; onPick: () => void; danger?: boolean }
+
+export default function ItemMenu({ label, onEdit, onDelete, deleteMessage, actions = [] }: {
   label: string // what the item is, for screen readers: "mistake", "note"
   onEdit?: () => void
   onDelete?: () => Promise<boolean>
   deleteMessage?: string
+  actions?: MenuAction[] // more choices, such as Report or Block, under Edit and Delete
 }) {
   const [open, setOpen] = useState(false)
   // Placed against the screen, not the card, so it is never clipped; opens upwards near the bottom bar.
@@ -46,10 +49,11 @@ export default function ItemMenu({ label, onEdit, onDelete, deleteMessage }: {
   }
 
   return <div ref={box} className="relative shrink-0">
-    <button type="button" disabled={busy} ref={btn} onClick={() => { place(); setOpen(!open) }} aria-haspopup="menu" aria-expanded={open} aria-label={`Edit or delete ${label}`} className="-m-1 grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50 dark:hover:bg-slate-800"><MoreHorizontal className="h-5 w-5" /></button>
+    <button type="button" disabled={busy} ref={btn} onClick={() => { place(); setOpen(!open) }} aria-haspopup="menu" aria-expanded={open} aria-label={onEdit || onDelete ? `Edit or delete ${label}` : `More options for this ${label}`} className="-m-1 grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50 dark:hover:bg-slate-800"><MoreHorizontal className="h-5 w-5" /></button>
     {open && <div role="menu" style={pos} className="z-[70] min-w-36 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
       {onEdit && <button type="button" role="menuitem" onClick={() => { setOpen(false); onEdit() }} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800"><Pencil className="h-4 w-4 text-slate-400" />Edit</button>}
       {onDelete && <button type="button" role="menuitem" onClick={() => void remove()} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"><Trash2 className="h-4 w-4" />Delete</button>}
+      {actions.map(({ label: text, icon: Icon, onPick, danger }) => <button key={text} type="button" role="menuitem" onClick={() => { setOpen(false); onPick() }} className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm ${danger ? 'text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}><Icon className={`h-4 w-4 ${danger ? '' : 'text-slate-400'}`} />{text}</button>)}
     </div>}
   </div>
 }

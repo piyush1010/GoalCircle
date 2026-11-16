@@ -6,6 +6,7 @@ import { useDisplayPreferences, useTheme, type Theme } from '@/components/ThemeP
 import InstallAppCard from '@/components/InstallAppCard'
 import FeedbackCard from '@/components/FeedbackCard'
 import DeleteAccount from '@/components/DeleteAccount'
+import BlockedPeople from '@/components/BlockedPeople'
 import DayEndSetting from '@/components/DayEndSetting'
 import { resetTours } from '@/components/GuideTour'
 import PushToggle from '@/components/PushToggle'
@@ -142,9 +143,10 @@ export default function SettingsPage() {
   const handleExportData = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      // Everything you created: goals and check-ins, focus time, and exam preparation.
+      // Everything you created: goals and check-ins, focus time, exam preparation, and community posts and answers.
       const tables = ['goals', 'posts', 'focus_logs', 'todo_items', 'circle_task_checkins', 'prep_plans', 'prep_profiles', 'prep_events', 'prep_topic_state',
-        'prep_mistakes', 'prep_mock_tests', 'prep_pyq_attempts', 'prep_answer_logs', 'prep_current_affairs', 'prep_answer_reviews'] as const
+        'prep_mistakes', 'prep_mock_tests', 'prep_pyq_attempts', 'prep_answer_logs', 'prep_current_affairs', 'prep_answer_reviews',
+        'community_posts', 'community_comments'] as const
       const results = await Promise.all(tables.map(async (table) => {
         const rows: unknown[] = []
         for (let from = 0; ; from += 1000) {
@@ -262,7 +264,8 @@ export default function SettingsPage() {
           <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Show my progress to my batches</span><span className="block text-sm text-slate-500">People in your batches and groups can see your streak calendar</span></span>
           <button type="button" role="switch" aria-checked={isPublicProfile} aria-label="Show my progress to my batches" onClick={() => void togglePublicProfile()} className={toggle(isPublicProfile)}><span className={knob(isPublicProfile)} /></button>
         </div>
-        <button type="button" onClick={() => void handleExportData()} className={row}><Download className="h-5 w-5 shrink-0 text-slate-400" /><span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Download my data</span><span className="block text-sm text-slate-500">Goals, check-ins, focus time and exam preparation, in one file</span></span><ChevronRight className="h-4 w-4 text-slate-400" /></button>
+        <button type="button" onClick={() => void handleExportData()} className={row}><Download className="h-5 w-5 shrink-0 text-slate-400" /><span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Download my data</span><span className="block text-sm text-slate-500">Goals, check-ins, focus time, exam preparation and community posts, in one file</span></span><ChevronRight className="h-4 w-4 text-slate-400" /></button>
+        <BlockedPeople className={row} />
         <Link href="/about" className={row}><Info className="h-5 w-5 shrink-0 text-slate-400" /><span className="min-w-0 flex-1 text-[15px] font-semibold">About GoalYaar and privacy</span><ChevronRight className="h-4 w-4 text-slate-400" /></Link>
       </div>
 
