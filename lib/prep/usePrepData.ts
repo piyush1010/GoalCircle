@@ -6,6 +6,7 @@ import { localDateString } from '@/lib/exams'
 import type { Foundation, MockResult, SyllabusNode, TopicState } from './types'
 import type { Mistake, PrepEvent } from './insights'
 import { announcePrepActive } from './active'
+import { readOrder, type StudyOrder } from './order'
 import { applyLocally, looksOffline, readQueue, writeQueue, type QueuedEvent } from './offline'
 
 const storage = () => { try { return typeof window === 'undefined' ? null : window.localStorage } catch { return null } }
@@ -22,19 +23,21 @@ export interface PrepProfile {
   targetStage: 'prelims' | 'mains'; planStartOn: string | null; revisionBufferPct: number
   reminderEnabled: boolean; reminderHour: number
   optionalSubjectId: string | null
+  studyOrder: StudyOrder | null // the student's own order; null = syllabus order
   active: boolean // false = paused; Today shows goals only
   level: 'beginner' | 'intermediate' | 'advanced' | null
   saved: boolean // false until the student has finished setup once
 }
-const EMPTY_PROFILE: PrepProfile = { examDate: null, dailyMinutes: null, targetStage: 'prelims', planStartOn: null, revisionBufferPct: 15, reminderEnabled: true, reminderHour: 7, optionalSubjectId: null, active: false, level: null, saved: false }
+const EMPTY_PROFILE: PrepProfile = { examDate: null, dailyMinutes: null, targetStage: 'prelims', planStartOn: null, revisionBufferPct: 15, reminderEnabled: true, reminderHour: 7, optionalSubjectId: null, studyOrder: null, active: false, level: null, saved: false }
 /** One exam the student is preparing for. */
 export interface PrepPlan {
   templateId: string; code: string; name: string
   examDate: string | null; targetStage: 'prelims' | 'mains'; planStartOn: string | null; revisionBufferPct: number
-  level: PrepProfile['level']; optionalSubjectId: string | null; active: boolean
+  level: PrepProfile['level']; optionalSubjectId: string | null; studyOrder: StudyOrder | null; active: boolean
 }
-interface PlanRow { template_id: string; exam_date: string | null; target_stage: string | null; plan_start_on: string | null; revision_buffer_pct: number | null; level: PrepProfile['level']; optional_subject_node_id: string | null; active: boolean | null }
-const PLAN_COLS = 'template_id,exam_date,target_stage,plan_start_on,revision_buffer_pct,level,optional_subject_node_id,active'
+interface PlanRow { template_id: string; exam_date: string | null; target_stage: string | null; plan_start_on: string | null; revision_buffer_pct: number | null; level: PrepProfile['level']; optional_subject_node_id: string | null; active: boolean | null; study_order?: unknown }
+// Every column, so the newer ones (study_order) are read when they exist and nothing breaks before they do.
+const PLAN_COLS = '*'
 const VIEW_KEY = 'goalyaar-prep-view'
 const readView = () => { try { return window.localStorage.getItem(VIEW_KEY) } catch { return null } }
 
@@ -87,7 +90,7 @@ export function usePrepData(enabled = true) {
   const viewPlan = plans.find((p) => p.templateId === templateId && p.active) ?? null
   const profile: PrepProfile = useMemo(() => (!userSettings || !viewPlan ? { ...EMPTY_PROFILE, ...(userSettings ? { dailyMinutes: userSettings.dailyMinutes, reminderEnabled: userSettings.reminderEnabled, reminderHour: userSettings.reminderHour } : {}) } : {
     examDate: viewPlan.examDate, targetStage: viewPlan.targetStage, planStartOn: viewPlan.planStartOn, revisionBufferPct: viewPlan.revisionBufferPct,
-    level: viewPlan.level, optionalSubjectId: viewPlan.optionalSubjectId,
+    level: viewPlan.level, optionalSubjectId: viewPlan.optionalSubjectId, studyOrder: viewPlan.studyOrder,
     dailyMinutes: userSettings.dailyMinutes, reminderEnabled: userSettings.reminderEnabled, reminderHour: userSettings.reminderHour, active: userSettings.active, saved: true,
   }), [userSettings, viewPlan])
 
@@ -110,7 +113,7 @@ export function usePrepData(enabled = true) {
     const planList: PrepPlan[] = rows.filter((r) => byId.has(r.template_id)).map((r) => ({
       templateId: r.template_id, code: byId.get(r.template_id)!.code, name: byId.get(r.template_id)!.name,
       examDate: r.exam_date, targetStage: (r.target_stage === 'mains' ? 'mains' : 'prelims') as PrepPlan['targetStage'], planStartOn: r.plan_start_on, revisionBufferPct: r.revision_buffer_pct ?? 15,
-      level: r.level ?? null, optionalSubjectId: r.optional_subject_node_id, active: r.active !== false,
+      level: r.level ?? null, optionalSubjectId: r.optional_subject_node_id, studyOrder: readOrder(r.study_order), active: r.active !== false,
     })).sort((a, b) => (a.examDate ?? '9999').localeCompare(b.examDate ?? '9999'))
     const activePlans = planList.filter((p) => p.active)
     const fallback = list.find((t) => t.code === TEMPLATE_CODE)
@@ -345,7 +348,7 @@ export function usePrepData(enabled = true) {
     const known = plans.some((p) => p.templateId === target)
     const t = templates.find((x) => x.id === target)
     setPlans((cur) => {
-      const updated: PrepPlan = { templateId: target, code: t?.code ?? '', name: t?.name ?? '', ...plan, active: true }
+      const updated: PrepPlan = { templateId: target, code: t?.code ?? '', name: t?.name ?? '', ...plan, studyOrder: base?.studyOrder ?? null, active: true }
       return (known ? cur.map((p) => (p.templateId === target ? updated : p)) : [...cur, updated]).sort((a, b) => (a.examDate ?? '9999').localeCompare(b.examDate ?? '9999'))
     })
     if (target !== templateId || !nodesByTemplate.has(target)) {
@@ -354,6 +357,16 @@ export function usePrepData(enabled = true) {
     }
     return true
   }, [templateId, userId, plans, userSettings, primaryId, templates, nodesByTemplate, load])
+
+  /** The student's own study order for the exam being viewed; null puts it back to the syllabus order. */
+  const saveOrder = useCallback(async (order: StudyOrder | null) => {
+    if (!templateId || !userId) return false
+    const value = order && readOrder(order) ? order : null
+    const { error } = await supabase.from('prep_plans').update({ study_order: value, updated_at: new Date().toISOString() }).eq('user_id', userId).eq('template_id', templateId)
+    if (error) return false
+    setPlans((cur) => cur.map((p) => (p.templateId === templateId ? { ...p, studyOrder: value } : p)))
+    return true
+  }, [templateId, userId])
 
   /** Look at another exam's syllabus, plan and progress (Today always shows all of them). */
   const setView = useCallback((id: string) => {
@@ -443,5 +456,5 @@ export function usePrepData(enabled = true) {
     await supabase.from('prep_profiles').update({ daily_target: Math.min(500, Math.max(0, dailyTarget)), target_computed_on: localDateString() }).eq('user_id', userId)
   }, [userId, profile.saved])
 
-  return { status, pending, templateId, templates, plans: plans.filter((p) => p.active), removedPlans: plans.filter((p) => !p.active), nodesByTemplate, setView, removePlan, restorePlan, template: templates.find((t) => t.id === templateId) ?? null, studyDays, events, mistakes, addMistake, resolveMistake, updateMistake, deleteMistake, updateMock, deleteMock, updateAnswer, deleteAnswer, saveTarget, tick, tickMany, untickMany, revise, unrevise, nodes, setNodes, states, mocks, answers, profile, userId, reload: load, refreshTopic, logEvent, saveProfile }
+  return { status, pending, templateId, templates, plans: plans.filter((p) => p.active), removedPlans: plans.filter((p) => !p.active), nodesByTemplate, setView, removePlan, restorePlan, template: templates.find((t) => t.id === templateId) ?? null, studyDays, events, mistakes, addMistake, resolveMistake, updateMistake, deleteMistake, updateMock, deleteMock, updateAnswer, deleteAnswer, saveTarget, tick, tickMany, untickMany, revise, unrevise, nodes, setNodes, states, mocks, answers, profile, userId, reload: load, refreshTopic, logEvent, saveProfile, saveOrder }
 }
