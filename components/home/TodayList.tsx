@@ -10,6 +10,7 @@ import { todayTasks, type Task } from '@/lib/prep/today'
 import type { usePrepData } from '@/lib/prep/usePrepData'
 import FocusTimer from '@/components/FocusTimer'
 import ItemMenu from '@/components/ItemMenu'
+import AmountSheet from '@/components/AmountSheet'
 
 type PrepData = ReturnType<typeof usePrepData>
 interface Room { template_id: string; node_id: string; title: string; subject: string; done: boolean; done_count: number; people: number }
@@ -37,15 +38,16 @@ function tagFor(t: Task, exam: string | null): string {
 export default function TodayList({ data, userId, goals, mentor, onGoalDone, onCounts }: {
   data: PrepData
   userId: string
-  goals: { id: string; title: string; done: boolean; detail: string }[]
+  goals: { id: string; title: string; done: boolean; detail: string; unit?: string | null }[]
   mentor: { circleId: string; name: string; task: string; done: boolean }[]
-  onGoalDone: (goalId: string) => Promise<boolean>
+  onGoalDone: (goalId: string) => Promise<string | null> // the new check-in's id
   onCounts?: (counts: TodayCounts) => void
 }) {
   const today = localDateString()
   const [busy, setBusy] = useState<string | null>(null)
   const [focus, setFocus] = useState<Task | null>(null)
   const [shareOpen, setShareOpen] = useState(false)
+  const [asking, setAsking] = useState<{ postId: string; unit: string; title: string } | null>(null)
   const [toast, setToastState] = useState<{ text: string; undo?: () => Promise<boolean> } | null>(null)
   const setToast = (text: string | null, undo?: () => Promise<boolean>) => setToastState(text ? { text, undo } : null)
   const [intro, setIntro] = useState(false)
@@ -145,6 +147,17 @@ export default function TodayList({ data, userId, goals, mentor, onGoalDone, onC
     setBusy(null)
     setToast(ok ? message : 'Could not save. Try again.', ok ? undo : undefined)
   }
+  // A goal that counts something (km, pages) asks for the number right after it's ticked. Skipping is fine.
+  const logGoal = async (t: Task) => {
+    const id = await onGoalDone(t.goalId!)
+    const unit = goals.find((g) => g.id === t.goalId)?.unit
+    if (id && unit) setAsking({ postId: id, unit, title: t.title })
+    return Boolean(id)
+  }
+  const saveAmount = async (postId: string, amount: number | null) => {
+    const { error } = await supabase.from('posts').update({ amount }).eq('id', postId).eq('user_id', userId)
+    return !error
+  }
   const examOf = (t: Task) => (t.templateId ? examInfo(data.plans.find((p) => p.templateId === t.templateId)?.code).short : null)
   const studied = tasks.filter((t) => t.kind === 'study' && t.done).length
   const revised = tasks.filter((t) => t.kind === 'revise' && t.done).length
@@ -184,7 +197,7 @@ export default function TodayList({ data, userId, goals, mentor, onGoalDone, onC
                     : <Link href={`/circles/${t.circleId}`} className={`${primary} grid place-items-center`}>Check in</Link>}
                 </div>
               </li>
-              const finish = t.kind === 'study' ? () => data.tick(t.nodeId!, true) : t.kind === 'room' ? () => roomCheck(t.templateId!) : () => onGoalDone(t.goalId!)
+              const finish = t.kind === 'study' ? () => data.tick(t.nodeId!, true) : t.kind === 'room' ? () => roomCheck(t.templateId!) : () => logGoal(t)
               const undo = t.kind === 'study' ? () => data.tick(t.nodeId!, false) : t.kind === 'room' ? () => roomCheck(t.templateId!, true) : undefined
               return <li key={t.key} className={`${row} flex items-start gap-3`}>
                 <button type="button" disabled={busy !== null} onClick={() => void act(t, finish, t.kind === 'study' ? 'Done. It comes back for revision in three days.' : 'Done.', undo)} aria-label={`Mark “${t.title}” done`} className="mt-4 grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 border-slate-300 text-transparent transition hover:border-slate-900 hover:text-slate-900 disabled:opacity-50 dark:border-slate-600 dark:hover:border-white dark:hover:text-white"><Check className="h-4 w-4" strokeWidth={3} /></button>
@@ -228,6 +241,7 @@ export default function TodayList({ data, userId, goals, mentor, onGoalDone, onC
       const ok = markDone ? await data.tick(focus.nodeId!, true, minutes) : await data.logEvent(null, 'studied', { minutes, details: { timer: true, unit: focus.nodeId } })
       setToast(ok ? `${minutes} minutes saved${markDone ? ', and ticked off' : ''}.` : 'Could not save.', ok && markDone ? () => data.tick(focus.nodeId!, false) : undefined)
     }} />}
+    {asking && <AmountSheet unit={asking.unit} goalTitle={asking.title} onSave={(amount) => saveAmount(asking.postId, amount)} onClose={() => setAsking(null)} />}
     {shareOpen && <ShareSheet text={[studied ? `${studied} subtopic${studied === 1 ? '' : 's'}` : '', revised ? `${revised} revision${revised === 1 ? '' : 's'}` : ''].filter(Boolean).join(' and ')} exams={data.plans.map((p) => examInfo(p.code).short).join(' and ')} onClose={() => setShareOpen(false)} onDone={setToast} />}
     {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-sm items-center justify-between gap-3 rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-lg dark:bg-white dark:text-slate-900">
       <span className={toast.undo ? '' : 'w-full text-center'}>{toast.text}</span>

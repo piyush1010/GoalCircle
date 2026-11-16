@@ -1,5 +1,6 @@
 'use client'
 
+import UnitPicker from '@/components/UnitPicker'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -220,6 +221,9 @@ export default function StartPage() {
             {value.finishBy && <button type="button" onClick={() => setHabit(h.id, { finishBy: undefined })} className="shrink-0 px-2 text-sm font-medium text-slate-500">Clear</button>}
           </div>
           <p className="mt-1.5 text-xs text-slate-500">Leave it empty for a goal that keeps going.</p>
+          <p className="mt-6 text-sm font-semibold text-slate-700 dark:text-slate-300">Count something? <span className="font-normal text-slate-500">(optional)</span></p>
+          <p className="mt-0.5 text-sm text-slate-500">Log a number each time, like km or pages, and watch it add up week by week.</p>
+          <div className="mt-2"><UnitPicker value={value.unit ?? null} onChange={(unit) => setHabit(h.id, { unit })} category={h.category} /></div>
         </>
       })()}
 
@@ -233,7 +237,7 @@ export default function StartPage() {
           </li>}
           {habitList.map((h) => <li key={h.id} className="px-4 py-3.5">
             <span className="block text-[15px] font-semibold">{h.title.trim()}</span>
-            <span className="mt-0.5 block text-sm text-slate-500">{howOften(h.perWeek).replace(/^./, (c) => c.toUpperCase())}{h.finishBy ? `, until ${longDate(h.finishBy)}` : ''}</span>
+            <span className="mt-0.5 block text-sm text-slate-500">{howOften(h.perWeek).replace(/^./, (c) => c.toUpperCase())}{h.finishBy ? `, until ${longDate(h.finishBy)}` : ''}{h.unit ? `, counting ${h.unit}` : ''}</span>
           </li>)}
         </ul>
         {habitList.length > 0 && <label className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 dark:border-slate-800 dark:bg-slate-900">
