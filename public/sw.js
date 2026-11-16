@@ -1,5 +1,6 @@
-const CACHE_VERSION = 'goalcircle-shell-v3'
-const SHELL_ASSETS = ['/', '/login', '/goalyaar-icon-192.png', '/goalyaar-icon-512.png']
+const CACHE_VERSION = 'goalcircle-shell-v4'
+const OFFLINE_PAGE = '/offline.html'
+const SHELL_ASSETS = ['/', '/login', OFFLINE_PAGE, '/goalyaar-icon-192.png', '/goalyaar-icon-512.png', '/goalyaar-badge-96.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_VERSION).then((cache) => cache.addAll(SHELL_ASSETS)))
@@ -22,6 +23,12 @@ self.addEventListener('fetch', (event) => {
   // Only cache the public shell. Authenticated pages and API responses remain network-only.
   if (SHELL_ASSETS.includes(url.pathname)) {
     event.respondWith(fetch(event.request).catch(() => caches.match(event.request)))
+    return
+  }
+
+  // Opening a page with no connection: show a friendly offline page instead of the browser's error.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_PAGE)))
   }
 })
 
@@ -36,7 +43,7 @@ self.addEventListener('push', (event) => {
   event.waitUntil(self.registration.showNotification(data.title || 'GoalYaar', {
     body: data.body || 'You have a new GoalYaar update.',
     icon: '/goalyaar-icon-192.png',
-    badge: '/goalyaar-icon-192.png',
+    badge: '/goalyaar-badge-96.png', // Android shows the badge as a white silhouette
     tag: data.tag || 'goalcircle-update',
     data: { url: data.url || '/notifications' },
   }))

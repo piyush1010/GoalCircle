@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import BottomNav from '@/components/BottomNav'
 import ReminderManager from '@/components/ReminderManager'
 import PwaManager from '@/components/PwaManager'
+import BackClosesSheets from '@/components/BackClosesSheets'
 import WelcomeBack from '@/components/WelcomeBack'
 import CheerToast from '@/components/CheerToast'
 import ConfirmHost from '@/components/ConfirmHost'
@@ -25,6 +26,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <>
       <ErrorReporter />
       <PwaManager />
+      <BackClosesSheets />
       <ReminderManager />
       <DayEndSync />
       {children}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { claimNudge } from '@/lib/nudges'
 import { Smartphone, X } from 'lucide-react'
-import { getInstallPrompt, setInstallPrompt, subscribeToInstallPrompt } from '@/lib/pwa'
+import { getInstallPrompt, setInstallPrompt, subscribeToInstallPrompt, isInstalledApp } from '@/lib/pwa'
 
 const DISMISS_KEY = 'goalcircle-install-dismissed'
 
@@ -14,7 +14,7 @@ export default function InstallNudge() {
   const [ios, setIos] = useState(false)
 
   useEffect(() => {
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
+    const standalone = isInstalledApp()
     let dismissedAt = 0
     try { dismissedAt = Number(window.localStorage.getItem(DISMISS_KEY) || 0) } catch { /* storage unavailable */ }
     const mobile = /Android|iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)

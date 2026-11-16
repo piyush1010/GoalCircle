@@ -21,3 +21,19 @@ export function subscribeToInstallPrompt(listener: () => void) {
   listeners.add(listener)
   return () => listeners.delete(listener)
 }
+
+const APP_KEY = 'gy-android-app'
+
+/**
+ * True inside the installed app: the Android app from Google Play (it opens the site with an
+ * android-app:// referrer, remembered for the session) or the site added to the home screen.
+ */
+export function isInstalledApp() {
+  if (typeof window === 'undefined') return false
+  let fromPlay = document.referrer.startsWith('android-app://')
+  try {
+    if (fromPlay) window.sessionStorage.setItem(APP_KEY, '1')
+    else fromPlay = window.sessionStorage.getItem(APP_KEY) === '1'
+  } catch { /* storage unavailable */ }
+  return fromPlay || window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
+}

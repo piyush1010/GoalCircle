@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect } from 'react'
-import { setInstallPrompt, type BeforeInstallPromptEvent } from '@/lib/pwa'
+import { isInstalledApp, setInstallPrompt, type BeforeInstallPromptEvent } from '@/lib/pwa'
 
 export default function PwaManager() {
   useEffect(() => {
+    isInstalledApp() // remember, for this session, that we were opened from the Android app
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).catch((error) => {
         console.warn('GoalYaar service worker registration failed:', error)
