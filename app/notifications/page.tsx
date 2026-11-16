@@ -10,10 +10,11 @@ interface NotificationItem {
   id: string
   recipient_id: string
   actor_id: string | null
-  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap' | 'goal_collaboration_invite' | 'goal_collaboration_accepted' | 'circle_task' | 'circle_post' | 'circle_leave' | 'circle_reply' | 'prep_reminder' | 'prep_weekly'
+  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap' | 'goal_collaboration_invite' | 'goal_collaboration_accepted' | 'circle_task' | 'circle_post' | 'circle_leave' | 'circle_reply' | 'prep_reminder' | 'prep_weekly' | 'community_answer' | 'community_helpful'
   post_id: string | null
   circle_id: string | null
   goal_id: string | null
+  community_post_id?: string | null
   message: string | null
   is_read: boolean
   created_at: string
@@ -40,6 +41,8 @@ const details = {
   circle_reply: { icon: MessageCircle, title: 'Your mentor replied', copy: 'replied to your check-in.' },
   prep_weekly: { icon: CheckCheck, title: 'Your preparation this week', copy: 'Your weekly summary is ready.' },
   prep_reminder: { icon: CheckCheck, title: 'Your study plan for today', copy: 'Open your plan to see today\'s target.' },
+  community_answer: { icon: MessageCircle, title: 'New answer', copy: 'answered your question.' },
+  community_helpful: { icon: Check, title: 'Your answer helped', copy: 'said your answer helped.' },
 }
 
 function NotificationIcon({ kind }: { kind: NotificationItem['kind'] }) {
@@ -69,7 +72,7 @@ export default function NotificationsPage() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) { router.replace('/login?next=/notifications'); return }
     const [{ data, error: notificationsError }, { data: requestData }, { data: collaborationData }] = await Promise.all([
-      supabase.from('notifications').select('id,recipient_id,actor_id,kind,post_id,circle_id,goal_id,message,is_read,created_at').order('created_at', { ascending: false }).limit(50),
+      supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(50),
       supabase.from('accountability_partners').select('id,requester_id,partner_id,status,created_at').eq('partner_id', session.user.id).eq('status', 'pending').order('created_at', { ascending: false }),
       supabase.from('goal_collaborators').select('goal_id,user_id,invited_by,status,created_at,goal:goals(title)').eq('user_id', session.user.id).eq('status', 'pending').order('created_at', { ascending: false }),
     ])
@@ -136,7 +139,7 @@ export default function NotificationsPage() {
         {notifications.filter((item) => item.kind !== 'goal_collaboration_invite' || !collaborationRequests.some((request) => request.goal_id === item.goal_id)).map((item) => (
           <Link
             key={item.id}
-            href={item.kind === 'goal_collaboration_invite' ? '/notifications' : item.kind === 'prep_reminder' ? '/prep/plan' : item.kind === 'prep_weekly' ? '/prep/progress' : item.post_id ? `/feed?post=${item.post_id}` : item.goal_id ? `/goal/${item.goal_id}` : item.circle_id ? `/circles/${item.circle_id}` : '/profile'}
+            href={item.community_post_id ? `/discuss/${item.community_post_id}` : item.kind === 'goal_collaboration_invite' ? '/notifications' : item.kind === 'prep_reminder' ? '/prep/plan' : item.kind === 'prep_weekly' ? '/prep/progress' : item.post_id ? `/feed?post=${item.post_id}` : item.goal_id ? `/goal/${item.goal_id}` : item.circle_id ? `/circles/${item.circle_id}` : '/profile'}
             className={`border rounded-2xl p-4 shadow-sm flex items-start gap-3 transition ${
               item.is_read
                 ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-80'

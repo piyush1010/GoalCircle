@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, ChevronRight, Plus } from 'lucide-react'
 import ChallengeCard from '@/components/communities/ChallengeCard'
+import Discussion from '@/components/communities/Discussion'
 import { CATEGORY_COMMUNITIES, describe, examCode, isExamCommunity, todayLine, type CommunityRow } from '@/lib/communities'
 import { confirmAction } from '@/lib/confirm'
 import { supabase } from '@/utils/supabase'
@@ -12,7 +13,7 @@ import { supabase } from '@/utils/supabase'
 interface Goal { id: string; title: string; current_streak: number | null }
 interface Group { id: string; name: string; description: string | null }
 
-/** One community: what's happening today, this week's challenge, your own goals in it, and open groups. */
+/** One community: what's happening today, this week's challenge, your own goals in it, open groups, and the discussion. */
 export default function CommunityPage() {
   const router = useRouter()
   const key = decodeURIComponent(String(useParams().key ?? ''))
@@ -126,6 +127,12 @@ export default function CommunityPage() {
             </ul>
           </>}
         </section>}
+
+    <section className="mt-8" aria-labelledby="discussion">
+      <h2 id="discussion" className="text-base font-semibold">Questions and posts</h2>
+      <p className="mb-3 mt-0.5 text-sm text-slate-500">{isExamCommunity(key) ? `Ask about a topic you’re stuck on, or share what’s working for you.` : `Ask for advice, or share what’s working for you.`}</p>
+      <Discussion places={[{ key, name: d.name }]} emptyTitle="No questions yet" emptyLine={`Ask the first one. Everyone in ${d.name} can see it and answer.`} />
+    </section>
 
     {row.member && <button type="button" disabled={busy} onClick={() => void setMember(false)} className="mt-8 w-full py-2 text-center text-sm font-medium text-slate-500 disabled:opacity-50">Leave this community</button>}
   </main>

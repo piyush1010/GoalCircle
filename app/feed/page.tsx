@@ -5,8 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import CommunityTabs from '@/components/communities/CommunityTabs'
+import Discussion from '@/components/communities/Discussion'
+import type { Place } from '@/components/communities/Composer'
+import { describe, type CommunityRow } from '@/lib/communities'
 import { useRouter } from 'next/navigation'
-import { Bell, Bolt, Check, Clock3, Flame, Hand, LockKeyhole, MessageCircle, MoreHorizontal, Pencil, Plus, Search, Share2, Target, Trash2, UserCheck, UserPlus, X } from 'lucide-react'
+import { Bell, Bolt, Check, Clock3, Flame, Hand, LockKeyhole, MessageCircle, MoreHorizontal, Pencil, Search, Share2, Target, Trash2, UserCheck, UserPlus, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import ProfileAvatar from '@/components/ProfileAvatar'
 import PostMusic from '@/components/PostMusic'
@@ -58,7 +61,8 @@ export default function FeedPage() {
   const router = useRouter()
   const [posts, setPosts] = useState<FeedPost[]>([])
   const [userId, setUserId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'all' | 'circle'>('all')
+  const [activeTab, setActiveTab] = useState<'all' | 'circle' | 'talk'>('all')
+  const [places, setPlaces] = useState<Place[] | null>(null)
   const [openComments, setOpenComments] = useState<string | null>(null)
   const [commentText, setCommentText] = useState('')
   const [loading, setLoading] = useState(true)
@@ -197,6 +201,15 @@ export default function FeedPage() {
       window.clearTimeout(hideTimer)
     }
   }, [])
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('tab') !== 'discussions') return
+    const timer = window.setTimeout(() => setActiveTab('talk'), 0)
+    return () => window.clearTimeout(timer)
+  }, [])
+  useEffect(() => {
+    if (activeTab !== 'talk' || places) return
+    void supabase.rpc('community_overview').then(({ data }) => setPlaces(((data ?? []) as CommunityRow[]).filter((r) => r.member).map((r) => ({ key: r.key, name: describe(r.key).name }))))
+  }, [activeTab, places])
   const displayedPosts = useMemo(() => activeTab === 'circle' ? posts.filter((post) => post.isFollowing) : posts, [activeTab, posts])
 
   const showToast = (message: string) => { setToast(message); window.setTimeout(() => setToast(null), 1800) }
@@ -281,11 +294,17 @@ export default function FeedPage() {
       {toast && <div role="status" className="fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-slate-950 px-4 py-2 text-xs font-bold text-white shadow-xl dark:bg-white dark:text-slate-950">{toast}</div>}
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-slate-50/90 px-4 pb-3 pt-5 backdrop-blur-xl dark:border-slate-800 dark:bg-[#07101F]/90">
         <div className="mb-3 flex items-center justify-between gap-3"><h1 className="sr-only">Feed</h1><CommunityTabs active="feed" /><HelpButton /></div>
-        <div className="flex items-center gap-2"><div className="grid min-w-0 flex-1 grid-cols-2 rounded-xl bg-slate-200/70 p-1 dark:bg-slate-800"><button type="button" aria-pressed={activeTab === 'all'} onClick={() => setActiveTab('all')} className={`rounded-lg py-2 text-sm font-semibold ${activeTab === 'all' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>Everyone</button><button type="button" aria-pressed={activeTab === 'circle'} onClick={() => setActiveTab('circle')} className={`rounded-lg py-2 text-sm font-semibold ${activeTab === 'circle' ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>Following</button></div><Link href="/search" aria-label="Discover people and goals" className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"><Search className="h-4 w-4" /></Link><Link href="/notifications" aria-label={`${unreadCount} unread notifications`} className="relative grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"><Bell className="h-4 w-4" />{unreadCount > 0 && <span className="absolute -right-1 -top-1 grid min-h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white">{Math.min(unreadCount, 99)}</span>}</Link><Link href="/check-in" aria-label="Post a check-in" className="grid h-9 w-9 place-items-center rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900"><Plus className="h-4 w-4" /></Link></div>
+        <div className="flex items-center gap-2"><div className="grid min-w-0 flex-1 grid-cols-3 rounded-xl bg-slate-200/70 p-1 dark:bg-slate-800">{([['all', 'Everyone'], ['circle', 'Following'], ['talk', 'Questions']] as const).map(([tab, label]) => <button key={tab} type="button" aria-pressed={activeTab === tab} onClick={() => setActiveTab(tab)} className={`truncate rounded-lg px-1 py-2 text-sm font-semibold ${activeTab === tab ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>{label}</button>)}</div><Link href="/search" aria-label="Discover people and goals" className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"><Search className="h-4 w-4" /></Link><Link href="/notifications" aria-label={`${unreadCount} unread notifications`} className="relative grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"><Bell className="h-4 w-4" />{unreadCount > 0 && <span className="absolute -right-1 -top-1 grid min-h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white">{Math.min(unreadCount, 99)}</span>}</Link></div>
       </header>
 
       <div className="space-y-4 px-3 py-4">
         {userId && <FeedBatchStrip userId={userId} />}
+        {activeTab === 'talk' && (places === null
+          ? <div className="h-32 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" aria-busy="true" />
+          : places.length === 0
+            ? <div className="rounded-3xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700"><h2 className="font-bold">Join a community to see its questions</h2><p className="mb-4 mt-1 text-sm text-slate-500">Questions and posts from your communities show up here.</p><Link href="/circles" className="inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">See communities</Link></div>
+            : <Discussion places={places} showCommunity emptyTitle="No questions yet" emptyLine="Ask the first one. People in your communities will see it here." />)}
+        {activeTab !== 'talk' && <>
         {loading && [1, 2].map((item) => <div key={item} className="h-72 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" />)}
         {!loading && error && <div className="rounded-3xl border border-rose-200 bg-white p-7 text-center dark:border-rose-900/60 dark:bg-[#101B2D]"><Target className="mx-auto mb-3 h-7 w-7 text-rose-500" /><p className="text-sm font-bold">Feed unavailable</p><p className="mt-1 text-xs text-slate-500">{error}</p><button onClick={() => void loadFeed()} className="mt-4 rounded-xl bg-slate-900 dark:bg-slate-50 px-4 py-2 text-xs font-bold text-white dark:text-slate-900">Retry</button></div>}
         {!loading && !error && displayedPosts.length === 0 && <div className="rounded-3xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700"><Target className="mx-auto mb-3 h-8 w-8 text-slate-400" /><h2 className="font-bold">No check-ins here yet</h2><p className="mb-4 mt-1 text-xs text-slate-500">Be the first to share real progress.</p><Link href="/check-in" className="inline-flex rounded-xl bg-slate-900 dark:bg-slate-50 px-4 py-2 text-xs font-bold text-white dark:text-slate-900">Post a check-in</Link></div>}
@@ -309,6 +328,7 @@ export default function FeedPage() {
           </div>
         </article>)}
         {!loading && !error && hasMore && <button onClick={() => void loadMorePosts()} disabled={loadingMore} className="w-full rounded-2xl border border-slate-200 bg-white py-3 text-xs font-bold text-slate-700 shadow-sm disabled:opacity-60 dark:border-slate-700 dark:bg-[#101B2D] dark:text-slate-100">{loadingMore ? 'Loading more…' : 'Load more updates'}</button>}
+        </>}
       </div>
       {safetyTarget && <ReportBlockModal targetUserId={safetyTarget} isOpen onClose={() => setSafetyTarget(null)} />}
     </main>
