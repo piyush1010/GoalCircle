@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Check, RotateCcw, Share2, Timer, X } from 'lucide-react'
+import { Check, ChevronDown, RotateCcw, Share2, Timer, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import { examInfo } from '@/lib/prep/exam'
@@ -139,6 +139,25 @@ export default function TodayList({ data, userId, goals, mentor, onGoalDone, onC
   useEffect(() => { if (ready && target && data.plans.length) void saveTarget(target) }, [ready, target, saveTarget, data.plans.length])
   useEffect(() => { if (!toast) return; const t = window.setTimeout(() => setToastState(null), toast.undo ? 5000 : 2600); return () => window.clearTimeout(t) }, [toast])
 
+  // The day in groups: the mentor's task, each exam, then personal goals and to-dos.
+  // Each group shows its next few items; the rest open with "Show N more", so a long day stays short.
+  const groups = useMemo(() => {
+    const out: { key: string; title: string; tasks: Task[]; todos: boolean }[] = []
+    const mentorTasks = tasks.filter((t) => t.kind === 'mentor')
+    if (mentorTasks.length) out.push({ key: 'mentor', title: mentorTasks.length === 1 ? 'From your mentor' : 'From your mentors', tasks: mentorTasks, todos: false })
+    for (const p of data.plans) {
+      const own = tasks.filter((t) => t.templateId === p.templateId && t.kind !== 'mentor')
+      if (own.length) out.push({ key: p.templateId, title: examInfo(p.code).short, tasks: own, todos: false })
+    }
+    const goalTasks = tasks.filter((t) => t.kind === 'goal' || (!t.templateId && t.kind !== 'mentor'))
+    if (goalTasks.length || todos.length) out.push({ key: 'goals', title: data.plans.length ? 'Goals and tasks' : 'Your goals and tasks', tasks: goalTasks, todos: true })
+    return out
+  }, [tasks, todos.length, data.plans])
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const [showDone, setShowDone] = useState<Set<string>>(new Set())
+  const [only, setOnly] = useState<string | null>(null)
+  const flip = (set: Set<string>, key: string) => { const next = new Set(set); if (next.has(key)) next.delete(key); else next.add(key); return next }
+
   if (data.plans.length > 0 && !ready) return <div className="h-64 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-900" aria-busy="true" />
 
   const act = async (t: Task, fn: () => Promise<boolean>, message: string, undo?: () => Promise<boolean>) => {
@@ -166,6 +185,53 @@ export default function TodayList({ data, userId, goals, mentor, onGoalDone, onC
   const undoButton = 'inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
   const row = 'px-4 py-3.5'
 
+  // Inside a group the exam's name is already in the heading, so labels just say Study, Revise or the batch.
+  const tagIn = (t: Task, group: string) => (t.kind === 'mentor' ? t.subtitle.replace(/^From your mentor in /, '') : group === 'goals' ? tagFor(t, examOf(t)) : tagFor(t, null))
+  const openRow = (t: Task, group: string) => {
+    const title = t.nodeId ? <Link href={`/prep?topic=${t.nodeId}`} className="block text-[15px] font-semibold leading-snug">{t.title}</Link> : <span className="block text-[15px] font-semibold leading-snug">{t.title}</span>
+    const sub = t.kind !== 'mentor' && t.subtitle ? <span className="mt-0.5 block text-sm text-slate-500">{t.subtitle}</span> : null
+    if (t.kind === 'revise' || t.kind === 'mentor') return <li key={t.key} className={row}>
+      <p className="text-xs font-medium text-slate-500">{tagIn(t, group)}</p>
+      <div className="mt-0.5">{title}{sub}</div>
+      <div className="mt-3">
+        {t.kind === 'revise'
+          ? <><p className="mb-2 text-sm text-slate-500">How much did you remember?</p><div className="grid grid-cols-3 gap-2">{([['all', 'Got it'], ['some', 'Partly'], ['little', 'Forgot']] as const).map(([recall, label], i) => <button key={recall} type="button" disabled={busy !== null} onClick={() => void act(t, () => data.revise(t.nodeId!, recall), recall === 'little' ? 'Revised. It comes back in three days.' : 'Revised.', () => data.unrevise(t.nodeId!))} className={i === 0 ? primary : secondary}>{label}</button>)}</div></>
+          : <Link href={`/circles/${t.circleId}`} className={`${primary} grid place-items-center`}>Check in</Link>}
+      </div>
+    </li>
+    const finish = t.kind === 'study' ? () => data.tick(t.nodeId!, true) : t.kind === 'room' ? () => roomCheck(t.templateId!) : () => logGoal(t)
+    const undo = t.kind === 'study' ? () => data.tick(t.nodeId!, false) : t.kind === 'room' ? () => roomCheck(t.templateId!, true) : undefined
+    return <li key={t.key} className={`${row} flex items-start gap-3`}>
+      <button type="button" disabled={busy !== null} onClick={() => void act(t, finish, t.kind === 'study' ? 'Done. It comes back for revision in three days.' : 'Done.', undo)} aria-label={`Mark “${t.title}” done`} className="mt-4 grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 border-slate-300 text-transparent transition hover:border-slate-900 hover:text-slate-900 disabled:opacity-50 dark:border-slate-600 dark:hover:border-white dark:hover:text-white"><Check className="h-4 w-4" strokeWidth={3} /></button>
+      <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-slate-500">{tagIn(t, group)}</span><span className="mt-0.5 block">{title}{sub}</span></span>
+      {t.kind === 'study' && <button type="button" onClick={() => setFocus(t)} aria-label={`Focus timer for ${t.title}`} className="mt-3 grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"><Timer className="h-5 w-5" /></button>}
+      {t.kind === 'goal' && <Link href={`/check-in?goal=${t.goalId}`} className="mt-3 shrink-0 rounded-lg px-2 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800">Add a note</Link>}
+    </li>
+  }
+  const openTodoRow = (todo: Todo) => <li key={todo.id} className={`${row} flex items-center gap-3`}>
+    <button type="button" onClick={() => void setTodo(todo, true)} aria-label={`Mark “${todo.title}” done`} className="grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 border-slate-300 text-transparent transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-600 dark:hover:border-white dark:hover:text-white"><Check className="h-4 w-4" strokeWidth={3} /></button>
+    {editing?.id === todo.id
+      ? <form onSubmit={(e) => { e.preventDefault(); void saveRename() }} className="flex min-w-0 flex-1 gap-2">
+          <input autoFocus value={editing.title} onChange={(e) => setEditing({ id: todo.id, title: e.target.value })} maxLength={200} aria-label="Task name" className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-[15px] dark:border-slate-600" />
+          <button type="submit" className="rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">Save</button>
+        </form>
+      : <>
+          <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-slate-500">To-do</span><span className="block text-[15px] font-semibold leading-snug">{todo.title}</span></span>
+          <ItemMenu label="task" onEdit={() => setEditing({ id: todo.id, title: todo.title })} onDelete={() => deleteTodo(todo)} deleteMessage={`Delete “${todo.title}”?`} />
+        </>}
+  </li>
+  const doneRow = (t: Task) => <li key={t.key} className={`${row} flex items-center gap-3`}>
+    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-600 text-white"><Check className="h-4 w-4" strokeWidth={3} /></span>
+    <span className="min-w-0 flex-1"><span className="block text-[15px] font-medium leading-snug text-slate-500 line-through decoration-slate-300">{t.title}</span></span>
+    {t.kind === 'room' && t.templateId && <button type="button" disabled={busy !== null} onClick={() => void act(t, () => roomCheck(t.templateId!, true), 'Undone.')} className={undoButton}><RotateCcw className="h-3.5 w-3.5" />Undo</button>}
+    {(t.kind === 'study' || t.kind === 'revise') && t.nodeId && <button type="button" disabled={busy !== null} onClick={() => void act(t, t.kind === 'study' ? () => data.tick(t.nodeId!, false) : () => data.unrevise(t.nodeId!), t.kind === 'study' ? 'Unticked.' : 'Revision undone.')} className={undoButton}><RotateCcw className="h-3.5 w-3.5" />Undo</button>}
+  </li>
+  const doneTodoRow = (todo: Todo) => <li key={todo.id} className={`${row} flex items-center gap-3`}>
+    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-600 text-white"><Check className="h-4 w-4" strokeWidth={3} /></span>
+    <span className="min-w-0 flex-1"><span className="block text-[15px] font-medium leading-snug text-slate-500 line-through decoration-slate-300">{todo.title}</span></span>
+    <button type="button" onClick={() => void setTodo(todo, false)} className={undoButton}><RotateCcw className="h-3.5 w-3.5" />Undo</button>
+  </li>
+
   return <section aria-labelledby="today-h" data-guide="deck">
     {intro && total > 0 && <div className="mb-3 rounded-2xl bg-slate-900 p-4 text-white dark:bg-white dark:text-slate-900">
       <div className="flex items-start justify-between gap-3">
@@ -184,55 +250,44 @@ export default function TodayList({ data, userId, goals, mentor, onGoalDone, onC
 
       {total === 0
         ? <p className="px-4 pb-5 pt-3 text-sm text-slate-500">Nothing is due today. Add a goal, or take the day off.</p>
-        : <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">
-            {tasks.filter((t) => !t.done).map((t) => {
-              const title = t.nodeId ? <Link href={`/prep?topic=${t.nodeId}`} className="block text-[15px] font-semibold leading-snug">{t.title}</Link> : <span className="block text-[15px] font-semibold leading-snug">{t.title}</span>
-              const sub = t.kind !== 'mentor' && t.subtitle ? <span className="mt-0.5 block text-sm text-slate-500">{t.subtitle}</span> : null
-              if (t.kind === 'revise' || t.kind === 'mentor') return <li key={t.key} className={row}>
-                <p className="text-xs font-medium text-slate-500">{tagFor(t, examOf(t))}</p>
-                <div className="mt-0.5">{title}{sub}</div>
-                <div className="mt-3">
-                  {t.kind === 'revise'
-                    ? <><p className="mb-2 text-sm text-slate-500">How much did you remember?</p><div className="grid grid-cols-3 gap-2">{([['all', 'Got it'], ['some', 'Partly'], ['little', 'Forgot']] as const).map(([recall, label], i) => <button key={recall} type="button" disabled={busy !== null} onClick={() => void act(t, () => data.revise(t.nodeId!, recall), recall === 'little' ? 'Revised. It comes back in three days.' : 'Revised.', () => data.unrevise(t.nodeId!))} className={i === 0 ? primary : secondary}>{label}</button>)}</div></>
-                    : <Link href={`/circles/${t.circleId}`} className={`${primary} grid place-items-center`}>Check in</Link>}
+        : <>
+            {groups.length > 1 && <div className="mt-3 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Show">
+              {[{ key: null, title: 'All' }, ...groups].map((g) => <button key={g.key ?? 'all'} type="button" aria-pressed={only === g.key} onClick={() => setOnly(g.key)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium ${only === g.key ? 'border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900' : 'border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300'}`}>{g.title}</button>)}
+            </div>}
+            {groups.filter((g) => !only || g.key === only).map((g, gi) => {
+              const openT = g.tasks.filter((t) => !t.done)
+              const openD = g.todos ? openTodos : []
+              const doneT = g.tasks.filter((t) => t.done)
+              const doneD = g.todos ? doneTodos : []
+              const openCount = openT.length + openD.length
+              const doneCount = doneT.length + doneD.length
+              const all = expanded.has(g.key) || only === g.key || openCount <= 4
+              const shownT = all ? openT : openT.slice(0, 3)
+              const shownD = all ? openD : openD.slice(0, Math.max(0, 3 - shownT.length))
+              const hidden = openCount - shownT.length - shownD.length
+              const doneOpen = showDone.has(g.key)
+              return <section key={g.key} aria-labelledby={`group-${g.key}`} className={gi > 0 ? 'mt-2 border-t border-slate-100 dark:border-slate-800' : 'mt-1'}>
+                <div className="flex items-baseline justify-between gap-3 px-4 pt-3">
+                  <h3 id={`group-${g.key}`} className="text-sm font-semibold text-slate-700 dark:text-slate-200">{g.title}</h3>
+                  <span className="text-sm tabular-nums text-slate-500">{openCount === 0 ? 'All done' : `${doneCount} of ${openCount + doneCount} done`}</span>
                 </div>
-              </li>
-              const finish = t.kind === 'study' ? () => data.tick(t.nodeId!, true) : t.kind === 'room' ? () => roomCheck(t.templateId!) : () => logGoal(t)
-              const undo = t.kind === 'study' ? () => data.tick(t.nodeId!, false) : t.kind === 'room' ? () => roomCheck(t.templateId!, true) : undefined
-              return <li key={t.key} className={`${row} flex items-start gap-3`}>
-                <button type="button" disabled={busy !== null} onClick={() => void act(t, finish, t.kind === 'study' ? 'Done. It comes back for revision in three days.' : 'Done.', undo)} aria-label={`Mark “${t.title}” done`} className="mt-4 grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 border-slate-300 text-transparent transition hover:border-slate-900 hover:text-slate-900 disabled:opacity-50 dark:border-slate-600 dark:hover:border-white dark:hover:text-white"><Check className="h-4 w-4" strokeWidth={3} /></button>
-                <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-slate-500">{tagFor(t, examOf(t))}</span><span className="mt-0.5 block">{title}{sub}</span></span>
-                {t.kind === 'study' && <button type="button" onClick={() => setFocus(t)} aria-label={`Focus timer for ${t.title}`} className="mt-3 grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"><Timer className="h-5 w-5" /></button>}
-                {t.kind === 'goal' && <Link href={`/check-in?goal=${t.goalId}`} className="mt-3 shrink-0 rounded-lg px-2 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800">Add a note</Link>}
-              </li>
+                {openCount > 0 && <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {shownT.map((t) => openRow(t, g.key))}
+                  {shownD.map((todo) => openTodoRow(todo))}
+                </ul>}
+                {hidden > 0 && <button type="button" onClick={() => setExpanded(flip(expanded, g.key))} className="mx-4 mb-1 flex h-10 items-center gap-1.5 text-sm font-semibold text-slate-900 dark:text-white"><ChevronDown className="h-4 w-4" />Show {hidden} more</button>}
+                {expanded.has(g.key) && openCount > 4 && only !== g.key && <button type="button" onClick={() => setExpanded(flip(expanded, g.key))} className="mx-4 mb-1 flex h-10 items-center gap-1.5 text-sm font-medium text-slate-500"><ChevronDown className="h-4 w-4 rotate-180" />Show fewer</button>}
+                {doneCount > 0 && <button type="button" onClick={() => setShowDone(flip(showDone, g.key))} aria-expanded={doneOpen} className="mx-4 mb-2 flex h-10 items-center gap-2 text-sm text-slate-500">
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-emerald-600 text-white"><Check className="h-3 w-3" strokeWidth={3} /></span>{doneCount} done today<ChevronDown className={`h-4 w-4 transition ${doneOpen ? 'rotate-180' : ''}`} />
+                </button>}
+                {doneOpen && <ul className="divide-y divide-slate-100 border-t border-slate-100 dark:divide-slate-800 dark:border-slate-800">
+                  {doneT.map((t) => doneRow(t))}
+                  {doneD.map((todo) => doneTodoRow(todo))}
+                </ul>}
+              </section>
             })}
-
-            {openTodos.map((todo) => <li key={todo.id} className={`${row} flex items-center gap-3`}>
-              <button type="button" onClick={() => void setTodo(todo, true)} aria-label={`Mark “${todo.title}” done`} className="grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 border-slate-300 text-transparent transition hover:border-slate-900 hover:text-slate-900 dark:border-slate-600 dark:hover:border-white dark:hover:text-white"><Check className="h-4 w-4" strokeWidth={3} /></button>
-              {editing?.id === todo.id
-                ? <form onSubmit={(e) => { e.preventDefault(); void saveRename() }} className="flex min-w-0 flex-1 gap-2">
-                    <input autoFocus value={editing.title} onChange={(e) => setEditing({ id: todo.id, title: e.target.value })} maxLength={200} aria-label="Task name" className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-[15px] dark:border-slate-600" />
-                    <button type="submit" className="rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">Save</button>
-                  </form>
-                : <>
-                    <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-slate-500">To-do</span><span className="block text-[15px] font-semibold leading-snug">{todo.title}</span></span>
-                    <ItemMenu label="task" onEdit={() => setEditing({ id: todo.id, title: todo.title })} onDelete={() => deleteTodo(todo)} deleteMessage={`Delete “${todo.title}”?`} />
-                  </>}
-            </li>)}
-
-            {tasks.filter((t) => t.done).map((t) => <li key={t.key} className={`${row} flex items-center gap-3`}>
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-600 text-white"><Check className="h-4 w-4" strokeWidth={3} /></span>
-              <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-slate-500">{tagFor(t, examOf(t))}</span><span className="block text-[15px] font-medium leading-snug text-slate-500 line-through decoration-slate-300">{t.title}</span></span>
-              {t.kind === 'room' && t.templateId && <button type="button" disabled={busy !== null} onClick={() => void act(t, () => roomCheck(t.templateId!, true), 'Undone.')} className={undoButton}><RotateCcw className="h-3.5 w-3.5" />Undo</button>}
-              {(t.kind === 'study' || t.kind === 'revise') && t.nodeId && <button type="button" disabled={busy !== null} onClick={() => void act(t, t.kind === 'study' ? () => data.tick(t.nodeId!, false) : () => data.unrevise(t.nodeId!), t.kind === 'study' ? 'Unticked.' : 'Revision undone.')} className={undoButton}><RotateCcw className="h-3.5 w-3.5" />Undo</button>}
-            </li>)}
-
-            {doneTodos.map((todo) => <li key={todo.id} className={`${row} flex items-center gap-3`}>
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-600 text-white"><Check className="h-4 w-4" strokeWidth={3} /></span>
-              <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-slate-500">To-do</span><span className="block text-[15px] font-medium leading-snug text-slate-500 line-through decoration-slate-300">{todo.title}</span></span>
-              <button type="button" onClick={() => void setTodo(todo, false)} className={undoButton}><RotateCcw className="h-3.5 w-3.5" />Undo</button>
-            </li>)}
-          </ul>}
+          </>}
     </div>
 
     {studied + revised > 0 && <button type="button" onClick={() => setShareOpen(true)} className="mt-3 inline-flex items-center gap-1.5 px-1 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white"><Share2 className="h-4 w-4" />Share today&apos;s progress</button>}
