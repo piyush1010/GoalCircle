@@ -3,9 +3,10 @@
 import type { Stage, SyllabusNode, TopicState } from './types'
 import { childrenMap } from './explorer'
 import { addDays, daysBetween } from './revision'
+import { arrangeUnits, type StudyOrder } from './order'
 
 export const PACE_VERSION = 'v1'
-export interface Unit { id: string; title: string; topicId: string; topicTitle: string; paperTitle: string }
+export interface Unit { id: string; title: string; topicId: string; topicTitle: string; paperTitle: string; subjectId?: string; subjectTitle?: string }
 
 /** Study units for a stage, in syllabus order: each official subtopic, or the topic itself if it has none. */
 export function studyUnits(nodes: SyllabusNode[], stage: Stage, opts: { skipPapers?: (paper: SyllabusNode) => boolean } = {}): Unit[] {
@@ -17,8 +18,8 @@ export function studyUnits(nodes: SyllabusNode[], stage: Stage, opts: { skipPape
     for (const subject of kids.get(paper.id) ?? []) for (const topic of kids.get(subject.id) ?? []) {
       if (topic.kind !== 'topic' || topic.ownerId) continue
       const subs = (kids.get(topic.id) ?? []).filter((s) => s.kind === 'subtopic' && !s.ownerId)
-      if (subs.length) for (const s of subs) out.push({ id: s.id, title: s.title, topicId: topic.id, topicTitle: topic.title, paperTitle: paper.title })
-      else out.push({ id: topic.id, title: topic.title, topicId: topic.id, topicTitle: topic.title, paperTitle: paper.title })
+      if (subs.length) for (const s of subs) out.push({ id: s.id, title: s.title, topicId: topic.id, topicTitle: topic.title, paperTitle: paper.title, subjectId: subject.id, subjectTitle: subject.title })
+      else out.push({ id: topic.id, title: topic.title, topicId: topic.id, topicTitle: topic.title, paperTitle: paper.title, subjectId: subject.id, subjectTitle: subject.title })
     }
   }
   return out
@@ -81,16 +82,16 @@ export function pacePlan(units: Unit[], states: Map<string, TopicState>, today: 
  * The student's plan from their saved settings; null until an exam date is set.
  * Optional papers count only for the optional subject the student picked (Mains).
  */
-export function planFor(nodes: SyllabusNode[], states: Map<string, TopicState>, settings: { examDate: string | null; planStartOn: string | null; targetStage: 'prelims' | 'mains'; revisionBufferPct: number; optionalSubjectId?: string | null }, today: string): (PacePlan & { units: Unit[] }) | null {
+export function planFor(nodes: SyllabusNode[], states: Map<string, TopicState>, settings: { examDate: string | null; planStartOn: string | null; targetStage: 'prelims' | 'mains'; revisionBufferPct: number; optionalSubjectId?: string | null; studyOrder?: StudyOrder | null }, today: string): (PacePlan & { units: Unit[] }) | null {
   if (!settings.examDate) return null
   const parent = new Map(nodes.map((n) => [n.id, n.parentId]))
   const isOpt = (p: SyllabusNode) => (p.code ?? '').endsWith('.OPT')
   const optional = settings.optionalSubjectId ?? null
-  const units = studyUnits(nodes, settings.targetStage).filter((u) => {
+  const units = arrangeUnits(studyUnits(nodes, settings.targetStage).filter((u) => {
     const subject = parent.get(u.topicId) ?? null
     const paper = subject ? nodes.find((n) => n.id === parent.get(subject)) : undefined
     return !paper || !isOpt(paper) || (optional !== null && subject === optional)
-  })
+  }), settings.studyOrder ?? null)
   const start = settings.planStartOn && settings.planStartOn <= today ? settings.planStartOn : today
   return { ...pacePlan(units, states, today, start, settings.examDate, settings.revisionBufferPct), units }
 }

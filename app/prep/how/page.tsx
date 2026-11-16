@@ -11,6 +11,7 @@ const ITEMS: [string, string][] = [
   ['Points to win back', 'Exactly how much the index rises if you revise those overdue topics today. It is the same formula, not a guess.'],
   ['Revision dates', 'After you first study a topic: revise in 3 days, then 7, 15, 30, and longer each time. If you say you remembered only some of it, the gap stays the same; if little, it goes back to 3 days.'],
   ['Daily target', 'Subtopics left ÷ study days left before your exam, rounded up. The last 15% of your days are kept free for revision. It is worked out again every morning.'],
+  ['Which subtopics each day', 'The syllabus order, one subject at a time, unless you choose your own: a few subjects each day, the subjects in your order, or one subtopic moved first or last. Your order changes which subtopics come, never how many.'],
   ['Streak', 'Days in a row with anything logged. One rest day a week does not break it.'],
   ['Past paper marks', 'Correct × marks per question − wrong × negative marks, using that paper’s scheme. Approximate, because a few questions may have no negative marking.'],
   ['Not enough evidence', 'Shown instead of a number until you have started at least 5 topics. A score from two topics would mislead you.'],

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, CalendarDays, ChevronRight, CircleAlert, FileText, HelpCircle, ListTree, NotebookPen, Play, RotateCcw, Settings2, Timer, TrendingUp } from 'lucide-react'
+import { ArrowDownToLine, ArrowLeft, ArrowUpToLine, CalendarDays, ChevronRight, CircleAlert, FileText, HelpCircle, ListTree, NotebookPen, Play, RotateCcw, Settings2, Timer, TrendingUp, Undo2 } from 'lucide-react'
 import { localDateString } from '@/lib/exams'
 import { optionalSubjects, planFor, type PacePlan, type Unit } from '@/lib/prep/pace'
 import { retention } from '@/lib/prep/revision'
@@ -16,6 +16,9 @@ import ExamSwitcher from '@/components/prep/ExamSwitcher'
 import FocusTimer, { savedFocusTitle } from '@/components/FocusTimer'
 import { examInfo } from '@/lib/prep/exam'
 import { usePrepLang } from '@/lib/prep/i18n'
+import { moveUnit, orderLine, planSubjects, unmoveUnit } from '@/lib/prep/order'
+import StudyOrderSheet from '@/components/prep/StudyOrderSheet'
+import ItemMenu, { type MenuAction } from '@/components/ItemMenu'
 
 const MIN_PER_SUBTOPIC = 40 // rough time for one study sitting; used only for the "is this realistic?" check
 const STATUS: Record<PacePlan['status'], [string, string]> = {
@@ -47,10 +50,12 @@ export default function PrepPlanPage() {
   const [ahead, setAhead] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
+  useEffect(() => { if (!toastMsg) return; const x = window.setTimeout(() => setToastMsg(null), 4000); return () => window.clearTimeout(x) }, [toastMsg])
   const [, , t] = usePrepLang()
   const today = localDateString()
   const [tab, setTab] = useState<'plan' | 'batch'>('plan')
   const [day, setDay] = useState(0)
+  const [orderOpen, setOrderOpen] = useState(false)
   useEffect(() => { const x = window.setTimeout(() => { if (new URLSearchParams(window.location.search).get('tab') === 'batch') setTab('batch') }, 0); return () => window.clearTimeout(x) }, [])
 
   const plan = useMemo(() => (data.status === 'ready' ? planFor(data.nodes, data.states, data.profile, today) : null), [data.status, data.nodes, data.states, data.profile, today])
@@ -72,6 +77,15 @@ export default function PrepPlanPage() {
     }
     return out
   }, [data.status, data.nodes, data.states, data.profile.targetStage])
+
+  // Subjects for "Your study order", in syllabus order, with how many subtopics are left in each.
+  const orderSubjects = useMemo(() => {
+    if (!plan) return []
+    const rank = new Map(subjects.map((s, i) => [s.id, i]))
+    const left = new Map<string, number>()
+    for (const u of plan.units) if (!data.states.get(u.id)?.touchedOn) left.set(u.subjectId ?? u.paperTitle, (left.get(u.subjectId ?? u.paperTitle) ?? 0) + 1)
+    return planSubjects(plan.units).sort((a, b) => (rank.get(a.id) ?? 1e6) - (rank.get(b.id) ?? 1e6)).map((s) => ({ id: s.id, title: s.title, left: left.get(s.id) ?? 0 }))
+  }, [plan, subjects, data.states])
 
   // Remember today's target for the reminder.
   const { saveTarget } = data
@@ -101,11 +115,26 @@ export default function PrepPlanPage() {
   const examName = data.template ? EXAM_SHORT[data.template.code] ?? data.template.name : 'Your exam'
   const stageName = examInfo(data.template?.code).stageName[data.profile.targetStage]
   const tick = async (u: Unit, on: boolean) => { if (busy) return; setBusy(u.id); await data.tick(u.id, on); setBusy(null) }
+  const order = data.profile.studyOrder
+  // Move one subtopic to the front or the end of the plan, or put it back.
+  const move = async (u: Unit, where: 'next' | 'later' | 'back') => {
+    const ok = await data.saveOrder(where === 'back' ? unmoveUnit(order, u.id) : moveUnit(order, u.id, where))
+    setToastMsg(!ok ? 'That didn’t save. Please try again.' : where === 'next' ? `${u.title} is next.` : where === 'later' ? `${u.title} moved to the end of your plan.` : `${u.title} is back in its usual place.`)
+  }
+  const moveActions = (u: Unit, isToday: boolean): MenuAction[] => {
+    const moved = Boolean(order?.next.includes(u.id) || order?.later.includes(u.id))
+    return [
+      ...(!isToday ? [{ label: 'Do this next', icon: ArrowUpToLine, onPick: () => void move(u, 'next') }] : []),
+      ...(!order?.later.includes(u.id) ? [{ label: 'Move to the end', icon: ArrowDownToLine, onPick: () => void move(u, 'later') }] : []),
+      ...(moved ? [{ label: 'Put back in order', icon: Undo2, onPick: () => void move(u, 'back') }] : []),
+    ]
+  }
   const unitRow = (u: Unit) => {
     const on = Boolean(data.states.get(u.id)?.touchedOn)
     return <li key={u.id}><label className="flex cursor-pointer items-start gap-3 px-4 py-2.5">
       <input type="checkbox" checked={on} disabled={busy !== null} onChange={() => void tick(u, !on)} className="mt-0.5 h-5 w-5 shrink-0 accent-slate-900" />
       <span className="min-w-0 flex-1"><span className={`block text-sm font-semibold leading-snug ${on ? 'text-slate-500 line-through decoration-slate-300' : ''}`}>{u.title}</span><span className="block text-xs text-slate-500">{u.topicTitle === u.title ? u.paperTitle : u.topicTitle}</span></span>
+    {!on && <ItemMenu label="subtopic" actions={moveActions(u, true)} />}
     <Link href={`/prep?topic=${u.topicId}`} aria-label={`Open ${u.topicTitle}`} className="-my-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-400"><ChevronRight className="h-4 w-4" /></Link></label></li>
   }
 
@@ -197,7 +226,7 @@ export default function PrepPlanPage() {
           const coming = plan.days.slice(1, 8)
           const pick = coming[Math.min(day, coming.length - 1)]
           return <section aria-labelledby="week-h" className="mt-6">
-            <h2 id="week-h" className="text-base font-semibold">Coming up</h2>
+            <div className="flex items-baseline justify-between"><h2 id="week-h" className="text-base font-semibold">Coming up</h2><button type="button" onClick={() => setOrderOpen(true)} className="text-sm font-medium text-slate-900 dark:text-white">Change the order</button></div>
             <div className="mt-3 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${coming.length}, minmax(0, 1fr))` }}>
               {coming.map((d, i) => { const on = i === day; const date = new Date(`${d.date}T00:00:00`); return <button key={d.date} type="button" onClick={() => setDay(i)} aria-pressed={on} className={`flex h-16 flex-col items-center justify-center rounded-2xl border text-center ${on ? 'border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'}`}>
                 <span className="text-[11px] font-medium opacity-80">{date.toLocaleDateString('en-IN', { weekday: 'short' })}</span>
@@ -206,8 +235,8 @@ export default function PrepPlanPage() {
             </div>
             {pick && <div className="mt-2 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
               <p className="px-4 pt-3 text-sm text-slate-500">{dayLabel(pick.date, today)}: {pick.units.length} {pick.units.length === 1 ? 'subtopic' : 'subtopics'}, {hoursFor(pick.units.length)}</p>
-              <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{pick.units.map((u) => <li key={u.id}><Link href={`/prep?topic=${u.topicId}`} className="flex items-center gap-3 px-4 py-2.5"><span className="h-2 w-2 shrink-0 rounded-full bg-slate-400" /><span className="min-w-0 flex-1"><span className="block text-sm font-semibold leading-snug">{u.title}</span><span className="block text-xs text-slate-500">{u.topicTitle === u.title ? u.paperTitle : u.topicTitle}</span></span><ChevronRight className="h-4 w-4 shrink-0 text-slate-400" /></Link></li>)}</ul>
-              <p className="border-t border-slate-100 px-4 py-2.5 text-xs text-slate-500 dark:border-slate-800">The plan follows the syllabus order. Tick subtopics in any order; it adjusts.</p>
+              <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{pick.units.map((u) => <li key={u.id} className="flex items-center gap-1 pr-3"><Link href={`/prep?topic=${u.topicId}`} className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-4"><span className="h-2 w-2 shrink-0 rounded-full bg-slate-400" /><span className="min-w-0 flex-1"><span className="block text-sm font-semibold leading-snug">{u.title}</span><span className="block text-xs text-slate-500">{u.topicTitle === u.title ? u.paperTitle : u.topicTitle}</span></span></Link><ItemMenu label="subtopic" actions={moveActions(u, false)} /></li>)}</ul>
+              <p className="border-t border-slate-100 px-4 py-2.5 text-xs text-slate-500 dark:border-slate-800">{orderLine(order)} Tick subtopics in any order; the plan adjusts.</p>
             </div>}
           </section>
         })()}
@@ -245,6 +274,7 @@ export default function PrepPlanPage() {
     </>}
 
     {toastMsg && <button type="button" onClick={() => setToastMsg(null)} role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">{toastMsg}</button>}
+    {orderOpen && <StudyOrderSheet subjects={orderSubjects} order={data.profile.studyOrder} onSave={async (o) => { const ok = await data.saveOrder(o); if (ok) { setDay(0); setToastMsg(o ? 'Your order is saved. Coming up shows the new days.' : 'Back to the syllabus order.') } return ok }} onClose={() => setOrderOpen(false)} />}
     {setup && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onRemove={data.plans.length > 1 && data.templateId ? () => data.removePlan(data.templateId!) : undefined} onClose={() => setSetup(false)} />}
   </main>
 }
