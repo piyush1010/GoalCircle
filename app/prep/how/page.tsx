@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
-export const metadata = { title: 'How your preparation is measured · GoalYaar' }
+export const metadata = { title: 'How your preparation is measured | GoalYaar' }
 
 const ITEMS: [string, string][] = [
   ['Subtopics ticked', 'A plain count. You tick a subtopic when you have studied it. Nothing is estimated.'],

@@ -65,15 +65,15 @@ export default function BatchPrepPage() {
       const pct = r.subtopics ? Math.round((100 * (r.ticked ?? 0)) / r.subtopics) : 0
       return <section key={`${r.name}-${i}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1"><p className="font-bold">{r.name}</p><p className="text-xs text-slate-500">{r.exam ?? 'No exam set'}{r.target_stage ? ` · ${r.target_stage === 'mains' ? 'Mains' : 'Prelims'}` : ''}{r.exam_date ? ` · ${Math.max(0, daysBetween(today, r.exam_date))} days left` : ''}</p></div>
+          <div className="min-w-0 flex-1"><p className="font-bold">{r.name}</p><p className="text-xs text-slate-500">{r.exam ?? 'No exam set'}{r.target_stage ? `, ${r.target_stage === 'mains' ? 'Mains' : 'Prelims'}` : ''}{r.exam_date ? `, ${Math.max(0, daysBetween(today, r.exam_date))} days left` : ''}</p></div>
           {inactive !== null && inactive >= 3 && <span className="shrink-0 rounded-full bg-rose-500/10 px-2 py-0.5 text-[11px] font-bold text-rose-700 dark:text-rose-400">Inactive {inactive}d</span>}
           {inactive === null && <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-500 dark:bg-slate-800">Not started</span>}
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-amber-500" style={{ width: `${pct}%` }} /></div>
-        <p className="mt-1 text-xs text-slate-500">{r.ticked ?? 0} of {r.subtopics ?? 0} subtopics ticked · {r.overdue ?? 0} revision{r.overdue === 1 ? '' : 's'} overdue</p>
+        <p className="mt-1 text-xs text-slate-500">{r.ticked ?? 0} of {r.subtopics ?? 0} subtopics ticked, {r.overdue ?? 0} revision{r.overdue === 1 ? '' : 's'} overdue</p>
         {r.week && <p className="mt-1 text-xs text-slate-500">This week: {r.week.days} study day{r.week.days === 1 ? '' : 's'}, {r.week.ticks} subtopics, {r.week.revisions} revisions{r.week.answers ? `, ${r.week.answers} answers` : ''}{r.week.pyqs ? `, ${r.week.pyqs} PYQs` : ''}</p>}
         {r.scope === 'full' && <div className="mt-2 border-t border-slate-100 pt-2 text-xs text-slate-600 dark:border-slate-800 dark:text-slate-300">
-          {r.mocks && r.mocks.length > 0 ? <p>Mocks: {r.mocks.map((m) => `${m.name} ${m.score ?? '–'}${m.max ? `/${m.max}` : ''}`).join(' · ')}</p> : <p>No mocks logged.</p>}
+          {r.mocks && r.mocks.length > 0 ? <p>Mocks: {r.mocks.map((m) => `${m.name} ${m.score ?? '–'}${m.max ? `/${m.max}` : ''}`).join(', ')}</p> : <p>No mocks logged.</p>}
           <p>{r.open_mistakes ?? 0} mistakes to revisit</p>
         </div>}
       </section>

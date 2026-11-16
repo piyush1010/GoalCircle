@@ -175,7 +175,7 @@ export default function StartPage() {
         <h1 className="text-[26px] font-bold tracking-tight">When is your {exam?.label ?? 'exam'}{info.targetStages.length > 1 ? ' exam' : ''}?</h1>
         <div className="mt-5 space-y-2">
           {presets.map((p) => <button key={p.label} type="button" onClick={() => { setDate(p.date); setStage(p.stage); setCustom(false) }} aria-pressed={date === p.date && !custom} className={option(date === p.date && !custom)}>
-            <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{p.label.replace(/ · /g, ', ')}</span><span className="block text-sm text-slate-500">{p.source ? `From the ${p.source}` : 'Expected date'}</span></span>
+            <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{p.label}</span><span className="block text-sm text-slate-500">{p.source ? `From the ${p.source}` : 'Expected date'}</span></span>
             {date === p.date && !custom && tick}
           </button>)}
           {!presets.length && [[91, 'In three months'], [182, 'In six months'], [365, 'In a year']].map(([days, label]) => { const d = plusDays(days as number); return <button key={label} type="button" onClick={() => { setDate(d); setCustom(false) }} aria-pressed={date === d && !custom} className={option(date === d && !custom)}>

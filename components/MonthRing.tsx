@@ -65,18 +65,18 @@ export default function MonthRing({ days, monthName, compact = false }: { days: 
           {picked ? <>
             <span className="text-sm font-bold text-slate-600 dark:text-slate-300">{monthName.slice(0, 3)} {picked.day}</span>
             <span className="text-2xl font-bold">{picked.future ? '—' : picked.active ? '✓' : '·'}</span>
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{picked.future ? 'Coming up' : picked.active ? `${picked.checkins ? `${picked.checkins} check-in${picked.checkins > 1 ? 's' : ''}` : ''}${picked.checkins && picked.minutes ? ' · ' : ''}${picked.minutes ? `${picked.minutes} min` : ''}` : 'Missed'}</span>
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{picked.future ? 'Coming up' : picked.active ? `${picked.checkins ? `${picked.checkins} check-in${picked.checkins > 1 ? 's' : ''}` : ''}${picked.checkins && picked.minutes ? ', ' : ''}${picked.minutes ? `${picked.minutes} min` : ''}` : 'Missed'}</span>
           </> : <>
             <span className="text-4xl font-bold leading-none">{shown}</span>
             <span className="mt-1 text-sm font-bold text-slate-600 dark:text-slate-300">of {sofar} days so far</span>
-            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{monthName}</span>
+            <span className="text-xs font-semibold text-slate-900 dark:text-white">{monthName}</span>
           </>}
         </div>
       </div>
       <div className="mt-2 flex items-center gap-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full" style={{ background: '#E8890C' }} />Showed up</span>
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full" style={{ background: 'var(--ring-missed)' }} />Missed</span>
-        {picked && <button type="button" onClick={() => setPicked(null)} className="pointer-events-auto font-bold text-amber-600 dark:text-amber-400">Month view</button>}
+        {picked && <button type="button" onClick={() => setPicked(null)} className="pointer-events-auto font-bold text-slate-900 dark:text-white">Month view</button>}
       </div>
     </div>
   )

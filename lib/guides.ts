@@ -54,7 +54,7 @@ export const GUIDES: { match: (path: string) => boolean; pick?: () => boolean; g
   {
     match: (p) => p === '/prep/mistakes',
     guide: { title: 'Mistake notebook', intro: 'Every wrong answer worth remembering, until it sticks.', steps: [
-      { title: 'Add a mistake', text: 'After a mock or PYQ set, add what went wrong and the correct fact.', example: '“Misread the statement” · Polity · “Article 32 is itself a fundamental right.”' },
+      { title: 'Add a mistake', text: 'After a mock or PYQ set, add what went wrong and the correct fact.', example: '“Misread the statement”, Polity, “Article 32 is itself a fundamental right.”' },
       { title: 'Revisit', text: 'Read the open ones before your next mock and tap “Got it” when it sticks.' },
     ] },
   },
@@ -67,7 +67,7 @@ export const GUIDES: { match: (path: string) => boolean; pick?: () => boolean; g
   {
     match: (p) => p === '/prep/notes',
     guide: { title: 'Current affairs', intro: 'One line a day from the news, linked to your syllabus.', steps: [
-      { title: 'Add a note', text: 'Write one line, pick the kind, link a topic if it fits.', example: '“SC ruling on Governor’s assent timelines” · Judgment · Polity.' },
+      { title: 'Add a note', text: 'Write one line, pick the kind, link a topic if it fits.', example: '“SC ruling on Governor’s assent timelines”, Judgment, Polity.' },
       { title: 'Copy a month', text: 'At month end, “Copy month” gives you a ready revision sheet.' },
     ] },
   },

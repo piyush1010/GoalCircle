@@ -20,7 +20,7 @@ import { usePrepLang } from '@/lib/prep/i18n'
 const MIN_PER_SUBTOPIC = 40 // rough time for one study sitting; used only for the "is this realistic?" check
 const STATUS: Record<PacePlan['status'], [string, string]> = {
   on_track: ['On track', 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'],
-  slightly_behind: ['Slightly behind', 'bg-amber-500/15 text-amber-800 dark:text-amber-300'],
+  slightly_behind: ['Slightly behind', 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'],
   behind: ['Behind', 'bg-rose-500/10 text-rose-700 dark:text-rose-400'],
   revision_window: ['Revision window', 'bg-sky-500/10 text-sky-700 dark:text-sky-400'],
   complete: ['Syllabus covered', 'bg-emerald-600 text-white'],
@@ -94,7 +94,7 @@ export default function PrepPlanPage() {
   useEffect(() => { const t = window.setTimeout(() => setWelcome(new URLSearchParams(window.location.search).get('welcome') === '1'), 0); return () => window.clearTimeout(t) }, [])
 
   if (data.status === 'loading') return <main className="mx-auto max-w-xl space-y-3 px-4 pb-28 pt-6" aria-busy="true">{[1, 2, 3].map((k) => <div key={k} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}</main>
-  if (data.status !== 'ready') return <main className="mx-auto grid min-h-[70vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">{data.status === 'denied' ? 'Not available yet' : "Couldn't load your plan"}</h1><Link href="/dashboard" className="mt-5 inline-block rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Back to Today</Link></div></main>
+  if (data.status !== 'ready') return <main className="mx-auto grid min-h-[70vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">{data.status === 'denied' ? 'Not available yet' : "Couldn't load your plan"}</h1><Link href="/dashboard" className="mt-5 inline-block rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white dark:bg-white dark:text-slate-900">Back to Today</Link></div></main>
 
   const shifts = examInfo(data.template?.code).shifts
   const shiftNote = Boolean(shifts?.stages.includes(data.profile.targetStage)) && Boolean(data.profile.examDate) && shiftDate !== data.profile.examDate
@@ -104,7 +104,7 @@ export default function PrepPlanPage() {
   const unitRow = (u: Unit) => {
     const on = Boolean(data.states.get(u.id)?.touchedOn)
     return <li key={u.id}><label className="flex cursor-pointer items-start gap-3 px-4 py-2.5">
-      <input type="checkbox" checked={on} disabled={busy !== null} onChange={() => void tick(u, !on)} className="mt-0.5 h-5 w-5 shrink-0 accent-amber-500" />
+      <input type="checkbox" checked={on} disabled={busy !== null} onChange={() => void tick(u, !on)} className="mt-0.5 h-5 w-5 shrink-0 accent-slate-900" />
       <span className="min-w-0 flex-1"><span className={`block text-sm font-semibold leading-snug ${on ? 'text-slate-500 line-through decoration-slate-300' : ''}`}>{u.title}</span><span className="block text-xs text-slate-500">{u.topicTitle === u.title ? u.paperTitle : u.topicTitle}</span></span>
     <Link href={`/prep?topic=${u.topicId}`} aria-label={`Open ${u.topicTitle}`} className="-my-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-400"><ChevronRight className="h-4 w-4" /></Link></label></li>
   }
@@ -145,10 +145,10 @@ export default function PrepPlanPage() {
 
     {!plan
       ? <section className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <CalendarDays className="mx-auto h-8 w-8 text-amber-500" />
+          <CalendarDays className="mx-auto h-8 w-8 text-slate-500" />
           <h2 className="mt-2 text-lg">How long do you have?</h2>
           <p className="mt-1 text-sm text-slate-500">Tell us your exam date and we will work out how many subtopics to finish each day, and which ones.</p>
-          <button type="button" onClick={() => setSetup(true)} className="mt-4 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-slate-950">Set my target</button>
+          <button type="button" onClick={() => setSetup(true)} className="mt-4 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white dark:bg-white dark:text-slate-900">Set my target</button>
         </section>
       : <>
         <section data-guide="plan-target" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -157,12 +157,12 @@ export default function PrepPlanPage() {
               {plan.status === 'complete' ? <p className="text-2xl font-extrabold">All {plan.total} covered</p>
                 : plan.status === 'revision_window' || plan.status === 'past' ? <p className="text-2xl font-extrabold">{plan.remaining} left</p>
                 : <p className="text-3xl font-extrabold tabular-nums">{plan.perDay} <span className="text-base font-bold text-slate-500">{t('subtopics a day')}</span></p>}
-              <p className="mt-1 text-sm text-slate-500">{plan.daysLeft >= 0 ? `${plan.daysLeft} ${t('days left')}` : 'Exam date has passed'}{plan.remaining > 0 ? ` · about ${Math.round((plan.remaining * MIN_PER_SUBTOPIC) / 60)} h of study` : ''}</p>
+              <p className="mt-1 text-sm text-slate-500">{plan.daysLeft >= 0 ? `${plan.daysLeft} ${t('days left')}` : 'Exam date has passed'}{plan.remaining > 0 ? `, about ${Math.round((plan.remaining * MIN_PER_SUBTOPIC) / 60)} hours of study to go` : ''}</p>
             </div>
             <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${STATUS[plan.status][1]}`}>{t(STATUS[plan.status][0])}</span>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-amber-500" style={{ width: `${plan.total ? Math.round((plan.done / plan.total) * 100) : 0}%` }} /></div>
-          <p className="mt-1.5 text-xs text-slate-500"><b className="tabular-nums text-slate-700 dark:text-slate-200">{plan.done}</b> of {plan.total} {stageName} subtopics ticked{plan.behindBy > 0 && plan.status !== 'complete' ? ` · ${plan.behindBy} behind schedule` : ''}</p>
+          <p className="mt-1.5 text-xs text-slate-500"><b className="tabular-nums text-slate-700 dark:text-slate-200">{plan.done}</b> of {plan.total} {stageName} subtopics ticked{plan.behindBy > 0 && plan.status !== 'complete' ? `, ${plan.behindBy} behind schedule` : ''}</p>
           <button type="button" onClick={() => setWhy(!why)} aria-expanded={why} className="mt-2 flex items-center gap-1 text-xs font-bold text-slate-600 dark:text-slate-300"><HelpCircle className="h-4 w-4" />{t('How is this worked out?')}</button>
           {why && <ul className="mt-2 space-y-1 rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">{plan.reasons.map((r) => <li key={r}>{r}</li>)}<li><Link href="/prep/how" className="font-bold underline">How every number is worked out</Link></li><li>The target is recalculated every day: miss a day and it rises a little, get ahead and it falls.</li>{plan.revisionDays > 0 && <li>The last {plan.revisionDays} days before the exam are kept for revision.</li>}<li>Hours assume about {MIN_PER_SUBTOPIC} minutes a subtopic; treat them as a rough guide.</li><li>{data.profile.optionalSubjectId ? 'Your optional subject is included in the Mains plan.' : 'Optional papers are left out until you pick your optional in settings.'}</li></ul>}
           {(plan.status === 'behind' || plan.status === 'slightly_behind') && <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60">
@@ -173,25 +173,25 @@ export default function PrepPlanPage() {
         </section>
 
         {plan.status !== 'complete' && plan.status !== 'past' && plan.status !== 'revision_window' && <section data-guide="plan-today" className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center justify-between px-4 pt-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('Today')}</p><p className="text-xs font-bold tabular-nums text-slate-600 dark:text-slate-300">{Math.min(plan.doneToday, plan.perDay)} / {plan.perDay} {t('done')}</p></div>
+          <div className="flex items-center justify-between px-4 pt-3"><p className="text-sm font-medium text-slate-500">{t('Today')}</p><p className="text-xs font-bold tabular-nums text-slate-600 dark:text-slate-300">{Math.min(plan.doneToday, plan.perDay)} / {plan.perDay} {t('done')}</p></div>
           {targetMet && <p className="mx-4 mt-2 rounded-xl bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300">Today&apos;s target is done. Anything extra lowers tomorrow&apos;s.</p>}
           <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{doneTodayUnits.map(unitRow)}{todayUnits.map(unitRow)}</ul>
-          {targetMet && plan.days[1] && <button type="button" onClick={() => setAhead(!ahead)} className="mx-4 mb-3 mt-1 text-xs font-bold text-amber-700 dark:text-amber-400">{ahead ? 'Hide' : 'Get ahead: show tomorrow’s'}</button>}
+          {targetMet && plan.days[1] && <button type="button" onClick={() => setAhead(!ahead)} className="mx-4 mb-3 mt-1 text-xs font-bold text-slate-900 dark:text-white">{ahead ? 'Hide' : 'Get ahead: show tomorrow’s'}</button>}
           {ahead && plan.days[1] && <ul className="divide-y divide-slate-100 border-t border-slate-100 dark:divide-slate-800 dark:border-slate-800">{plan.days[1].units.map(unitRow)}</ul>}
           {dueCount > 0 && <Link href="/prep?filter=due" className="flex items-center gap-2 border-t border-slate-100 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-slate-800 dark:text-rose-400"><RotateCcw className="h-4 w-4" />Plus {dueCount} revision{dueCount === 1 ? '' : 's'} due →</Link>}
         </section>}
 
         {plan.status !== 'complete' && timerUnits.length > 0 && <section data-guide="plan-timer" className="mt-3 flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <Timer className="h-5 w-5 shrink-0 text-amber-600" />
+          <Timer className="h-5 w-5 shrink-0 text-slate-500" />
           <select aria-label="What are you studying?" value={timerUnit?.id ?? ''} onChange={(e) => setTimerPick(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900">{timerUnits.map((u) => <option key={u.id} value={u.id}>{u.title}</option>)}</select>
-          <button type="button" onClick={() => setTimerOpen(true)} className="flex shrink-0 items-center gap-1 rounded-lg bg-amber-500 px-3 py-2 text-sm font-bold text-slate-950"><Play className="h-4 w-4" />{resumable ? 'Resume' : 'Focus'}</button>
+          <button type="button" onClick={() => setTimerOpen(true)} className="flex shrink-0 items-center gap-1 rounded-lg bg-slate-900 px-3 py-2 text-sm font-bold text-white dark:bg-white dark:text-slate-900"><Play className="h-4 w-4" />{resumable ? 'Resume' : 'Focus'}</button>
         </section>}
         {timerOpen && timerUnit && <FocusTimer title={timerUnit.title} subtitle={timerUnit.topicTitle} doneLabel="Done with this subtopic" onClose={() => setTimerOpen(false)} onFinish={async (minutes, tickIt) => {
           const ok = tickIt ? await data.tick(timerUnit.id, true, minutes) : await data.logEvent(null, 'studied', { minutes, details: { timer: true, unit: timerUnit.id } })
           setToastMsg(ok ? `${minutes} min saved${tickIt ? ' and ticked' : ''}.` : 'Could not save.')
         }} />}
 
-        {plan.status === 'revision_window' && <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900">You are in your revision window. Focus on revising what you have covered and on mocks; {plan.remaining} subtopics are still unticked. <Link href="/prep?filter=due" className="font-bold text-amber-700 dark:text-amber-400">Revisions due →</Link></section>}
+        {plan.status === 'revision_window' && <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900">You are in your revision window. Focus on revising what you have covered and on mocks; {plan.remaining} subtopics are still unticked. <Link href="/prep?filter=due" className="font-bold text-slate-900 dark:text-white">Revisions due →</Link></section>}
 
         {plan.days.length > 1 && plan.status !== 'complete' && (() => {
           const coming = plan.days.slice(1, 8)
@@ -206,7 +206,7 @@ export default function PrepPlanPage() {
             </div>
             {pick && <div className="mt-2 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
               <p className="px-4 pt-3 text-sm text-slate-500">{dayLabel(pick.date, today)}: {pick.units.length} {pick.units.length === 1 ? 'subtopic' : 'subtopics'}, {hoursFor(pick.units.length)}</p>
-              <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{pick.units.map((u) => <li key={u.id}><Link href={`/prep?topic=${u.topicId}`} className="flex items-center gap-3 px-4 py-2.5"><span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" /><span className="min-w-0 flex-1"><span className="block text-sm font-semibold leading-snug">{u.title}</span><span className="block text-xs text-slate-500">{u.topicTitle === u.title ? u.paperTitle : u.topicTitle}</span></span><ChevronRight className="h-4 w-4 shrink-0 text-slate-400" /></Link></li>)}</ul>
+              <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{pick.units.map((u) => <li key={u.id}><Link href={`/prep?topic=${u.topicId}`} className="flex items-center gap-3 px-4 py-2.5"><span className="h-2 w-2 shrink-0 rounded-full bg-slate-400" /><span className="min-w-0 flex-1"><span className="block text-sm font-semibold leading-snug">{u.title}</span><span className="block text-xs text-slate-500">{u.topicTitle === u.title ? u.paperTitle : u.topicTitle}</span></span><ChevronRight className="h-4 w-4 shrink-0 text-slate-400" /></Link></li>)}</ul>
               <p className="border-t border-slate-100 px-4 py-2.5 text-xs text-slate-500 dark:border-slate-800">The plan follows the syllabus order. Tick subtopics in any order; it adjusts.</p>
             </div>}
           </section>
@@ -214,7 +214,7 @@ export default function PrepPlanPage() {
       </>}
 
     {subjects.length > 0 && <section aria-labelledby="syllabus-h" className="mt-6">
-      <div className="flex items-baseline justify-between"><h2 id="syllabus-h" className="text-base font-semibold">Syllabus</h2><Link href="/prep" className="text-sm font-medium text-amber-700 dark:text-amber-400">Open all</Link></div>
+      <div className="flex items-baseline justify-between"><h2 id="syllabus-h" className="text-base font-semibold">Syllabus</h2><Link href="/prep" className="text-sm font-medium text-slate-900 dark:text-white">Open all</Link></div>
       <div className="mt-3 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
         {subjects.map((sub) => { const pct = Math.round((sub.done / sub.total) * 100); return <Link key={sub.id} href={`/prep?open=${sub.id}`} className="flex items-center gap-3 px-4 py-3">
           <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{sub.name}</span><span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><span className="block h-full rounded-full bg-amber-500" style={{ width: `${pct}%` }} /></span></span>
@@ -240,7 +240,7 @@ export default function PrepPlanPage() {
       </div>
     </section>
 
-    <button type="button" onClick={() => setSetup(true)} className="mt-4 w-full text-center text-sm text-slate-500">{data.profile.reminderEnabled ? `Reminder at ${((data.profile.reminderHour + 11) % 12) + 1}:00 ${data.profile.reminderHour < 12 ? 'AM' : 'PM'}` : 'Reminder off'} · Change</button>
+    <button type="button" onClick={() => setSetup(true)} className="mt-4 w-full text-center text-sm text-slate-500">{data.profile.reminderEnabled ? `Reminder at ${((data.profile.reminderHour + 11) % 12) + 1}:00 ${data.profile.reminderHour < 12 ? 'AM' : 'PM'}` : 'Reminder off'}. Change</button>
 
     </>}
 

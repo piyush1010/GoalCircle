@@ -39,11 +39,11 @@ export default function MistakeSheet({ nodes, initial, onSave, onClose }: {
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-4 w-4" /></button>
       </div>
       <p className="mt-4 text-sm font-bold">What went wrong?</p>
-      <div className="mt-2 flex flex-wrap gap-1.5">{ORDER.map((c) => <button key={c} type="button" onClick={() => setCategory(c)} aria-pressed={category === c} className={`rounded-full border px-3 py-1.5 text-xs font-bold ${category === c ? 'border-amber-500 bg-amber-500/10 text-amber-800 dark:text-amber-300' : 'border-slate-200 dark:border-slate-700'}`}>{MISTAKE_LABEL[c]}</button>)}</div>
+      <div className="mt-2 flex flex-wrap gap-1.5">{ORDER.map((c) => <button key={c} type="button" onClick={() => setCategory(c)} aria-pressed={category === c} className={`rounded-full border px-3 py-1.5 text-xs font-bold ${category === c ? 'border-slate-900 bg-slate-100 dark:border-white dark:bg-slate-800 text-slate-900 dark:text-white' : 'border-slate-200 dark:border-slate-700'}`}>{MISTAKE_LABEL[c]}</button>)}</div>
 
       <p className="mt-4 text-sm font-bold">Topic <span className="font-normal text-slate-500">(optional)</span></p>
       {topic
-        ? <button type="button" onClick={() => { setTopic(null); setQuery('') }} className="mt-2 flex w-full items-center gap-2 rounded-xl border border-amber-500 bg-amber-500/10 px-3 py-2.5 text-left text-sm font-semibold">{topic.title}<X className="ml-auto h-4 w-4 shrink-0" /></button>
+        ? <button type="button" onClick={() => { setTopic(null); setQuery('') }} className="mt-2 flex w-full items-center gap-2 rounded-xl border border-slate-900 bg-slate-100 dark:border-white dark:bg-slate-800 px-3 py-2.5 text-left text-sm font-semibold">{topic.title}<X className="ml-auto h-4 w-4 shrink-0" /></button>
         : <><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Type to find a topic" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900" />
           {hits.length > 0 && <ul className="mt-1 divide-y divide-slate-100 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-700">{hits.map((t) => <li key={t.id}><button type="button" onClick={() => setTopic(t)} className="w-full px-3 py-2 text-left text-sm">{t.title}</button></li>)}</ul>}</>}
 
@@ -51,7 +51,7 @@ export default function MistakeSheet({ nodes, initial, onSave, onClose }: {
       <textarea id="mistake-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} rows={2} placeholder="e.g. Article 32 is a fundamental right; Article 226 is wider in scope" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900" />
 
       {error && <p role="alert" className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
-      <button type="button" disabled={busy} onClick={() => void save()} className="mt-4 w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 shadow-sm disabled:opacity-60">{busy ? 'Saving…' : initial ? 'Save changes' : 'Save mistake'}</button>
+      <button type="button" disabled={busy} onClick={() => void save()} className="mt-4 w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white dark:bg-white dark:text-slate-900 shadow-sm disabled:opacity-60">{busy ? 'Saving…' : initial ? 'Save changes' : 'Save mistake'}</button>
     </div>
   </div>
 }

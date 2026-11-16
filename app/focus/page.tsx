@@ -65,7 +65,7 @@ export default function FocusRoomPage() {
       : { data: [] as Array<{ circle_id: string; title: string }> }
     if (goalsResult.error) setError('Could not load your goals.')
     const options: Target[] = [
-      ...((tasks || []) as Array<{ circle_id: string; title: string }>).map((task) => ({ key: `c:${task.circle_id}`, label: `${batches.find((b) => b.id === task.circle_id)?.name ?? 'Batch'} · ${task.title}`, goalId: null, circleId: task.circle_id })),
+      ...((tasks || []) as Array<{ circle_id: string; title: string }>).map((task) => ({ key: `c:${task.circle_id}`, label: `${task.title} (${batches.find((b) => b.id === task.circle_id)?.name ?? 'batch'})`, goalId: null, circleId: task.circle_id })),
       ...((goalsResult.data || []) as GoalOption[]).map((goal) => ({ key: `g:${goal.id}`, label: goal.title, goalId: goal.id, circleId: null })),
       { key: 'none', label: 'Just focus (not linked to anything)', goalId: null, circleId: null },
     ]
@@ -113,22 +113,22 @@ export default function FocusRoomPage() {
     <header className="mb-6 flex items-center gap-3"><button onClick={() => router.back()} aria-label="Go back" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101B2D]"><ArrowLeft className="h-4 w-4" /></button><div><h1 className="text-lg font-bold">Focus</h1><p className="text-xs text-slate-500">Timed study that counts toward your goal.</p></div></header>
     {loading ? <div className="h-96 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" /> : <div className="space-y-4">
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-[#101B2D]">
-        <label htmlFor="focus-goal" data-tour="focus-goal" className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Focusing on</label>
+        <label htmlFor="focus-goal" data-tour="focus-goal" className="mb-2 block text-sm font-bold text-slate-500">Focusing on</label>
         <select id="focus-goal" value={targetKey} onChange={(e) => setTargetKey(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold dark:border-slate-700 dark:bg-[#07101F]">{targets.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</select>
-        <label htmlFor="focus-notes" className="mb-2 mt-4 block text-xs font-bold uppercase tracking-wider text-slate-500">Session note <span className="font-medium normal-case">(optional)</span></label>
+        <label htmlFor="focus-notes" className="mb-2 mt-4 block text-sm font-bold text-slate-500">Session note <span className="font-medium normal-case">(optional)</span></label>
         <textarea id="focus-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} placeholder="What are you working on?" className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-[#07101F]" />
-        <button data-tour="focus-start" type="button" onClick={() => { setSavedMinutes(null); setOpen(true) }} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3.5 text-base font-bold text-slate-950"><Play className="h-4 w-4" fill="currentColor" />Start focus</button>
+        <button data-tour="focus-start" type="button" onClick={() => { setSavedMinutes(null); setOpen(true) }} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 text-base font-bold text-white dark:bg-white dark:text-slate-900"><Play className="h-4 w-4" fill="currentColor" />Start focus</button>
         <p data-tour="focus-modes" className="mt-2 text-center text-xs text-slate-500">Choose 25 / 5, 50 / 10 or a stopwatch on the timer.</p>
       </section>
       {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</p>}
-      {savedMinutes !== null && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"><CheckCircle2 className="mr-2 inline h-4 w-4" />{savedMinutes} focus minutes saved.{target?.circleId ? <Link href={`/circles/${target.circleId}`} className="mt-2 block text-amber-700 underline dark:text-amber-300">Go back and check in →</Link> : null}</div>}
-      <div className="grid grid-cols-3 gap-3 text-center"><Stat icon={<Clock3 className="mx-auto mb-1 h-4 w-4 text-amber-500" />} value={`${stats.today}m`} label="Today" /><Stat value={`${Math.floor(stats.week / 60)}h ${stats.week % 60}m`} label="This week" accent /><Stat value={String(stats.sessions)} label="Sessions" /></div>
+      {savedMinutes !== null && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"><CheckCircle2 className="mr-2 inline h-4 w-4" />{savedMinutes} focus minutes saved.{target?.circleId ? <Link href={`/circles/${target.circleId}`} className="mt-2 block text-slate-500 underline dark:text-slate-400">Go back and check in →</Link> : null}</div>}
+      <div className="grid grid-cols-3 gap-3 text-center"><Stat icon={<Clock3 className="mx-auto mb-1 h-4 w-4 text-slate-500" />} value={`${stats.today}m`} label="Today" /><Stat value={`${Math.floor(stats.week / 60)}h ${stats.week % 60}m`} label="This week" accent /><Stat value={String(stats.sessions)} label="Sessions" /></div>
       {recent.length > 0 && <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#101B2D]">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">This week&apos;s sessions</h2>
+        <h2 className="text-sm font-bold text-slate-500">This week&apos;s sessions</h2>
         <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{recent.slice(0, 12).map((r) => <li key={r.id} className="flex items-center gap-3 py-2 text-sm">
           <span className="min-w-0 flex-1"><span className="block truncate font-medium">{targets.find((t) => t.goalId && t.goalId === r.goal_id)?.label ?? r.note ?? 'Focus session'}</span><span className="text-xs text-slate-500">{new Date(r.logged_at).toLocaleString('en-IN', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span></span>
           {editing?.id === r.id
-            ? <form onSubmit={(e) => { e.preventDefault(); void saveMinutes(r.id) }} className="flex items-center gap-1.5"><input autoFocus inputMode="numeric" value={editing.minutes} onChange={(e) => setEditing({ id: r.id, minutes: e.target.value.replace(/\D/g, '') })} aria-label="Minutes" className="w-14 rounded-lg border border-slate-200 px-2 py-1 text-right text-sm dark:border-slate-700 dark:bg-slate-900" /><span className="text-xs text-slate-500">min</span><button type="submit" className="rounded-lg bg-amber-500 px-2 py-1 text-xs font-bold text-slate-950">Save</button></form>
+            ? <form onSubmit={(e) => { e.preventDefault(); void saveMinutes(r.id) }} className="flex items-center gap-1.5"><input autoFocus inputMode="numeric" value={editing.minutes} onChange={(e) => setEditing({ id: r.id, minutes: e.target.value.replace(/\D/g, '') })} aria-label="Minutes" className="w-14 rounded-lg border border-slate-200 px-2 py-1 text-right text-sm dark:border-slate-700 dark:bg-slate-900" /><span className="text-xs text-slate-500">min</span><button type="submit" className="rounded-lg bg-slate-900 px-2 py-1 text-xs font-bold text-white dark:bg-white dark:text-slate-900">Save</button></form>
             : <span className="shrink-0 tabular-nums">{r.minutes_logged} min</span>}
           <ItemMenu label="focus session" onEdit={() => setEditing({ id: r.id, minutes: String(r.minutes_logged) })} onDelete={() => removeSession(r.id)} deleteMessage={`Delete this ${r.minutes_logged}-minute session?`} />
         </li>)}</ul>
@@ -140,5 +140,5 @@ export default function FocusRoomPage() {
 }
 
 function Stat({ icon, value, label, accent = false }: { icon?: React.ReactNode; value: string; label: string; accent?: boolean }) {
-  return <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-[#101B2D]">{icon}<strong className={`block text-base ${accent ? 'text-amber-500' : ''}`}>{value}</strong><span className="text-[11px] font-bold uppercase text-slate-400">{label}</span></div>
+  return <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-[#101B2D]">{icon}<strong className={`block text-base ${accent ? 'text-slate-500' : ''}`}>{value}</strong><span className="text-xs font-medium text-slate-400">{label}</span></div>
 }

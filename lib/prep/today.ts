@@ -48,7 +48,7 @@ export function todayTasks(input: {
   const openRevise = revise.filter((t) => !t.done).sort((a, b) => b.overdue - a.overdue).slice(0, max)
   const doneRevise = revise.filter((t) => t.done)
 
-  const mentor: Task[] = (input.mentor ?? []).map((m) => ({ key: `m:${m.circleId}`, kind: 'mentor', title: m.task, subtitle: `From your mentor · ${m.name}`, exam: null, circleId: m.circleId, done: m.done }))
+  const mentor: Task[] = (input.mentor ?? []).map((m) => ({ key: `m:${m.circleId}`, kind: 'mentor', title: m.task, subtitle: `From your mentor in ${m.name}`, exam: null, circleId: m.circleId, done: m.done }))
   const goals: Task[] = (input.goals ?? []).map((g) => ({ key: `g:${g.id}`, kind: 'goal', title: g.title, subtitle: g.detail, exam: null, goalId: g.id, done: g.done }))
   const strip = (t: Task & { overdue: number }): Task => ({ key: t.key, kind: t.kind, title: t.title, subtitle: t.subtitle, exam: t.exam, templateId: t.templateId, nodeId: t.nodeId, done: t.done })
   const all = [...mentor, ...openRevise.map(strip), ...doneRevise.map(strip), ...study, ...goals]

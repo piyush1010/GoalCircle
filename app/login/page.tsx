@@ -188,7 +188,7 @@ function AuthForm() {
 
       <div className="relative flex items-center justify-center">
         <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
-        <span className="absolute bg-white px-3 text-xs font-bold uppercase text-slate-500 dark:bg-[#101B2D]">
+        <span className="absolute bg-white px-3 text-sm font-medium text-slate-500 dark:bg-[#101B2D]">
           or email
         </span>
       </div>
@@ -198,7 +198,7 @@ function AuthForm() {
       <form onSubmit={handleSubmit} className="space-y-3">
         {mode === 'signup' && (
           <div>
-            <label className="block text-xs font-bold uppercase text-slate-400 mb-1">
+            <label className="block text-sm font-medium text-slate-400 mb-1">
               Full Name
             </label>
             <input
@@ -206,14 +206,14 @@ function AuthForm() {
               placeholder="Your name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101F] dark:text-white"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-slate-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101F] dark:text-white"
               required={mode === 'signup'}
             />
           </div>
         )}
 
         <div>
-          <label className="block text-xs font-bold uppercase text-slate-400 mb-1">
+          <label className="block text-sm font-medium text-slate-400 mb-1">
             Email Address
           </label>
           <input
@@ -221,13 +221,13 @@ function AuthForm() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101F] dark:text-white"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-slate-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101F] dark:text-white"
             required
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase text-slate-400 mb-1">
+          <label className="block text-sm font-medium text-slate-400 mb-1">
             Password
           </label>
           <input
@@ -235,7 +235,7 @@ function AuthForm() {
             placeholder={mode === 'signup' ? 'At least 8 characters' : 'Your password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-amber-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101F] dark:text-white"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 transition focus:border-slate-500 focus:outline-none dark:border-slate-800 dark:bg-[#07101F] dark:text-white"
             required
             minLength={mode === 'signup' ? 8 : undefined}
           />
@@ -245,7 +245,7 @@ function AuthForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm font-bold text-sm rounded-xl transition disabled:opacity-50 mt-2"
+          className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 shadow-sm font-bold text-sm rounded-xl transition disabled:opacity-50 mt-2"
         >
           {loading ? 'Processing...' : mode === 'signup' ? 'Create account' : 'Sign in'}
         </button>
@@ -262,7 +262,7 @@ function AuthForm() {
               setErrorMsg(null)
               setSuccessMsg(null)
             }}
-            className="text-amber-500 font-bold hover:underline ml-1"
+            className="text-slate-500 font-bold hover:underline ml-1"
           >
             {mode === 'signup' ? 'Sign in' : 'Create account'}
           </button>

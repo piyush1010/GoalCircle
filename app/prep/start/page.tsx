@@ -108,7 +108,7 @@ export default function PrepStartPage() {
   }, [data.nodes, data.templateId, exam, singleStage, stage])
 
   if (data.status === 'loading') return <main className="mx-auto max-w-md px-5 pt-10" aria-busy="true"><div className="h-64 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" /></main>
-  if (data.status !== 'ready') return <main className="mx-auto grid min-h-[70vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">Couldn&apos;t load</h1><p className="mt-2 text-sm text-slate-500">Check your connection and try again.</p><button type="button" onClick={() => void data.reload()} className="mt-5 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Try again</button></div></main>
+  if (data.status !== 'ready') return <main className="mx-auto grid min-h-[70vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">Couldn&apos;t load</h1><p className="mt-2 text-sm text-slate-500">Check your connection and try again.</p><button type="button" onClick={() => void data.reload()} className="mt-5 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white dark:bg-white dark:text-slate-900">Try again</button></div></main>
 
   const total = level === 'beginner' ? 3 : 4
   const saveSettings = async () => {
@@ -138,7 +138,7 @@ export default function PrepStartPage() {
     setError(null); setStep(step + 1)
   }
 
-  const option = (active: boolean) => `flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${active ? 'border-amber-500 bg-amber-500/[0.06] ring-1 ring-amber-500' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'}`
+  const option = (active: boolean) => `flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${active ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900 dark:border-white dark:bg-slate-800 dark:ring-white' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'}`
   const Icon = [GraduationCap, CalendarDays, Gauge, ListChecks][step - 1]
   const title = [adding ? 'Add another exam' : 'What are you preparing for?', 'When is your exam?', 'Where are you right now?', 'What have you already finished?'][step - 1]
   const subtitle = [adding ? 'Today will show all your exams together. Shared subtopics count for both.' : 'You can change this later. Progress is saved for each exam.', 'We work out how much to do each day to finish in time.', 'This sets how hard your daily plan pushes.', 'Tick a whole subject, or open it to pick subtopics. You can change any of it later.'][step - 1]
@@ -153,7 +153,7 @@ export default function PrepStartPage() {
     </div>
 
     <div className="mt-6">
-      <Icon className="h-6 w-6 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+      <Icon className="h-6 w-6 text-slate-900 dark:text-white" aria-hidden="true" />
       <h1 className="mt-3 text-[22px] font-extrabold leading-tight tracking-tight">{title}</h1>
       <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
     </div>
@@ -162,7 +162,7 @@ export default function PrepStartPage() {
       {step === 1 && data.templates.length > 6 && <input type="search" value={find} onChange={(e) => setFind(e.target.value)} placeholder="Search exams" aria-label="Search exams" className="mb-1 w-full rounded-xl border border-slate-200 bg-transparent px-4 py-3 text-[15px] dark:border-slate-700" />}
       {step === 1 && [...data.templates].sort(byExamOrder).filter((t) => { const q = find.trim().toLowerCase(); if (!q) return true; const [n, s] = EXAM_LABEL[t.code] ?? [t.name, '']; return `${n} ${s} ${t.name} ${EXAM_WORDS[t.code] ?? ''}`.toLowerCase().includes(q) }).map((t) => { const [name, sub] = EXAM_LABEL[t.code] ?? [t.name, '']; const added = adding && data.plans.some((p) => p.templateId === t.id); return <button key={t.id} type="button" disabled={added} onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={`${option(exam === t.id)} ${added ? 'opacity-50' : ''}`}>
         <span className="min-w-0 flex-1"><span className="block text-[15px] font-bold">{name}</span>{(sub || added) && <span className="block text-[13px] text-slate-500">{added ? 'Already in your plan' : sub}</span>}</span>
-        {exam === t.id && <Check className="h-5 w-5 shrink-0 text-amber-600" />}
+        {exam === t.id && <Check className="h-5 w-5 shrink-0 text-slate-500" />}
       </button> })}
 
       {step === 1 && <div className="pt-2">
@@ -181,10 +181,10 @@ export default function PrepStartPage() {
       {step === 2 && <>
         {info.targetStages.length > 1 && <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">{info.targetStages.map((s) => <button key={s} type="button" onClick={() => setStage(s)} aria-pressed={stage === s} className={`rounded-lg py-2.5 text-sm font-bold ${stage === s ? 'bg-white shadow-sm dark:bg-slate-700' : 'text-slate-500'}`}>{info.stageName[s]}</button>)}</div>}
         {presets.map((p) => <button key={p.date} type="button" onClick={() => setDate(p.date)} aria-pressed={date === p.date} className={option(date === p.date)}>
-          <span className="min-w-0 flex-1"><span className="block text-base font-bold">{p.label.startsWith(info.short) ? p.label : `${info.short} ${p.label}`}</span><span className="block text-xs text-slate-500">Official date · {p.source}</span></span>
-          {date === p.date && <Check className="h-5 w-5 shrink-0 text-amber-600" />}
+          <span className="min-w-0 flex-1"><span className="block text-base font-bold">{p.label.startsWith(info.short) ? p.label : `${info.short} ${p.label}`}</span><span className="block text-xs text-slate-500">Official date, from the {p.source}</span></span>
+          {date === p.date && <Check className="h-5 w-5 shrink-0 text-slate-500" />}
         </button>)}
-        <div className="grid grid-cols-3 gap-2">{QUICK.map(([label, days]) => <button key={label} type="button" onClick={() => setDate(addDays(today, days))} className={`rounded-xl border py-2.5 text-sm font-bold ${date === addDays(today, days) ? 'border-amber-500 bg-amber-500/10' : 'border-slate-200 dark:border-slate-700'}`}>In {label}</button>)}</div>
+        <div className="grid grid-cols-3 gap-2">{QUICK.map(([label, days]) => <button key={label} type="button" onClick={() => setDate(addDays(today, days))} className={`rounded-xl border py-2.5 text-sm font-bold ${date === addDays(today, days) ? 'border-slate-900 bg-slate-100 dark:border-white dark:bg-slate-800' : 'border-slate-200 dark:border-slate-700'}`}>In {label}</button>)}</div>
         <label className="block text-sm font-bold">Or pick a date<input type="date" min={addDays(today, 7)} value={date} onChange={(e) => setDate(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-900" /></label>
         {presets.length === 0 && <p className="text-xs text-slate-500">The official date for this exam is not announced yet. Pick your best guess; you can change it any time.</p>}
       </>}
@@ -192,11 +192,11 @@ export default function PrepStartPage() {
       {step === 3 && <>
         {LEVELS.map(([id, name, sub]) => <button key={id} type="button" onClick={() => setLevel(id)} aria-pressed={level === id} className={option(level === id)}>
           <span className="min-w-0 flex-1"><span className="block text-base font-bold">{name}</span><span className="block text-sm text-slate-500">{sub}</span></span>
-          {level === id && <Check className="h-5 w-5 shrink-0 text-amber-600" />}
+          {level === id && <Check className="h-5 w-5 shrink-0 text-slate-500" />}
         </button>)}
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-          <div className="flex items-center justify-between"><span className="text-sm font-bold">Study hours a day</span><span className="rounded-full bg-amber-500 px-3 py-1 text-sm font-extrabold text-slate-950">{hours}h</span></div>
-          <input type="range" min={1} max={14} value={hours} onChange={(e) => setHours(Number(e.target.value))} aria-label="Study hours a day" className="mt-3 w-full accent-amber-500" />
+          <div className="flex items-center justify-between"><span className="text-sm font-bold">Study hours a day</span><span className="rounded-full bg-slate-900 px-3 py-1 text-sm font-extrabold text-white dark:bg-white dark:text-slate-900">{hours}h</span></div>
+          <input type="range" min={1} max={14} value={hours} onChange={(e) => setHours(Number(e.target.value))} aria-label="Study hours a day" className="mt-3 w-full accent-slate-900" />
         </div>
       </>}
 
@@ -209,11 +209,11 @@ export default function PrepStartPage() {
             const already = units.every((u) => data.states.get(u)?.touchedOn)
             const toggle = (ids: string[], on: boolean) => setDone((cur) => { const n = new Set(cur); for (const id of ids) { if (data.states.get(id)?.touchedOn) continue; if (on) n.add(id); else n.delete(id) } return n })
             const open = openSubject === subject.id
-            return <div key={subject.id} className={`overflow-hidden rounded-2xl border ${count ? 'border-amber-500 bg-amber-500/5' : 'border-slate-200 dark:border-slate-800'}`}>
+            return <div key={subject.id} className={`overflow-hidden rounded-2xl border ${count ? 'border-slate-400 bg-slate-50 dark:border-slate-500 dark:bg-slate-800/60' : 'border-slate-200 dark:border-slate-800'}`}>
               <div className="flex items-center">
                 <button type="button" disabled={already} onClick={() => toggle(units, !all)} aria-pressed={all} className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-left">
-                  <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${all ? 'border-amber-500 bg-amber-500 text-slate-950' : count ? 'border-amber-500 text-amber-600' : 'border-slate-300 dark:border-slate-600'}`}>{all ? <Check className="h-3.5 w-3.5" /> : count ? <span className="h-0.5 w-2.5 rounded bg-amber-500" /> : null}</span>
-                  <span className="min-w-0 flex-1"><span className="block text-sm font-bold">{subject.title === paper ? paper : subject.title}</span><span className="block text-xs text-slate-500">{already ? 'Already ticked' : count ? `${count} of ${units.length} subtopics` : `${units.length} subtopics`}{subject.title !== paper ? ` · ${paper.replace(/^Paper [IVX]+: /, '')}` : ''}</span></span>
+                  <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${all ? 'border-slate-900 dark:border-white bg-slate-900 text-white dark:bg-white dark:text-slate-900' : count ? 'border-slate-900 text-slate-900 dark:border-white dark:text-white' : 'border-slate-300 dark:border-slate-600'}`}>{all ? <Check className="h-3.5 w-3.5" /> : count ? <span className="h-0.5 w-2.5 rounded bg-slate-900 dark:bg-white" /> : null}</span>
+                  <span className="min-w-0 flex-1"><span className="block text-sm font-bold">{subject.title === paper ? paper : subject.title}</span><span className="block text-xs text-slate-500">{already ? 'Already ticked' : count ? `${count} of ${units.length} subtopics` : `${units.length} subtopics`}{subject.title !== paper ? `, ${paper.replace(/^Paper [IVX]+: /, '')}` : ''}</span></span>
                 </button>
                 <button type="button" onClick={() => setOpenSubject(open ? null : subject.id)} aria-expanded={open} aria-label={`${open ? 'Hide' : 'Show'} subtopics of ${subject.title}`} className="grid h-14 w-12 shrink-0 place-items-center text-slate-400"><ChevronDown className={`h-5 w-5 transition ${open ? 'rotate-180' : ''}`} /></button>
               </div>
@@ -222,7 +222,7 @@ export default function PrepStartPage() {
                 return <div key={topic.id} className="pt-2">
                   {subs.length > 0 && <p className="pt-1 text-xs font-semibold text-slate-500">{topic.title}</p>}
                   {items.map((u) => <label key={u.id} className="flex cursor-pointer items-start gap-3 py-1.5">
-                    <input type="checkbox" checked={ticked(u.id)} disabled={Boolean(data.states.get(u.id)?.touchedOn)} onChange={(e) => toggle([u.id], e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-amber-500" />
+                    <input type="checkbox" checked={ticked(u.id)} disabled={Boolean(data.states.get(u.id)?.touchedOn)} onChange={(e) => toggle([u.id], e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-slate-900" />
                     <span className="text-sm leading-snug">{u.title}</span>
                   </label>)}
                 </div>
@@ -233,7 +233,7 @@ export default function PrepStartPage() {
 
     {error && <p role="alert" className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 text-center text-sm font-semibold text-rose-600">{error}</p>}
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-5 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 backdrop-blur dark:border-slate-800 dark:bg-[#07101F]/95"><div className="mx-auto max-w-md">
-    <button type="button" disabled={busy || (step === 1 && !exam) || (step === 2 && !date) || (step === 3 && !level)} onClick={() => void (step === 4 ? finish() : next())} className="w-full rounded-xl bg-amber-500 py-3.5 text-base font-bold text-slate-950 transition active:scale-[0.99] disabled:opacity-40">
+    <button type="button" disabled={busy || (step === 1 && !exam) || (step === 2 && !date) || (step === 3 && !level)} onClick={() => void (step === 4 ? finish() : next())} className="w-full rounded-xl bg-slate-900 py-3.5 text-base font-bold text-white dark:bg-white dark:text-slate-900 transition active:scale-[0.99] disabled:opacity-40">
       {busy ? 'Saving…' : step === 4 ? (done.size ? `Tick ${done.size} subtopic${done.size === 1 ? '' : 's'} and see my plan` : 'Skip, show my plan') : step === 3 && level === 'beginner' ? 'See my plan' : 'Continue'}
     </button>
     </div></div>

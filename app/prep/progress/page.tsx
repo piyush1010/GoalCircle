@@ -93,7 +93,7 @@ export default function PrepProgressPage() {
   }, [view, data.userId, today])
 
   if (data.status === 'loading' || !view) return <main className="mx-auto max-w-xl space-y-3 px-4 pb-28 pt-6" aria-busy="true">{[1, 2, 3].map((k) => <div key={k} className="h-28 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}</main>
-  if (data.status === 'error') return <main className="mx-auto grid min-h-[60vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">Couldn&apos;t load your progress</h1><button onClick={() => void data.reload()} className="mt-4 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Try again</button></div></main>
+  if (data.status === 'error') return <main className="mx-auto grid min-h-[60vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">Couldn&apos;t load your progress</h1><button onClick={() => void data.reload()} className="mt-4 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">Try again</button></div></main>
 
   const { overall } = view
   const exam = examInfo(data.template?.code)
@@ -106,8 +106,8 @@ export default function PrepProgressPage() {
     <main className="mx-auto max-w-xl px-4 pb-28 pt-5">
       <header className="mb-4 flex items-center gap-3">
         <Link href="/dashboard" aria-label="Back to Today" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
-        <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Preparation</h1><p className="text-sm text-slate-500">{data.template?.name ?? 'Your exam'}{daysToExam !== null && daysToExam >= 0 ? ` · ${daysToExam} days to exam` : ''}</p></div>
-        <button type="button" onClick={() => setLogOpen(true)} aria-label="Quick log" className="flex h-10 shrink-0 items-center gap-1 rounded-full bg-amber-500 px-3.5 text-sm font-bold text-slate-950"><Plus className="h-4 w-4" />Log</button>
+        <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Preparation</h1><p className="text-sm text-slate-500">{data.template?.name ?? 'Your exam'}{daysToExam !== null && daysToExam >= 0 ? (daysToExam === 0 ? ', exam day today' : `, ${daysToExam} ${daysToExam === 1 ? 'day' : 'days'} to go`) : ''}</p></div>
+        <button type="button" onClick={() => setLogOpen(true)} aria-label="Quick log" className="flex h-10 shrink-0 items-center gap-1 rounded-full bg-slate-900 px-3.5 text-sm font-semibold text-white dark:bg-white dark:text-slate-900"><Plus className="h-4 w-4" />Log</button>
         <HelpButton />
       </header>
       <PrepNav active="/prep/progress" />
@@ -119,14 +119,14 @@ export default function PrepProgressPage() {
           <div>
             <p className="text-sm text-slate-500">Preparation</p>
             <p className="mt-0.5 text-[28px] font-semibold leading-tight tracking-tight">{overall.value === null ? 'Getting started' : overall.band}</p>
-            <p className="mt-0.5 text-sm text-slate-500">{`${overall.touchedTopics} of ${overall.totalTopics} topics started`}{overall.value !== null ? ` · index ${overall.value}` : ''}</p>
+            <p className="mt-0.5 text-sm text-slate-500">{`${overall.touchedTopics} of ${overall.totalTopics} topics started`}{overall.value !== null ? `. Preparation score ${overall.value}` : ''}</p>
           </div>
           <Link href="/prep/how" className="shrink-0 text-xs text-slate-500 underline underline-offset-4">How it works</Link>
         </div>
-        {lost > 0 && <Link href="/prep?filter=due" className="mt-3 flex items-center justify-between rounded-xl bg-amber-500/10 px-3 py-2.5 text-sm"><span>Revise {overall.overdueTopics} overdue topic{overall.overdueTopics === 1 ? '' : 's'} to win back {lost} point{lost === 1 ? '' : 's'}</span><span aria-hidden="true">→</span></Link>}
+        {lost > 0 && <Link href="/prep?filter=due" className="mt-3 flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2.5 text-sm dark:bg-slate-800"><span>Revise {overall.overdueTopics} overdue topic{overall.overdueTopics === 1 ? '' : 's'} to win back {lost} point{lost === 1 ? '' : 's'}</span><ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" /></Link>}
         <div className="mt-4 flex gap-1" aria-label="Study days this week">{view.streak.week.map((d) => <span key={d.date} title={d.date} className={`h-1.5 flex-1 rounded-full ${d.studied ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-800'}`} />)}</div>
         <div className="mt-3 grid grid-cols-3 gap-2">{WEEK_ROWS.slice(0, 3).map(([key, label]) => <WeekCell key={key} label={label} now={view.week.thisWeek[key]} before={view.week.lastWeek[key]} />)}</div>
-        <p className="mt-2 text-xs text-slate-500">This week vs last{view.streak.current > 1 ? ` · ${view.streak.current}-day streak` : ''}{view.week.thisWeek.minutes ? ` · ${view.week.thisWeek.minutes} min focused` : ''}</p>
+        <p className="mt-2 text-sm text-slate-500">This week, compared with last week.{view.streak.current > 1 ? ` ${view.streak.current} days in a row.` : ''}{view.week.thisWeek.minutes ? ` ${view.week.thisWeek.minutes} minutes focused.` : ''}</p>
       </section>
 
       {/* Everything else: one line each, open for detail */}
@@ -134,7 +134,7 @@ export default function PrepProgressPage() {
         <Row title="By stage" value={view.prelims.band ?? 'Not enough data'}>
           <div className="grid grid-cols-2 gap-2">
             {exam.targetStages.length === 1
-              ? <><Stage title={exam.stageName.prelims} r={view.prelims} /><Stage title="WAT · GD · PI" r={view.interview} /></>
+              ? <><Stage title={exam.stageName.prelims} r={view.prelims} /><Stage title="WAT, GD and PI" r={view.interview} /></>
               : <><Stage title={exam.stageName.prelims} r={view.prelims} /><Stage title={exam.stageName.mains} r={view.mains} /></>}
             {view.optional && exam.targetStages.length > 1 && <Stage title="Optional" r={view.optional} />}
             {view.csat && <section className={card}>
@@ -146,8 +146,8 @@ export default function PrepProgressPage() {
           <Why reasons={overall.reasons} />
           {history.length > 1 && <div className="mt-3">
             <p className="text-xs text-slate-500">Last {history.length} days</p>
-            <div className="mt-1 flex h-12 items-end gap-[2px]" role="img" aria-label={`Preparation index over ${history.length} days`}>
-              {history.map((h) => <span key={h.computed_on} title={`${h.computed_on}: ${h.metrics.overall ?? 'not enough evidence'}`} className="flex h-full flex-1 items-end"><span className="block w-full rounded-t-[3px] bg-amber-500" style={{ height: `${h.metrics.overall === null ? 0 : Math.max(4, (h.metrics.overall / maxHistory) * 100)}%` }} /></span>)}
+            <div className="mt-1 flex h-12 items-end gap-[2px]" role="img" aria-label={`Preparation score over ${history.length} days`}>
+              {history.map((h) => <span key={h.computed_on} title={`${niceDate(h.computed_on)}: ${h.metrics.overall ?? 'not enough evidence'}`} className="flex h-full flex-1 items-end"><span className="block w-full rounded-t-[3px] bg-amber-500" style={{ height: `${h.metrics.overall === null ? 0 : Math.max(4, (h.metrics.overall / maxHistory) * 100)}%` }} /></span>)}
             </div>
           </div>}
         </Row>
@@ -162,17 +162,17 @@ export default function PrepProgressPage() {
           {view.mistakes.topTypes.length > 0 && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Most common mistake: {view.mistakes.topTypes[0].label} ({view.mistakes.topTypes[0].count}).</p>}
         </Row>}
 
-        <Row title="Mock tests" value={data.mocks.length ? `${data.mocks.length} logged${view.trend.change !== null ? ` · ${view.trend.change > 0 ? '+' : ''}${view.trend.change} pts` : ''}` : 'None yet'}>
+        <Row title="Mock tests" value={data.mocks.length ? `${data.mocks.length} logged${view.trend.change ? `, ${view.trend.change > 0 ? 'up' : 'down'} ${Math.abs(view.trend.change)} ${Math.abs(view.trend.change) === 1 ? 'point' : 'points'}` : ''}` : 'None yet'}>
           {data.mocks.length === 0
             ? <p className="text-sm text-slate-500">Add one with Log → Mock test.</p>
             : <>
               {view.trend.points.length >= 2 && <div>
                 <p className="text-xs text-slate-500">Score % over your last {Math.min(12, view.trend.points.length)} mocks</p>
-                <div className="mt-1 flex h-14 items-end gap-1" role="img" aria-label="Mock score trend">{view.trend.points.slice(-12).map((p, i) => <span key={i} title={`${p.takenOn}: ${p.pct}%`} className="flex h-full flex-1 flex-col justify-end"><span className="block w-full rounded-t-[3px] bg-sky-500" style={{ height: `${Math.max(4, p.pct)}%` }} /></span>)}</div>
+                <div className="mt-1 flex h-14 items-end gap-1" role="img" aria-label="Mock score trend">{view.trend.points.slice(-12).map((p, i) => <span key={i} title={`${niceDate(p.takenOn)}: ${p.pct}%`} className="flex h-full flex-1 flex-col justify-end"><span className="block w-full rounded-t-[3px] bg-amber-500" style={{ height: `${Math.max(4, p.pct)}%` }} /></span>)}</div>
               </div>}
-              {view.trend.sections.length > 0 && <ul className="mt-3 space-y-1.5">{view.trend.sections.map((x) => <li key={x.name} className="flex items-center gap-2 text-sm"><span className="w-16 shrink-0 font-medium">{x.name}</span><span className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><span className="block h-full rounded-full bg-sky-500" style={{ width: `${Math.max(2, Math.min(100, x.avgPct))}%` }} /></span><span className="w-10 shrink-0 text-right tabular-nums">{x.avgPct}%</span></li>)}</ul>}
+              {view.trend.sections.length > 0 && <ul className="mt-3 space-y-1.5">{view.trend.sections.map((x) => <li key={x.name} className="flex items-center gap-2 text-sm"><span className="w-16 shrink-0 font-medium">{x.name}</span><span className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><span className="block h-full rounded-full bg-amber-500" style={{ width: `${Math.max(2, Math.min(100, x.avgPct))}%` }} /></span><span className="w-10 shrink-0 text-right tabular-nums">{x.avgPct}%</span></li>)}</ul>}
               <ul className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">{(allMocks ? data.mocks : data.mocks.slice(0, 6)).map((m) => <li key={m.id} className="flex items-center gap-3 py-2 text-sm">
-                <span className="min-w-0 flex-1"><span className="block truncate font-medium">{m.name}</span><span className="text-xs text-slate-500">{exam.mockStages.find(([id]) => id === m.stage)?.[1] ?? STAGE_NAME[m.stage]} · {m.takenOn}</span></span>
+                <span className="min-w-0 flex-1"><span className="block truncate font-medium">{m.name}</span><span className="text-xs text-slate-500">{exam.mockStages.find(([id]) => id === m.stage)?.[1] ?? STAGE_NAME[m.stage]}, {niceDate(m.takenOn)}</span></span>
                 <span className="shrink-0 tabular-nums">{m.score ?? '–'}{m.maxScore ? <span className="text-slate-500">/{m.maxScore}</span> : null}</span>
                 <ItemMenu label="mock test" onEdit={() => setEditMock(m)} onDelete={() => data.deleteMock(m.id)} />
               </li>)}</ul>
@@ -184,10 +184,10 @@ export default function PrepProgressPage() {
           {view.answers.total === 0
             ? <p className="text-sm text-slate-500">No answers logged yet.</p>
             : <>
-              <p className="text-sm">{view.answers.total} in total{view.answers.lastWeek ? ` · last week ${view.answers.lastWeek}` : ''} · {view.answers.timed} timed · {view.answers.reviewed} reviewed</p>
+              <p className="text-sm">{view.answers.total} in total, {view.answers.timed} timed and {view.answers.reviewed} reviewed.{view.answers.lastWeek ? ` ${view.answers.lastWeek} last week.` : ''}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">{view.answers.byPaper.map(([paper, n]) => <span key={paper} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs dark:bg-slate-800">{paper.replace('ESSAY', 'Essay')}: {n}</span>)}</div>
               <ul className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">{(allAnswers ? data.answers : data.answers.slice(0, 5)).map((a) => <li key={a.id} className="flex items-center gap-3 py-2 text-sm">
-                <span className="min-w-0 flex-1"><span className="block truncate font-medium">{(a.nodeId && nodeTitle.get(a.nodeId)) || a.paper || 'Answers'}</span><span className="text-xs text-slate-500">{a.writtenOn}{a.timed ? ' · timed' : ''}{a.mentorReviewed ? ' · reviewed' : ''}</span></span>
+                <span className="min-w-0 flex-1"><span className="block truncate font-medium">{(a.nodeId && nodeTitle.get(a.nodeId)) || a.paper || 'Answers'}</span><span className="text-xs text-slate-500">{niceDate(a.writtenOn)}{a.timed ? ', timed' : ''}{a.mentorReviewed ? ', reviewed' : ''}</span></span>
                 <span className="shrink-0 tabular-nums">{a.count}</span>
                 <ItemMenu label="answer log" onEdit={() => setEditAnswer(a)} onDelete={() => data.deleteAnswer(a)} deleteMessage={`Delete this log of ${a.count} answer${a.count === 1 ? '' : 's'}? Your answer count goes down by ${a.count}.`} />
               </li>)}</ul>
@@ -198,7 +198,7 @@ export default function PrepProgressPage() {
         <LinkRow href="/prep/mistakes" title="Mistake notebook" value={view.mistakes.open.length ? `${view.mistakes.open.length} to revisit` : ''} />
         {exam.pyqPapers.length > 0 && <LinkRow href="/prep/pyq" title="Past papers" value="Year by year" />}
         <LinkRow href="/prep/notes" title="Current affairs notes" value="" />
-        <button type="button" onClick={() => setSetupOpen(true)} className="flex w-full items-center justify-between px-4 py-3.5 text-left"><span className="font-medium">Exam, date and reminders</span><span className="text-sm text-slate-500">{data.profile.examDate ?? 'Set date'} →</span></button>
+        <button type="button" onClick={() => setSetupOpen(true)} className="flex w-full items-center justify-between px-4 py-3.5 text-left"><span className="font-medium">Exam, date and reminders</span><span className="flex items-center gap-2 text-sm text-slate-500">{data.profile.examDate ? niceDate(data.profile.examDate, true) : 'Set date'}<ChevronRight className="h-4 w-4 text-slate-400" /></span></button>
       </div>
 
       <Link href="/prep/plan?tab=batch" className="mt-3 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
@@ -208,7 +208,7 @@ export default function PrepProgressPage() {
 
       {setupOpen && <PrepSetup templates={data.templates} templateId={data.templateId} profile={data.profile} optionals={optionalSubjects(data.nodes)} onSave={data.saveProfile} onRemove={data.plans.length > 1 && data.templateId ? () => data.removePlan(data.templateId!) : undefined} onClose={() => setSetupOpen(false)} />}
 
-      <p className="mt-4 px-1 text-xs text-slate-500">Based only on what you log (scoring {SCORING_VERSION}). Not a prediction of rank or selection.</p>
+      <p className="mt-4 px-1 text-xs text-slate-500">Based only on what you log. It isn’t a prediction of rank or selection.</p>
 
       {editAnswer && <AnswerEditSheet row={editAnswer} title={(editAnswer.nodeId && nodeTitle.get(editAnswer.nodeId)) || editAnswer.paper || 'Answers'} onSave={(n) => data.updateAnswer(editAnswer, n)} onClose={() => setEditAnswer(null)} />}
       {editMock && <MockEditSheet mock={editMock} onSave={(c) => data.updateMock(editMock.id, c)} onClose={() => setEditMock(null)} />}
@@ -226,7 +226,7 @@ function Row({ title, value, children }: { title: string; value: string; childre
   </details>
 }
 function LinkRow({ href, title, value }: { href: string; title: string; value: string }) {
-  return <Link href={href} className="flex items-center justify-between px-4 py-3.5"><span className="font-medium">{title}</span><span className="text-sm text-slate-500">{value} →</span></Link>
+  return <Link href={href} className="flex items-center justify-between px-4 py-3.5"><span className="font-medium">{title}</span><span className="flex items-center gap-2 text-sm text-slate-500">{value}<ChevronRight className="h-4 w-4 text-slate-400" /></span></Link>
 }
 
 function Why({ reasons }: { reasons: string[] }) {
@@ -236,9 +236,9 @@ function Why({ reasons }: { reasons: string[] }) {
 function Stage({ title, r }: { title: string; r: Readiness }) {
   const lost = r.value !== null && r.peak !== null ? r.peak - r.value : 0
   return <section className={card}>
-    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{title}</p>
+    <p className="text-sm font-medium text-slate-500">{title}</p>
     {r.value === null ? <p className="mt-1 text-sm font-semibold text-slate-500">Not enough evidence</p>
-      : <><p className="mt-1 text-lg font-extrabold leading-tight">{r.band}</p><p className="text-xs text-slate-500">Index {r.value}{lost > 0 ? <span className="text-rose-600 dark:text-rose-400"> · −{lost} overdue</span> : null}</p></>}
+      : <><p className="mt-1 text-lg font-extrabold leading-tight">{r.band}</p><p className="text-xs text-slate-500">Score {r.value}.{lost > 0 ? ` Overdue revisions cost ${lost} ${lost === 1 ? 'point' : 'points'}.` : ''}</p></>}
     <Why reasons={r.reasons} />
   </section>
 }
@@ -251,6 +251,12 @@ function Metric({ label, ind }: { label: string; ind: Indicator }) {
   </div>
 }
 
+/** "12 Nov", or "29 May 2027" with the year. Dates are stored as YYYY-MM-DD. */
+function niceDate(iso: string, year = false) {
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00`)
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}) })
+}
+
 const WEEK_ROWS: [keyof WeekStats, string][] = [['studyDays', 'study days'], ['ticks', 'subtopics'], ['revisions', 'revisions'], ['minutes', 'min timed'], ['pyqs', 'PYQs'], ['answers', 'answers'], ['newspaperDays', 'newspaper days']]
 
 function WeekCell({ label, now, before }: { label: string; now: number; before: number }) {
@@ -258,6 +264,6 @@ function WeekCell({ label, now, before }: { label: string; now: number; before: 
   return <div className="rounded-xl bg-slate-50 px-2 py-2 text-center dark:bg-slate-800/60">
     <p className="text-lg font-extrabold tabular-nums">{now}</p>
     <p className="text-[11px] font-semibold text-slate-500">{label}</p>
-    {(now > 0 || before > 0) && <p className={`text-[11px] font-bold ${diff > 0 ? 'text-emerald-600 dark:text-emerald-400' : diff < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>{diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : 'same'}</p>}
+    {(now > 0 || before > 0) && <p className="text-[11px] font-medium text-slate-500">{diff > 0 ? `${diff} more` : diff < 0 ? `${-diff} fewer` : 'same'}</p>}
   </div>
 }

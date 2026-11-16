@@ -94,7 +94,9 @@ export default function ProgressPage() {
             <MonthRing days={month} monthName={monthName} compact />
             <div className="min-w-0 flex-1 space-y-3">
               <div><p className="text-2xl font-bold tabular-nums">{activeDays}<span className="text-base font-medium text-slate-500"> of {soFar} days</span></p><p className="text-sm text-slate-500">active in {monthName}</p></div>
-              <div><p className="text-lg font-bold tabular-nums">{duration(weekMinutes)}</p><p className="text-sm text-slate-500">of study and focus this week, over {weekDays === 1 ? 'one day' : `${weekDays} days`}</p></div>
+              {weekMinutes > 0
+                ? <div><p className="text-lg font-bold tabular-nums">{duration(weekMinutes)}</p><p className="text-sm text-slate-500">of study and focus this week, over {weekDays === 1 ? 'one day' : `${weekDays} days`}</p></div>
+                : <p className="text-sm text-slate-500">No study or focus time logged this week yet.</p>}
             </div>
           </section>
 

@@ -67,7 +67,7 @@ export default function PushPrompt() {
   return (
     <div role="dialog" aria-label="Turn on notifications" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-700 dark:bg-slate-900">
       <div className="flex items-start gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-amber-500/15 text-amber-600"><Bell className="h-5 w-5" /></span>
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500"><Bell className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-bold leading-snug">{note ? 'Notifications' : title}</h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{note || 'We’ll let you know when your mentor posts a task, someone nudges you, or a friend comments. Nothing else.'}</p>
@@ -75,7 +75,7 @@ export default function PushPrompt() {
       </div>
       {!note && <div className="mt-3 flex justify-end gap-2">
         <button type="button" onClick={later} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Not now</button>
-        <button type="button" onClick={() => void allow()} disabled={busy} className="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-60">{busy ? 'One sec…' : 'Allow'}</button>
+        <button type="button" onClick={() => void allow()} disabled={busy} className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white dark:bg-white dark:text-slate-900 disabled:opacity-60">{busy ? 'One sec…' : 'Allow'}</button>
       </div>}
     </div>
   )

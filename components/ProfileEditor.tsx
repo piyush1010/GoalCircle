@@ -6,7 +6,7 @@ import { supabase } from '@/utils/supabase'
 
 export interface SavedProfile { fullName: string; username: string; bio: string; avatarUrl: string | null }
 
-const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-amber-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white'
+const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white'
 
 /** The one place to edit your photo, name, username and bio (saved to your profile and sign-in details). */
 export default function ProfileEditor({ onSaved, onCancel }: { onSaved: (profile: SavedProfile) => void; onCancel: () => void }) {
@@ -68,7 +68,7 @@ export default function ProfileEditor({ onSaved, onCancel }: { onSaved: (profile
       <label className="block"><span className="mb-1 block text-xs font-bold text-slate-600 dark:text-slate-300">Name</span>
         <input value={fullName} onChange={(event) => setFullName(event.target.value)} maxLength={60} autoComplete="name" className={field} /></label>
       <label className="block"><span className="mb-1 block text-xs font-bold text-slate-600 dark:text-slate-300">Username</span>
-        <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 pl-3 focus-within:border-amber-500 dark:border-slate-800 dark:bg-slate-950"><span className="text-sm text-slate-400">@</span>
+        <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 pl-3 focus-within:border-slate-500 dark:border-slate-800 dark:bg-slate-950"><span className="text-sm text-slate-400">@</span>
           <input value={username} onChange={(event) => setUsername(event.target.value)} maxLength={30} autoCapitalize="none" autoComplete="username" className="w-full bg-transparent px-1 py-2.5 text-sm text-slate-900 outline-none dark:text-white" /></div></label>
       <label className="block"><span className="mb-1 block text-xs font-bold text-slate-600 dark:text-slate-300">Bio <span className="font-normal text-slate-400">(optional)</span></span>
         <textarea value={bio} onChange={(event) => setBio(event.target.value)} rows={2} maxLength={200} placeholder="What are you working towards?" className={`${field} resize-none`} /></label>

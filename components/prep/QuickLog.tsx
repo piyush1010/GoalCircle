@@ -21,7 +21,7 @@ const ACTIONS: { id: Action; label: string; icon: typeof BookOpen; needsTopic: b
 const CA_KINDS = [['scheme', 'Scheme'], ['judgment', 'Judgment'], ['report', 'Report'], ['committee', 'Committee'], ['budget', 'Budget data'], ['economic_survey', 'Economic Survey'], ['state_example', 'State example'], ['other', 'Other']] as const
 
 const input = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900'
-const label = 'block text-xs font-bold uppercase tracking-wide text-slate-500'
+const label = 'block text-sm font-medium text-slate-500'
 
 /**
  * Quick log: action -> topic -> (count) -> save. Defaults everywhere so a log takes a few seconds.
@@ -103,7 +103,7 @@ export default function QuickLog({ nodes, states, examCode, initialAction, initi
     } finally { setBusy(false) }
   }
 
-  const topicButton = (n: SyllabusNode, hint?: string) => <button key={n.id} type="button" onClick={() => { setTopicId(n.id); setQuery('') }} className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm ${topicId === n.id ? 'border-amber-500 bg-amber-500/10' : 'border-slate-200 dark:border-slate-700'}`}>
+  const topicButton = (n: SyllabusNode, hint?: string) => <button key={n.id} type="button" onClick={() => { setTopicId(n.id); setQuery('') }} className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm ${topicId === n.id ? 'border-slate-900 bg-slate-100 dark:border-white dark:bg-slate-800' : 'border-slate-200 dark:border-slate-700'}`}>
     <span className="min-w-0 flex-1 line-clamp-2 font-semibold">{n.title}</span>{hint && <span className="shrink-0 text-[11px] font-bold text-rose-600 dark:text-rose-400">{hint}</span>}
   </button>
   const stepper = (value: number, set: (v: number) => void, min = 0) => <div className="flex items-center gap-2">
@@ -124,13 +124,13 @@ export default function QuickLog({ nodes, states, examCode, initialAction, initi
 
       <div className="flex-1 overflow-y-auto px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">
         {!action && <div className="grid grid-cols-2 gap-2">
-          {actions.map(({ id, label: l, icon: Icon }) => <button key={id} type="button" onClick={() => setAction(id)} className="flex items-center gap-2.5 rounded-xl border border-slate-200 px-3 py-3 text-left text-sm font-bold transition hover:border-amber-500 dark:border-slate-700"><span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><Icon className="h-4 w-4" /></span>{l}</button>)}
+          {actions.map(({ id, label: l, icon: Icon }) => <button key={id} type="button" onClick={() => setAction(id)} className="flex items-center gap-2.5 rounded-xl border border-slate-200 px-3 py-3 text-left text-sm font-bold transition hover:border-slate-400 dark:border-slate-700"><span className="grid h-8 w-8 place-items-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"><Icon className="h-4 w-4" /></span>{l}</button>)}
         </div>}
 
         {action && action !== 'mock' && <div className="space-y-2">
           <p className={label}>Topic{def?.needsTopic ? '' : ' (optional)'}</p>
           {topic && !q
-            ? <div className="flex items-center gap-2 rounded-xl border border-amber-500 bg-amber-500/10 px-3 py-2.5 text-sm"><span className="min-w-0 flex-1 font-semibold">{topic.title}</span><button type="button" onClick={() => setTopicId(null)} className="text-xs font-bold text-slate-500">Change</button></div>
+            ? <div className="flex items-center gap-2 rounded-xl border border-slate-900 bg-slate-100 dark:border-white dark:bg-slate-800 px-3 py-2.5 text-sm"><span className="min-w-0 flex-1 font-semibold">{topic.title}</span><button type="button" onClick={() => setTopicId(null)} className="text-xs font-bold text-slate-500">Change</button></div>
             : <>
               <label className="relative block"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><span className="sr-only">Find a topic</span><input autoFocus={!due.length && !recent.length} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Find a topic" className={`${input} pl-9`} /></label>
               {q ? <div className="space-y-1.5">{results.length ? results.map((n) => topicButton(n)) : <p className="text-sm text-slate-500">No topic matches.</p>}</div>
@@ -144,7 +144,7 @@ export default function QuickLog({ nodes, states, examCode, initialAction, initi
 
           {action === 'pyq' && <div className="grid grid-cols-2 gap-3 pt-2"><div><p className={`${label} mb-1`}>Attempted</p>{stepper(count, setCount, 1)}</div><div><p className={`${label} mb-1`}>Correct</p>{stepper(Math.min(correct, count), setCorrect)}</div></div>}
           {action === 'answers' && <div className="flex items-end justify-between gap-3 pt-2"><div><p className={`${label} mb-1`}>Answers</p>{stepper(count, setCount, 1)}</div>
-            <label className="flex items-center gap-2 pb-2 text-sm font-semibold"><input type="checkbox" checked={timed} onChange={(e) => setTimed(e.target.checked)} className="h-4 w-4 accent-amber-500" />Timed</label></div>}
+            <label className="flex items-center gap-2 pb-2 text-sm font-semibold"><input type="checkbox" checked={timed} onChange={(e) => setTimed(e.target.checked)} className="h-4 w-4 accent-slate-900" />Timed</label></div>}
           {action === 'current_affairs' && <div className="space-y-2 pt-2">
             <label className={label}>What<input value={ca.title} onChange={(e) => setCa({ ...ca, title: e.target.value })} maxLength={200} placeholder="e.g. SC ruling on electoral bonds" className={`${input} mt-1 normal-case tracking-normal`} /></label>
             <div className="flex flex-wrap gap-1.5">{CA_KINDS.map(([k, l]) => <button key={k} type="button" onClick={() => setCa({ ...ca, kind: k })} className={`rounded-full border px-3 py-1 text-xs font-bold ${ca.kind === k ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-50 dark:bg-slate-50 dark:text-slate-900' : 'border-slate-200 dark:border-slate-700'}`}>{l}</button>)}</div>
@@ -171,7 +171,7 @@ export default function QuickLog({ nodes, states, examCode, initialAction, initi
       </div>
 
       {action && <div className="border-t border-slate-100 px-5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 dark:border-slate-800">
-        <button type="button" disabled={!canSave || busy} onClick={() => void save()} className="w-full rounded-xl bg-amber-500 py-3 text-base font-bold text-slate-950 shadow-sm disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800">{busy ? 'Saving…' : 'Save'}</button>
+        <button type="button" disabled={!canSave || busy} onClick={() => void save()} className="w-full rounded-xl bg-slate-900 py-3 text-base font-bold text-white dark:bg-white dark:text-slate-900 shadow-sm disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800">{busy ? 'Saving…' : 'Save'}</button>
       </div>}
     </div>
   </div>

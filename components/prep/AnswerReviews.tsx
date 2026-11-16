@@ -57,21 +57,21 @@ export default function AnswerReviews({ userId }: { userId: string | null }) {
   }
 
   return <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-    <h2 className="flex items-center gap-2 text-base"><MessageSquareText className="h-4 w-4 text-amber-600" />Answer review</h2>
+    <h2 className="flex items-center gap-2 text-base"><MessageSquareText className="h-4 w-4 text-slate-500" />Answer review</h2>
     <p className="text-xs text-slate-500">Photograph a written answer and your batch mentor marks it. Only you and the mentor can see it.</p>
     <div className="mt-3 space-y-2">
       {batches.length > 1 && <select value={batch} onChange={(e) => setBatch(e.target.value)} aria-label="Batch" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900">{batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select>}
       <input value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={500} placeholder="Question (optional), e.g. GS2: Role of the Governor" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900" />
       <div className="flex gap-2">
         <label className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2.5 text-sm font-bold dark:border-slate-600"><Camera className="h-4 w-4" />{file ? 'Photo ready' : 'Add photo'}<input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
-        <button type="button" disabled={!file || busy} onClick={() => void send()} className="shrink-0 rounded-xl bg-amber-500 px-4 text-sm font-bold text-slate-950 disabled:opacity-50">{busy ? 'Sending…' : 'Send'}</button>
+        <button type="button" disabled={!file || busy} onClick={() => void send()} className="shrink-0 rounded-xl bg-slate-900 px-4 text-sm font-bold text-white dark:bg-white dark:text-slate-900 disabled:opacity-50">{busy ? 'Sending…' : 'Send'}</button>
       </div>
       {msg && <p role="status" className="text-sm text-slate-600 dark:text-slate-300">{msg}</p>}
     </div>
     {reviews && reviews.length > 0 && <ul className="mt-3 divide-y divide-slate-100 border-t border-slate-100 dark:divide-slate-800 dark:border-slate-800">{reviews.map((r) => <li key={r.id} className="py-2.5">
       <div className="flex items-start gap-2">
       <button type="button" onClick={() => setOpen(open === r.id ? null : r.id)} className="flex min-w-0 flex-1 items-start gap-3 text-left">
-        <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{r.question ?? 'Answer'}</span><span className="block text-xs text-slate-500">{new Date(r.submitted_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}{r.reviewed_at ? '' : ' · waiting for review'}</span></span>
+        <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{r.question ?? 'Answer'}</span><span className="block text-xs text-slate-500">{new Date(r.submitted_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}{r.reviewed_at ? '' : ', waiting for review'}</span></span>
         {r.reviewed_at && <span className="shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">{r.marks !== null ? `${r.marks}/${r.max_marks}` : 'Reviewed'}</span>}
       </button>
       {!r.reviewed_at && <ItemMenu label="answer" deleteMessage="Withdraw this answer? Your mentor won't see it any more." onDelete={async () => {

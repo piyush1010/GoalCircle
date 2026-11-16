@@ -20,7 +20,7 @@ export default function BottomNav() {
     const active = item.match.some((m) => pathname === m || pathname.startsWith(`${m}/`))
     const Icon = item.icon
     return <Link key={item.href} href={item.href} data-tour={item.tour} aria-current={active ? 'page' : undefined}
-      className={`flex min-w-16 flex-col items-center gap-1 rounded-xl px-2 py-1 text-xs transition active:scale-95 ${active ? 'font-semibold text-amber-700 dark:text-amber-400' : 'font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}>
+      className={`flex min-w-16 flex-col items-center gap-1 rounded-xl px-2 py-1 text-xs transition active:scale-95 ${active ? 'font-semibold text-slate-900 dark:text-white' : 'font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}>
       <Icon aria-hidden="true" className="h-[21px] w-[21px]" strokeWidth={active ? 2.4 : 1.9} />
       {item.label}
     </Link>

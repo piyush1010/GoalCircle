@@ -35,7 +35,7 @@ describe('weak topics', () => {
 })
 
 describe('mistake notebook', () => {
-  it('lists open mistakes oldest first and the commonest types', () => {
+  it('lists open mistakes oldest first and the most common types', () => {
     const s = mistakeSummary([mistake('1', null, 'careless', null, '2026-11-03'), mistake('2', null, 'careless', '2026-11-04'), mistake('3', null, 'extreme_word', null, '2026-11-01')])
     expect(s.open.map((m) => m.id)).toEqual(['3', '1'])
     expect(s.topTypes[0]).toEqual({ category: 'careless', label: 'Careless slip', count: 2 })

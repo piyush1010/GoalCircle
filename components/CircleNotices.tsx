@@ -64,10 +64,10 @@ export default function CircleNotices({ circleId, userId, isAdmin }: { circleId:
       </div>
 
       {isAdmin && composing && <div className={card}>
-        <textarea value={body} onChange={(event) => setBody(event.target.value)} rows={3} maxLength={2000} autoFocus placeholder="e.g. Mock test this Sunday at 9 AM. Notes attached." className="max-h-72 min-h-[5rem] w-full resize-none [field-sizing:content] rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-amber-500 dark:border-slate-700 dark:bg-[#07101F]" />
+        <textarea value={body} onChange={(event) => setBody(event.target.value)} rows={3} maxLength={2000} autoFocus placeholder="e.g. Mock test this Sunday at 9 AM. Notes attached." className="max-h-72 min-h-[5rem] w-full resize-none [field-sizing:content] rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-500 dark:border-slate-700 dark:bg-[#07101F]" />
         <div className="mt-2"><AttachmentPicker files={files} onFilesChange={setFiles} onError={setError} /></div>
         <div className="mt-3 flex items-center gap-2">
-          <button type="button" onClick={() => setPinned((on) => !on)} aria-pressed={pinned} className={`inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold ${pinned ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 text-slate-500 dark:border-slate-700'}`}><Pin className="h-3.5 w-3.5" />Pin</button>
+          <button type="button" onClick={() => setPinned((on) => !on)} aria-pressed={pinned} className={`inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold ${pinned ? 'border-slate-900 bg-slate-100 dark:border-white dark:bg-slate-800 text-slate-900 dark:text-white' : 'border-slate-200 text-slate-500 dark:border-slate-700'}`}><Pin className="h-3.5 w-3.5" />Pin</button>
           <span className="flex-1" />
           <button type="button" onClick={clearComposer} className="h-10 rounded-xl px-3 text-xs font-bold text-slate-500">Cancel</button>
           <button type="button" onClick={() => void post()} disabled={posting} className="h-10 rounded-xl bg-slate-900 dark:bg-slate-50 px-4 text-xs font-bold text-white dark:text-slate-900 disabled:opacity-60">{posting ? 'Posting…' : 'Post'}</button>
@@ -77,11 +77,11 @@ export default function CircleNotices({ circleId, userId, isAdmin }: { circleId:
 
       {notices.length === 0 && isAdmin && !composing && <p className="rounded-2xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500 dark:border-slate-700">Post notices, new targets or test dates here. Students are notified.</p>}
 
-      {notices.map((notice) => <article key={notice.id} className={`${card} ${notice.pinned ? 'border-amber-500/50' : ''}`}>
+      {notices.map((notice) => <article key={notice.id} className={`${card} ${notice.pinned ? 'border-slate-200 dark:border-slate-700' : ''}`}>
         <div className="flex items-start justify-between gap-3">
-          <p className="text-[11px] font-bold text-slate-400">{notice.pinned && <span className="mr-1 inline-flex items-center gap-1 text-amber-600 dark:text-amber-400"><Pin className="h-3 w-3" />Pinned ·</span>}{new Date(notice.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</p>
+          <p className="text-[11px] font-bold text-slate-400">{notice.pinned && <span className="mr-1 inline-flex items-center gap-1 text-slate-600 dark:text-slate-300"><Pin className="h-3 w-3" />Pinned,</span>}{new Date(notice.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</p>
           {isAdmin && <div className="flex gap-1">
-            <button type="button" onClick={() => void togglePin(notice)} aria-label={notice.pinned ? 'Unpin notice' : 'Pin notice'} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:text-amber-500">{notice.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}</button>
+            <button type="button" onClick={() => void togglePin(notice)} aria-label={notice.pinned ? 'Unpin notice' : 'Pin notice'} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white">{notice.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}</button>
             <button type="button" onClick={() => void remove(notice)} aria-label="Delete notice" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:text-rose-500"><Trash2 className="h-4 w-4" /></button>
           </div>}
         </div>
