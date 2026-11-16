@@ -36,7 +36,7 @@ export default function WelcomeBack() {
       </div>
       <div className="mt-4 flex justify-end gap-2">
         <button type="button" onClick={() => setDaysAway(null)} className="rounded-xl px-3 py-2.5 text-sm font-bold text-slate-500">Not now</button>
-        <Link href="/check-in" onClick={() => setDaysAway(null)} className="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-sm">Check in</Link>
+        <Link href="/check-in" onClick={() => setDaysAway(null)} className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white dark:bg-white dark:text-slate-900 shadow-sm">Check in</Link>
       </div>
     </div>
   )

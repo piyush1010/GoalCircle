@@ -53,7 +53,7 @@ export default function AboutPage() {
         <p>What we store, why, and who processes it: <Link href="/privacy" className="font-medium text-slate-900 underline underline-offset-2 dark:text-white">Privacy policy</Link>.</p>
       </Section>
 
-      <p className="border-t border-slate-200 pt-6 text-xs text-slate-500 dark:border-slate-800">{APP_NAME} · version {APP_VERSION} · Free for students, no ads.</p>
+      <p className="border-t border-slate-200 pt-6 text-xs text-slate-500 dark:border-slate-800">{APP_NAME}, version {APP_VERSION}. Free for students, with no ads.</p>
     </div>
   </main>
 }

@@ -50,7 +50,7 @@ type Sort = 'behind' | 'last' | 'name' | 'newest'
 const QUIET_MS = 2 * 24 * 60 * 60 * 1000
 
 const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101B2D]'
-const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#07101F]'
+const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-900 dark:ring-white/20 dark:border-slate-700 dark:bg-[#07101F]'
 
 const displayName = (row: DashboardRow) => row.full_name || row.username || 'Student'
 const isQuiet = (row: DashboardRow, now: number) => {

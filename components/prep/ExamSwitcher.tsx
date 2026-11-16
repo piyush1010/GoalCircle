@@ -41,7 +41,7 @@ export function ManageExams({ plans, manage, onClose }: { plans: PrepPlan[]; man
       <ul className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
         {plans.map((p) => <li key={p.templateId} className="px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="min-w-0 flex-1"><p className="font-semibold">{examInfo(p.code).short}</p><p className="text-xs text-slate-500">{examInfo(p.code).stageName[p.targetStage]} · {when(p)}</p></div>
+            <div className="min-w-0 flex-1"><p className="font-semibold">{examInfo(p.code).short}</p><p className="text-xs text-slate-500">{examInfo(p.code).stageName[p.targetStage]}, {when(p)}</p></div>
             {plans.length > 1 && confirm !== p.templateId && <button type="button" disabled={busy !== null} onClick={() => setConfirm(p.templateId)} className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300">Remove</button>}
           </div>
           {confirm === p.templateId && <div className="mt-2 flex items-center gap-2 rounded-xl bg-slate-50 p-2.5 text-sm dark:bg-slate-800/60">

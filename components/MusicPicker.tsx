@@ -209,20 +209,20 @@ export default function MusicPicker({ open, selected, onClose, onSelect }: Music
                 const inside = at >= safeStart && at <= safeStart + CLIP_SECONDS
                 const heard = position !== null && inside && at <= position
                 const height = 30 + Math.abs(Math.sin(index * 1.7) * 55) + (index % 3) * 5
-                return <span key={index} className={`flex-1 rounded-full ${heard ? 'bg-orange-500' : inside ? 'bg-amber-400' : 'bg-slate-200 dark:bg-slate-700'}`} style={{ height: `${Math.min(100, height)}%` }} />
+                return <span key={index} className={`flex-1 rounded-full ${heard ? 'bg-amber-500' : inside ? 'bg-slate-400' : 'bg-slate-200 dark:bg-slate-700'}`} style={{ height: `${Math.min(100, height)}%` }} />
               })}
             </div>
-            <div className="pointer-events-none absolute inset-y-[-4px] rounded-xl border-2 border-amber-500" style={{ left: `${(safeStart / length) * 100}%`, width: `${(CLIP_SECONDS / length) * 100}%` }} />
+            <div className="pointer-events-none absolute inset-y-[-4px] rounded-xl border-2 border-slate-900 dark:border-white" style={{ left: `${(safeStart / length) * 100}%`, width: `${(CLIP_SECONDS / length) * 100}%` }} />
             <input type="range" min={0} max={maxStart} step={1} value={safeStart} onChange={(event) => moveStart(Number(event.target.value))} aria-label="Start of the part" className="absolute inset-0 h-full w-full cursor-grab opacity-0" />
           </div>
-          <div className="mt-2 flex justify-between text-xs font-bold text-slate-500"><span>{clock(safeStart)}</span><span className="text-amber-600 dark:text-amber-400"><Scissors className="mr-1 inline h-3.5 w-3.5" />{CLIP_SECONDS} sec</span><span>{clock(safeStart + CLIP_SECONDS)}</span></div>
+          <div className="mt-2 flex justify-between text-xs font-bold text-slate-500"><span>{clock(safeStart)}</span><span className="text-slate-900 dark:text-white"><Scissors className="mr-1 inline h-3.5 w-3.5" />{CLIP_SECONDS} sec</span><span>{clock(safeStart + CLIP_SECONDS)}</span></div>
 
           <button type="button" onClick={useThisPart} className="mt-6 w-full rounded-xl bg-slate-900 dark:bg-slate-50 py-3.5 text-sm font-bold text-white dark:text-slate-900">Use this part</button>
           {selected?.id === cropping.id && <button type="button" onClick={() => { onSelect(null); close() }} className="mt-2 w-full py-2 text-xs font-bold text-slate-500">Remove music</button>}
         </div> : <div className="p-4">
           <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 dark:border-slate-700 dark:bg-[#07101F]"><Search className="h-4 w-4 text-slate-400" /><input autoFocus value={query} onChange={(event) => { const value = event.target.value; setQuery(value); if (value.trim().length < 2) setResults([]) }} placeholder="Search songs or artists" className="min-w-0 flex-1 bg-transparent py-3 text-sm outline-none" /></label>
           <div className="mt-3 max-h-[55vh] space-y-1 overflow-y-auto">
-            {query.trim().length < 2 && <div className="py-12 text-center"><Music2 className="mx-auto h-7 w-7 text-amber-500" /><p className="mt-2 text-xs font-bold">Find a soundtrack for your goal</p></div>}
+            {query.trim().length < 2 && <div className="py-12 text-center"><Music2 className="mx-auto h-7 w-7 text-slate-500" /><p className="mt-2 text-xs font-bold">Find a soundtrack for your goal</p></div>}
             {searching && <div className="space-y-2">{[1, 2, 3].map((item) => <div key={item} className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />)}</div>}
             {!searching && query.trim().length >= 2 && results.length === 0 && <p className="py-10 text-center text-xs text-slate-500">No previewable tracks found.</p>}
             {!searching && results.map((track) => <div key={track.id} className="flex items-center gap-3 rounded-xl p-2 hover:bg-slate-50 dark:hover:bg-slate-800/60">

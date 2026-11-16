@@ -112,7 +112,7 @@ export default function FocusTimer({ title, subtitle, doneLabel, defaultMode = '
     </div>
 
     <div className="flex flex-1 flex-col items-center justify-center text-center">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{stopwatch ? 'Stopwatch' : s.phase === 'focus' ? `Focus · round ${s.round}` : s.round % 4 === 0 ? 'Long break' : 'Break'}</p>
+      <p className="text-sm font-semibold text-slate-500">{stopwatch ? 'Stopwatch' : s.phase === 'focus' ? `Focus, round ${s.round}` : s.round % 4 === 0 ? 'Long break' : 'Break'}</p>
       <div className="relative mt-6 h-[264px] w-[264px]">
         <svg viewBox="0 0 264 264" className="h-full w-full -rotate-90" aria-hidden="true">
           <circle cx="132" cy="132" r={R} fill="none" strokeWidth="6" className="stroke-slate-100 dark:stroke-slate-800" />
@@ -127,14 +127,14 @@ export default function FocusTimer({ title, subtitle, doneLabel, defaultMode = '
 
     {ending
       ? <div className="mx-auto w-full max-w-sm space-y-2">
-          {doneLabel && <button type="button" disabled={busy} onClick={() => void finish(true)} className="w-full rounded-xl bg-amber-500 py-3.5 text-base font-semibold text-slate-950">{doneLabel}</button>}
-          <button type="button" disabled={busy} onClick={() => void finish(false)} className={`w-full rounded-xl py-3.5 text-base font-semibold ${doneLabel ? 'border border-slate-200 dark:border-slate-700' : 'bg-amber-500 text-slate-950'}`}>Save {minutes} min{doneLabel ? ' only' : ''}</button>
+          {doneLabel && <button type="button" disabled={busy} onClick={() => void finish(true)} className="w-full rounded-xl bg-slate-900 py-3.5 text-base font-semibold text-white dark:bg-white dark:text-slate-900">{doneLabel}</button>}
+          <button type="button" disabled={busy} onClick={() => void finish(false)} className={`w-full rounded-xl py-3.5 text-base font-semibold ${doneLabel ? 'border border-slate-200 dark:border-slate-700' : 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'}`}>Save {minutes} min{doneLabel ? ' only' : ''}</button>
           <button type="button" disabled={busy} onClick={() => { write(null); onClose() }} className="w-full py-2 text-sm text-slate-500">Discard this session</button>
           <button type="button" disabled={busy} onClick={() => setEnding(false)} className="w-full py-2 text-sm text-slate-500">Keep going</button>
         </div>
       : <div className="mx-auto flex w-full max-w-sm items-center gap-3">
           <button type="button" disabled={!started} onClick={() => setEnding(true)} className="flex-1 rounded-xl border border-slate-200 py-3.5 text-base font-semibold disabled:opacity-50 dark:border-slate-700">Finish</button>
-          <button type="button" onClick={toggle} aria-label={running ? 'Pause' : 'Start'} className="grid h-16 w-16 place-items-center rounded-full bg-amber-500 text-slate-950">{running ? <Pause className="h-6 w-6" /> : <Play className="ml-0.5 h-6 w-6" />}</button>
+          <button type="button" onClick={toggle} aria-label={running ? 'Pause' : 'Start'} className="grid h-16 w-16 place-items-center rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">{running ? <Pause className="h-6 w-6" /> : <Play className="ml-0.5 h-6 w-6" />}</button>
           {stopwatch
             ? <span className="flex-1" />
             : <button type="button" onClick={skip} className="flex-1 rounded-xl border border-slate-200 py-3.5 text-base font-semibold dark:border-slate-700">{s.phase === 'focus' ? 'Break' : 'Skip'}</button>}

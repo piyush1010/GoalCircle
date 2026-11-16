@@ -38,7 +38,7 @@ export default function MockEditSheet({ mock, onSave, onClose }: {
         <label className="block text-sm font-semibold">Out of<input inputMode="decimal" value={max} onChange={(e) => setMax(e.target.value)} className={field} /></label>
       </div>
       {error && <p role="alert" className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
-      <button type="button" disabled={busy} onClick={() => void save()} className="mt-4 w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 disabled:opacity-60">{busy ? 'Saving…' : 'Save changes'}</button>
+      <button type="button" disabled={busy} onClick={() => void save()} className="mt-4 w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white dark:bg-white dark:text-slate-900 disabled:opacity-60">{busy ? 'Saving…' : 'Save changes'}</button>
     </div>
   </div>
 }

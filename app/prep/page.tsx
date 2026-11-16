@@ -22,8 +22,8 @@ type TabCode = string
 
 const STAGE_TONE: Record<TopicStageName, string> = {
   not_started: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
-  touched: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
-  foundation_complete: 'bg-amber-500/15 text-amber-800 dark:text-amber-300',
+  touched: 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white',
+  foundation_complete: 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white',
   practised: 'bg-sky-500/10 text-sky-700 dark:text-sky-400',
   revision_current: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
   exam_ready: 'bg-emerald-600 text-white',
@@ -136,7 +136,7 @@ export default function PrepExplorerPage() {
     <main className="mx-auto max-w-xl px-4 pb-28 pt-5">
       <header className="mb-4 flex items-center gap-3">
         <Link href="/dashboard" aria-label="Back to Today" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 dark:border-slate-700"><ArrowLeft className="h-4 w-4" /></Link>
-        <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Syllabus</h1><p className="text-sm text-slate-500">{data.template?.name ?? 'Your exam'} · {tickedTotal} of {allSubs.length} subtopics ticked{dueTotal ? ` · ${dueTotal} revision${dueTotal === 1 ? '' : 's'} due` : ''}</p></div>
+        <div className="min-w-0 flex-1"><h1 className="text-2xl leading-tight">Syllabus</h1><p className="text-sm text-slate-500">{data.template?.name ?? 'Your exam'}. {tickedTotal} of {allSubs.length} subtopics ticked{dueTotal ? `, ${dueTotal} revision${dueTotal === 1 ? '' : 's'} due` : ''}</p></div>
         <HelpButton />
       </header>
       <PrepNav active="/prep" />
@@ -152,9 +152,9 @@ export default function PrepExplorerPage() {
         {tab !== 'NCERT' && <button type="button" onClick={() => setFilter(filter === 'due' ? 'all' : 'due')} aria-pressed={filter === 'due'} className={`shrink-0 rounded-xl border px-3 py-2.5 text-sm font-bold ${filter === 'due' ? 'border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400' : 'border-slate-200 dark:border-slate-700'}`}>Due{dueTotal ? ` (${dueTotal})` : ''}</button>}
       </div>
 
-      {tab !== 'NCERT' && tickedTotal === 0 && <p className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2.5 text-sm text-amber-900 dark:text-amber-200">Open any topic and tick the subtopics you have already studied. Your progress, revision dates and plan are built from these ticks.</p>}
+      {tab !== 'NCERT' && tickedTotal === 0 && <p className="mt-3 rounded-xl bg-slate-100 dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-white">Open any topic and tick the subtopics you have already studied. Your progress, revision dates and plan are built from these ticks.</p>}
 
-      {tab === 'MAI' && !data.profile.optionalSubjectId && optionalSubjects(nodes).length > 0 && <label className="mt-3 block rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm">
+      {tab === 'MAI' && !data.profile.optionalSubjectId && optionalSubjects(nodes).length > 0 && <label className="mt-3 block rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2.5 text-sm">
         <span className="font-bold">Pick your optional</span> <span className="text-slate-600 dark:text-slate-300">to hide the other {optionalSubjects(nodes).length - 1} and add it to your plan.</span>
         <select defaultValue="" onChange={async (e) => { if (!e.target.value) return; const ok = await data.saveProfile({ optionalSubjectId: e.target.value }); setToast(ok ? 'Optional saved.' : 'Set your exam date in My plan first.') }} className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900">
           <option value="">Choose…</option>{optionalSubjects(nodes).map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
@@ -175,7 +175,7 @@ export default function PrepExplorerPage() {
               const pct = r.subtopics ? Math.round((r.ticked / r.subtopics) * 100) : r.topics ? Math.round((r.complete / r.topics) * 100) : 0
               return <section key={paper.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <button type="button" onClick={() => toggle(paper.id)} aria-expanded={isOpen(paper.id)} className="flex w-full items-center gap-3 px-3 py-3 text-left">
-                  <span className="min-w-0 flex-1"><span className="block text-sm font-bold leading-snug">{paper.title}</span><span className="mt-1 block text-xs text-slate-500">{r.subtopics ? `${r.ticked} of ${r.subtopics} subtopics` : `${r.complete} of ${r.topics} topics`}{r.due ? ` · ${r.due} due` : ''}</span>
+                  <span className="min-w-0 flex-1"><span className="block text-sm font-bold leading-snug">{paper.title}</span><span className="mt-1 block text-xs text-slate-500">{r.subtopics ? `${r.ticked} of ${r.subtopics} subtopics` : `${r.complete} of ${r.topics} topics`}{r.due ? `, ${r.due} due` : ''}</span>
                     <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><span className="block h-full rounded-full bg-amber-500" style={{ width: `${pct}%` }} /></span></span>
                   <ChevronDown className={`h-5 w-5 shrink-0 text-slate-400 transition ${isOpen(paper.id) ? 'rotate-180' : ''}`} />
                 </button>
@@ -184,8 +184,8 @@ export default function PrepExplorerPage() {
                     {(() => {
                       const left = topics.flatMap((t) => { const subs = officialSubs(t.id); return subs.length ? subs : [t] }).filter((u) => !states.get(u.id)?.touchedOn)
                       return <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 dark:bg-slate-800/60">
-                        <p className="min-w-0 flex-1 text-xs font-bold uppercase tracking-wide text-slate-500">{subject.title !== paper.title ? subject.title : 'Topics'}</p>
-                        {left.length > 0 && filter === 'all' && !q && <button type="button" disabled={bulk !== null} onClick={() => setConfirmBulk({ title: subject.title, ids: left.map((u) => u.id) })} className="shrink-0 text-[11px] font-bold text-amber-700 disabled:opacity-50 dark:text-amber-400">{bulk === subject.title ? 'Ticking…' : 'Already done? Tick all'}</button>}
+                        <p className="min-w-0 flex-1 text-sm font-medium text-slate-500">{subject.title !== paper.title ? subject.title : 'Topics'}</p>
+                        {left.length > 0 && filter === 'all' && !q && <button type="button" disabled={bulk !== null} onClick={() => setConfirmBulk({ title: subject.title, ids: left.map((u) => u.id) })} className="shrink-0 text-[11px] font-bold text-slate-500 disabled:opacity-50 dark:text-slate-400">{bulk === subject.title ? 'Ticking…' : 'Already done? Tick all'}</button>}
                       </div>
                     })()}
                     <div className="divide-y divide-slate-100 dark:divide-slate-800">{topics.map(topicRow)}</div>
@@ -231,14 +231,14 @@ export default function PrepExplorerPage() {
           <p className="mt-1 text-sm text-slate-500">{confirmBulk.ids.length} subtopics will be marked as studied today, and revision dates will start. Only do this for what you have genuinely covered; you can untick any of them later.</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button type="button" onClick={() => setConfirmBulk(null)} className="rounded-xl border border-slate-300 py-3 text-sm font-bold dark:border-slate-600">Cancel</button>
-            <button type="button" onClick={async () => { const job = confirmBulk; setConfirmBulk(null); setBulk(job.title); const ok = await data.tickMany(job.ids); setBulk(null); setBulkUndo(ok ? job : null); setToast(ok ? `${job.ids.length} ticked in ${job.title}.` : 'Some could not be saved. Please try again.') }} className="rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950">Tick {confirmBulk.ids.length}</button>
+            <button type="button" onClick={async () => { const job = confirmBulk; setConfirmBulk(null); setBulk(job.title); const ok = await data.tickMany(job.ids); setBulk(null); setBulkUndo(ok ? job : null); setToast(ok ? `${job.ids.length} ticked in ${job.title}.` : 'Some could not be saved. Please try again.') }} className="rounded-xl bg-slate-900 py-3 text-sm font-bold text-white dark:bg-white dark:text-slate-900">Tick {confirmBulk.ids.length}</button>
           </div>
         </div>
       </div>}
 
       {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-md items-center justify-between gap-3 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg dark:bg-slate-50 dark:text-slate-900">
         <span className={bulkUndo ? '' : 'w-full text-center'}>{toast}</span>
-        {bulkUndo && <button type="button" onClick={async () => { const job = bulkUndo; setBulkUndo(null); setToast(null); setBulk(job.title); const ok = await data.untickMany(job.ids); setBulk(null); setToast(ok ? `Unticked ${job.title}.` : 'Could not undo. Please try again.') }} className="shrink-0 text-amber-400 dark:text-amber-600">Undo</button>}
+        {bulkUndo && <button type="button" onClick={async () => { const job = bulkUndo; setBulkUndo(null); setToast(null); setBulk(job.title); const ok = await data.untickMany(job.ids); setBulk(null); setToast(ok ? `Unticked ${job.title}.` : 'Could not undo. Please try again.') }} className="shrink-0 text-white underline dark:text-slate-900">Undo</button>}
       </div>}
     </main>
   )
@@ -248,13 +248,13 @@ function pathOf(id: string, byId: Map<string, SyllabusNode>): string {
   const parts: string[] = []
   let cur = byId.get(id)?.parentId
   while (cur) { const n = byId.get(cur); if (!n || n.kind === 'stage') break; parts.unshift(n.title.replace(/^Paper [IVX]+: /, '').split(' (')[0]); cur = n.parentId }
-  return [...new Set(parts)].join(' · ')
+  return [...new Set(parts)].join(', ')
 }
 
 
 function Center({ title, body, action }: { title: string; body: string; action?: () => void }) {
   return <main className="mx-auto grid min-h-[70vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">{title}</h1><p className="mt-2 text-sm text-slate-500">{body}</p>
-    {action ? <button type="button" onClick={action} className="mt-5 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Try again</button> : <Link href="/dashboard" className="mt-5 inline-block rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950">Back to Today</Link>}</div></main>
+    {action ? <button type="button" onClick={action} className="mt-5 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white dark:bg-white dark:text-slate-900">Try again</button> : <Link href="/dashboard" className="mt-5 inline-block rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white dark:bg-white dark:text-slate-900">Back to Today</Link>}</div></main>
 }
 
 function TopicSheet({ node, path, state, states, today, share, subtopics, customs, onClose, onTick, onLog, onUnrevise, onAddSubtopic, onRenameSubtopic, onDeleteSubtopic }: {
@@ -282,10 +282,10 @@ function TopicSheet({ node, path, state, states, today, share, subtopics, custom
     if (mine && renaming?.id === s.id) return <li key={s.id}><form onSubmit={(e) => { e.preventDefault(); const t = renaming.title.trim(); if (t.length < 2) return; void run(s.id, async () => { if (await onRenameSubtopic(s.id, t.slice(0, 200))) setRenaming(null) }) }} className="flex items-center gap-2 py-1.5">
       <input autoFocus value={renaming.title} onChange={(e) => setRenaming({ id: s.id, title: e.target.value })} aria-label="Subtopic name" className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900" />
       <button type="button" onClick={() => setRenaming(null)} className="px-1 text-xs text-slate-500">Cancel</button>
-      <button type="submit" className="rounded-lg bg-amber-500 px-2.5 py-1.5 text-xs font-bold text-slate-950">Save</button>
+      <button type="submit" className="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-bold text-white dark:bg-white dark:text-slate-900">Save</button>
     </form></li>
     return <li key={s.id} className="flex items-start gap-1"><label className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 py-2">
-      <input type="checkbox" checked={on} disabled={busy !== null} onChange={() => void run(s.id, () => onTick(s.id, !on))} className="mt-0.5 h-5 w-5 shrink-0 accent-amber-500" />
+      <input type="checkbox" checked={on} disabled={busy !== null} onChange={() => void run(s.id, () => onTick(s.id, !on))} className="mt-0.5 h-5 w-5 shrink-0 accent-slate-900" />
       <span className={`text-sm leading-snug ${on ? 'text-slate-500 line-through decoration-slate-300 dark:decoration-slate-600' : ''}`}>{s.title}{mine && <span className="ml-1 text-xs text-slate-400">(mine)</span>}</span>
     </label>{mine && <span className="pt-1.5"><ItemMenu label="subtopic" onEdit={() => setRenaming({ id: s.id, title: s.title })} onDelete={() => onDeleteSubtopic(s.id)} deleteMessage={`Delete “${s.title}”? Its tick and history go with it.`} /></span>}</li>
   }
@@ -314,12 +314,12 @@ function TopicSheet({ node, path, state, states, today, share, subtopics, custom
         ? <div className="mt-4">
             <div className="flex items-center justify-between"><p className="text-sm font-bold">Subtopics <span className="font-normal tabular-nums text-slate-500">{ticked}/{subtopics.length}</span></p>
               {ticked < subtopics.length
-                ? <button type="button" disabled={busy !== null} onClick={() => void run('all', async () => { for (const s of subtopics) if (!states.get(s.id)?.touchedOn) await onTick(s.id, true) })} className="text-xs font-bold text-amber-700 disabled:opacity-50 dark:text-amber-400">{busy === 'all' ? 'Ticking…' : 'Tick all'}</button>
+                ? <button type="button" disabled={busy !== null} onClick={() => void run('all', async () => { for (const s of subtopics) if (!states.get(s.id)?.touchedOn) await onTick(s.id, true) })} className="text-xs font-bold text-slate-500 disabled:opacity-50 dark:text-slate-400">{busy === 'all' ? 'Ticking…' : 'Tick all'}</button>
                 : <button type="button" disabled={busy !== null} onClick={() => void run('all', async () => { for (const s of subtopics) if (states.get(s.id)?.touchedOn) await onTick(s.id, false) })} className="text-xs font-bold text-slate-500 disabled:opacity-50">{busy === 'all' ? 'Unticking…' : 'Untick all'}</button>}</div>
             <p className="text-xs text-slate-500">Tick a subtopic once you have studied it. Tap again to untick.</p>
             <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{subtopics.map((s) => tickRow(s))}{customs.map((s) => tickRow(s, true))}</ul>
           </div>
-        : <button type="button" disabled={busy !== null} onClick={() => void run('self', () => onTick(node.id, !touched))} className={`mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-bold shadow-sm disabled:opacity-60 ${touched ? 'border border-slate-300 dark:border-slate-600' : 'bg-amber-500 text-slate-950'}`}><Check className="h-4 w-4" />{touched ? (node.kind === 'ncert_book' ? 'Read · tap to undo' : 'Studied · tap to undo') : (node.kind === 'ncert_book' ? 'Mark as read' : 'Mark as studied')}</button>}
+        : <button type="button" disabled={busy !== null} onClick={() => void run('self', () => onTick(node.id, !touched))} className={`mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-bold shadow-sm disabled:opacity-60 ${touched ? 'border border-slate-300 dark:border-slate-600' : 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'}`}><Check className="h-4 w-4" />{touched ? (node.kind === 'ncert_book' ? 'Read. Tap to undo' : 'Studied. Tap to undo') : (node.kind === 'ncert_book' ? 'Mark as read' : 'Mark as studied')}</button>}
 
       {node.kind !== 'ncert_book' && <>
         <div className="mt-3"><RecallButton block disabled={busy !== null || !touched || revisedToday} label={revisedToday ? 'Revised today' : 'I revised this topic'} onPick={(recall) => run('rev', () => onLog('revised', { recall }, recall === 'little' ? 'Saved. It comes back in 3 days.' : recall === 'some' ? 'Saved. Same gap as last time.' : 'Revision logged. The next gap is longer.'))} /></div>
@@ -342,7 +342,7 @@ function TopicSheet({ node, path, state, states, today, share, subtopics, custom
         <summary className="cursor-pointer list-none px-3 py-2.5 text-sm font-bold [&::-webkit-details-marker]:hidden">Study checklist <span className="font-normal text-slate-500">(optional)</span></summary>
         <div className="space-y-1 border-t border-slate-100 px-3 py-2 dark:border-slate-800">
           {FOUNDATION_ITEMS.map(([key, label]) => <label key={key} className="flex items-center gap-2.5 py-1 text-sm">
-            <input type="checkbox" disabled={busy !== null || !touched} checked={Boolean(state?.foundation[key])} onChange={(e) => void run(key, () => onLog('foundation', { foundation: { [key]: e.target.checked } }, 'Saved.'))} className="h-4 w-4 accent-amber-500" />{label}
+            <input type="checkbox" disabled={busy !== null || !touched} checked={Boolean(state?.foundation[key])} onChange={(e) => void run(key, () => onLog('foundation', { foundation: { [key]: e.target.checked } }, 'Saved.'))} className="h-4 w-4 accent-slate-900" />{label}
           </label>)}
         </div>
       </details>}

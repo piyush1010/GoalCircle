@@ -231,7 +231,7 @@ export default function TodayList({ data, userId, goals, mentor, onGoalDone, onC
     {shareOpen && <ShareSheet text={[studied ? `${studied} subtopic${studied === 1 ? '' : 's'}` : '', revised ? `${revised} revision${revised === 1 ? '' : 's'}` : ''].filter(Boolean).join(' and ')} exams={data.plans.map((p) => examInfo(p.code).short).join(' and ')} onClose={() => setShareOpen(false)} onDone={setToast} />}
     {toast && <div role="status" className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-sm items-center justify-between gap-3 rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-lg dark:bg-white dark:text-slate-900">
       <span className={toast.undo ? '' : 'w-full text-center'}>{toast.text}</span>
-      {toast.undo && <button type="button" onClick={async () => { const undo = toast.undo!; setToastState(null); const ok = await undo(); setToast(ok ? 'Undone.' : 'Could not undo. Try again.') }} className="shrink-0 font-semibold text-amber-400 dark:text-amber-600">Undo</button>}
+      {toast.undo && <button type="button" onClick={async () => { const undo = toast.undo!; setToastState(null); const ok = await undo(); setToast(ok ? 'Undone.' : 'Could not undo. Try again.') }} className="shrink-0 font-semibold text-white underline dark:text-slate-900">Undo</button>}
     </div>}
   </section>
 }

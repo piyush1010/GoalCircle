@@ -21,7 +21,7 @@ export default function ThemeToggle() {
         onClick={() => setTheme('light')}
         className={`p-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition ${
           theme === 'light'
-            ? 'bg-white dark:bg-slate-700 text-amber-500 shadow-sm'
+            ? 'bg-white dark:bg-slate-700 text-slate-500 shadow-sm'
             : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
         }`}
         title="Light Mode"
@@ -33,7 +33,7 @@ export default function ThemeToggle() {
         onClick={() => setTheme('dark')}
         className={`p-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition ${
           theme === 'dark'
-            ? 'bg-slate-900 text-amber-400 shadow-sm'
+            ? 'bg-slate-900 text-slate-500 shadow-sm'
             : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
         }`}
         title="Dark Mode"
@@ -45,7 +45,7 @@ export default function ThemeToggle() {
         onClick={() => setTheme('system')}
         className={`p-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition ${
           theme === 'system'
-            ? 'bg-white dark:bg-slate-700 text-amber-500 shadow-sm'
+            ? 'bg-white dark:bg-slate-700 text-slate-500 shadow-sm'
             : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
         }`}
         title="System Preference"

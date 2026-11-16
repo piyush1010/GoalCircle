@@ -126,11 +126,11 @@ export default function TodoWidget({ userId }: { userId: string }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="today-list-title" className="flex items-center gap-2 text-sm font-bold">
-            <ListTodo className="h-4 w-4 text-amber-500" /> Today
+            <ListTodo className="h-4 w-4 text-slate-500" /> Today
           </h2>
           <p className="mt-0.5 text-xs text-slate-400">Small steps that move your goals forward.</p>
         </div>
-        <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
+        <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-900 dark:text-white">
           {completedCount}/{items.length} done
         </span>
       </div>
@@ -144,7 +144,7 @@ export default function TodoWidget({ userId }: { userId: string }) {
             onChange={(event) => setTitle(event.target.value)}
             maxLength={160}
             placeholder="Add a small next step…"
-            className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs outline-none transition focus:border-amber-500 dark:border-slate-800 dark:bg-slate-950"
+            className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs outline-none transition focus:border-slate-500 dark:border-slate-800 dark:bg-slate-950"
           />
           <button
             type="submit"
@@ -193,7 +193,7 @@ export default function TodoWidget({ userId }: { userId: string }) {
             </button>
             <div className="min-w-0 flex-1">
               <p className={`truncate text-xs font-bold ${item.is_completed ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-100'}`}>{item.title}</p>
-              {item.goal_id && goalTitles.get(item.goal_id) && <p className="truncate text-[11px] text-amber-600 dark:text-amber-400">{goalTitles.get(item.goal_id)}</p>}
+              {item.goal_id && goalTitles.get(item.goal_id) && <p className="truncate text-[11px] text-slate-900 dark:text-white">{goalTitles.get(item.goal_id)}</p>}
             </div>
             <button
               type="button"

@@ -16,7 +16,7 @@ const WELCOME_TOUR: TourStep[] = [
   { target: 'nav-progress', title: 'Progress', text: 'Your month, each exam’s coverage and each goal’s run.' },
   { title: 'Profile and settings', text: 'Open them any time from your photo at the top of Home. Tap the ? on this page to see this tour again.' },
 ]
-import { CircleHelp, Film, Flame, Settings as SettingsIcon, Sparkles } from 'lucide-react'
+import { ChevronDown, ChevronRight, CircleHelp, Settings as SettingsIcon } from 'lucide-react'
 import Link from 'next/link'
 import TodoWidget from '@/components/TodoWidget'
 import { usePrepActive } from '@/lib/prep/active'
@@ -27,7 +27,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
 
-  // Real-time Supabase Stats
   const [totalGoals, setTotalGoals] = useState(0)
   const [completedGoals, setCompletedGoals] = useState(0)
   const [currentStreak, setCurrentStreak] = useState(0)
@@ -38,10 +37,6 @@ export default function ProfilePage() {
   const [handle, setHandle] = useState('')
   const [showQuickGuide, setShowQuickGuide] = useState(false)
 
-  // Memory Reels Dynamic Days
-  const [daysRemainingInMonth, setDaysRemainingInMonth] = useState(0)
-  const [currentMonthName, setCurrentMonthName] = useState('')
-  const [nextMonthName, setNextMonthName] = useState('')
 
   const fetchUserStats = async (userId: string) => {
     // 1. Fetch Goals Count & Streaks
@@ -97,14 +92,6 @@ export default function ProfilePage() {
       setFullName(userMeta.full_name || userMeta.name || currentUser.email?.split('@')[0] || 'User')
       setHandle(userMeta.handle || `@${currentUser.email?.split('@')[0] || 'member'}`)
 
-      const now = new Date()
-      const totalDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-      setCurrentMonthName(now.toLocaleString('default', { month: 'long' }))
-      setNextMonthName(
-        new Date(now.getFullYear(), now.getMonth() + 1, 1).toLocaleString('default', { month: 'long' })
-      )
-      setDaysRemainingInMonth(totalDaysInMonth - now.getDate())
-
       await Promise.all([
         fetchUserStats(currentUser.id),
       ])
@@ -140,114 +127,68 @@ export default function ProfilePage() {
     })
   }
 
-  // Helper for matrix color intensity
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-amber-500"></div>
-      </div>
-    )
+    return <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-6" aria-busy="true">
+      <div className="h-8 w-28 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
+      <div className="mt-5 h-52 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+    </main>
   }
 
   const userMeta = user?.user_metadata || {}
   const displayName = userMeta.full_name || userMeta.name || user?.email?.split('@')[0] || 'User'
-  const displayHandle = userMeta.handle || `@${user?.email?.split('@')[0] || 'member'}`
+  const displayHandle = String(userMeta.handle || `@${user?.email?.split('@')[0] || 'member'}`)
   const avatarUrl = userMeta.avatar_url || null
+  const card = 'rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
+  const stats: [string, string][] = [
+    [String(totalGoals), totalGoals === 1 ? 'goal' : 'goals'],
+    [String(currentStreak), currentStreak === 1 ? 'day in a row' : 'days in a row'],
+    [String(completedGoals), completedGoals === 1 ? 'day you showed up' : 'days you showed up'],
+  ]
 
   return (
-    <div className="min-h-screen p-4 pb-28 max-w-xl mx-auto space-y-5 text-slate-900 dark:text-slate-100">
-      
-      {/* HEADER WITH SETTINGS BUTTON */}
-      <div className="flex justify-between items-center pt-2">
-        <h1 className="text-xl font-bold tracking-wide">Profile</h1>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowQuickGuide(true)}
-            className="grid h-9 w-9 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:border-amber-500 hover:text-amber-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-amber-400"
-            aria-label="Open quick guide"
-            title="Quick guide"
-          >
-            <CircleHelp className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => router.push('/settings')}
-            className="p-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-2xl text-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:border-slate-800 dark:text-slate-300 transition flex items-center gap-1.5 text-xs font-bold"
-            title="Settings"
-          >
-            <SettingsIcon className="h-4 w-4 text-amber-500" />
-            <span className="text-[11px]">Settings</span>
-          </button>
+    <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-6 text-slate-900 dark:text-slate-100">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
+        <div className="flex items-center gap-1">
+          <button type="button" onClick={() => setShowQuickGuide(true)} aria-label="Show me around" className="grid h-10 w-10 place-items-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><CircleHelp className="h-5 w-5" /></button>
+          <Link href="/settings" className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"><SettingsIcon className="h-5 w-5" />Settings</Link>
         </div>
       </div>
 
       <GuideTour name="welcome" steps={WELCOME_TOUR} open={showQuickGuide} onDone={() => void handleQuickGuideComplete()} />
 
-      {/* USER CARD & STATS */}
-      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl p-5 space-y-5 shadow-sm">
+      <section aria-label="You" className={`${card} mt-5 p-5`}>
         <div className="flex items-center gap-4">
-          <ProfileAvatar value={avatarUrl} name={displayName} size={56} className="rounded-2xl border-2 border-amber-500/50" />
-          <div>
-            <h2 className="text-base font-bold">{displayName}</h2>
-            <p className="text-xs font-semibold text-amber-500">{displayHandle}</p>
+          <ProfileAvatar value={avatarUrl} name={displayName} size={64} className="rounded-full" />
+          <div className="min-w-0">
+            <h2 className="truncate text-xl font-bold">{displayName}</h2>
+            <p className="truncate text-sm text-slate-500">{displayHandle.startsWith('@') ? displayHandle : `@${displayHandle}`}</p>
           </div>
         </div>
-
-        {/* STAT PILLS WITH LIVE SUPABASE DATA */}
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
-            <p className="text-base font-bold text-amber-500">{totalGoals}</p>
-            <p className="text-[11px] font-extrabold uppercase text-slate-500">Goals</p>
-          </div>
-          <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
-            <p className="inline-flex items-center justify-center gap-1 text-base font-bold text-amber-500"><Flame className="h-4 w-4" />{currentStreak}</p>
-            <p className="text-[11px] font-extrabold uppercase text-slate-500">Streak</p>
-          </div>
-          <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-2.5 space-y-0.5">
-            <p className="text-base font-bold text-emerald-400">{completedGoals}</p>
-            <p className="text-[11px] font-extrabold uppercase text-slate-500">Days showed up</p>
-          </div>
-        </div>
-
-        <button
-          onClick={() => setShowEditModal(true)}
-          className="w-full py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700/60 dark:text-slate-200 font-extrabold text-xs rounded-xl transition"
-        >
-          Edit Profile
-        </button>
-      </div>
+        <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+          {stats.map(([value, label]) => <div key={label}>
+            <dt className="sr-only">{label}</dt>
+            <dd className="text-2xl font-bold tabular-nums">{value}</dd>
+            <dd className="text-sm leading-snug text-slate-500">{label}</dd>
+          </div>)}
+        </dl>
+        <button type="button" onClick={() => setShowEditModal(true)} className="mt-5 h-11 w-full rounded-xl border border-slate-200 text-[15px] font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">Edit profile</button>
+      </section>
 
       {/* For people preparing for an exam, the feed and small to-dos live here instead of the main bar and Today */}
-      {preparing && user?.id && <div className="space-y-2">
-        <Link href="/feed" className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold shadow-sm dark:border-slate-800 dark:bg-slate-900">Feed<span className="text-xs font-semibold text-slate-500">Check-ins from people you follow →</span></Link>
-        <details className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-bold [&::-webkit-details-marker]:hidden">Small steps for today</summary>
+      {preparing && user?.id && <div className={`${card} mt-4 divide-y divide-slate-100 dark:divide-slate-800`}>
+        <Link href="/feed" className="flex items-center gap-3 px-4 py-3.5">
+          <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Feed</span><span className="block text-sm text-slate-500">Check-ins from people you follow</span></span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+        </Link>
+        <details className="group">
+          <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+            <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Quick tasks for today</span><span className="block text-sm text-slate-500">Small one-off things, like filling in a form</span></span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 transition group-open:rotate-180" />
+          </summary>
           <div className="px-2 pb-2"><TodoWidget userId={user.id} /></div>
         </details>
       </div>}
-
-      {/* MEMORY REELS (DYNAMIC MONTH CALCULATIONS) */}
-      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm">
-        <h2 className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 tracking-wider">
-          Memory Reels
-        </h2>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-3.5 space-y-2 text-center">
-            <Film className="mx-auto h-6 w-6 text-amber-500" />
-            <h3 className="text-xs font-extrabold">{currentMonthName} Recap</h3>
-            <p className="text-[11px] text-emerald-400 font-bold bg-emerald-500/10 py-1 px-2 rounded-lg">
-              Ready on 1 {nextMonthName}
-            </p>
-          </div>
-          <div className="bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-2xl p-3.5 space-y-2 text-center opacity-70">
-            <Sparkles className="mx-auto h-6 w-6 text-slate-400" />
-            <h3 className="text-xs font-extrabold text-slate-300">{nextMonthName} Recap</h3>
-            <p className="text-[11px] text-amber-400 font-bold bg-amber-500/10 py-1 px-2 rounded-lg">
-              Ready on 1 {new Date(new Date().getFullYear(), new Date().getMonth() + 2, 1).toLocaleDateString(undefined, { month: 'long' })}
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* MODAL: EDIT PROFILE (the only place to edit profile details) */}
       {showEditModal && (
@@ -262,7 +203,6 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-
-    </div>
+    </main>
   )
 }

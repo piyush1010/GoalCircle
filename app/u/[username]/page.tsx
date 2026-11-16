@@ -108,7 +108,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
         <p className="text-sm font-bold text-slate-400">User @{username} not found.</p>
         <Link
           href="/search"
-          className="inline-block py-2 px-4 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-amber-500"
+          className="inline-block py-2 px-4 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-500"
         >
           Back to Search
         </Link>
@@ -119,111 +119,44 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
   const isSelf = currentUserId === profile.id;
   const totalStreaks = goals.reduce((acc, g) => acc + (g.streak_count || 0), 0);
 
+  const card = 'rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
+  const name = profile.full_name || profile.username
+  const categoryName = (c: string | null) => (c ? c.charAt(0).toUpperCase() + c.slice(1).replace(/_/g, ' ') : 'Personal')
+
   return (
-    <div className="min-h-screen text-slate-900 dark:text-slate-100 p-4 pb-28 max-w-2xl mx-auto space-y-6">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between">
-        <Link
-          href="/search"
-          className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 hover:text-slate-100 transition"
-        >
-          <ArrowLeft size={18} />
-        </Link>
-        <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
-          Circle Profile
-        </span>
-        <div className="w-9" />
+    <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4 text-slate-900 dark:text-slate-100">
+      <div className="flex h-10 items-center">
+        <Link href="/search" aria-label="Back" className="-ml-2 grid h-10 w-10 place-items-center rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" /></Link>
       </div>
 
-      {/* Profile Header Card */}
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl space-y-5 text-center relative overflow-hidden">
-        <ProfileAvatar value={profile.avatar_url} name={profile.full_name || profile.username} size={80} className="mx-auto rounded-full border-2 border-amber-500 shadow-lg" />
-
-        <div className="space-y-1">
-          <h1 className="text-xl font-bold">
-            {profile.full_name || profile.username}
-          </h1>
-          <p className="text-xs font-bold text-amber-500">@{profile.username}</p>
-          {profile.bio && (
-            <p className="text-xs text-slate-400 max-w-md mx-auto pt-1 font-medium">
-              {profile.bio}
-            </p>
-          )}
-        </div>
-
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 gap-3 pt-2">
-          <div className="p-3 bg-slate-50 border border-slate-200 dark:bg-slate-950/60 dark:border-slate-800/80 rounded-2xl">
-            <div className="flex items-center justify-center gap-1.5 text-amber-500 font-bold text-lg">
-              <Flame size={18} />
-              <span>{totalStreaks}</span>
-            </div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Streaks</p>
-          </div>
-          <div className="p-3 bg-slate-50 border border-slate-200 dark:bg-slate-950/60 dark:border-slate-800/80 rounded-2xl">
-            <div className="flex items-center justify-center gap-1.5 text-emerald-400 font-bold text-lg">
-              <Target size={18} />
-              <span>{goals.length}</span>
-            </div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Goals</p>
+      <section className={`${card} mt-2 p-5`}>
+        <div className="flex items-center gap-4">
+          <ProfileAvatar value={profile.avatar_url} name={name} size={64} className="rounded-full" />
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-bold">{name}</h1>
+            <p className="truncate text-sm text-slate-500">@{profile.username}</p>
           </div>
         </div>
+        {profile.bio && <p className="mt-3 text-[15px] text-slate-700 dark:text-slate-200">{profile.bio}</p>}
+        <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+          <div><dt className="sr-only">Goals</dt><dd className="text-2xl font-bold tabular-nums">{goals.length}</dd><dd className="text-sm text-slate-500">{goals.length === 1 ? 'goal' : 'goals'} in progress</dd></div>
+          <div><dt className="sr-only">Days in a row</dt><dd className="text-2xl font-bold tabular-nums">{totalStreaks}</dd><dd className="text-sm text-slate-500">days in a row, across goals</dd></div>
+        </dl>
+        {!isSelf && <button type="button" onClick={toggleSupport}
+          className={`mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl text-[15px] font-semibold ${isSupporting ? 'border border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-200' : 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'}`}>
+          {isSupporting ? <><UserCheck className="h-4 w-4" />Supporting</> : <><UserPlus className="h-4 w-4" />Support {name.split(' ')[0]}</>}
+        </button>}
+      </section>
 
-        {/* Support Button */}
-        {!isSelf && (
-          <button
-            type="button"
-            onClick={toggleSupport}
-            className={`w-full py-3.5 rounded-2xl font-extrabold text-xs transition flex items-center justify-center gap-2 shadow-md ${
-              isSupporting
-                ? 'bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700'
-                : 'bg-amber-500 text-black hover:bg-amber-600'
-            }`}
-          >
-            {isSupporting ? (
-              <>
-                <UserCheck size={16} /> Supporting in Circle
-              </>
-            ) : (
-              <>
-                <UserPlus size={16} /> Support this Circle
-              </>
-            )}
-          </button>
-        )}
-      </div>
-
-      {/* Active Goals Section */}
-      <div className="space-y-3">
-        <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 px-1">
-          Active Goals & Habits
-        </h2>
-
-        {goals.length === 0 ? (
-          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900/50 dark:border-slate-800/80 rounded-2xl text-center text-xs text-slate-500 font-medium">
-            No active goals publicly listed yet.
-          </div>
-        ) : (
-          goals.map((goal) => (
-            <div
-              key={goal.id}
-              className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-2xl flex items-center justify-between"
-            >
-              <div className="space-y-1">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md">
-                  {goal.category || 'General'}
-                </span>
-                <p className="text-xs font-bold">{goal.title}</p>
-              </div>
-
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 text-xs font-extrabold">
-                <Flame size={14} />
-                <span>{goal.streak_count || 0}d streak</span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+      <h2 className="mb-3 mt-6 text-base font-semibold">Goals</h2>
+      {goals.length === 0
+        ? <p className={`${card} p-5 text-center text-sm text-slate-500`}>No public goals yet.</p>
+        : <ul className={`${card} divide-y divide-slate-100 dark:divide-slate-800`}>
+            {goals.map((goal) => <li key={goal.id} className="flex items-center gap-3 px-4 py-3.5">
+              <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{goal.title}</span><span className="block text-sm text-slate-500">{categoryName(goal.category)}</span></span>
+              {(goal.streak_count || 0) > 0 && <span className="shrink-0 text-sm text-slate-500">{goal.streak_count} {goal.streak_count === 1 ? 'day' : 'days'} in a row</span>}
+            </li>)}
+          </ul>}
+    </main>
   );
 }

@@ -41,7 +41,7 @@ const STUDENT_TOUR: TourStep[] = [
 ]
 
 const card = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/70 dark:bg-[#101B2D]'
-const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-[#07101F]'
+const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-900 dark:ring-white/20 dark:border-slate-700 dark:bg-[#07101F]'
 const primary = 'w-full rounded-2xl bg-slate-900 py-3.5 text-base font-bold text-white shadow-sm transition active:scale-[.99] dark:bg-white dark:text-slate-900 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:opacity-100 dark:disabled:bg-slate-800 dark:disabled:text-slate-400'
 
 export default function CirclePage() {
@@ -348,7 +348,7 @@ function StudentToday({ circleId, userId, coachKind, task, checkin, progress, on
       {progress && progress.members > 0 && <BatchToday progress={progress} />}
 
       {!showForm && checkin && <div className={`mt-4 flex items-center justify-between rounded-2xl px-4 py-3 ${checkin.status === 'missed' ? 'bg-slate-100 dark:bg-slate-800' : 'bg-emerald-500/10'}`}>
-        <p className={`flex items-center gap-2 text-sm font-bold ${checkin.status === 'missed' ? 'text-slate-600 dark:text-slate-300' : 'text-emerald-700 dark:text-emerald-300'}`}>{checkin.status === 'missed' ? <XCircle className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}{checkin.status === 'done' ? 'Done today' : checkin.status === 'partial' ? 'Partly done' : 'Missed today'}{(() => { const m = checkin.minutes ?? (checkin.hours != null ? Math.round(checkin.hours * 60) : null); return m ? ` · ${m} min` : '' })()}</p>
+        <p className={`flex items-center gap-2 text-sm font-bold ${checkin.status === 'missed' ? 'text-slate-600 dark:text-slate-300' : 'text-emerald-700 dark:text-emerald-300'}`}>{checkin.status === 'missed' ? <XCircle className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}{checkin.status === 'done' ? 'Done today' : checkin.status === 'partial' ? 'Partly done' : 'Missed today'}{(() => { const m = checkin.minutes ?? (checkin.hours != null ? Math.round(checkin.hours * 60) : null); return m ? `, ${m} min` : '' })()}</p>
         <button type="button" onClick={() => setEditing(true)} className="inline-flex items-center gap-1 text-xs font-bold text-slate-500"><Pencil className="h-3.5 w-3.5" />Edit</button>
       </div>}
       {!showForm && checkin && (checkin.mentor_reply || checkin.seen_at) && <div className="mt-2 space-y-2">

@@ -93,16 +93,16 @@ export function AttachmentPicker({ files, existing = [], onFilesChange, onRemove
   return (
     <div className="space-y-2">
       {total > 0 && <ul className="flex flex-wrap gap-2">
-        {existing.map((file) => <li key={file.path} className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-slate-100 py-1 pl-2 pr-1 text-xs font-semibold dark:bg-slate-800"><FileText className="h-3.5 w-3.5 shrink-0 text-amber-500" /><span className="truncate">{file.name}</span>
+        {existing.map((file) => <li key={file.path} className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-slate-100 py-1 pl-2 pr-1 text-xs font-semibold dark:bg-slate-800"><FileText className="h-3.5 w-3.5 shrink-0 text-slate-500" /><span className="truncate">{file.name}</span>
           {onExistingChange && <DownloadToggle on={file.downloadable !== false} name={file.name} onToggle={() => toggleExisting(file.path)} />}
           {onRemoveExisting && <button type="button" onClick={() => onRemoveExisting(file.path)} aria-label={`Remove ${file.name}`} className="grid h-6 w-6 place-items-center rounded-md text-slate-400 hover:text-rose-500"><X className="h-3.5 w-3.5" /></button>}</li>)}
-        {files.map((file, index) => <li key={`${file.name}-${index}`} className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-amber-500/10 py-1 pl-2 pr-1 text-xs font-semibold text-amber-800 dark:text-amber-200"><FileText className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{file.name}</span><span className="shrink-0 font-normal opacity-70">{sizeLabel(file.size)}</span>
+        {files.map((file, index) => <li key={`${file.name}-${index}`} className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 py-1 pl-2 pr-1 text-xs font-semibold text-slate-900 dark:text-white"><FileText className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{file.name}</span><span className="shrink-0 font-normal opacity-70">{sizeLabel(file.size)}</span>
           <DownloadToggle on={allowsDownload(file)} name={file.name} onToggle={() => toggleNew(file)} />
           <button type="button" onClick={() => onFilesChange(files.filter((_, i) => i !== index))} aria-label={`Remove ${file.name}`} className="grid h-6 w-6 place-items-center rounded-md hover:text-rose-500"><X className="h-3.5 w-3.5" /></button></li>)}
       </ul>}
       {total > 0 && <p className="text-[11px] text-slate-500">Tap a file’s label to switch between “Can download” and “View only” for students.</p>}
-      {total < MAX_FILES && <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-amber-500 dark:border-slate-700 dark:text-slate-300">
-        <Paperclip className="h-4 w-4 text-amber-500" />{preparing ? 'Preparing…' : 'Attach photos, PDFs or videos'}
+      {total < MAX_FILES && <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:text-slate-300">
+        <Paperclip className="h-4 w-4 text-slate-500" />{preparing ? 'Preparing…' : 'Attach photos, PDFs or videos'}
         <input type="file" multiple accept={ACCEPT} className="sr-only" onChange={(event) => { void add(event.target.files); event.target.value = '' }} />
       </label>}
     </div>
@@ -253,14 +253,14 @@ export function AttachmentList({ attachments, isAdmin = false }: { attachments: 
       </div>}
       {videos.map((file) => urls[file.path] && <div key={file.path}>
         <video src={urls[file.path]} controls playsInline controlsList={canDownload(file) ? undefined : 'nodownload'} disablePictureInPicture={!canDownload(file)} onContextMenu={(event) => { if (!canDownload(file)) event.preventDefault() }} className="max-h-72 w-full rounded-xl bg-slate-950 object-contain" />
-        <div className="mt-1 flex items-center justify-between gap-2">{badge(file)}{canDownload(file) && <button type="button" onClick={() => void downloadFile(file)} className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400"><Download className="h-3.5 w-3.5" />Download</button>}</div>
+        <div className="mt-1 flex items-center justify-between gap-2">{badge(file)}{canDownload(file) && <button type="button" onClick={() => void downloadFile(file)} className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-slate-900 dark:text-white"><Download className="h-3.5 w-3.5" />Download</button>}</div>
       </div>)}
-      {documents.map((file) => <div key={file.path} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 transition hover:border-amber-500 dark:border-slate-700">
+      {documents.map((file) => <div key={file.path} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 transition hover:border-slate-400 dark:border-slate-700">
         <button type="button" onClick={() => urls[file.path] && setOpen(file)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-rose-500/10 text-xs font-bold text-rose-600 dark:text-rose-300">PDF</span>
-          <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{file.name}</span><span className="block text-xs text-slate-500">{sizeLabel(file.size)} · tap to open{isAdmin ? '' : canDownload(file) ? '' : ' · view only'}</span>{badge(file)}</span>
+          <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{file.name}</span><span className="block text-xs text-slate-500">{sizeLabel(file.size)}. Tap to open{isAdmin ? '' : canDownload(file) ? '' : ', view only'}</span>{badge(file)}</span>
         </button>
-        {canDownload(file) && <button type="button" onClick={() => void downloadFile(file)} aria-label={`Download ${file.name}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-amber-600 hover:bg-amber-500/10 dark:text-amber-400"><Download className="h-4 w-4" /></button>}
+        {canDownload(file) && <button type="button" onClick={() => void downloadFile(file)} aria-label={`Download ${file.name}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400"><Download className="h-4 w-4" /></button>}
       </div>)}
       {open && urls[open.path] && <Viewer file={open} url={urls[open.path]} canDownload={canDownload(open)} onClose={() => setOpen(null)} />}
     </div>

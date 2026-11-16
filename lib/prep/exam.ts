@@ -46,8 +46,8 @@ const TET = (short: string, years: [number, number]): ExamInfo => ({
 })
 
 export const EXAMS: Record<string, ExamInfo> = {
-  upsc_cse_v1: { ...CIVIL, short: 'UPSC CSE', presets: [{ label: 'Prelims 2027 · 23 May', date: '2027-05-23', stage: 'prelims', source: 'UPSC calendar 2027' }, { label: 'Mains 2027 · from 20 Aug', date: '2027-08-20', stage: 'mains', source: 'UPSC calendar 2027' }], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS I', questions: 100, plus: 2, minus: 0.66 }, { code: 'CSAT', label: 'CSAT', questions: 80, plus: 2.5, minus: 0.83 }] },
-  uppcs_v1: { ...CIVIL, short: 'UPPCS', presets: [{ label: 'Prelims 2026 · 6 Dec', date: '2026-12-06', stage: 'prelims', source: 'UPPSC schedule as reported; confirm on uppsc.up.nic.in' }], pyqYears: [2013, 2025], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS I', questions: 150, plus: 1.33, minus: 0.44 }, { code: 'CSAT', label: 'CSAT', questions: 100, plus: 2, minus: 0.66 }] },
+  upsc_cse_v1: { ...CIVIL, short: 'UPSC CSE', presets: [{ label: 'Prelims 2027, 23 May', date: '2027-05-23', stage: 'prelims', source: 'UPSC calendar 2027' }, { label: 'Mains 2027, from 20 Aug', date: '2027-08-20', stage: 'mains', source: 'UPSC calendar 2027' }], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS I', questions: 100, plus: 2, minus: 0.66 }, { code: 'CSAT', label: 'CSAT', questions: 80, plus: 2.5, minus: 0.83 }] },
+  uppcs_v1: { ...CIVIL, short: 'UPPCS', presets: [{ label: 'Prelims 2026, 6 Dec', date: '2026-12-06', stage: 'prelims', source: 'UPPSC schedule as reported; confirm on uppsc.up.nic.in' }], pyqYears: [2013, 2025], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS I', questions: 150, plus: 1.33, minus: 0.44 }, { code: 'CSAT', label: 'CSAT', questions: 100, plus: 2, minus: 0.66 }] },
   bpsc_v1: { ...CIVIL, short: 'BPSC', presets: [], pyqYears: [2013, 2025], mockStages: [['prelims_gs', 'Prelims GS', 150], ['mains', 'Mains', 300], ['other', 'Other', 100]], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS', questions: 150, plus: 1, minus: 0.33 }] },
   jkpsc_cce_v1: { ...CIVIL, short: 'JKPSC CCE', presets: [], pyqYears: [2018, 2025], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS I', questions: 100, plus: 2, minus: 0.66 }, { code: 'CSAT', label: 'CSAT', questions: 80, plus: 2.5, minus: 0.83 }] },
   hpsc_hcs_v1: { ...CIVIL, short: 'HCS (Haryana)', presets: [], pyqYears: [2014, 2025], mockStages: [['prelims_gs', 'Prelims GS', 200], ['csat', 'CSAT', 200], ['mains', 'Mains', 100]], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS', questions: 100, plus: 2, minus: 0.25 }, { code: 'CSAT', label: 'CSAT', questions: 100, plus: 2, minus: 0.25 }] },
@@ -92,7 +92,7 @@ export const EXAMS: Record<string, ExamInfo> = {
   mpsc_rajyaseva_v1: { ...CIVIL, short: 'MPSC Rajyaseva', presets: [], tabs: [{ root: 'PRE', label: 'Prelims' }, { root: 'MAI', label: 'Mains' }], pyqYears: [2013, 2025], mockStages: [['prelims_gs', 'Prelims GS', 200], ['csat', 'CSAT', 200], ['mains', 'Mains', 250], ['optional', 'Optional', 250]], pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS', questions: 100, plus: 2, minus: 0.5 }, { code: 'CSAT', label: 'CSAT', questions: 80, plus: 2.5, minus: 0.625 }] },
   cds_v1: {
     short: 'CDS',
-    presets: [{ label: 'CDS I 2027 · 11 Apr', date: '2027-04-11', stage: 'prelims', source: 'UPSC calendar 2027' }, { label: 'CDS II 2027 · 19 Sep', date: '2027-09-19', stage: 'prelims', source: 'UPSC calendar 2027' }],
+    presets: [{ label: 'CDS I 2027, 11 Apr', date: '2027-04-11', stage: 'prelims', source: 'UPSC calendar 2027' }, { label: 'CDS II 2027, 19 Sep', date: '2027-09-19', stage: 'prelims', source: 'UPSC calendar 2027' }],
     tabs: [{ root: 'PRE', label: 'Written' }, { root: 'INT', label: 'SSB' }],
     targetStages: ['prelims'],
     stageName: { prelims: 'Written exam', mains: 'Written exam' },
@@ -108,8 +108,8 @@ export const EXAMS: Record<string, ExamInfo> = {
   uptet_v1: TET('UPTET', [2017, 2026]),
   cat_v1: {
     short: 'CAT',
-    presets: [{ label: 'CAT 2026 · 29 Nov', date: '2026-11-29', stage: 'prelims', source: 'IIM CAT 2026 notice' }],
-    tabs: [{ root: 'PRE', label: 'CAT' }, { root: 'INT', label: 'WAT · GD · PI' }],
+    presets: [{ label: 'CAT 2026, 29 Nov', date: '2026-11-29', stage: 'prelims', source: 'IIM CAT 2026 notice' }],
+    tabs: [{ root: 'PRE', label: 'CAT' }, { root: 'INT', label: 'WAT, GD and PI' }],
     targetStages: ['prelims'],
     stageName: { prelims: 'CAT', mains: 'CAT' },
     mockStages: [['other', 'Full mock', 204], ['prelims_gs', 'Sectional', 72]],

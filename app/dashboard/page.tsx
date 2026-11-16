@@ -196,7 +196,7 @@ export default function HomePage() {
       {error && <div role="alert" className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"><span>{error}</span><button type="button" onClick={() => void load()} className="shrink-0 font-semibold underline">Try again</button></div>}
 
       {!isNew && <section aria-labelledby="goals-h" data-guide="goals" className="mt-6">
-        <div className="mb-3 flex items-baseline justify-between"><h2 id="goals-h" className="text-base font-semibold">Your goals</h2>{prep.plans.length > 0 && <Link href="/prep/plan?exams=1" className="text-sm font-medium text-amber-700 dark:text-amber-400">Manage exams</Link>}</div>
+        <div className="mb-3 flex items-baseline justify-between"><h2 id="goals-h" className="text-base font-semibold">Your goals</h2>{prep.plans.length > 0 && <Link href="/prep/plan?exams=1" className="text-sm font-medium text-slate-900 dark:text-white">Manage exams</Link>}</div>
         <GoalCircles items={circles} />
       </section>}
 

@@ -39,8 +39,8 @@ export default function InstallNudge() {
   }
 
   return (
-    <div className="mt-3 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-3.5 dark:border-amber-500/40 dark:bg-amber-500/10">
-      <Smartphone className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+    <div className="mt-3 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-700 dark:bg-slate-800">
+      <Smartphone className="mt-0.5 h-5 w-5 shrink-0 text-slate-900 dark:text-white" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold">Keep GoalYaar on your home screen</p>
         <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">{canPrompt ? 'One tap, and it opens like an app.' : ios ? 'In Safari: tap Share, then “Add to Home Screen”. On iPhone, reminders only work once it’s on your home screen.' : 'In Chrome: tap ⋮ (top right), then “Add to Home screen”.'}</p>

@@ -20,7 +20,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function PrivacyPage() {
-  const mail = <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-amber-700 underline underline-offset-2 dark:text-amber-400">{CONTACT_EMAIL}</a>
+  const mail = <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-slate-500 underline underline-offset-2 dark:text-slate-400">{CONTACT_EMAIL}</a>
   return <main className="min-h-screen bg-slate-50 px-4 pb-16 pt-6 text-slate-950 dark:bg-[#07101F] dark:text-slate-50">
     <div className="mx-auto max-w-2xl">
       <header className="flex items-center justify-between pb-6">
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
       <Section title="Your choices">
         <p><b>Export:</b> Settings → Download my data gives you everything as one file.</p>
         <p><b>Correct:</b> edit your profile, goals and preparation in the app.</p>
-        <p><b>Delete:</b> Settings → Delete my account, or email {mail} if you cannot sign in. See <Link href="/about#delete" className="font-medium text-amber-700 underline underline-offset-2 dark:text-amber-400">deleting your account</Link>.</p>
+        <p><b>Delete:</b> Settings → Delete my account, or email {mail} if you cannot sign in. See <Link href="/about#delete" className="font-medium text-slate-500 underline underline-offset-2 dark:text-slate-400">deleting your account</Link>.</p>
         <p><b>Notifications:</b> turn them off any time in Settings.</p>
       </Section>
 

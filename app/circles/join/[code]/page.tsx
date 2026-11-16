@@ -71,7 +71,7 @@ export default function JoinCirclePage() {
           <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-slate-800"><Users className="h-7 w-7" /></span>
           <h1 className="mt-4 text-xl font-bold tracking-tight">This invite link doesn&apos;t work</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">It may have been copied only partly, or the batch was closed. Ask your mentor to send the link again.</p>
-          <Link href="/" className="mt-5 inline-block text-sm font-bold text-amber-600 dark:text-amber-400">What is GoalYaar?</Link>
+          <Link href="/" className="mt-5 inline-block text-sm font-bold text-slate-900 dark:text-white">What is GoalYaar?</Link>
         </>}
         {!loading && signedOut && !invalid && <>
           {preview ? <CircleAvatar name={preview.name} size={56} className="mx-auto" /> : <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"><Users className="h-7 w-7" /></span>}
@@ -85,7 +85,7 @@ export default function JoinCirclePage() {
           </ul>
           <button type="button" onClick={() => void continueWithGoogle()} disabled={signingIn} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-4 text-base font-bold text-white disabled:opacity-60 dark:bg-white dark:text-slate-900">{signingIn ? 'Opening Google…' : 'Continue with Google'}</button>
           <p className="mt-2 text-xs text-slate-500">New or returning, it&apos;s the same button. Free.</p>
-          <Link href={`/login?next=${encodeURIComponent(`/circles/join/${code}?go=1`)}`} className="mt-4 inline-block text-sm font-bold text-amber-600 dark:text-amber-400">Use email instead</Link>
+          <Link href={`/login?next=${encodeURIComponent(`/circles/join/${code}?go=1`)}`} className="mt-4 inline-block text-sm font-bold text-slate-900 dark:text-white">Use email instead</Link>
         </>}
         {!loading && !signedOut && preview && <>
           <CircleAvatar name={preview.name} size={56} className="mx-auto" />
@@ -103,7 +103,7 @@ export default function JoinCirclePage() {
           <button type="button" onClick={() => void join()} disabled={joining} className="mt-6 w-full rounded-2xl bg-slate-900 py-4 text-base font-bold text-white transition disabled:opacity-60 dark:bg-white dark:text-slate-900">{joining ? 'Joining…' : 'Join batch'}</button>
         </>}
         {!loading && error && <p role="alert" className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
-        {!loading && !preview && !signedOut && <Link href="/circles" className="mt-4 inline-block text-sm font-bold text-amber-600 dark:text-amber-400">Go to circles</Link>}
+        {!loading && !preview && !signedOut && <Link href="/circles" className="mt-4 inline-block text-sm font-bold text-slate-900 dark:text-white">Go to circles</Link>}
       </section>
     </main>
   )

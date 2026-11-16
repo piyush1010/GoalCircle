@@ -56,7 +56,7 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
     if (ok) onClose(); else setError('Could not save. Please try again.')
   }
 
-  const chip = (active: boolean) => `rounded-xl border px-3 py-2.5 text-sm font-bold transition ${active ? 'border-amber-500 bg-amber-500/10 text-amber-800 dark:text-amber-300' : 'border-slate-200 dark:border-slate-700'}`
+  const chip = (active: boolean) => `rounded-xl border px-3 py-2.5 text-sm font-bold transition ${active ? 'border-slate-900 bg-slate-100 dark:border-white dark:bg-slate-800 text-slate-900 dark:text-white' : 'border-slate-200 dark:border-slate-700'}`
 
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center" onClick={onClose}>
     <div role="dialog" aria-modal="true" aria-label="Plan your preparation" onClick={(e) => e.stopPropagation()} className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 pb-[calc(2rem+env(safe-area-inset-bottom))] shadow-2xl dark:bg-slate-900 sm:rounded-3xl">
@@ -65,14 +65,14 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><X className="h-4 w-4" /></button>
       </div>
 
-      {!profile.saved && <ol className="mt-4 space-y-2 rounded-2xl bg-amber-500/10 p-3 text-sm">
+      {!profile.saved && <ol className="mt-4 space-y-2 rounded-2xl bg-slate-100 dark:bg-slate-800 p-3 text-sm">
         <li><b>1. Tell us your exam and date.</b> We work out how many subtopics a day you need.</li>
         <li><b>2. Tick what you study.</b> One tap per subtopic; tick whole subjects you have already finished.</li>
         <li><b>3. Revise when reminded.</b> Your progress stays honest: it dips when revision is overdue and comes straight back when you revise.</li>
       </ol>}
 
       <p className="mt-5 text-sm font-bold">{t('Exam')}</p>
-      <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-sm dark:border-slate-700"><span className="font-semibold">{EXAM_SHORT[templates.find((x) => x.id === exam)?.code ?? ''] ?? templates.find((x) => x.id === exam)?.name ?? 'Your exam'}</span><a href="/prep/start?add=1" className="text-xs font-bold text-amber-700 dark:text-amber-400">Add another exam</a></div>
+      <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-sm dark:border-slate-700"><span className="font-semibold">{EXAM_SHORT[templates.find((x) => x.id === exam)?.code ?? ''] ?? templates.find((x) => x.id === exam)?.name ?? 'Your exam'}</span><a href="/prep/start?add=1" className="text-xs font-bold text-slate-900 dark:text-white">Add another exam</a></div>
 
       {stagesFor.length > 1 && <>
         <p className="mt-5 text-sm font-bold">{t('Preparing for')}</p>
@@ -90,12 +90,12 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
 
       <label className="mt-5 block text-sm font-bold" htmlFor="prep-date">{inShifts && !ownShift ? 'First day of the exam window' : t('Finish by (exam date)')}</label>
       <input id="prep-date" type="date" min={addDays(today, 7)} value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900" />
-      {presets.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{presets.map((p) => <button key={p.date} type="button" onClick={() => { setDate(p.date); setStage(p.stage) }} title={p.source} className={`rounded-full border px-3 py-1 text-xs font-bold ${date === p.date ? 'border-amber-500 bg-amber-500/10 text-amber-800 dark:text-amber-300' : 'border-amber-500/40 text-amber-800 dark:text-amber-300'}`}>{p.label}</button>)}</div>}
+      {presets.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{presets.map((p) => <button key={p.date} type="button" onClick={() => { setDate(p.date); setStage(p.stage) }} title={p.source} className={`rounded-full border px-3 py-1 text-xs font-bold ${date === p.date ? 'border-slate-900 bg-slate-100 dark:border-white dark:bg-slate-800 text-slate-900 dark:text-white' : 'border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white'}`}>{p.label}</button>)}</div>}
       {presets.length > 0 && <p className="mt-1 text-[11px] text-slate-500">Official dates as announced. Check the commission’s site before relying on them.</p>}
       {inShifts && shifts && <div className="mt-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
         <p>{shifts.window} {shifts.admitCard}</p>
         <p className="mt-1">Until then, plan to the first day so you are ready whichever shift you get. Your plan stretches to fit once you set your own date.</p>
-        <label className="mt-2 flex items-center gap-2 font-semibold text-slate-900 dark:text-white"><input type="checkbox" checked={ownShift} onChange={(e) => setOwnShift(e.target.checked)} className="h-4 w-4 accent-amber-500" />This is my own shift date</label>
+        <label className="mt-2 flex items-center gap-2 font-semibold text-slate-900 dark:text-white"><input type="checkbox" checked={ownShift} onChange={(e) => setOwnShift(e.target.checked)} className="h-4 w-4 accent-slate-900" />This is my own shift date</label>
       </div>}
       <div className="mt-2 flex flex-wrap gap-2">{QUICK.map(([label, days]) => <button key={label} type="button" onClick={() => setDate(addDays(today, days))} className="rounded-full border border-slate-200 px-3 py-1 text-xs font-bold dark:border-slate-700">In {label}</button>)}</div>
 
@@ -103,8 +103,8 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
       <div className="mt-2 grid grid-cols-5 gap-2">{HOURS.map((h) => <button key={h} type="button" onClick={() => setHours(h)} aria-pressed={hours === h} className={chip(hours === h)}>{h}h</button>)}</div>
 
       <div className="mt-5 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
-        <label className="flex items-center gap-3"><Bell className="h-5 w-5 shrink-0 text-amber-600" /><span className="min-w-0 flex-1 text-sm"><b>{t('Daily study reminder')}</b><span className="block text-xs text-slate-500">Today&apos;s target and revisions due. Skipped on days you have already logged.</span></span>
-          <input type="checkbox" checked={reminder} onChange={(e) => setReminder(e.target.checked)} className="h-5 w-5 accent-amber-500" /></label>
+        <label className="flex items-center gap-3"><Bell className="h-5 w-5 shrink-0 text-slate-500" /><span className="min-w-0 flex-1 text-sm"><b>{t('Daily study reminder')}</b><span className="block text-xs text-slate-500">Today&apos;s target and revisions due. Skipped on days you have already logged.</span></span>
+          <input type="checkbox" checked={reminder} onChange={(e) => setReminder(e.target.checked)} className="h-5 w-5 accent-slate-900" /></label>
         {reminder && <label className="mt-3 flex items-center justify-between gap-3 text-sm">At<select value={hour} onChange={(e) => setHour(Number(e.target.value))} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900">{Array.from({ length: 19 }, (_, i) => i + 5).map((h) => <option key={h} value={h}>{hourLabel(h)}</option>)}</select></label>}
       </div>
 
@@ -113,7 +113,7 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
       </div>
 
       {error && <p role="alert" className="mt-3 text-sm font-semibold text-rose-600">{error}</p>}
-      <button type="button" disabled={busy || !exam} onClick={() => void save()} className="mt-5 w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 shadow-sm disabled:opacity-60">{busy ? '…' : t('Make my plan')}</button>
+      <button type="button" disabled={busy || !exam} onClick={() => void save()} className="mt-5 w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white dark:bg-white dark:text-slate-900 shadow-sm disabled:opacity-60">{busy ? '…' : t('Make my plan')}</button>
       {onRemove && <button type="button" disabled={busy} onClick={async () => { setBusy(true); const ok = await onRemove(); setBusy(false); if (ok) onClose() }} className="mt-3 w-full py-2 text-center text-sm font-semibold text-rose-600">Stop preparing for this exam</button>}
       <p className="mt-2 text-center text-xs text-slate-500">Ticks are saved per exam, so switching back later loses nothing.</p>
     </div>
