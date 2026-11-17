@@ -8,7 +8,7 @@ import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import { childrenMap, rollups, stageExplanation, STAGE_LABEL } from '@/lib/prep/explorer'
 import { studyShares, topicStage } from '@/lib/prep/scoring/v2'
-import { NODE_COLS, toNode, usePrepData } from '@/lib/prep/usePrepData'
+import { NODE_COLS, toNode, noExamsLeft, usePrepData } from '@/lib/prep/usePrepData'
 import type { Foundation, SyllabusNode, TopicStageName, TopicState } from '@/lib/prep/types'
 import { examInfo } from '@/lib/prep/exam'
 import { optionalSubjects } from '@/lib/prep/pace'
@@ -86,7 +86,8 @@ export default function PrepExplorerPage() {
   }, [selected, dataStatus, nodesByTemplate, viewId, setView])
   useEffect(() => { if (data.status === 'denied') { void supabase.auth.getSession().then(({ data: { session } }) => { if (!session) router.replace('/login?next=/prep') }) } }, [data.status, router])
   // Not set up yet: start with the step-by-step setup.
-  useEffect(() => { if (data.status === 'ready' && !data.profile.saved) router.replace('/prep/start') }, [data.status, data.profile.saved, router])
+  const leaveTo = noExamsLeft(data) ? '/dashboard' : '/prep/start'
+  useEffect(() => { if (data.status === 'ready' && !data.profile.saved) router.replace(leaveTo) }, [data.status, data.profile.saved, leaveTo, router])
   useEffect(() => { if (!toast) return; const t = window.setTimeout(() => { setToast(null); setBulkUndo(null) }, bulkUndo ? 6000 : 3200); return () => window.clearTimeout(t) }, [toast, bulkUndo])
 
   const kids = useMemo(() => childrenMap(nodes), [nodes])
@@ -140,7 +141,7 @@ export default function PrepExplorerPage() {
         <HelpButton />
       </header>
       <PrepNav active="/prep" />
-      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} manage={{ removed: data.removedPlans, onRemove: data.removePlan, onRestore: data.restorePlan }} />
+      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} manage={{ removed: data.removedPlans, onRemove: data.removePlan, onRemoveAll: data.removeAllPlans, onRestore: data.restorePlan }} />
 
       <div className={`grid gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 ${tabs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`} role="tablist" data-guide="syllabus-tabs">
         {tabs.map(({ root: code, label }) => <button key={code} type="button" role="tab" aria-selected={tab === code} onClick={() => setTab(code)} className={`rounded-lg py-2 text-sm font-bold transition ${tab === code ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500'}`}>{label}</button>)}

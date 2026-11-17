@@ -193,7 +193,7 @@ export default function FeedPage() {
     const url = new URL(window.location.href)
     if (url.searchParams.get('published') !== 'goal') return
     url.searchParams.delete('published')
-    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
     const showTimer = window.setTimeout(() => setToast('Your public goal is live'), 0)
     const hideTimer = window.setTimeout(() => setToast(null), 2400)
     return () => {

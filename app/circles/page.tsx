@@ -45,9 +45,11 @@ export default function CirclesPage() {
   const [showCreate, setShowCreate] = useState(false)
   // Today's first-day screen links here with ?create=1 for coaches.
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('create') !== '1') return
-    const timer = window.setTimeout(() => setShowCreate(true), 0)
-    window.history.replaceState(null, '', '/circles')
+    const timer = window.setTimeout(() => {
+      if (new URLSearchParams(window.location.search).get('create') !== '1') return
+      window.history.replaceState(window.history.state, '', '/circles') // keep the router's state, so back never reloads
+      setShowCreate(true)
+    }, 0)
     return () => window.clearTimeout(timer)
   }, [])
   const [name, setName] = useState('')

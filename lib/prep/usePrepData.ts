@@ -63,6 +63,9 @@ export const toState = (r: StateRow): TopicState => ({ nodeId: r.node_id, touche
 export type LogKind = 'studied' | 'revised' | 'foundation' | 'pyq' | 'answers' | 'notes' | 'current_affairs' | 'mock'
 
 /** Everything the tracker screens need, loaded once, plus write helpers that refresh the affected topic. */
+/** Every exam was removed (as opposed to never having started): the exam screens send the person to Today. */
+export const noExamsLeft = (d: { plans: PrepPlan[]; removedPlans: PrepPlan[] }) => d.plans.length === 0 && d.removedPlans.length > 0
+
 export function usePrepData(enabled = true) {
   const [status, setStatus] = useState<'loading' | 'ready' | 'denied' | 'error'>('loading')
   const [templateId, setTemplateId] = useState<string | null>(null)
@@ -388,6 +391,17 @@ export function usePrepData(enabled = true) {
     return true
   }, [userId, plans, primaryId, templateId, setView])
 
+  /** Stop preparing for every exam at once. Ticks and history are kept; exams can be added back any time. */
+  const removeAllPlans = useCallback(async () => {
+    if (!userId) return false
+    const { error } = await supabase.from('prep_plans').update({ active: false, updated_at: new Date().toISOString() }).eq('user_id', userId).eq('active', true)
+    if (error) return false
+    await supabase.from('prep_profiles').update({ active: false }).eq('user_id', userId)
+    announcePrepActive(false)
+    setPlans((cur) => cur.map((p) => ({ ...p, active: false })))
+    return true
+  }, [userId])
+
   /** Bring back an exam that was removed; its ticks and history were kept. */
   const restorePlan = useCallback(async (id: string) => {
     if (!userId) return false
@@ -456,5 +470,5 @@ export function usePrepData(enabled = true) {
     await supabase.from('prep_profiles').update({ daily_target: Math.min(500, Math.max(0, dailyTarget)), target_computed_on: localDateString() }).eq('user_id', userId)
   }, [userId, profile.saved])
 
-  return { status, pending, templateId, templates, plans: plans.filter((p) => p.active), removedPlans: plans.filter((p) => !p.active), nodesByTemplate, setView, removePlan, restorePlan, template: templates.find((t) => t.id === templateId) ?? null, studyDays, events, mistakes, addMistake, resolveMistake, updateMistake, deleteMistake, updateMock, deleteMock, updateAnswer, deleteAnswer, saveTarget, tick, tickMany, untickMany, revise, unrevise, nodes, setNodes, states, mocks, answers, profile, userId, reload: load, refreshTopic, logEvent, saveProfile, saveOrder }
+  return { status, pending, templateId, templates, plans: plans.filter((p) => p.active), removedPlans: plans.filter((p) => !p.active), nodesByTemplate, setView, removePlan, removeAllPlans, restorePlan, template: templates.find((t) => t.id === templateId) ?? null, studyDays, events, mistakes, addMistake, resolveMistake, updateMistake, deleteMistake, updateMock, deleteMock, updateAnswer, deleteAnswer, saveTarget, tick, tickMany, untickMany, revise, unrevise, nodes, setNodes, states, mocks, answers, profile, userId, reload: load, refreshTopic, logEvent, saveProfile, saveOrder }
 }

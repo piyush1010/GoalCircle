@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, ChevronRight, UsersRound } from 'lucide-react'
+import { goBack } from '@/lib/goBack'
 
 /** Join a batch with the code or link a mentor shared, or start your own. */
 export default function JoinBatchPage() {
@@ -21,7 +22,7 @@ export default function JoinBatchPage() {
 
   return <main className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4">
     <div className="flex h-10 items-center gap-2">
-      <button type="button" onClick={() => router.back()} aria-label="Back" className="-ml-2 grid h-10 w-10 place-items-center rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" /></button>
+      <button type="button" onClick={() => goBack(router, '/circles')} aria-label="Back" className="-ml-2 grid h-10 w-10 place-items-center rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" /></button>
       <span className="text-[15px] font-semibold">Batches</span>
     </div>
     <form onSubmit={join} className="pt-6">

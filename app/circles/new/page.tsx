@@ -7,6 +7,7 @@ import { ArrowLeft, Check, Copy, MessageCircle } from 'lucide-react'
 import { inviteMessage } from '@/components/MentorDashboard'
 import { ALL_EXAMS, GROUPS, batchExamTag } from '@/lib/examGroups'
 import { supabase } from '@/utils/supabase'
+import { goBack } from '@/lib/goBack'
 
 type Kind = 'exam' | 'fitness' | 'skill' | 'other'
 const KINDS: { id: Kind; name: string; line: string; batch: string; target: string; category: string; how: string }[] = [
@@ -83,7 +84,7 @@ export default function NewBatchPage() {
 
   return <main className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4">
     <div className="flex h-10 items-center gap-2">
-      <button type="button" onClick={() => router.back()} aria-label="Back" className="-ml-2 grid h-10 w-10 place-items-center rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" /></button>
+      <button type="button" onClick={() => goBack(router, '/circles')} aria-label="Back" className="-ml-2 grid h-10 w-10 place-items-center rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" /></button>
       <span className="text-[15px] font-semibold">Start a batch</span>
     </div>
 

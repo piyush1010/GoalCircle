@@ -10,6 +10,7 @@ import GuideTour, { type TourStep } from '@/components/GuideTour'
 import { localDateString } from '@/lib/exams'
 import { focusMinutesKey } from '@/lib/focusHandoff'
 import { supabase } from '@/utils/supabase'
+import { goBack } from '@/lib/goBack'
 
 const FOCUS_TOUR: TourStep[] = [
   { target: 'focus-goal', title: 'What are you focusing on?', text: 'Pick a goal or today\'s batch task. The minutes are saved to it.' },
@@ -110,7 +111,7 @@ export default function FocusRoomPage() {
   }
 
   return <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4">
-    <header className="mb-6 flex items-center gap-3"><button onClick={() => router.back()} aria-label="Go back" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101B2D]"><ArrowLeft className="h-4 w-4" /></button><div><h1 className="text-lg font-bold">Focus</h1><p className="text-xs text-slate-500">Timed study that counts toward your goal.</p></div></header>
+    <header className="mb-6 flex items-center gap-3"><button onClick={() => goBack(router)} aria-label="Go back" className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-[#101B2D]"><ArrowLeft className="h-4 w-4" /></button><div><h1 className="text-lg font-bold">Focus</h1><p className="text-xs text-slate-500">Timed study that counts toward your goal.</p></div></header>
     {loading ? <div className="h-96 animate-pulse rounded-3xl bg-slate-200 dark:bg-slate-800" /> : <div className="space-y-4">
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-[#101B2D]">
         <label htmlFor="focus-goal" data-tour="focus-goal" className="mb-2 block text-sm font-bold text-slate-500">Focusing on</label>
