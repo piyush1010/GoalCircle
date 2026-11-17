@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, ChevronDown, ChevronRight, Plus } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
-import { usePrepData } from '@/lib/prep/usePrepData'
+import { noExamsLeft, usePrepData } from '@/lib/prep/usePrepData'
 import { coverage, preparation, SCORING_VERSION, type Readiness } from '@/lib/prep/scoring/v2'
 import { csatSafety } from '@/lib/prep/scoring/v1'
 import { addDays, daysBetween } from '@/lib/prep/revision'
@@ -49,7 +49,8 @@ export default function PrepProgressPage() {
   const today = localDateString()
 
   // Not set up yet: start with the step-by-step setup.
-  useEffect(() => { if (data.status === 'ready' && !data.profile.saved) router.replace('/prep/start') }, [data.status, data.profile.saved, router])
+  const leaveTo = noExamsLeft(data) ? '/dashboard' : '/prep/start'
+  useEffect(() => { if (data.status === 'ready' && !data.profile.saved) router.replace(leaveTo) }, [data.status, data.profile.saved, leaveTo, router])
   useEffect(() => { if (data.status === 'denied') router.replace('/dashboard') }, [data.status, router])
 
   const view = useMemo(() => {
@@ -111,7 +112,7 @@ export default function PrepProgressPage() {
         <HelpButton />
       </header>
       <PrepNav active="/prep/progress" />
-      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} manage={{ removed: data.removedPlans, onRemove: data.removePlan, onRestore: data.restorePlan }} />
+      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} manage={{ removed: data.removedPlans, onRemove: data.removePlan, onRemoveAll: data.removeAllPlans, onRestore: data.restorePlan }} />
 
       {/* One summary: where you stand, and this week */}
       <section data-guide="progress-summary" className={card}>

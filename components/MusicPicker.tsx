@@ -188,7 +188,7 @@ export default function MusicPicker({ open, selected, onClose, onSelect }: Music
   const safeStart = Math.min(start, maxStart)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="music-picker-title">
+    <div onClick={(e) => { if (e.target === e.currentTarget) close() }} className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="music-picker-title">
       <div className="max-h-[82vh] w-full max-w-lg overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-[#101B2D] sm:rounded-3xl">
         <div className="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-800">
           <div className="flex items-center gap-2">{cropping && <button type="button" onClick={() => { stopAudio(); setCropping(null) }} aria-label="Change song" className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 dark:bg-slate-800"><ArrowLeft className="h-4 w-4" /></button>}<div><h2 id="music-picker-title" className="text-base font-bold">{cropping ? 'Pick the part' : 'Add music'}</h2><p className="text-xs text-slate-500">{cropping ? `Slide to choose ${CLIP_SECONDS} seconds` : 'Search and preview available tracks'}</p></div></div>

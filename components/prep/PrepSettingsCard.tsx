@@ -8,7 +8,7 @@ import { announcePrepActive } from '@/lib/prep/active'
 
 /** Settings: start exam preparation any time, pause it after the exam, or change exam/date. Nothing is deleted. */
 export default function PrepSettingsCard() {
-  const [state, setState] = useState<{ loaded: boolean; userId: string | null; has: boolean; active: boolean; exam: string | null }>({ loaded: false, userId: null, has: false, active: false, exam: null })
+  const [state, setState] = useState<{ loaded: boolean; userId: string | null; has: boolean; active: boolean; exam: string | null; exams: number }>({ loaded: false, userId: null, has: false, active: false, exam: null, exams: 0 })
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -16,11 +16,14 @@ export default function PrepSettingsCard() {
     void (async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
-      const { data } = await supabase.from('prep_profiles').select('active, prep_exam_templates(name)').eq('user_id', session.user.id).maybeSingle()
+      const [{ data }, plans] = await Promise.all([
+        supabase.from('prep_profiles').select('active, prep_exam_templates(name)').eq('user_id', session.user.id).maybeSingle(),
+        supabase.from('prep_plans').select('template_id').eq('user_id', session.user.id).eq('active', true),
+      ])
       if (!alive) return
       const row = data as unknown as { active: boolean | null; prep_exam_templates: { name: string } | { name: string }[] | null } | null
       const t = row?.prep_exam_templates
-      setState({ loaded: true, userId: session.user.id, has: Boolean(row), active: row?.active !== false, exam: (Array.isArray(t) ? t[0]?.name : t?.name) ?? null })
+      setState({ loaded: true, userId: session.user.id, has: Boolean(row), active: row?.active !== false, exam: (Array.isArray(t) ? t[0]?.name : t?.name) ?? null, exams: plans.error ? 1 : (plans.data ?? []).length })
     })()
     return () => { alive = false }
   }, [])
@@ -36,7 +39,10 @@ export default function PrepSettingsCard() {
 
   return <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
     <p className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white"><GraduationCap className="h-4 w-4 text-slate-400" />Exam preparation</p>
-    {!state.has
+    {state.has && state.exams === 0
+      ? <div className="flex items-center gap-3"><p className="min-w-0 flex-1 text-sm text-slate-600 dark:text-slate-300">No exams right now. Your ticks and history are saved if you add one back.</p>
+          <Link href="/prep/start?add=1" className="shrink-0 rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white dark:bg-white dark:text-slate-900">Add an exam</Link></div>
+      : !state.has
       ? <div className="flex items-center gap-3"><p className="min-w-0 flex-1 text-sm text-slate-600 dark:text-slate-300">Get a daily study plan for UPSC, state PCS, SSC, banking, teaching exams or CAT.</p>
           <Link href="/prep/start" onClick={() => { try { window.localStorage.removeItem('goalyaar-prep-invite') } catch { /* nothing to clear */ } }} className="shrink-0 rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white dark:bg-white dark:text-slate-900">Start</Link></div>
       : <>

@@ -7,7 +7,7 @@ import { ArrowDownToLine, ArrowLeft, ArrowUpToLine, CalendarDays, ChevronRight, 
 import { localDateString } from '@/lib/exams'
 import { optionalSubjects, planFor, type PacePlan, type Unit } from '@/lib/prep/pace'
 import { retention } from '@/lib/prep/revision'
-import { usePrepData } from '@/lib/prep/usePrepData'
+import { noExamsLeft, usePrepData } from '@/lib/prep/usePrepData'
 import PrepSetup, { EXAM_SHORT, readShiftDate } from '@/components/prep/PrepSetup'
 import ExamBatch from '@/components/prep/ExamBatch'
 import { childrenMap } from '@/lib/prep/explorer'
@@ -94,7 +94,8 @@ export default function PrepPlanPage() {
   // First visit: open setup straight away.
   const needsSetup = data.status === 'ready' && !data.profile.saved
   // First visit: the step-by-step setup instead of a sheet.
-  useEffect(() => { if (needsSetup) router.replace('/prep/start') }, [needsSetup, router])
+  const leaveTo = noExamsLeft(data) ? '/dashboard' : '/prep/start'
+  useEffect(() => { if (needsSetup) router.replace(leaveTo) }, [needsSetup, leaveTo, router])
   // Arriving from setup: a one-line welcome that explains the screen.
   const [welcome, setWelcome] = useState(false)
   // Exams held in shifts: until the student sets their own date, remind them near the window.
@@ -160,7 +161,7 @@ export default function PrepPlanPage() {
     </div>
     {tab === 'batch' && data.userId && data.templateId && <ExamBatch userId={data.userId} templateId={data.templateId} examName={examName} />}
     {tab === 'plan' && <>
-      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} manage={{ removed: data.removedPlans, onRemove: data.removePlan, onRestore: data.restorePlan }} />
+      <ExamSwitcher plans={data.plans} current={data.templateId} onPick={data.setView} manage={{ removed: data.removedPlans, onRemove: data.removePlan, onRemoveAll: data.removeAllPlans, onRestore: data.restorePlan }} />
     {welcome && plan && <section className="mb-3 rounded-2xl bg-emerald-500/10 p-4 text-sm text-emerald-900 dark:text-emerald-200">
       <p className="font-bold">Your plan is ready.</p>
       <p className="mt-1">Each day, tick the subtopics below as you study them. Revise when reminded. That is all you need to do; everything else updates itself.</p>

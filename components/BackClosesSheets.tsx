@@ -2,25 +2,25 @@
 
 import { useEffect } from 'react'
 
-const MODAL = '[aria-modal="true"]' // pop-up sheets only, never cards inside the page
-const CLOSE_WORDS = ['close', 'cancel', 'not now', 'skip', 'skip tips', 'dismiss']
+const MODAL = '[aria-modal="true"], [role="menu"]' // pop-up sheets and small menus, never cards inside the page
+const CLOSE_WORDS = ['close', 'cancel', 'not now', 'skip', 'skip tips', 'dismiss', 'minimise']
 
 const topModal = () => {
   const all = [...document.querySelectorAll<HTMLElement>(MODAL)].filter((el) => el.isConnected && el.getClientRects().length > 0)
   return all.at(-1) ?? null
 }
 
-/** Close a sheet the way a person would: Escape, then its Close or Cancel button, then a tap on the dimmed backdrop. */
+/** Close a sheet the way a person would: Escape, then its Close, Cancel or Minimise button, then a tap on the dimmed backdrop. */
 function closeModal(modal: HTMLElement, done: (closed: boolean) => void) {
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
   window.setTimeout(() => {
     if (!modal.isConnected) return done(true)
     const buttons = [...modal.querySelectorAll<HTMLButtonElement>('button')]
-    const button = buttons.find((b) => CLOSE_WORDS.includes((b.getAttribute('aria-label') ?? '').trim().toLowerCase()))
-      ?? buttons.find((b) => CLOSE_WORDS.includes((b.textContent ?? '').trim().toLowerCase()))
+    const isClose = (t: string | null) => { const w = (t ?? '').trim().toLowerCase(); return CLOSE_WORDS.includes(w) || w.startsWith('close ') }
+    const button = buttons.find((b) => isClose(b.getAttribute('aria-label'))) ?? buttons.find((b) => isClose(b.textContent))
     if (button && !button.disabled) button.click()
     else {
-      const backdrop = modal.parentElement
+      const backdrop = getComputedStyle(modal).position === 'fixed' ? modal : modal.parentElement // some sheets mark the dimmed layer itself
       if (backdrop && getComputedStyle(backdrop).position === 'fixed') backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     }
     window.setTimeout(() => done(!modal.isConnected), 60)
@@ -28,7 +28,7 @@ function closeModal(modal: HTMLElement, done: (closed: boolean) => void) {
 }
 
 /**
- * On phones, and in the Android app, the back button closes an open sheet instead of leaving the page.
+ * On phones, and in the Android app, the back button closes an open sheet or menu instead of leaving the page.
  * While a sheet is open, one extra history entry (same URL) is kept; back removes it and closes the sheet.
  * Closing the sheet any other way removes the entry again, so history stays as it was.
  */
