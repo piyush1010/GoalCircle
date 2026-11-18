@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/utils/supabase'
 
 const KEY = 'goalyaar-prep-active'
-const EVENT = 'goalyaar-prep-changed'
+export const PREP_CHANGED_EVENT = 'goalyaar-prep-changed'
+const EVENT = PREP_CHANGED_EVENT
 
 /** Remember the latest known state on this device and tell open screens (nav, Today) to update. */
 export function announcePrepActive(active: boolean) {
@@ -33,4 +34,19 @@ export function usePrepActive(): boolean {
     return () => { alive = false; window.clearTimeout(t); window.removeEventListener(EVENT, read) }
   }, [])
   return active
+}
+
+/**
+ * Bring back exams that were just removed (the Undo after removing them). Works from any page, because
+ * after the last exam goes the person is already on Today and the exam screens are gone.
+ */
+export async function bringBackExams(templateIds: string[]): Promise<boolean> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session || !templateIds.length) return false
+  const { error } = await supabase.from('prep_plans').update({ active: true, updated_at: new Date().toISOString() }).eq('user_id', session.user.id).in('template_id', templateIds)
+  if (error) return false
+  const { error: e2 } = await supabase.from('prep_profiles').update({ active: true }).eq('user_id', session.user.id)
+  if (e2) return false
+  announcePrepActive(true)
+  return true
 }

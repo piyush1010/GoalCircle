@@ -5,7 +5,7 @@ import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
 import type { Foundation, MockResult, SyllabusNode, TopicState } from './types'
 import type { Mistake, PrepEvent } from './insights'
-import { announcePrepActive } from './active'
+import { announcePrepActive, PREP_CHANGED_EVENT } from './active'
 import { readOrder, type StudyOrder } from './order'
 import { applyLocally, looksOffline, readQueue, writeQueue, type QueuedEvent } from './offline'
 
@@ -162,6 +162,15 @@ export function usePrepData(enabled = true) {
     const t = window.setTimeout(() => void load(), 0)
     return () => window.clearTimeout(t)
   }, [enabled, load])
+
+  // Exams brought back from another screen (Undo after removing the last one): load them here too.
+  const hasActive = plans.some((p) => p.active)
+  useEffect(() => {
+    if (!enabled || hasActive) return
+    const onChange = () => { try { if (window.localStorage.getItem('goalyaar-prep-active') === '1') void load() } catch { /* next visit loads them */ } }
+    window.addEventListener(PREP_CHANGED_EVENT, onChange)
+    return () => window.removeEventListener(PREP_CHANGED_EVENT, onChange)
+  }, [enabled, hasActive, load])
 
   const refreshTopic = useCallback(async (nodeId: string) => {
     const { data } = await supabase.from('prep_topic_state').select(STATE_COLS).eq('node_id', nodeId).maybeSingle()

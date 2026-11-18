@@ -55,7 +55,6 @@ export default function AddSheet({ onClose }: { onClose: () => void }) {
 
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 sm:items-center" onClick={onClose}>
     <div role="dialog" aria-modal="true" aria-label="Add" onClick={(e) => e.stopPropagation()} className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3 dark:bg-slate-900 sm:rounded-3xl">
-      <span aria-hidden="true" className="mx-auto mb-3 block h-1 w-10 rounded-full bg-slate-300 dark:bg-slate-700 sm:hidden" />
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">{view === 'task' ? 'Add a task' : 'Add'}</h2>
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-10 w-10 place-items-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>

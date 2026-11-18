@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { Plus, SlidersHorizontal, X } from 'lucide-react'
 import { examInfo } from '@/lib/prep/exam'
 import type { PrepPlan } from '@/lib/prep/usePrepData'
+import { bringBackExams } from '@/lib/prep/active'
+import { showUndo } from '@/lib/undo'
 
 interface Manage { removed: PrepPlan[]; onRemove: (templateId: string) => Promise<boolean>; onRemoveAll: () => Promise<boolean>; onRestore: (templateId: string) => Promise<boolean> }
 
@@ -39,23 +41,33 @@ export default function ExamSwitcher({ plans, current, onPick, manage }: { plans
 
 /** Every exam in one place: remove one you were only exploring, bring one back, or add another. Ticks are never lost. */
 export function ManageExams({ plans, manage, onClose, onEmpty }: { plans: PrepPlan[]; manage: Manage; onClose: () => void; onEmpty: () => void }) {
-  const [confirm, setConfirm] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const run = async (id: string, fn: () => Promise<boolean>, last = false) => {
     setBusy(id); setError(null)
     const ok = await fn()
     setBusy(null)
-    if (!ok) { setError('That didn’t save. Please try again.'); return }
-    setConfirm(null)
+    if (!ok) { setError('That didn’t save. Please try again.'); return false }
     if (last) onEmpty() // no exams left: the page behind sends the person to Today
+    return true
+  }
+  // Removing happens at once, with Undo for a few seconds (as in Gmail), instead of an "Are you sure?" step.
+  const removeOne = async (p: PrepPlan) => {
+    const last = plans.length === 1
+    if (!(await run(p.templateId, () => manage.onRemove(p.templateId), last))) return
+    const name = examInfo(p.code).short
+    showUndo(last ? `${name} removed. Today shows just your goals.` : `${name} removed.`, last ? () => bringBackExams([p.templateId]) : () => manage.onRestore(p.templateId))
+  }
+  const removeAll = async () => {
+    const ids = plans.map((p) => p.templateId)
+    if (!(await run('all', manage.onRemoveAll, true))) return
+    showUndo(ids.length === 2 ? 'Both exams removed.' : `All ${ids.length} exams removed.`, () => bringBackExams(ids))
   }
   useEffect(() => {
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', esc)
     return () => document.removeEventListener('keydown', esc)
   }, [onClose])
-  const only = plans.length === 1
   const when = (p: PrepPlan) => (p.examDate ? new Date(`${p.examDate}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No date set')
 
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 sm:items-center" onClick={onClose}>
@@ -67,22 +79,11 @@ export function ManageExams({ plans, manage, onClose, onEmpty }: { plans: PrepPl
         {plans.map((p) => <li key={p.templateId} className="px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="min-w-0 flex-1"><p className="font-semibold">{examInfo(p.code).short}</p><p className="text-xs text-slate-500">{examInfo(p.code).stageName[p.targetStage]}, {when(p)}</p></div>
-            {confirm !== p.templateId && <button type="button" disabled={busy !== null} onClick={() => setConfirm(p.templateId)} className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300">Remove</button>}
+            <button type="button" disabled={busy !== null} onClick={() => void removeOne(p)} className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300">{busy === p.templateId ? '…' : 'Remove'}</button>
           </div>
-          {confirm === p.templateId && <div className="mt-2 flex items-center gap-2 rounded-xl bg-slate-50 p-2.5 text-sm dark:bg-slate-800/60">
-            <span className="min-w-0 flex-1">{only ? `Remove ${examInfo(p.code).short}? It’s your only exam, so Today will show just your goals. Its ticks stay saved.` : `Remove ${examInfo(p.code).short}? Its ticks stay saved.`}</span>
-            <button type="button" onClick={() => setConfirm(null)} className="px-2 py-1 text-slate-500">Cancel</button>
-            <button type="button" disabled={busy !== null} onClick={() => void run(p.templateId, () => manage.onRemove(p.templateId), only)} className="rounded-lg bg-slate-900 px-3 py-1.5 font-medium text-white dark:bg-white dark:text-slate-900">{busy === p.templateId ? '…' : 'Remove'}</button>
-          </div>}
         </li>)}
       </ul>
-      {plans.length > 1 && (confirm === 'all'
-        ? <div className="mt-2 flex items-center gap-2 rounded-xl bg-slate-50 p-2.5 text-sm dark:bg-slate-800/60">
-            <span className="min-w-0 flex-1">{plans.length === 2 ? 'Remove both exams?' : `Remove all ${plans.length} exams?`} Today will show just your goals. All ticks stay saved.</span>
-            <button type="button" onClick={() => setConfirm(null)} className="px-2 py-1 text-slate-500">Cancel</button>
-            <button type="button" disabled={busy !== null} onClick={() => void run('all', manage.onRemoveAll, true)} className="rounded-lg bg-slate-900 px-3 py-1.5 font-medium text-white dark:bg-white dark:text-slate-900">{busy === 'all' ? '…' : 'Remove all'}</button>
-          </div>
-        : <button type="button" disabled={busy !== null} onClick={() => setConfirm('all')} className="mt-2 text-sm font-medium text-slate-500 underline underline-offset-2">Remove all exams</button>)}
+      {plans.length > 1 && <button type="button" disabled={busy !== null} onClick={() => void removeAll()} className="mt-2 text-sm font-medium text-slate-500 underline underline-offset-2">{busy === 'all' ? 'Removing…' : 'Remove all exams'}</button>}
 
       {manage.removed.length > 0 && <>
         <p className="mt-5 text-sm font-semibold">Removed</p>
