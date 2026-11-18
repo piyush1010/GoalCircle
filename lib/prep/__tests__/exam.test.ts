@@ -25,6 +25,18 @@ describe('CDS', () => {
   })
 })
 
+describe('IFoS, EPFO, CHSL and NTPC', () => {
+  it('know their stages, optionals and marking', () => {
+    expect(examInfo('ifos_v1').optionals).toBe(2)
+    expect(examInfo('ifos_v1').tabs.map((t) => t.root)).toEqual(['PRE', 'MAI', 'NCERT'])
+    expect(examInfo('epfo_v1').targetStages).toEqual(['prelims'])
+    expect(netMarks(EXAMS.epfo_v1.pyqPapers[0], 100, 80)).toEqual({ marks: 183.3, max: 300, accuracy: 80 })
+    expect(netMarks(EXAMS.ssc_chsl_v1.pyqPapers[0], 90, 80)).toEqual({ marks: 155, max: 200, accuracy: 89 })
+    expect(netMarks(EXAMS.rrb_ntpc_v1.pyqPapers[0], 90, 75)).toEqual({ marks: 70, max: 100, accuracy: 83 })
+    expect(EXAMS.epfo_v1.pyqYearList?.[0]).toBe(2025)
+  })
+})
+
 describe('PYQ net marks', () => {
   it('applies negative marking', () => {
     expect(netMarks(EXAMS.upsc_cse_v1.pyqPapers[0], 80, 55)).toEqual({ marks: 93.5, max: 200, accuracy: 69 })

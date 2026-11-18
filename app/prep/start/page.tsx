@@ -27,6 +27,10 @@ const EXAM_LABEL: Record<string, [string, string]> = {
   up_pcsj_v1: ['UP PCS-J', 'Civil Judge, Uttar Pradesh'],
   mp_civil_judge_v1: ['MP Civil Judge', 'Judiciary, Madhya Pradesh'],
   mpsc_rajyaseva_v1: ['MPSC Rajyaseva', 'Maharashtra'],
+  ifos_v1: ['UPSC IFoS', 'Indian Forest Service'],
+  epfo_v1: ['UPSC EPFO', 'EO/AO and APFC'],
+  ssc_chsl_v1: ['SSC CHSL', 'Class 12 level'],
+  rrb_ntpc_v1: ['RRB NTPC', 'Railways'],
   cds_v1: ['UPSC CDS', 'Combined Defence Services'],
   cat_v1: ['CAT', 'MBA entrance'],
 }
@@ -35,6 +39,7 @@ const EXAM_WORDS: Record<string, string> = {
   upsc_cse_v1: 'ias ips civil services', uppcs_v1: 'uppsc ro aro uttar pradesh', bpsc_v1: 'bihar', jkpsc_cce_v1: 'kashmir jammu kas', hpsc_hcs_v1: 'haryana hpsc',
   ssc_cgl_v1: 'ssc staff selection cgl', bank_po_v1: 'ibps sbi bank banking', ctet_v1: 'teacher tet', uptet_v1: 'teacher tet uttar pradesh',
   up_pcsj_v1: 'judiciary judge law pcsj pcs j uttar pradesh', mp_civil_judge_v1: 'judiciary judge law mpcj madhya pradesh mp', mpsc_rajyaseva_v1: 'maharashtra rajyaseva state services mpsc', cds_v1: 'cds defence army navy air force ima ina afa ota ssb', cat_v1: 'mba iim',
+  ifos_v1: 'ifs indian forest service forestry', epfo_v1: 'eo ao apfc provident fund', ssc_chsl_v1: 'ssc chsl ldc jsa deo 12th staff selection', rrb_ntpc_v1: 'railway railways clerk station master goods train manager',
 }
 const LEVELS: [Level, string, string][] = [
   ['beginner', 'Just starting', 'Starting fresh with the syllabus'],

@@ -23,19 +23,20 @@ export interface PrepProfile {
   targetStage: 'prelims' | 'mains'; planStartOn: string | null; revisionBufferPct: number
   reminderEnabled: boolean; reminderHour: number
   optionalSubjectId: string | null
+  secondOptionalId: string | null // exams with two optionals (IFoS)
   studyOrder: StudyOrder | null // the student's own order; null = syllabus order
   active: boolean // false = paused; Today shows goals only
   level: 'beginner' | 'intermediate' | 'advanced' | null
   saved: boolean // false until the student has finished setup once
 }
-const EMPTY_PROFILE: PrepProfile = { examDate: null, dailyMinutes: null, targetStage: 'prelims', planStartOn: null, revisionBufferPct: 15, reminderEnabled: true, reminderHour: 7, optionalSubjectId: null, studyOrder: null, active: false, level: null, saved: false }
+const EMPTY_PROFILE: PrepProfile = { examDate: null, dailyMinutes: null, targetStage: 'prelims', planStartOn: null, revisionBufferPct: 15, reminderEnabled: true, reminderHour: 7, optionalSubjectId: null, secondOptionalId: null, studyOrder: null, active: false, level: null, saved: false }
 /** One exam the student is preparing for. */
 export interface PrepPlan {
   templateId: string; code: string; name: string
   examDate: string | null; targetStage: 'prelims' | 'mains'; planStartOn: string | null; revisionBufferPct: number
-  level: PrepProfile['level']; optionalSubjectId: string | null; studyOrder: StudyOrder | null; active: boolean
+  level: PrepProfile['level']; optionalSubjectId: string | null; secondOptionalId: string | null; studyOrder: StudyOrder | null; active: boolean
 }
-interface PlanRow { template_id: string; exam_date: string | null; target_stage: string | null; plan_start_on: string | null; revision_buffer_pct: number | null; level: PrepProfile['level']; optional_subject_node_id: string | null; active: boolean | null; study_order?: unknown }
+interface PlanRow { template_id: string; exam_date: string | null; target_stage: string | null; plan_start_on: string | null; revision_buffer_pct: number | null; level: PrepProfile['level']; optional_subject_node_id: string | null; optional_subject_node_id_2?: string | null; active: boolean | null; study_order?: unknown }
 // Every column, so the newer ones (study_order) are read when they exist and nothing breaks before they do.
 const PLAN_COLS = '*'
 const VIEW_KEY = 'goalyaar-prep-view'
@@ -93,7 +94,7 @@ export function usePrepData(enabled = true) {
   const viewPlan = plans.find((p) => p.templateId === templateId && p.active) ?? null
   const profile: PrepProfile = useMemo(() => (!userSettings || !viewPlan ? { ...EMPTY_PROFILE, ...(userSettings ? { dailyMinutes: userSettings.dailyMinutes, reminderEnabled: userSettings.reminderEnabled, reminderHour: userSettings.reminderHour } : {}) } : {
     examDate: viewPlan.examDate, targetStage: viewPlan.targetStage, planStartOn: viewPlan.planStartOn, revisionBufferPct: viewPlan.revisionBufferPct,
-    level: viewPlan.level, optionalSubjectId: viewPlan.optionalSubjectId, studyOrder: viewPlan.studyOrder,
+    level: viewPlan.level, optionalSubjectId: viewPlan.optionalSubjectId, secondOptionalId: viewPlan.secondOptionalId, studyOrder: viewPlan.studyOrder,
     dailyMinutes: userSettings.dailyMinutes, reminderEnabled: userSettings.reminderEnabled, reminderHour: userSettings.reminderHour, active: userSettings.active, saved: true,
   }), [userSettings, viewPlan])
 
@@ -116,7 +117,7 @@ export function usePrepData(enabled = true) {
     const planList: PrepPlan[] = rows.filter((r) => byId.has(r.template_id)).map((r) => ({
       templateId: r.template_id, code: byId.get(r.template_id)!.code, name: byId.get(r.template_id)!.name,
       examDate: r.exam_date, targetStage: (r.target_stage === 'mains' ? 'mains' : 'prelims') as PrepPlan['targetStage'], planStartOn: r.plan_start_on, revisionBufferPct: r.revision_buffer_pct ?? 15,
-      level: r.level ?? null, optionalSubjectId: r.optional_subject_node_id, studyOrder: readOrder(r.study_order), active: r.active !== false,
+      level: r.level ?? null, optionalSubjectId: r.optional_subject_node_id, secondOptionalId: r.optional_subject_node_id_2 ?? null, studyOrder: readOrder(r.study_order), active: r.active !== false,
     })).sort((a, b) => (a.examDate ?? '9999').localeCompare(b.examDate ?? '9999'))
     const activePlans = planList.filter((p) => p.active)
     const fallback = list.find((t) => t.code === TEMPLATE_CODE)
@@ -336,6 +337,7 @@ export function usePrepData(enabled = true) {
       revisionBufferPct: next.revisionBufferPct ?? base?.revisionBufferPct ?? 15,
       level: next.level !== undefined ? next.level : base?.level ?? null,
       optionalSubjectId: next.optionalSubjectId !== undefined ? next.optionalSubjectId : base?.optionalSubjectId ?? null,
+      secondOptionalId: next.secondOptionalId !== undefined ? next.secondOptionalId : base?.secondOptionalId ?? null,
     }
     const person = {
       dailyMinutes: next.dailyMinutes !== undefined ? next.dailyMinutes : userSettings?.dailyMinutes ?? null,
@@ -350,7 +352,9 @@ export function usePrepData(enabled = true) {
     }, { onConflict: 'user_id' })
     if (error) return false
     const { error: planError } = await supabase.from('prep_plans').upsert({
-      user_id: userId, template_id: target, exam_date: plan.examDate, target_stage: plan.targetStage, plan_start_on: plan.planStartOn, revision_buffer_pct: plan.revisionBufferPct, level: plan.level, optional_subject_node_id: plan.optionalSubjectId, active: true, updated_at: new Date().toISOString(),
+      user_id: userId, template_id: target, exam_date: plan.examDate, target_stage: plan.targetStage, plan_start_on: plan.planStartOn, revision_buffer_pct: plan.revisionBufferPct, level: plan.level, optional_subject_node_id: plan.optionalSubjectId,
+      // Only exams with two optionals use this column (added with IFoS), so older databases never see it.
+      ...(plan.secondOptionalId || base?.secondOptionalId ? { optional_subject_node_id_2: plan.secondOptionalId } : {}), active: true, updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,template_id' })
     // Before the multi-exam migration only the profile exists; that is still a working single plan.
     if (planError && primary !== target) return false

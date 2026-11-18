@@ -77,3 +77,9 @@ export function stageExplanation(s: TopicState | undefined, share: number, subto
   }
   return { stage, reasons, next: next[stage] }
 }
+
+/** Several roll-ups added together (two optional subjects shown as one paper). Null for none. */
+export function sumRolls(list: Rollup[]): Rollup | null {
+  if (!list.length) return null
+  return list.reduce((a, b) => ({ topics: a.topics + b.topics, subtopics: a.subtopics + b.subtopics, ticked: a.ticked + b.ticked, complete: a.complete + b.complete, due: a.due + b.due }))
+}

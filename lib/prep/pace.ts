@@ -82,19 +82,23 @@ export function pacePlan(units: Unit[], states: Map<string, TopicState>, today: 
  * The student's plan from their saved settings; null until an exam date is set.
  * Optional papers count only for the optional subject the student picked (Mains).
  */
-export function planFor(nodes: SyllabusNode[], states: Map<string, TopicState>, settings: { examDate: string | null; planStartOn: string | null; targetStage: 'prelims' | 'mains'; revisionBufferPct: number; optionalSubjectId?: string | null; studyOrder?: StudyOrder | null }, today: string): (PacePlan & { units: Unit[] }) | null {
+export function planFor(nodes: SyllabusNode[], states: Map<string, TopicState>, settings: { examDate: string | null; planStartOn: string | null; targetStage: 'prelims' | 'mains'; revisionBufferPct: number; optionalSubjectId?: string | null; secondOptionalId?: string | null; studyOrder?: StudyOrder | null }, today: string): (PacePlan & { units: Unit[] }) | null {
   if (!settings.examDate) return null
   const parent = new Map(nodes.map((n) => [n.id, n.parentId]))
   const isOpt = (p: SyllabusNode) => (p.code ?? '').endsWith('.OPT')
-  const optional = settings.optionalSubjectId ?? null
+  const chosen = chosenOptionals(settings)
   const units = arrangeUnits(studyUnits(nodes, settings.targetStage).filter((u) => {
     const subject = parent.get(u.topicId) ?? null
     const paper = subject ? nodes.find((n) => n.id === parent.get(subject)) : undefined
-    return !paper || !isOpt(paper) || (optional !== null && subject === optional)
+    return !paper || !isOpt(paper) || (subject !== null && chosen.includes(subject))
   }), settings.studyOrder ?? null)
   const start = settings.planStartOn && settings.planStartOn <= today ? settings.planStartOn : today
   return { ...pacePlan(units, states, today, start, settings.examDate, settings.revisionBufferPct), units }
 }
+
+/** The optional subjects a student picked: one for most exams, two for IFoS. */
+export const chosenOptionals = (s: { optionalSubjectId?: string | null; secondOptionalId?: string | null }): string[] =>
+  [s.optionalSubjectId, s.secondOptionalId].filter((x): x is string => Boolean(x))
 
 /** Optional subjects of an exam (subjects under a paper coded *.OPT), in syllabus order. */
 export function optionalSubjects(nodes: SyllabusNode[]): SyllabusNode[] {

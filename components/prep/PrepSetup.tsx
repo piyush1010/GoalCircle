@@ -10,7 +10,7 @@ import type { SyllabusNode } from '@/lib/prep/types'
 import { examInfo } from '@/lib/prep/exam'
 import { usePrepLang } from '@/lib/prep/i18n'
 
-export const EXAM_SHORT: Record<string, string> = { upsc_cse_v1: 'UPSC CSE', uppcs_v1: 'UPPCS', bpsc_v1: 'BPSC', jkpsc_cce_v1: 'JKPSC CCE', hpsc_hcs_v1: 'HCS (Haryana)', ssc_cgl_v1: 'SSC CGL', bank_po_v1: 'Bank PO', ctet_v1: 'CTET', uptet_v1: 'UPTET', up_pcsj_v1: 'UP PCS-J', mp_civil_judge_v1: 'MP Civil Judge', mpsc_rajyaseva_v1: 'MPSC Rajyaseva', cds_v1: 'UPSC CDS', cat_v1: 'CAT (MBA)' }
+export const EXAM_SHORT: Record<string, string> = { upsc_cse_v1: 'UPSC CSE', uppcs_v1: 'UPPCS', bpsc_v1: 'BPSC', jkpsc_cce_v1: 'JKPSC CCE', hpsc_hcs_v1: 'HCS (Haryana)', ssc_cgl_v1: 'SSC CGL', bank_po_v1: 'Bank PO', ctet_v1: 'CTET', uptet_v1: 'UPTET', up_pcsj_v1: 'UP PCS-J', mp_civil_judge_v1: 'MP Civil Judge', mpsc_rajyaseva_v1: 'MPSC Rajyaseva', ifos_v1: 'UPSC IFoS', epfo_v1: 'UPSC EPFO', ssc_chsl_v1: 'SSC CHSL', rrb_ntpc_v1: 'RRB NTPC', cds_v1: 'UPSC CDS', cat_v1: 'CAT (MBA)' }
 const HOURS = [2, 4, 6, 8, 10]
 const QUICK = [['3 months', 91], ['5 months', 152], ['1 year', 365]] as const
 const hourLabel = (h: number) => `${((h + 11) % 12) + 1}:00 ${h < 12 ? 'AM' : 'PM'}`
@@ -34,6 +34,7 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
   const [reminder, setReminder] = useState(profile.reminderEnabled)
   const [hour, setHour] = useState(profile.reminderHour)
   const [optional, setOptional] = useState(profile.optionalSubjectId ?? '')
+  const [second, setSecond] = useState(profile.secondOptionalId ?? '')
   const [busy, setBusy] = useState(false)
   const [lang, setLang, t] = usePrepLang()
   const [error, setError] = useState<string | null>(null)
@@ -42,6 +43,7 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
   const stagesFor = examInfo(templates.find((t) => t.id === exam)?.code).targetStages
   const presets = examInfo(templates.find((t) => t.id === exam)?.code).presets.filter((p) => p.date > today)
   const shifts = examInfo(templates.find((t) => t.id === exam)?.code).shifts
+  const twoOptionals = examInfo(templates.find((t) => t.id === exam)?.code).optionals === 2
   const inShifts = Boolean(shifts?.stages.includes(stagesFor.includes(stage) ? stage : stagesFor[0]))
   const save = async () => {
     if (!date || date <= today) { setError('Pick a target date in the future.'); return }
@@ -50,7 +52,7 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
     const finalStage = stagesFor.includes(stage) ? stage : stagesFor[0]
     const restart = exam !== templateId || stage !== profile.targetStage || date !== profile.examDate || !profile.planStartOn
     if (reminder && pushSupported() && !(await pushIsOn())) await enablePush()
-    const ok = await onSave({ templateId: exam, targetStage: finalStage, examDate: date, dailyMinutes: Math.min(960, Math.max(15, hours * 60)), planStartOn: restart ? today : profile.planStartOn, reminderEnabled: reminder, reminderHour: hour, optionalSubjectId: exam === templateId ? optional || null : null })
+    const ok = await onSave({ templateId: exam, targetStage: finalStage, examDate: date, dailyMinutes: Math.min(960, Math.max(15, hours * 60)), planStartOn: restart ? today : profile.planStartOn, reminderEnabled: reminder, reminderHour: hour, optionalSubjectId: exam === templateId ? optional || null : null, ...(twoOptionals ? { secondOptionalId: exam === templateId && second !== optional ? second || null : null } : {}) })
     setBusy(false)
     if (ok) { try { if (inShifts && ownShift) window.localStorage.setItem(shiftKey(exam), date); else window.localStorage.removeItem(shiftKey(exam)) } catch { /* only hides a reminder */ } }
     if (ok) onClose(); else setError('Could not save. Please try again.')
@@ -80,12 +82,19 @@ export default function PrepSetup({ templates, templateId, profile, optionals = 
       </>}
 
       {exam === templateId && optionals.length > 0 && <>
-        <label className="mt-5 block text-sm font-bold" htmlFor="prep-optional">Optional subject</label>
+        <label className="mt-5 block text-sm font-bold" htmlFor="prep-optional">{twoOptionals ? 'First optional subject' : 'Optional subject'}</label>
         <select id="prep-optional" value={optional} onChange={(e) => setOptional(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900">
           <option value="">Not decided yet</option>
           {optionals.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
         </select>
-        <p className="mt-1 text-xs text-slate-500">Included in your Mains plan; the other optionals are hidden from your syllabus.</p>
+        {twoOptionals && <>
+          <label className="mt-3 block text-sm font-bold" htmlFor="prep-optional-2">Second optional subject</label>
+          <select id="prep-optional-2" value={second} onChange={(e) => setSecond(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900">
+            <option value="">Not decided yet</option>
+            {optionals.filter((o) => o.id !== optional).map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
+          </select>
+        </>}
+        <p className="mt-1 text-xs text-slate-500">{twoOptionals ? 'Both go into your Mains plan; the other optionals are hidden from your syllabus. Check UPSC’s notice for pairs that aren’t allowed.' : 'Included in your Mains plan; the other optionals are hidden from your syllabus.'}</p>
       </>}
 
       <label className="mt-5 block text-sm font-bold" htmlFor="prep-date">{inShifts && !ownShift ? 'First day of the exam window' : t('Finish by (exam date)')}</label>

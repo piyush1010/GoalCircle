@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', images: ['/og-goalyaar.jpg'] },
 }
 
-const EXAMS = ['UPSC CSE', 'UPPCS', 'BPSC', 'MPSC', 'HCS', 'JKPSC', 'SSC CGL', 'Bank PO', 'CTET', 'UPTET', 'UP PCS-J', 'MP Civil Judge', 'UPSC CDS', 'CAT']
+const EXAMS = ['UPSC CSE', 'UPSC IFoS', 'UPSC EPFO', 'UPPCS', 'BPSC', 'MPSC', 'HCS', 'JKPSC', 'SSC CGL', 'SSC CHSL', 'RRB NTPC', 'Bank PO', 'CTET', 'UPTET', 'UP PCS-J', 'MP Civil Judge', 'UPSC CDS', 'CAT']
 
 const GOALS = ['Competitive exams', 'Fitness', 'Health and mind', 'Reading', 'Skills', 'Cooking', 'Travel', 'Your own goal']
 

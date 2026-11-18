@@ -31,7 +31,7 @@ export default function PyqPage() {
 
   // Latest attempt per paper and year.
   const latest = useMemo(() => { const m = new Map<string, Attempt>(); for (const r of rows ?? []) { const k = `${r.paper}:${r.year}`; if (!m.has(k)) m.set(k, r) } return m }, [rows])
-  const years = useMemo(() => { const out: number[] = []; for (let y = exam.pyqYears[1]; y >= exam.pyqYears[0]; y--) out.push(y); return out }, [exam.pyqYears])
+  const years = useMemo(() => { if (exam.pyqYearList) return exam.pyqYearList; const out: number[] = []; for (let y = exam.pyqYears[1]; y >= exam.pyqYears[0]; y--) out.push(y); return out }, [exam.pyqYears, exam.pyqYearList])
 
   if (data.status === 'loading' || (data.status === 'ready' && !rows)) return <main className="mx-auto max-w-xl space-y-3 px-4 pb-28 pt-6" aria-busy="true">{[1, 2].map((k) => <div key={k} className="h-40 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />)}</main>
   if (data.status !== 'ready') return <main className="mx-auto grid min-h-[70vh] max-w-md place-items-center px-6 text-center"><div><h1 className="text-xl">{data.status === 'denied' ? 'Not available yet' : "Couldn't load past papers"}</h1><Link href="/dashboard" className="mt-5 inline-block rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white dark:bg-white dark:text-slate-900">Back to Today</Link></div></main>

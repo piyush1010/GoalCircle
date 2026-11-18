@@ -7,7 +7,7 @@ import { retention } from './revision'
 
 export type TaskKind = 'mentor' | 'revise' | 'study' | 'goal' | 'room'
 export interface Task { key: string; kind: TaskKind; title: string; subtitle: string; exam: string | null; nodeId?: string; goalId?: string; circleId?: string; templateId?: string; done: boolean }
-export interface PlanInput { templateId: string; short: string; nodes: SyllabusNode[]; settings: { examDate: string | null; planStartOn: string | null; targetStage: 'prelims' | 'mains'; revisionBufferPct: number; optionalSubjectId?: string | null; studyOrder?: StudyOrder | null } }
+export interface PlanInput { templateId: string; short: string; nodes: SyllabusNode[]; settings: { examDate: string | null; planStartOn: string | null; targetStage: 'prelims' | 'mains'; revisionBufferPct: number; optionalSubjectId?: string | null; secondOptionalId?: string | null; studyOrder?: StudyOrder | null } }
 
 export function todayTasks(input: {
   plans: PlanInput[]

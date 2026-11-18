@@ -14,6 +14,10 @@ export interface ExamInfo {
   mockSections: { name: string; max: number }[]
   pyqPapers: PyqPaper[]
   pyqYears: [number, number]
+  /** For exams not held every year: the years with a paper, newest first (overrides pyqYears). */
+  pyqYearList?: number[]
+  /** How many optional subjects a student picks for Mains (IFoS: two). Default one. */
+  optionals?: number
   answerWriting: boolean
   readingHabit: string
   /**
@@ -104,6 +108,44 @@ export const EXAMS: Record<string, ExamInfo> = {
     answerWriting: false,
     readingHabit: 'Newspaper',
   },
+  ifos_v1: {
+    ...CIVIL, short: 'IFoS', optionals: 2,
+    // Prelims is the Civil Services Prelims itself, on the same day.
+    presets: [{ label: 'Prelims 2027, 23 May', date: '2027-05-23', stage: 'prelims', source: 'UPSC calendar 2027 (Civil Services Prelims)' }],
+    mockStages: [['prelims_gs', 'Prelims GS', 200], ['csat', 'CSAT', 200], ['mains', 'General English or GK', 300], ['optional', 'Optional paper', 200]],
+    pyqPapers: [{ code: 'PRE_GS', label: 'Prelims GS I', questions: 100, plus: 2, minus: 0.66 }, { code: 'CSAT', label: 'CSAT', questions: 80, plus: 2.5, minus: 0.83 }],
+  },
+  epfo_v1: {
+    short: 'EPFO', presets: [{ label: 'APFC 2026, 20 Dec', date: '2026-12-20', stage: 'prelims', source: 'UPSC notice for APFC 2026' }],
+    tabs: [{ root: 'PRE', label: 'Written test' }],
+    targetStages: ['prelims'], stageName: { prelims: 'Recruitment Test', mains: 'Recruitment Test' },
+    mockStages: [['prelims_gs', 'Recruitment Test', 300]], mockSections: [],
+    // 120 questions of 2.5 marks; a wrong answer loses a third of the question's marks.
+    pyqPapers: [{ code: 'EPFO_RT', label: 'Recruitment Test', questions: 120, plus: 2.5, minus: 2.5 / 3 }],
+    pyqYears: [2012, 2025], pyqYearList: [2025, 2023, 2021, 2017, 2016, 2012],
+    answerWriting: false, readingHabit: 'Newspaper',
+  },
+  ssc_chsl_v1: {
+    short: 'SSC CHSL', presets: [],
+    tabs: [{ root: 'PRE', label: 'Tier 1' }, { root: 'MAI', label: 'Tier 2' }],
+    targetStages: ['prelims', 'mains'], stageName: { prelims: 'Tier 1', mains: 'Tier 2' },
+    mockStages: [['prelims_gs', 'Tier 1', 200], ['mains', 'Tier 2', 360]],
+    mockSections: [{ name: 'Reasoning', max: 50 }, { name: 'GA', max: 50 }, { name: 'Quant', max: 50 }, { name: 'English', max: 50 }],
+    pyqPapers: [{ code: 'TIER1', label: 'Tier 1', questions: 100, plus: 2, minus: 0.5 }], pyqYears: [2017, 2025],
+    answerWriting: false, readingHabit: 'Newspaper',
+    shifts: { stages: ['prelims', 'mains'], window: 'Tier 1 runs over two to three weeks, several shifts a day.', admitCard: 'Your date and shift are on the admit card, released a few days before.' },
+  },
+  rrb_ntpc_v1: {
+    short: 'RRB NTPC', presets: [],
+    tabs: [{ root: 'PRE', label: 'CBT 1' }, { root: 'MAI', label: 'CBT 2' }],
+    targetStages: ['prelims', 'mains'], stageName: { prelims: 'CBT 1', mains: 'CBT 2' },
+    mockStages: [['prelims_gs', 'CBT 1', 100], ['mains', 'CBT 2', 120]],
+    mockSections: [{ name: 'GA', max: 40 }, { name: 'Maths', max: 30 }, { name: 'Reasoning', max: 30 }],
+    // One mark a question; a wrong answer loses a third of a mark.
+    pyqPapers: [{ code: 'CBT1', label: 'CBT 1', questions: 100, plus: 1, minus: 1 / 3 }, { code: 'CBT2', label: 'CBT 2', questions: 120, plus: 1, minus: 1 / 3 }], pyqYears: [2016, 2025],
+    answerWriting: false, readingHabit: 'Newspaper',
+    shifts: { stages: ['prelims', 'mains'], window: 'Each CBT runs over several weeks, three shifts a day.', admitCard: 'Your city comes about ten days before; the admit card, with date and shift, four days before.' },
+  },
   ctet_v1: TET('CTET', [2016, 2025]),
   uptet_v1: TET('UPTET', [2017, 2026]),
   cat_v1: {
@@ -122,7 +164,7 @@ export const EXAMS: Record<string, ExamInfo> = {
 }
 
 /** Most common exam first: used wherever exams are listed. */
-export const EXAM_ORDER = ['upsc_cse_v1', 'uppcs_v1', 'bpsc_v1', 'hpsc_hcs_v1', 'jkpsc_cce_v1', 'ssc_cgl_v1', 'bank_po_v1', 'ctet_v1', 'uptet_v1', 'up_pcsj_v1', 'mp_civil_judge_v1', 'mpsc_rajyaseva_v1', 'cds_v1', 'cat_v1']
+export const EXAM_ORDER = ['upsc_cse_v1', 'uppcs_v1', 'bpsc_v1', 'hpsc_hcs_v1', 'jkpsc_cce_v1', 'ssc_cgl_v1', 'bank_po_v1', 'ctet_v1', 'uptet_v1', 'up_pcsj_v1', 'mp_civil_judge_v1', 'mpsc_rajyaseva_v1', 'ifos_v1', 'epfo_v1', 'ssc_chsl_v1', 'rrb_ntpc_v1', 'cds_v1', 'cat_v1']
 export const byExamOrder = <T extends { code: string }>(a: T, b: T) => (EXAM_ORDER.indexOf(a.code) + 1 || 99) - (EXAM_ORDER.indexOf(b.code) + 1 || 99)
 
 export const examInfo = (code: string | null | undefined): ExamInfo => EXAMS[code ?? ''] ?? EXAMS.upsc_cse_v1
