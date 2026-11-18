@@ -49,6 +49,16 @@ export default function AboutPage() {
         <p>Can&apos;t sign in? Email {mail} from the address you signed up with, with the subject &ldquo;Delete my account&rdquo;. We delete it within 7 days and confirm by email.</p>
       </Section>
 
+      <Section id="delete-data" title="Deleting some of your data">
+        <p>You can delete things one at a time and keep your account. Tap the &ldquo;&middot;&middot;&middot;&rdquo; menu next to the item, then Delete:</p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>a goal, with all of its check-ins, or a single check-in</li>
+          <li>your posts and comments in the feed and in communities</li>
+          <li>to-dos, focus sessions, mistakes, mock test scores, answer logs and subtopics you added</li>
+        </ul>
+        <p>Each item is removed straight away. To have other data deleted, such as your exam ticks and study history, email {mail} from the address you signed up with, saying what to delete. We delete it within 7 days and confirm by email.</p>
+      </Section>
+
       <Section title="Privacy">
         <p>What we store, why, and who processes it: <Link href="/privacy" className="font-medium text-slate-900 underline underline-offset-2 dark:text-white">Privacy policy</Link>.</p>
       </Section>
