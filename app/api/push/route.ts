@@ -35,6 +35,7 @@ function compose({ notification: n, actor, circle }: PushRequest) {
     prep_weekly: 'Your preparation this week',
     community_answer: 'New answer',
     community_helpful: 'Your answer helped',
+    exam_ready: 'Your exam planner is ready',
   }
   const fallbackBody: Record<string, string> = {
     boost: 'Tap to see it.', comment: 'Tap to read and reply.', follow: 'Tap to see their profile.',
@@ -44,6 +45,7 @@ function compose({ notification: n, actor, circle }: PushRequest) {
     : n.kind === 'goal_collaboration_invite' ? '/notifications'
     : n.kind === 'prep_reminder' ? '/prep/plan'
     : n.kind === 'prep_weekly' ? '/prep/progress'
+    : n.kind === 'exam_ready' ? '/prep/start?add=1'
     : n.post_id ? `/feed?post=${n.post_id}`
     : n.goal_id ? `/goal/${n.goal_id}`
     : n.circle_id ? `/circles/${n.circle_id}`

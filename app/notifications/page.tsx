@@ -10,7 +10,7 @@ interface NotificationItem {
   id: string
   recipient_id: string
   actor_id: string | null
-  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap' | 'goal_collaboration_invite' | 'goal_collaboration_accepted' | 'circle_task' | 'circle_post' | 'circle_leave' | 'circle_reply' | 'prep_reminder' | 'prep_weekly' | 'community_answer' | 'community_helpful'
+  kind: 'boost' | 'comment' | 'follow' | 'nudge' | 'circle_invite' | 'streak' | 'accountability_invite' | 'challenge_invite' | 'weekly_recap' | 'goal_collaboration_invite' | 'goal_collaboration_accepted' | 'circle_task' | 'circle_post' | 'circle_leave' | 'circle_reply' | 'prep_reminder' | 'prep_weekly' | 'community_answer' | 'community_helpful' | 'exam_ready'
   post_id: string | null
   circle_id: string | null
   goal_id: string | null
@@ -43,6 +43,7 @@ const details = {
   prep_reminder: { icon: CheckCheck, title: 'Your study plan for today', copy: 'Open your plan to see today\'s target.' },
   community_answer: { icon: MessageCircle, title: 'New answer', copy: 'answered your question.' },
   community_helpful: { icon: Check, title: 'Your answer helped', copy: 'said your answer helped.' },
+  exam_ready: { icon: Check, title: 'Your exam planner is ready', copy: 'A planner you asked for has been added.' },
 }
 
 function NotificationIcon({ kind }: { kind: NotificationItem['kind'] }) {
@@ -139,7 +140,7 @@ export default function NotificationsPage() {
         {notifications.filter((item) => item.kind !== 'goal_collaboration_invite' || !collaborationRequests.some((request) => request.goal_id === item.goal_id)).map((item) => (
           <Link
             key={item.id}
-            href={item.community_post_id ? `/discuss/${item.community_post_id}` : item.kind === 'goal_collaboration_invite' ? '/notifications' : item.kind === 'prep_reminder' ? '/prep/plan' : item.kind === 'prep_weekly' ? '/prep/progress' : item.post_id ? `/feed?post=${item.post_id}` : item.goal_id ? `/goal/${item.goal_id}` : item.circle_id ? `/circles/${item.circle_id}` : '/profile'}
+            href={item.community_post_id ? `/discuss/${item.community_post_id}` : item.kind === 'goal_collaboration_invite' ? '/notifications' : item.kind === 'prep_reminder' ? '/prep/plan' : item.kind === 'prep_weekly' ? '/prep/progress' : item.kind === 'exam_ready' ? '/prep/start?add=1' : item.post_id ? `/feed?post=${item.post_id}` : item.goal_id ? `/goal/${item.goal_id}` : item.circle_id ? `/circles/${item.circle_id}` : '/profile'}
             className={`border rounded-2xl p-4 shadow-sm flex items-start gap-3 transition ${
               item.is_read
                 ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-80'
