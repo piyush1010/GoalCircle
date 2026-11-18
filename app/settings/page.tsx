@@ -8,6 +8,7 @@ import FeedbackCard from '@/components/FeedbackCard'
 import DeleteAccount from '@/components/DeleteAccount'
 import BlockedPeople from '@/components/BlockedPeople'
 import DayEndSetting from '@/components/DayEndSetting'
+import WeeklySummaryDay from '@/components/WeeklySummaryDay'
 import { resetTours } from '@/components/GuideTour'
 import PushToggle from '@/components/PushToggle'
 import PrepSettingsCard from '@/components/prep/PrepSettingsCard'
@@ -234,6 +235,7 @@ export default function SettingsPage() {
         </div>}
       </div>
       <div className="mt-2.5"><DayEndSetting /></div>
+      <div className="mt-2.5"><WeeklySummaryDay /></div>
 
       <div className="mt-7"><PrepSettingsCard /></div>
 
