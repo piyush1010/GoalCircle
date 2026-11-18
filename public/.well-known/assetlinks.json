@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "in.goalyaar.app",
+      "sha256_cert_fingerprints": [
+        "48:6B:39:DE:23:CD:27:E6:20:79:09:5B:42:94:5D:E7:2E:51:C4:E6:41:69:E4:01:92:5C:AB:06:FF:3C:1F:25"
+      ]
+    }
+  }
+]
