@@ -98,6 +98,7 @@ export function ManageExams({ plans, manage, onClose, onEmpty }: { plans: PrepPl
       {error && <p role="alert" className="mt-3 text-sm text-rose-600">{error}</p>}
       <Link href="/prep/start?add=1" className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white dark:bg-white dark:text-slate-900"><Plus className="h-4 w-4" />Add an exam</Link>
       <p className="mt-2 text-center text-xs text-slate-500">Just exploring another syllabus? Add it, look around, then remove it here.</p>
+      <p className="mt-1 text-center text-xs text-slate-500">Exam not listed? <Link href="/prep/start?add=1&request=1" className="font-medium text-slate-700 underline underline-offset-2 dark:text-slate-200">Request it</Link> and we&apos;ll tell you when it&apos;s ready.</p>
     </div>
   </div>
 }

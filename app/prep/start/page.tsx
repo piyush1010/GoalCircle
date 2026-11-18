@@ -77,6 +77,8 @@ export default function PrepStartPage() {
       const params = new URLSearchParams(window.location.search)
       const add = params.get('add') === '1'
       setAdding(add)
+      // "Request an exam" from the Your exams sheet opens the request form straight away.
+      if (params.get('request') === '1') setRequest((r) => ({ ...r, open: true }))
       if (add) return
       // Straight from first-time setup: the plan exists, so go to "What have you already finished?"
       if (params.get('step') === '4' && data.profile.saved) setStep(4)
@@ -89,6 +91,15 @@ export default function PrepStartPage() {
     return () => window.clearTimeout(t)
   }, [data.status, data.profile, data.templateId, today])
 
+  // Each typed word must start a word of the exam's name or search words ("ras" finds RAS, not Maharashtra).
+  const matchesFind = (t: { code: string; name: string }) => {
+    const typed = find.trim().toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
+    if (!typed.length) return true
+    const [n, sub] = EXAM_LABEL[t.code] ?? [t.name, '']
+    const words = `${n} ${sub} ${t.name} ${EXAM_WORDS[t.code] ?? ''}`.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
+    return typed.every((q) => words.some((w) => w.startsWith(q)))
+  }
+  const noMatch = Boolean(find.trim()) && !data.templates.some(matchesFind)
   const code = data.templates.find((t) => t.id === exam)?.code
   const info = examInfo(code)
   const presets = info.presets.filter((p) => p.date > today && (info.targetStages.length === 1 || p.stage === stage))
@@ -165,7 +176,8 @@ export default function PrepStartPage() {
 
     <div className="mt-5 flex-1 space-y-2 pb-28">
       {step === 1 && data.templates.length > 6 && <input type="search" value={find} onChange={(e) => setFind(e.target.value)} placeholder="Search exams" aria-label="Search exams" className="mb-1 w-full rounded-xl border border-slate-200 bg-transparent px-4 py-3 text-[15px] dark:border-slate-700" />}
-      {step === 1 && [...data.templates].sort(byExamOrder).filter((t) => { const q = find.trim().toLowerCase(); if (!q) return true; const [n, s] = EXAM_LABEL[t.code] ?? [t.name, '']; return `${n} ${s} ${t.name} ${EXAM_WORDS[t.code] ?? ''}`.toLowerCase().includes(q) }).map((t) => { const [name, sub] = EXAM_LABEL[t.code] ?? [t.name, '']; const added = adding && data.plans.some((p) => p.templateId === t.id); return <button key={t.id} type="button" disabled={added} onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={`${option(exam === t.id)} ${added ? 'opacity-50' : ''}`}>
+      {step === 1 && find.trim() && !data.templates.some(matchesFind) && <p className="rounded-xl bg-slate-100 px-4 py-3 text-sm dark:bg-slate-800">No planner for <b>{find.trim()}</b> yet. Ask for it below and we&apos;ll tell you when it&apos;s ready.</p>}
+      {step === 1 && [...data.templates].sort(byExamOrder).filter(matchesFind).map((t) => { const [name, sub] = EXAM_LABEL[t.code] ?? [t.name, '']; const added = adding && data.plans.some((p) => p.templateId === t.id); return <button key={t.id} type="button" disabled={added} onClick={() => setExam(t.id)} aria-pressed={exam === t.id} className={`${option(exam === t.id)} ${added ? 'opacity-50' : ''}`}>
         <span className="min-w-0 flex-1"><span className="block text-[15px] font-bold">{name}</span>{(sub || added) && <span className="block text-[13px] text-slate-500">{added ? 'Already in your plan' : sub}</span>}</span>
         {exam === t.id && <Check className="h-5 w-5 shrink-0 text-slate-500" />}
       </button> })}
@@ -173,13 +185,13 @@ export default function PrepStartPage() {
       {step === 1 && <div className="pt-2">
         {request.sent
           ? <p className="rounded-xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300">Thanks. We have noted <b>{request.name}</b> and will let you know when its planner is ready.</p>
-          : !request.open
-            ? <button type="button" onClick={() => setRequest({ ...request, open: true })} className="w-full py-2 text-sm font-medium text-slate-500 underline-offset-4 hover:underline">My exam is not listed</button>
+          : !request.open && !noMatch
+            ? <button type="button" onClick={() => setRequest({ ...request, open: true, name: request.name || find.trim() })} className="w-full py-2 text-sm font-medium text-slate-500 underline-offset-4 hover:underline">My exam is not listed</button>
             : <div className="space-y-2 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
                 <p className="text-sm font-semibold">Request a planner</p>
-                <input value={request.name} onChange={(e) => setRequest({ ...request, name: e.target.value })} maxLength={120} placeholder="Exam name, e.g. RAS, MPPSC, NDA" className="w-full rounded-lg border border-slate-200 bg-transparent px-3 py-2.5 text-sm dark:border-slate-700" />
+                <input value={request.name || (noMatch ? find.trim() : '')} onChange={(e) => setRequest({ ...request, name: e.target.value })} maxLength={120} placeholder="Exam name, e.g. RAS, MPPSC, NDA" className="w-full rounded-lg border border-slate-200 bg-transparent px-3 py-2.5 text-sm dark:border-slate-700" />
                 <input value={request.note} onChange={(e) => setRequest({ ...request, note: e.target.value })} maxLength={500} placeholder="Anything to add? (optional)" className="w-full rounded-lg border border-slate-200 bg-transparent px-3 py-2.5 text-sm dark:border-slate-700" />
-                <button type="button" disabled={request.busy || request.name.trim().length < 2} onClick={async () => { setRequest({ ...request, busy: true }); const { error: e } = await supabase.from('prep_exam_requests').insert({ exam_name: request.name.trim(), details: request.note.trim() || null }); setRequest({ ...request, busy: false, sent: !e }); if (e) setError('Could not send. Try again.') }} className="w-full rounded-lg bg-slate-900 py-2.5 text-sm font-semibold text-white disabled:opacity-40 dark:bg-white dark:text-slate-900">Send request</button>
+                <button type="button" disabled={request.busy || (request.name || (noMatch ? find : '')).trim().length < 2} onClick={async () => { const examName = (request.name || find).trim(); setRequest({ ...request, name: examName, busy: true }); const { error: e } = await supabase.from('prep_exam_requests').insert({ exam_name: examName, details: request.note.trim() || null }); setRequest({ ...request, name: examName, busy: false, sent: !e }); if (e) setError('Could not send. Try again.') }} className="w-full rounded-lg bg-slate-900 py-2.5 text-sm font-semibold text-white disabled:opacity-40 dark:bg-white dark:text-slate-900">Send request</button>
               </div>}
       </div>}
 
