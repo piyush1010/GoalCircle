@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Check, ChevronDown, HelpCircle, Plus, Search, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
 import { localDateString } from '@/lib/exams'
-import { childrenMap, rollups, stageExplanation, STAGE_LABEL } from '@/lib/prep/explorer'
+import { childrenMap, rollups, stageExplanation, STAGE_LABEL, sumRolls } from '@/lib/prep/explorer'
 import { studyShares, topicStage } from '@/lib/prep/scoring/v2'
 import { NODE_COLS, toNode, noExamsLeft, usePrepData } from '@/lib/prep/usePrepData'
 import type { Foundation, SyllabusNode, TopicStageName, TopicState } from '@/lib/prep/types'
 import { examInfo } from '@/lib/prep/exam'
-import { optionalSubjects } from '@/lib/prep/pace'
+import { chosenOptionals, optionalSubjects } from '@/lib/prep/pace'
 import RecallButton from '@/components/prep/RecallButton'
 import PrepNav from '@/components/prep/PrepNav'
 import HelpButton from '@/components/HelpButton'
@@ -105,6 +105,8 @@ export default function PrepExplorerPage() {
   const stageOf = (id: string) => topicStage(states.get(id), shareOf(id), today)
   const officialSubs = (id: string) => (kids.get(id) ?? []).filter((c) => c.kind === 'subtopic' && !c.ownerId)
   const tabs = examInfo(data.template?.code).tabs.filter((t) => byCode.has(t.root))
+  const optionalCount = examInfo(data.template?.code).optionals ?? 1
+  const picked = chosenOptionals(data.profile)
   const root = byCode.get(tab) ?? byCode.get(tabs[0]?.root ?? 'PRE')
   const allTopics = nodes.filter((n) => n.kind === 'topic' && !n.ownerId)
   const dueTotal = allTopics.filter((n) => stageOf(n.id) === 'revision_due').length
@@ -155,10 +157,10 @@ export default function PrepExplorerPage() {
 
       {tab !== 'NCERT' && tickedTotal === 0 && <p className="mt-3 rounded-xl bg-slate-100 dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-white">Open any topic and tick the subtopics you have already studied. Your progress, revision dates and plan are built from these ticks.</p>}
 
-      {tab === 'MAI' && !data.profile.optionalSubjectId && optionalSubjects(nodes).length > 0 && <label className="mt-3 block rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2.5 text-sm">
-        <span className="font-bold">Pick your optional</span> <span className="text-slate-600 dark:text-slate-300">to hide the other {optionalSubjects(nodes).length - 1} and add it to your plan.</span>
-        <select defaultValue="" onChange={async (e) => { if (!e.target.value) return; const ok = await data.saveProfile({ optionalSubjectId: e.target.value }); setToast(ok ? 'Optional saved.' : 'Set your exam date in My plan first.') }} className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900">
-          <option value="">Choose…</option>{optionalSubjects(nodes).map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
+      {tab === 'MAI' && picked.length < optionalCount && optionalSubjects(nodes).length > 0 && <label className="mt-3 block rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2.5 text-sm">
+        <span className="font-bold">{optionalCount === 1 ? 'Pick your optional' : picked.length === 0 ? 'Pick your first optional' : 'Pick your second optional'}</span> <span className="text-slate-600 dark:text-slate-300">{optionalCount === 1 ? `to hide the other ${optionalSubjects(nodes).length - 1} and add it to your plan.` : 'to add it to your plan. The others are hidden once both are picked.'}</span>
+        <select key={picked.length} defaultValue="" onChange={async (e) => { if (!e.target.value) return; const ok = await data.saveProfile(picked.length === 0 ? { optionalSubjectId: e.target.value } : { secondOptionalId: e.target.value }); setToast(ok ? 'Optional saved.' : 'Set your exam date in My plan first.') }} className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-900">
+          <option value="">Choose…</option>{optionalSubjects(nodes).filter((o) => !picked.includes(o.id)).map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
         </select>
       </label>}
 
@@ -169,10 +171,11 @@ export default function PrepExplorerPage() {
               <div className="divide-y divide-slate-100 dark:divide-slate-800">{(root ? kids.get(root.id) ?? [] : []).filter((b) => !q || b.title.toLowerCase().includes(q)).map(topicRow)}</div>
             </section>
           : (root ? kids.get(root.id) ?? [] : []).map((paper) => {
-              const chosenOpt = (paper.code ?? '').endsWith('.OPT') ? data.profile.optionalSubjectId : null
-              const subjects = (kids.get(paper.id) ?? []).filter((subject) => !chosenOpt || subject.id === chosenOpt).map((subject) => ({ subject, topics: (kids.get(subject.id) ?? []).filter((t) => t.kind === 'topic' && matches(t)) })).filter((x) => x.topics.length > 0)
+              // Once optionals are picked, show only those (one, or two for IFoS); until then, all of them.
+              const chosenOpt = (paper.code ?? '').endsWith('.OPT') && picked.length ? picked : null
+              const subjects = (kids.get(paper.id) ?? []).filter((subject) => !chosenOpt || chosenOpt.includes(subject.id)).map((subject) => ({ subject, topics: (kids.get(subject.id) ?? []).filter((t) => t.kind === 'topic' && matches(t)) })).filter((x) => x.topics.length > 0)
               if (subjects.length === 0) return null
-              const r = roll.get(chosenOpt ?? paper.id) ?? roll.get(paper.id)!
+              const r = chosenOpt ? sumRolls(chosenOpt.map((id) => roll.get(id)).filter((x) => x !== undefined)) ?? roll.get(paper.id)! : roll.get(paper.id)!
               const pct = r.subtopics ? Math.round((r.ticked / r.subtopics) * 100) : r.topics ? Math.round((r.complete / r.topics) * 100) : 0
               return <section key={paper.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <button type="button" onClick={() => toggle(paper.id)} aria-expanded={isOpen(paper.id)} className="flex w-full items-center gap-3 px-3 py-3 text-left">

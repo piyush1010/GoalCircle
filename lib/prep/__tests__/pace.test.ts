@@ -61,4 +61,11 @@ describe('plan from settings', () => {
     const withOpt = planFor(nodes, new Map(), { ...settings, examDate: '2026-11-14', optionalSubjectId: 'MJ' }, '2026-11-04')!
     expect(withOpt.units.map((u) => u.id)).toEqual(['G1', 'OP1'])
   })
+  it('takes two optionals for IFoS and still leaves the rest out', async () => {
+    const { planFor } = await import('../pace')
+    const nodes = [n('PRE', null, 'stage', ['mains']), { ...n('MAI.OPT', 'PRE', 'paper', ['mains']), code: 'MAI.OPT' },
+      n('FOR', 'MAI.OPT', 'subject', ['mains']), n('F1', 'FOR', 'topic', ['mains']), n('BOT', 'MAI.OPT', 'subject', ['mains']), n('B1', 'BOT', 'topic', ['mains']), n('ZOO', 'MAI.OPT', 'subject', ['mains']), n('Z1', 'ZOO', 'topic', ['mains'])]
+    const p = planFor(nodes, new Map(), { examDate: '2026-11-14', planStartOn: null, targetStage: 'mains', revisionBufferPct: 0, optionalSubjectId: 'FOR', secondOptionalId: 'BOT' }, '2026-11-04')!
+    expect(p.units.map((u) => u.id).sort()).toEqual(['B1', 'F1'])
+  })
 })

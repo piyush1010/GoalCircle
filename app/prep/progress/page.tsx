@@ -23,7 +23,7 @@ import type { AnswerRow, MockRow } from '@/lib/prep/usePrepData'
 import AnswerEditSheet from '@/components/prep/AnswerEditSheet'
 import ExamSwitcher from '@/components/prep/ExamSwitcher'
 import PrepSetup from '@/components/prep/PrepSetup'
-import { optionalSubjects } from '@/lib/prep/pace'
+import { chosenOptionals, optionalSubjects } from '@/lib/prep/pace'
 
 const card = 'rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900'
 const COVERAGE_LABEL: Record<string, string> = { syllabus_touched: 'Subtopics studied', foundation_completed: 'Topics completed', evidence_backed: 'Evidence-backed', revision_current: 'Revision current' }
@@ -57,8 +57,8 @@ export default function PrepProgressPage() {
     if (data.status !== 'ready') return null
     const states = [...data.states.values()]
     const official = data.nodes.filter((n) => !n.ownerId)
-    const chosen = data.profile.optionalSubjectId
-    const optionalNodes = official.filter((n) => n.papers.some((p) => p === 'OPT1' || p === 'OPT2')).filter((n) => !chosen || n.id === chosen || n.parentId === chosen)
+    const chosen = chosenOptionals({ optionalSubjectId: data.profile.optionalSubjectId, secondOptionalId: data.profile.secondOptionalId })
+    const optionalNodes = official.filter((n) => n.papers.some((p) => p === 'OPT1' || p === 'OPT2')).filter((n) => !chosen.length || chosen.includes(n.id) || (n.parentId !== null && chosen.includes(n.parentId)))
     const withSubs = new Set(official.filter((n) => n.kind === 'subtopic').map((n) => n.parentId))
     const units = new Set(official.filter((n) => n.kind === 'subtopic' || n.kind === 'ncert_book' || (n.kind === 'topic' && !withSubs.has(n.id))).map((n) => n.id))
     const optionalTouched = optionalNodes.some((n) => data.states.get(n.id)?.touchedOn)
@@ -82,7 +82,7 @@ export default function PrepProgressPage() {
       trend: mockTrend(data.mocks),
       answers: { total: data.answers.reduce((s, a) => s + a.count, 0), thisWeek: answersThisWeek, lastWeek: answersLastWeek, timed: data.answers.filter((a) => a.timed).reduce((s, a) => s + a.count, 0), reviewed: data.answers.filter((a) => a.mentorReviewed).reduce((s, a) => s + a.count, 0), byPaper: [...byPaper.entries()].sort((a, b) => b[1] - a[1]) },
     }
-  }, [data.status, data.nodes, data.states, data.mocks, data.answers, data.events, data.mistakes, data.studyDays, data.profile.optionalSubjectId, today])
+  }, [data.status, data.nodes, data.states, data.mocks, data.answers, data.events, data.mistakes, data.studyDays, data.profile.optionalSubjectId, data.profile.secondOptionalId, today])
 
   // Keep one snapshot per day so the trend line builds up over time.
   useEffect(() => {
