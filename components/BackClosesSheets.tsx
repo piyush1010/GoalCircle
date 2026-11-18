@@ -11,7 +11,7 @@ const topModal = () => {
 }
 
 /** Close a sheet the way a person would: Escape, then its Close, Cancel or Minimise button, then a tap on the dimmed backdrop. */
-function closeModal(modal: HTMLElement, done: (closed: boolean) => void) {
+export function closeModal(modal: HTMLElement, done: (closed: boolean) => void) {
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
   window.setTimeout(() => {
     if (!modal.isConnected) return done(true)

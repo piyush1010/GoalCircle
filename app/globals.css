@@ -172,3 +172,21 @@ h2 { font-weight: 700; }
 }
 @keyframes guide-pulse { 50% { outline-color: transparent; } }
 @media (prefers-reduced-motion: reduce) { .guide-highlight { animation: none; } }
+
+/* Bottom sheets on phones get a small grab handle, the usual hint that they can be pulled down to close. */
+@media (pointer: coarse) and (max-width: 639px) {
+  [role="dialog"][aria-modal="true"].rounded-t-3xl::before,
+  form[aria-modal="true"].rounded-t-3xl::before {
+    content: '';
+    display: block;
+    flex: none;
+    align-self: center;
+    width: 2.5rem;
+    height: 0.25rem;
+    margin: -0.25rem auto 0.75rem;
+    border-radius: 9999px;
+    background: rgb(203 213 225); /* slate-300 */
+  }
+  .dark [role="dialog"][aria-modal="true"].rounded-t-3xl::before,
+  .dark form[aria-modal="true"].rounded-t-3xl::before { background: rgb(51 65 85); } /* slate-700 */
+}

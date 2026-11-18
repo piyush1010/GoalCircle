@@ -5,9 +5,11 @@ import BottomNav from '@/components/BottomNav'
 import ReminderManager from '@/components/ReminderManager'
 import PwaManager from '@/components/PwaManager'
 import BackClosesSheets from '@/components/BackClosesSheets'
+import SwipeClosesSheets from '@/components/SwipeClosesSheets'
 import WelcomeBack from '@/components/WelcomeBack'
 import CheerToast from '@/components/CheerToast'
 import ConfirmHost from '@/components/ConfirmHost'
+import UndoHost from '@/components/UndoHost'
 import PushPrompt from '@/components/PushPrompt'
 import ErrorReporter from '@/components/ErrorReporter'
 import PageGuide from '@/components/PageGuide'
@@ -27,6 +29,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <ErrorReporter />
       <PwaManager />
       <BackClosesSheets />
+      <SwipeClosesSheets />
       <ReminderManager />
       <DayEndSync />
       {children}
@@ -35,6 +38,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {!hideNavigation && <PageGuide />}
       <CheerToast />
       <ConfirmHost />
+      <UndoHost />
       {!hideNavigation && <PushPrompt />}
     </>
   )
