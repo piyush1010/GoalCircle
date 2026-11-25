@@ -1,5 +1,6 @@
 'use client'
 
+import PasswordInput from '@/components/PasswordInput'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -62,8 +63,8 @@ export default function ResetPasswordPage() {
               <Link href="/login" className="mt-5 inline-block text-sm font-semibold underline underline-offset-2">Back to sign in</Link>
             </>
             : <form onSubmit={save} className="mt-4 space-y-3">
-              <label className="block text-sm font-semibold">New password<input type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required className={`${field} mt-1`} placeholder="At least 8 characters" /></label>
-              <label className="block text-sm font-semibold">Type it again<input type="password" autoComplete="new-password" value={confirm} onChange={(event) => setConfirm(event.target.value)} minLength={8} required className={`${field} mt-1`} /></label>
+              <label className="block text-sm font-semibold">New password<PasswordInput autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required wrapperClassName="mt-1" className={field} placeholder="At least 8 characters" /></label>
+              <label className="block text-sm font-semibold">Type it again<PasswordInput autoComplete="new-password" value={confirm} onChange={(event) => setConfirm(event.target.value)} minLength={8} required wrapperClassName="mt-1" className={field} /></label>
               {error && <p role="alert" className="text-sm font-semibold text-rose-600">{error}</p>}
               <button type="submit" disabled={saving || !ready} className="w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white disabled:opacity-50 dark:bg-slate-50 dark:text-slate-900">{saving ? 'Saving…' : ready ? 'Save new password' : 'Checking your link…'}</button>
             </form>}
