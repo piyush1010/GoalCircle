@@ -193,6 +193,7 @@ export default function PrepStartPage() {
                 <input value={request.note} onChange={(e) => setRequest({ ...request, note: e.target.value })} maxLength={500} placeholder="Anything to add? (optional)" className="w-full rounded-lg border border-slate-200 bg-transparent px-3 py-2.5 text-sm dark:border-slate-700" />
                 <button type="button" disabled={request.busy || (request.name || (noMatch ? find : '')).trim().length < 2} onClick={async () => { const examName = (request.name || find).trim(); setRequest({ ...request, name: examName, busy: true }); const { error: e } = await supabase.from('prep_exam_requests').insert({ exam_name: examName, details: request.note.trim() || null }); setRequest({ ...request, name: examName, busy: false, sent: !e }); if (e) setError('Could not send. Try again.') }} className="w-full rounded-lg bg-slate-900 py-2.5 text-sm font-semibold text-white disabled:opacity-40 dark:bg-white dark:text-slate-900">Send request</button>
               </div>}
+        <p className="mt-3 text-center text-xs text-slate-500">GoalYaar is not a government app. Syllabi follow each exam&apos;s official notice. <Link href="/about#sources" className="underline underline-offset-2">Official sources</Link></p>
       </div>}
 
       {step === 2 && <>

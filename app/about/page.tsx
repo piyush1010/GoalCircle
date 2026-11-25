@@ -10,6 +10,24 @@ export const metadata: Metadata = {
   description: `${APP_NAME} is a free, independent app for keeping goals: exam preparation, fitness, reading, health and mind, and new skills, with mentors, batches and communities.`,
 }
 
+// Where each exam's syllabus and dates are officially published (also listed in the Play Store description).
+const OFFICIAL_SOURCES: [string, string, string][] = [
+  ['UPSC Civil Services, IFoS, EPFO and CDS', 'Union Public Service Commission', 'https://upsc.gov.in'],
+  ['UPPCS and UP PCS-J', 'Uttar Pradesh Public Service Commission', 'https://uppsc.up.nic.in'],
+  ['BPSC', 'Bihar Public Service Commission', 'https://bpsc.bihar.gov.in'],
+  ['MPSC Rajyaseva', 'Maharashtra Public Service Commission', 'https://mpsc.gov.in'],
+  ['HCS', 'Haryana Public Service Commission', 'https://hpsc.gov.in'],
+  ['JKPSC CCE', 'Jammu and Kashmir Public Service Commission', 'https://jkpsc.nic.in'],
+  ['SSC CGL and SSC CHSL', 'Staff Selection Commission', 'https://ssc.gov.in'],
+  ['RRB NTPC', 'Railway Recruitment Boards', 'https://www.rrbapply.gov.in'],
+  ['Bank PO (IBPS)', 'Institute of Banking Personnel Selection', 'https://www.ibps.in'],
+  ['Bank PO (SBI)', 'State Bank of India', 'https://sbi.co.in/web/careers'],
+  ['CTET', 'Central Board of Secondary Education', 'https://ctet.nic.in'],
+  ['UPTET', 'Uttar Pradesh Education Service Selection Commission', 'https://upessc.up.gov.in'],
+  ['MP Civil Judge', 'High Court of Madhya Pradesh', 'https://mphc.gov.in'],
+  ['CAT', 'Indian Institutes of Management', 'https://iimcat.ac.in'],
+]
+
 function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return <section id={id} className="scroll-mt-6 border-t border-slate-200 py-6 dark:border-slate-800">
     <h2 className="text-base font-semibold">{title}</h2>
@@ -30,8 +48,15 @@ export default function AboutPage() {
       <p className="mt-3 text-base leading-7 text-slate-600 dark:text-slate-300">A free app for keeping your goals: an exam, fitness, reading, your mind or a new skill. It puts everything due today on one short list, and lets you work alongside a mentor, a batch, friends or a community with the same goal. For exams, it turns the syllabus and your exam date into a daily plan and brings each topic back before you forget it.</p>
 
       <Section id="disclaimer" title="Not affiliated with any commission">
-        <p>{APP_NAME} is an independent app. It is not affiliated with, authorised or endorsed by the Union Public Service Commission (UPSC), the Uttar Pradesh Public Service Commission (UPPSC), the Staff Selection Commission, any state public service commission, any High Court, or any other government body.</p>
+        <p>{APP_NAME} is an independent app. It is not affiliated with, authorised or endorsed by the Union Public Service Commission (UPSC), the Uttar Pradesh Public Service Commission (UPPSC), the Staff Selection Commission, the Railway Recruitment Boards, any state public service commission, any High Court, or any other government body.</p>
         <p>Commission and exam names are used only to say which exam a feature is for.</p>
+      </Section>
+
+      <Section id="sources" title="Official sources">
+        <p>{APP_NAME} is not a government app and does not represent any government body. Syllabi and exam dates in {APP_NAME} come from each exam&apos;s official notices, published at the websites below. Always check the latest notice there before you apply or plan around a date.</p>
+        <ul className="space-y-1.5">
+          {OFFICIAL_SOURCES.map(([exams, body, url]) => <li key={url}><b className="font-medium text-slate-900 dark:text-white">{exams}</b>: {body}, <a href={url} target="_blank" rel="noopener noreferrer" className="break-all underline underline-offset-2">{url.replace(/^https:\/\//, '')}</a></li>)}
+        </ul>
       </Section>
 
       <Section id="content" title="Syllabus, dates and questions">
