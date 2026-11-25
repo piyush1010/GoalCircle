@@ -2,6 +2,7 @@
 
 import LogoMark from '@/components/LogoMark'
 import Link from 'next/link'
+import PasswordInput from '@/components/PasswordInput'
 import React, { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
@@ -231,8 +232,8 @@ function AuthForm() {
           <label className="block text-sm font-medium text-slate-400 mb-1">
             Password
           </label>
-          <input
-            type="password"
+          <PasswordInput
+            autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
             placeholder={mode === 'signup' ? 'At least 8 characters' : 'Your password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
