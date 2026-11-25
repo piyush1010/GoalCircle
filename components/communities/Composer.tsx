@@ -1,5 +1,6 @@
 'use client'
 
+import { ensureTermsAccepted } from '@/lib/terms'
 import { useEffect, useRef, useState } from 'react'
 import { ImagePlus, X } from 'lucide-react'
 import { supabase } from '@/utils/supabase'
@@ -40,6 +41,7 @@ export default function Composer({ places, initialPlace, editing, onDone, onCanc
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!ready || busy) return
+    if (!(await ensureTermsAccepted())) return
     setBusy(true); setError(null)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { setBusy(false); setError('Please sign in again.'); return }

@@ -1,6 +1,7 @@
 'use client'
 
 import LogoMark from '@/components/LogoMark'
+import Link from 'next/link'
 import React, { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/utils/supabase'
@@ -250,6 +251,8 @@ function AuthForm() {
           {loading ? 'Processing...' : mode === 'signup' ? 'Create account' : 'Sign in'}
         </button>
       </form>
+
+      <p className="text-center text-xs leading-5 text-slate-500">By continuing, you agree to the <Link href="/terms" className="underline underline-offset-2">terms and community rules</Link> and the <Link href="/privacy" className="underline underline-offset-2">privacy policy</Link>.</p>
 
       {/* FOOTER SWITCH */}
       <div className="text-center pt-1">

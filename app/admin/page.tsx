@@ -1,6 +1,7 @@
 'use client'
 
 import AdminExamRequests from '@/components/prep/AdminExamRequests'
+import AdminReports from '@/components/AdminReports'
 import AdminPrepPilot from '@/components/prep/AdminPrepPilot'
 import AdminFeedback from '@/components/AdminFeedback'
 import { useCallback, useEffect, useState } from 'react'
@@ -100,6 +101,7 @@ export default function AdminPage() {
 
       <AdminPrepPilot />
       <AdminFeedback />
+      <AdminReports />
       <AdminExamRequests />
 
       {/* Sign-ups */}

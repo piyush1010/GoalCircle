@@ -64,6 +64,10 @@ export default function AboutPage() {
         <p>Previous year questions, where shown, are taken from papers the commissions publish on their official websites. Each one shows its exam, year and paper. They are included to help you practise and remain the work of the commission that set them. Answers follow the official answer keys where one has been published, and explanations are written by us.</p>
       </Section>
 
+      <Section id="terms" title="Terms and community rules">
+        <p>Everyone agrees to the <Link href="/terms" className="font-medium text-slate-900 underline underline-offset-2 dark:text-white">terms and community rules</Link> before posting. Every post, answer, comment and profile can be reported, and anyone can be blocked. We look at every report, usually within a day.</p>
+      </Section>
+
       <Section id="contact" title="Mistakes, questions and removal requests">
         <p>Spotted a mistake in a syllabus, date or question? Use Settings → Send feedback, or write to {mail}.</p>
         <p>If you represent a commission or rights holder and would like something removed, write to {mail} and we will act on it promptly.</p>

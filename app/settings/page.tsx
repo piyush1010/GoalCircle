@@ -269,6 +269,7 @@ export default function SettingsPage() {
         <button type="button" onClick={() => void handleExportData()} className={row}><Download className="h-5 w-5 shrink-0 text-slate-400" /><span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">Download my data</span><span className="block text-sm text-slate-500">Goals, check-ins, focus time, exam preparation and community posts, in one file</span></span><ChevronRight className="h-4 w-4 text-slate-400" /></button>
         <BlockedPeople className={row} />
         <Link href="/about" className={row}><Info className="h-5 w-5 shrink-0 text-slate-400" /><span className="min-w-0 flex-1 text-[15px] font-semibold">About GoalYaar and privacy</span><ChevronRight className="h-4 w-4 text-slate-400" /></Link>
+        <Link href="/terms" className={row}><Shield className="h-5 w-5 shrink-0 text-slate-400" /><span className="min-w-0 flex-1 text-[15px] font-semibold">Terms and community rules</span><ChevronRight className="h-4 w-4 text-slate-400" /></Link>
       </div>
 
       <h2 className={heading}>Help</h2>
