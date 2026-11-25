@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: `What ${APP_NAME} stores, why, who processes it, and how to export or delete it.`,
 }
 
-const UPDATED = '10 November 2026'
+const UPDATED = '25 November 2026'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return <section className="border-t border-slate-200 py-6 dark:border-slate-800">
@@ -34,15 +34,17 @@ export default function PrivacyPage() {
 
       <Section title="What we store">
         <p><b>Account:</b> your email address, name and username, and your Google profile photo if you sign in with Google.</p>
-        <p><b>What you create:</b> goals, check-ins and their photos, comments, circles and batch posts, focus time, and anything you send as feedback.</p>
+        <p><b>What you create:</b> goals, check-ins and their photos, comments, community posts and answers, circles, batch posts and the files attached to them, focus time, your to-do list, and anything you send as feedback or as a report.</p>
+        <p><b>Fitness and health habits:</b> what you choose to log for a habit, such as kilometres run, steps, minutes of exercise, hours of sleep or glasses of water. You type these in yourself; {APP_NAME} does not read your phone&apos;s health or fitness data.</p>
         <p><b>Exam preparation:</b> your exams and dates, study hours, subtopics ticked, revisions, mistakes, notes, mock scores and answers you share for review.</p>
         <p><b>Notifications:</b> if you turn on phone notifications, a notification address for your device, and your reminder time.</p>
         <p><b>Error reports:</b> when something breaks, the error message, the page and your browser type, so we can fix it.</p>
       </Section>
 
       <Section title="Who can see it">
-        <p>Your preparation data is private to you. A mentor sees your progress only if you choose to share it with them. Goals and check-ins are visible to the people you choose: only you, your circle, or everyone. Others preparing for the same exam see anonymous counts, never your name.</p>
-        <p>The app&apos;s administrator can see counts of activity and error reports to keep the app working, not your notes, mistakes or private posts.</p>
+        <p>Your preparation data and your fitness and health logs are private to you unless you post them. A mentor sees your progress only if you choose to share it with them. Goals and check-ins are visible to the people you choose: only you, your circle, or everyone. Others preparing for the same exam see anonymous counts, never your name.</p>
+        <p>Community posts and answers, and your name, username, photo and bio, can be seen by other members. When someone reports a post, comment or profile, the app&apos;s administrator sees it, and the report, to decide whether it breaks the <Link href="/terms" className="font-medium text-slate-900 underline underline-offset-2 dark:text-white">community rules</Link>. Otherwise the administrator sees only counts of activity and error reports, not your notes, mistakes or private posts.</p>
+        <p>Everything is sent over an encrypted connection (HTTPS). We never sell your data or share it with advertisers.</p>
       </Section>
 
       <Section title="Who processes it for us">

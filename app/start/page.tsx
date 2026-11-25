@@ -258,6 +258,7 @@ export default function StartPage() {
               <button type="button" disabled={busy} onClick={() => void google()} className={primary}>Continue with Google</button>
               <Link href="/login?mode=signup&next=/start/finish" onClick={() => writeDraft(draft())} className="block w-full rounded-2xl border border-slate-300 py-3.5 text-center text-[15px] font-semibold dark:border-slate-700">Use email</Link>
               <Link href="/login?next=/start/finish" onClick={() => writeDraft(draft())} className="block py-2 text-center text-sm font-medium text-slate-500">I already have an account</Link>
+              <p className="pt-1 text-center text-xs leading-5 text-slate-500">By continuing, you agree to the <Link href="/terms" className="underline underline-offset-2">terms and community rules</Link> and the <Link href="/privacy" className="underline underline-offset-2">privacy policy</Link>.</p>
             </div>
         : step.kind === 'group'
           ? null

@@ -1,5 +1,6 @@
 'use client'
 
+import { ensureTermsAccepted } from '@/lib/terms'
 import ClampedText from '@/components/ClampedText'
 import { confirmAction } from '@/lib/confirm'
 import Image from 'next/image'
@@ -32,6 +33,7 @@ export default function CircleNotices({ circleId, userId, isAdmin }: { circleId:
 
   const post = async () => {
     if (!body.trim() && files.length === 0) { setError('Write a notice or attach a file.'); return }
+    if (!(await ensureTermsAccepted())) return
     setPosting(true); setError(null)
     let attachments: Attachment[] = []
     try { attachments = await uploadCircleFiles(circleId, files) } catch (uploadError) { setError((uploadError as Error).message); setPosting(false); return }

@@ -1,5 +1,6 @@
 'use client'
 
+import { ensureTermsAccepted } from '@/lib/terms'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -106,6 +107,7 @@ export default function DiscussionThread() {
     e.preventDefault()
     const body = answer.trim()
     if (!body || busy) return
+    if (!(await ensureTermsAccepted())) return
     setBusy(true); setError(null)
     const { data, error: e2 } = await supabase.from('community_comments').insert({ post_id: post.id, body }).select('id').single()
     if (e2 || !data) { setBusy(false); setError(saveError(e2?.message)); return }

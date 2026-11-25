@@ -3,7 +3,8 @@
 import { useCallback, useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
-import { ArrowLeft, Flame, Target, UserPlus, UserCheck } from 'lucide-react';
+import { ArrowLeft, Flame, Target, UserPlus, UserCheck, Flag } from 'lucide-react';
+import ReportBlockModal from '@/components/ReportBlockModal';
 import ProfileAvatar from '@/components/ProfileAvatar';
 
 interface UserProfile {
@@ -28,6 +29,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSupporting, setIsSupporting] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const fetchProfileData = useCallback(async () => {
@@ -125,9 +127,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
 
   return (
     <main className="mx-auto min-h-screen max-w-xl px-4 pb-28 pt-4 text-slate-900 dark:text-slate-100">
-      <div className="flex h-10 items-center">
+      <div className="flex h-10 items-center justify-between">
         <Link href="/search" aria-label="Back" className="-ml-2 grid h-10 w-10 place-items-center rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" /></Link>
+        {!isSelf && <button type="button" onClick={() => setReporting(true)} className="-mr-2 flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><Flag className="h-4 w-4" />Report or block</button>}
       </div>
+      {reporting && <ReportBlockModal targetUserId={profile.id} name={name.split(' ')[0]} what="profile" context={[profile.full_name, profile.bio].filter(Boolean).join(' / ')} isOpen onClose={() => setReporting(false)} />}
 
       <section className={`${card} mt-2 p-5`}>
         <div className="flex items-center gap-4">

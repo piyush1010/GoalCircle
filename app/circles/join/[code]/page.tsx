@@ -84,7 +84,7 @@ export default function JoinCirclePage() {
             <li className="flex gap-2"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />Your notes stay between you and your mentor</li>
           </ul>
           <button type="button" onClick={() => void continueWithGoogle()} disabled={signingIn} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-4 text-base font-bold text-white disabled:opacity-60 dark:bg-white dark:text-slate-900">{signingIn ? 'Opening Google…' : 'Continue with Google'}</button>
-          <p className="mt-2 text-xs text-slate-500">New or returning, it&apos;s the same button. Free.</p>
+          <p className="mt-2 text-xs text-slate-500">New or returning, it&apos;s the same button. Free. By continuing, you agree to the <Link href="/terms" className="underline underline-offset-2">terms and community rules</Link> and the <Link href="/privacy" className="underline underline-offset-2">privacy policy</Link>.</p>
           <Link href={`/login?next=${encodeURIComponent(`/circles/join/${code}?go=1`)}`} className="mt-4 inline-block text-sm font-bold text-slate-900 dark:text-white">Use email instead</Link>
         </>}
         {!loading && !signedOut && preview && <>
